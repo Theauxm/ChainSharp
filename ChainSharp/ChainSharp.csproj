@@ -8,6 +8,10 @@
         <AssemblyName>Theauxm.ChainSharp</AssemblyName>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    </PropertyGroup>
+
     <ItemGroup>
         <PackageReference Include="LanguageExt.Core" Version="4.4.7" />
     </ItemGroup>

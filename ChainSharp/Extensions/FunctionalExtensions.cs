@@ -2,7 +2,7 @@ using LanguageExt;
 
 namespace ChainSharp.Extensions;
 
-internal static class FunctionalExtensions
+public static class FunctionalExtensions
 {
     internal static async Task<R> Unwrap<L, R>(this Task<Either<L, R>> option)
         where L : Exception

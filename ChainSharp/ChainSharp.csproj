@@ -4,9 +4,15 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <Version>1.0.0</Version>
+        <AssemblyName>Theauxm.ChainSharp</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="LanguageExt.Core" Version="4.4.7" />
     </ItemGroup>
+
+    <PropertyGroup>
+        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    </PropertyGroup>
 </Project>

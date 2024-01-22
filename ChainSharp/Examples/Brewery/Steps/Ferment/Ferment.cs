@@ -1,6 +1,5 @@
 using ChainSharp.Examples.Brewery.Steps.Prepare;
 using ChainSharp.Exceptions;
-using ChainSharp.Extensions;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
 

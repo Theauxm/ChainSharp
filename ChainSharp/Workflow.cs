@@ -11,6 +11,24 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
 
     public async Task<TReturn> Run(TInput input)
         => await RunInternal(input).Unwrap();
+
+    public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(Either<WorkflowException, TIn> previousStep,
+        out Either<WorkflowException, TOut> outVar)
+        where TStep : IStep<TIn, TOut>, new()
+    {
+        if (Exception is not null)
+        {
+            outVar = Exception;
+            return this;
+        }
+        
+        outVar = Task.Run(() => new TStep().RailwayStep(previousStep)).Result;
+
+        if (outVar.IsLeft)
+            Exception = outVar.Swap().ValueUnsafe();
+        
+        return this; 
+    }
     
     public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(TStep step, Either<WorkflowException, TIn> previousStep, out Either<WorkflowException, TOut> outVar)
         where TStep : IStep<TIn, TOut>
@@ -36,6 +54,20 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
             return this;
         
         var stepResult = Task.Run(() => step.RailwayStep(previousStep)).Result;
+        
+        if (stepResult.IsLeft)
+            Exception = stepResult.Swap().ValueUnsafe();
+        
+        return this;
+    }
+    
+    public Workflow<TInput, TReturn> Chain<TStep, TIn>(Either<WorkflowException, TIn> previousStep)
+        where TStep : IStep<TIn, Unit>, new()
+    {
+        if (Exception is not null)
+            return this;
+        
+        var stepResult = Task.Run(() => new TStep().RailwayStep(previousStep)).Result;
         
         if (stepResult.IsLeft)
             Exception = stepResult.Swap().ValueUnsafe();

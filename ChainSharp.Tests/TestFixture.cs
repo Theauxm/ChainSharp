@@ -1,6 +1,6 @@
 using NUnit.Framework;
 
-namespace ChainCharp.Tests;
+namespace ChainSharp.Tests;
 
 
 [SetUpFixture]

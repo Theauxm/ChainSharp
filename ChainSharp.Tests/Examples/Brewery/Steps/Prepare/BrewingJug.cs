@@ -1,4 +1,4 @@
-namespace ChainSharp.Examples.Brewery.Steps.Prepare;
+namespace ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
 
 internal class BrewingJug
 {

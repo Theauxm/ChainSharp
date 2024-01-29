@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 
-namespace ChainCharp.Tests;
+namespace ChainSharp.Tests;
 
 public abstract class TestSetup
 {

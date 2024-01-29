@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp", "ChainSharp\ChainSharp.csproj", "{E73AB948-40E3-416B-958A-8CBD8A09F3ED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainCharp.Tests", "ChainCharp.Tests\ChainCharp.Tests.csproj", "{DA06ED54-A8D0-4325-86C7-443815E8DD7F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests", "ChainSharp.Tests\ChainSharp.Tests.csproj", "{DA06ED54-A8D0-4325-86C7-443815E8DD7F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

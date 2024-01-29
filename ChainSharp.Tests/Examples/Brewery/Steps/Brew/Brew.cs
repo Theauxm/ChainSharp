@@ -1,8 +1,8 @@
-using ChainSharp.Examples.Brewery.Steps.Prepare;
 using ChainSharp.Exceptions;
+using ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
 using LanguageExt;
 
-namespace ChainSharp.Examples.Brewery.Steps.Brew;
+namespace ChainSharp.Tests.Examples.Brewery.Steps.Brew;
 
 internal class Brew : Step<BrewingJug, Unit>, IBrew
 {

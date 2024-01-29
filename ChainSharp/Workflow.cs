@@ -9,186 +9,33 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
 {
     private WorkflowException? Exception { get; set; }
     
-    private Dictionary<Type, Either<WorkflowException, Object>> Memory { get; set; }
+    private Dictionary<Type, object> Memory { get; set; }
 
     public async Task<TReturn> Run(TInput input)
     {
-        Memory = new Dictionary<Type, Either<WorkflowException, Object>>();
+        Memory = new Dictionary<Type, object>();
         
         return await RunInternal(input).Unwrap();
     }
 
-    /// <summary>
+    public Workflow<TInput, TReturn> Activate(TInput input)
+    {
+        Memory.Add(typeof(TInput), input);
+
+        return this;
+    }
+    
+    /// Current Implementations:
+    /// Chain<TStep, TIn, TOut>(TStep, TIn, TOut)
     /// Chain<TStep, TIn, TOut>(TIn, TOut)
-    /// </summary>
-    /// <param name="previousStep"></param>
-    /// <param name="outVar"></param>
-    /// <typeparam name="TStep"></typeparam>
-    /// <typeparam name="TIn"></typeparam>
-    /// <typeparam name="TOut"></typeparam>
-    /// <returns></returns>
-    public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(Either<WorkflowException, TIn> previousStep,
-        out Either<WorkflowException, TOut> outVar)
-        where TStep : IStep<TIn, TOut>, new()
-    {
-        if (Exception is not null)
-        {
-            outVar = Exception;
-            return this;
-        }
-        
-        outVar = Task.Run(() => new TStep().RailwayStep(previousStep)).Result;
-
-        if (outVar.IsLeft)
-            Exception = outVar.Swap().ValueUnsafe();
-        
-        return this; 
-    }
-    
-    /// <summary>
     /// Chain<TStep, TIn, TOut>(TStep)
-    /// </summary>
-    /// <param name="step"></param>
-    /// <typeparam name="TStep"></typeparam>
-    /// <typeparam name="TIn"></typeparam>
-    /// <typeparam name="TOut"></typeparam>
-    /// <returns></returns>
-    public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(TStep step)
-        where TStep : IStep<TIn, TOut>
-    {
-        if (Exception is not null)
-        {
-            return this;
-        }
-
-        Either<WorkflowException, TIn> input;
-        try
-        {
-            input = (Either<WorkflowException, TIn>)Memory[typeof(Either<WorkflowException, TIn>)];
-        }
-        catch (Exception e)
-        {
-            Exception = new WorkflowException($"Could not find type: ({typeof(Either<WorkflowException, TIn>)}). {e}");
-            return this;
-        }
-
-        var result = Task.Run(() => step.RailwayStep(input)).Result;
-        
-        Memory.Add(typeof(TOut), result);
-
-        if (result.IsLeft)
-            Exception = result.Swap().ValueUnsafe();
-        
-        return this;
-    }
-    
-    /// <summary>
-    /// Chain<TStep, TIn, TOut>(TStep)
-    /// </summary>
-    /// <param name="step"></param>
-    /// <typeparam name="TStep"></typeparam>
-    /// <typeparam name="TIn"></typeparam>
-    /// <typeparam name="TOut"></typeparam>
-    /// <returns></returns>
-    public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>()
-        where TStep : IStep<TIn, TOut>, new()
-    {
-        if (Exception is not null)
-        {
-            return this;
-        }
-
-        Either<WorkflowException, TIn> input;
-        try
-        {
-            input = (Either<WorkflowException, TIn>)Memory[typeof(Either<WorkflowException, TIn>)];
-        }
-        catch (Exception e)
-        {
-            Exception = new WorkflowException($"Could not find type: ({typeof(Either<WorkflowException, TIn>)}). {e}");
-            return this;
-        }
-
-        var result = Task.Run(() => new TStep().RailwayStep(input)).Result;
-        
-        Memory.Add(typeof(TOut), result);
-
-        if (result.IsLeft)
-            Exception = result.Swap().ValueUnsafe();
-        
-        return this;
-    }
-    
-    /// <summary>
+    /// Chain<TStep, TIn, TOut>()
+    /// Chain<TStep, TIn>(TStep, TIn)
+    /// Chain<TStep, TIn>(TIn)
     /// Chain<TStep, TIn>(TStep)
-    /// </summary>
-    /// <param name="step"></param>
-    /// <typeparam name="TStep"></typeparam>
-    /// <typeparam name="TIn"></typeparam>
-    /// <typeparam name="TOut"></typeparam>
-    /// <returns></returns>
-    public Workflow<TInput, TReturn> Chain<TStep, TIn>(TStep step)
-        where TStep : IStep<TIn, Unit>
-    {
-        if (Exception is not null)
-        {
-            return this;
-        }
-
-        Either<WorkflowException, TIn> input;
-        try
-        {
-            input = (Either<WorkflowException, TIn>)Memory[typeof(Either<WorkflowException, TIn>)];
-        }
-        catch (Exception e)
-        {
-            Exception = new WorkflowException($"Could not find type: ({typeof(Either<WorkflowException, TIn>)}). {e}");
-            return this;
-        }
-
-        var result = Task.Run(() => step.RailwayStep(input)).Result;
-
-        if (result.IsLeft)
-            Exception = result.Swap().ValueUnsafe();
-        
-        return this;
-    }
-    
-    /// <summary>
     /// Chain<TStep, TIn>()
-    /// </summary>
-    /// <param name="step"></param>
-    /// <typeparam name="TStep"></typeparam>
-    /// <typeparam name="TIn"></typeparam>
-    /// <typeparam name="TOut"></typeparam>
-    /// <returns></returns>
-    public Workflow<TInput, TReturn> Chain<TStep, TIn>()
-        where TStep : IStep<TIn, Unit>, new()
-    {
-        if (Exception is not null)
-        {
-            return this;
-        }
-
-        Either<WorkflowException, TIn> input;
-        try
-        {
-            input = (Either<WorkflowException, TIn>)Memory[typeof(Either<WorkflowException, TIn>)];
-        }
-        catch (Exception e)
-        {
-            Exception = new WorkflowException($"Could not find type: ({typeof(Either<WorkflowException, TIn>)}). {e}");
-            return this;
-        }
-
-        var result = Task.Run(() => new TStep().RailwayStep(input)).Result;
-
-        if (result.IsLeft)
-            Exception = result.Swap().ValueUnsafe();
-        
-        return this;
-    }
     
+    /// Chain<TStep, TIn, TOut>(TStep, TIn, TOut)
     public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(TStep step, Either<WorkflowException, TIn> previousStep, out Either<WorkflowException, TOut> outVar)
         where TStep : IStep<TIn, TOut>
     {
@@ -202,40 +49,74 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
 
         if (outVar.IsLeft)
             Exception = outVar.Swap().ValueUnsafe();
-        
-        return this;
-    }
-    
-    public Workflow<TInput, TReturn> Chain<TStep, TIn>(TStep step, Either<WorkflowException, TIn> previousStep)
-        where TStep : IStep<TIn, Unit>
-    {
-        if (Exception is not null)
-            return this;
-        
-        var stepResult = Task.Run(() => step.RailwayStep(previousStep)).Result;
-        
-        if (stepResult.IsLeft)
-            Exception = stepResult.Swap().ValueUnsafe();
-        
-        return this;
-    }
-    
-    public Workflow<TInput, TReturn> Chain<TStep, TIn>(Either<WorkflowException, TIn> previousStep)
-        where TStep : IStep<TIn, Unit>, new()
-    {
-        if (Exception is not null)
-            return this;
-        
-        var stepResult = Task.Run(() => new TStep().RailwayStep(previousStep)).Result;
-        
-        if (stepResult.IsLeft)
-            Exception = stepResult.Swap().ValueUnsafe();
+
+        Memory.TryAdd(typeof(TOut), outVar.ValueUnsafe());
         
         return this;
     }
 
+    /// Chain<TStep, TIn, TOut>(TStep)
+    public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(TStep step)
+        where TStep : IStep<TIn, TOut>
+    {
+        if (Memory.GetValueOrDefault(typeof(TIn)) is TIn input)
+            return Chain<TStep, TIn, TOut>(step, input, out var x);
+        
+        Exception ??= new WorkflowException($"Could not find type: ({typeof(TIn)}).");
+        
+        return this;
+    }
+    
+    /// Chain<TStep, TIn, TOut>(TIn, TOut)
+    public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(Either<WorkflowException, TIn> previousStep,
+        out Either<WorkflowException, TOut> outVar)
+        where TStep : IStep<TIn, TOut>, new()
+        => Chain<TStep, TIn, TOut>(new TStep(), previousStep, out outVar);
+    
+    /// Chain<TStep, TIn, TOut>()
+    public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>()
+        where TStep : IStep<TIn, TOut>, new()
+        => Chain<TStep, TIn, TOut>(new TStep());
+
+    
+    /// Chain<TStep, TIn>(TStep, In)
+    public Workflow<TInput, TReturn> Chain<TStep, TIn>(TStep step, Either<WorkflowException, TIn> previousStep)
+        where TStep : IStep<TIn, Unit>
+        => Chain<TStep, TIn, Unit>(step, previousStep, out var x);
+    
+    /// Chain<TStep, TIn>(TStep)
+    public Workflow<TInput, TReturn> Chain<TStep, TIn>(TStep step)
+        where TStep : IStep<TIn, Unit>
+        => Chain<TStep, TIn, Unit>(step);
+
+
+    /// Chain<TStep, TIn>(TIn)
+    public Workflow<TInput, TReturn> Chain<TStep, TIn>(Either<WorkflowException, TIn> previousStep)
+        where TStep : IStep<TIn, Unit>, new()
+        => Chain<TStep, TIn, Unit>(new TStep(), previousStep, out var x);
+    
+    /// Chain<TStep, TIn>()
+    public Workflow<TInput, TReturn> Chain<TStep, TIn>()
+        where TStep : IStep<TIn, Unit>, new()
+        => Chain<TStep, TIn, Unit>(new TStep());
+
+    
     public Either<WorkflowException, TReturn> Resolve(Either<WorkflowException, TReturn> returnType)
         => Exception ?? returnType;
+
+    public Either<WorkflowException, TReturn> Resolve()
+    {
+        if (Exception is not null)
+            return Exception;
+        
+        var result = Memory.GetValueOrDefault(
+                typeof(TReturn));
+        
+        if (result is null)
+            return new WorkflowException($"Could not find type: ({typeof(TReturn)}).");
+
+        return (TReturn)result;
+    }
 
     protected abstract Task<Either<WorkflowException, TReturn>> RunInternal(TInput input);
 }

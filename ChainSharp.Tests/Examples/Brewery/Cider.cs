@@ -1,11 +1,11 @@
-using ChainSharp.Examples.Brewery.Steps.Bottle;
-using ChainSharp.Examples.Brewery.Steps.Brew;
-using ChainSharp.Examples.Brewery.Steps.Ferment;
-using ChainSharp.Examples.Brewery.Steps.Prepare;
 using ChainSharp.Exceptions;
+using ChainSharp.Tests.Examples.Brewery.Steps.Bottle;
+using ChainSharp.Tests.Examples.Brewery.Steps.Brew;
+using ChainSharp.Tests.Examples.Brewery.Steps.Ferment;
+using ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
 using LanguageExt;
 
-namespace ChainSharp.Examples.Brewery;
+namespace ChainSharp.Tests.Examples.Brewery;
 
 internal class Cider(
     IPrepare prepare,

@@ -1,6 +1,6 @@
-namespace ChainSharp.Examples.Brewery.Steps.Prepare;
+namespace ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
 
-internal class Ingredients
+public class Ingredients
 {
     public required int Apples { get; set; }
     

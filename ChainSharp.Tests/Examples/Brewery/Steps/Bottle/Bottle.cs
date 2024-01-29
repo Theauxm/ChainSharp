@@ -1,8 +1,8 @@
-using ChainSharp.Examples.Brewery.Steps.Prepare;
 using ChainSharp.Exceptions;
+using ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
 using LanguageExt;
 
-namespace ChainSharp.Examples.Brewery.Steps.Bottle;
+namespace ChainSharp.Tests.Examples.Brewery.Steps.Bottle;
 
 internal class Bottle : Step<BrewingJug, List<GlassBottle>>, IBottle
 {

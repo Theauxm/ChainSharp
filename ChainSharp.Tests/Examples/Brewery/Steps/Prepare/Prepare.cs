@@ -2,7 +2,7 @@ using ChainSharp.Exceptions;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
 
-namespace ChainSharp.Examples.Brewery.Steps.Prepare;
+namespace ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
 
 internal class Prepare : Step<Ingredients, BrewingJug>, IPrepare
 {

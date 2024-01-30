@@ -39,9 +39,37 @@ public class WorkflowTests : TestSetup
             => Activate(input)
                 .Chain<Prepare, Ingredients, BrewingJug>()
                 .Chain<Ferment, BrewingJug>()
+                .Chain<TwoTupleStepTest, (Ingredients, BrewingJug)>()
+                .Chain<ThreeTupleStepTest, (Ingredients, BrewingJug, Unit)>()
                 .Chain<IBrew, BrewingJug>(brew)
                 .Chain<Bottle, BrewingJug, List<GlassBottle>>()
                 .Resolve();
+    }
+
+    private class TwoTupleStepTest : Step<(Ingredients, BrewingJug), Unit>
+    {
+        public override async Task<Either<WorkflowException, Unit>> Run((Ingredients, BrewingJug) input)
+        {
+            var (x, y) = input;
+
+            x.Apples++;
+            y.Gallons++;
+
+            return Unit.Default;
+        }
+    }
+    
+    private class ThreeTupleStepTest : Step<(Ingredients, BrewingJug, Unit), Unit>
+    {
+        public override async Task<Either<WorkflowException, Unit>> Run((Ingredients, BrewingJug, Unit) input)
+        {
+            var (x, y, z) = input;
+
+            x.Apples++;
+            y.Gallons++;
+
+            return Unit.Default;
+        }
     }
     
     [Theory]

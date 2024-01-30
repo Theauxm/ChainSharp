@@ -36,7 +36,7 @@ public class WorkflowTests : TestSetup
     private class ChainTest(IBrew brew) : Workflow<Ingredients, List<GlassBottle>>
     {
         protected override async Task<Either<WorkflowException, List<GlassBottle>>> RunInternal(Ingredients input)
-            => Activate(input)
+            => Activate(input, "this is a test string to make sure it gets added to memory")
                 .Chain<Prepare, Ingredients, BrewingJug>()
                 .Chain<Ferment, BrewingJug>()
                 .Chain<TwoTupleStepTest, (Ingredients, BrewingJug)>()

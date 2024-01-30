@@ -19,12 +19,15 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
         return await RunInternal(input).Unwrap();
     }
 
-    public Workflow<TInput, TReturn> Activate(TInput input)
+    public Workflow<TInput, TReturn> Activate(TInput input, params object[] otherTypes)
     {
         if (input is null)
             Exception ??= new WorkflowException($"Input ({typeof(TInput)}) is null.");
         else 
-            Memory.Add(typeof(TInput), input);
+            Memory.TryAdd(typeof(TInput), input);
+
+        foreach (var otherType in otherTypes)
+            Memory.TryAdd(otherType.GetType(), otherType);
 
         return this;
     }

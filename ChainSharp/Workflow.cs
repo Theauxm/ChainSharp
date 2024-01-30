@@ -1,5 +1,6 @@
 using ChainSharp.Exceptions;
 using ChainSharp.Extensions;
+using ChainSharp.Utils;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
 
@@ -20,7 +21,10 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
 
     public Workflow<TInput, TReturn> Activate(TInput input)
     {
-        Memory.Add(typeof(TInput), input);
+        if (input is null)
+            Exception ??= new WorkflowException($"Input ({typeof(TInput)}) is null.");
+        else 
+            Memory.Add(typeof(TInput), input);
 
         return this;
     }
@@ -48,9 +52,9 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
         outVar = Task.Run(() => step.RailwayStep(previousStep)).Result;
 
         if (outVar.IsLeft)
-            Exception = outVar.Swap().ValueUnsafe();
+            Exception ??= outVar.Swap().ValueUnsafe();
 
-        Memory.TryAdd(typeof(TOut), outVar.ValueUnsafe());
+        Memory.TryAdd(typeof(TOut), outVar.Unwrap());
         
         return this;
     }
@@ -59,10 +63,28 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
     public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(TStep step)
         where TStep : IStep<TIn, TOut>
     {
-        if (Memory.GetValueOrDefault(typeof(TIn)) is TIn input)
+        TIn? input = default;
+        
+        var inputType = typeof(TIn);
+        if (inputType.IsTuple())
+        {
+            try
+            {
+                input = TypeHelpers.ExtractTuple(Memory, inputType);
+            }
+            catch (Exception e)
+            {
+                Exception ??= new WorkflowException(e.Message);
+                return this;
+            }
+        }
+
+        input ??= (TIn?)Memory.GetValueOrDefault(inputType);
+
+        if (input is not null) 
             return Chain<TStep, TIn, TOut>(step, input, out var x);
         
-        Exception ??= new WorkflowException($"Could not find type: ({typeof(TIn)}).");
+        Exception ??= new WorkflowException($"Could not find type: ({inputType}).");
         
         return this;
     }

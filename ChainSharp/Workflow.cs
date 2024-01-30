@@ -63,30 +63,12 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
     public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(TStep step)
         where TStep : IStep<TIn, TOut>
     {
-        TIn? input = default;
-        
-        var inputType = typeof(TIn);
-        if (inputType.IsTuple())
-        {
-            try
-            {
-                input = TypeHelpers.ExtractTuple(Memory, inputType);
-            }
-            catch (Exception e)
-            {
-                Exception ??= new WorkflowException(e.Message);
-                return this;
-            }
-        }
+        var input = ExtractTypeFromMemory<TIn>();
 
-        input ??= (TIn?)Memory.GetValueOrDefault(inputType);
-
-        if (input is not null) 
-            return Chain<TStep, TIn, TOut>(step, input, out var x);
+        if (input is null) 
+            return this;
         
-        Exception ??= new WorkflowException($"Could not find type: ({inputType}).");
-        
-        return this;
+        return Chain<TStep, TIn, TOut>(step, input, out var x);
     }
     
     /// Chain<TStep, TIn, TOut>(TIn, TOut)
@@ -138,6 +120,48 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
             return new WorkflowException($"Could not find type: ({typeof(TReturn)}).");
 
         return (TReturn)result;
+    }
+
+    private T? ExtractTypeFromMemory<T>()
+    {
+        T? input = default;
+
+        var inputType = typeof(T);
+        if (inputType.IsTuple())
+        {
+            try
+            {
+                input = ExtractTuple(inputType);
+            }
+            catch (Exception e)
+            {
+                Exception ??= new WorkflowException(e.Message);
+            }
+        }
+
+        input ??= (T?)Memory.GetValueOrDefault(inputType);
+        
+        if (input is null)
+            Exception ??= new WorkflowException($"Could not find type: ({inputType}).");
+
+        return input;
+    }
+    
+    private dynamic ExtractTuple(Type inputType)
+    {
+        var dynamicList = TypeHelpers.ExtractTypes(Memory, inputType);
+
+        return dynamicList.Count switch
+        {
+            0 => throw new WorkflowException($"Cannot have Tuple of length 0."),
+            2 => TypeHelpers.ConvertTwoTuple(dynamicList),
+            3 => TypeHelpers.ConvertThreeTuple(dynamicList),
+            4 => TypeHelpers.ConvertFourTuple(dynamicList),
+            5 => TypeHelpers.ConvertFiveTuple(dynamicList),
+            6 => TypeHelpers.ConvertSixTuple(dynamicList),
+            7 => TypeHelpers.ConvertSevenTuple(dynamicList),
+            _ => throw new WorkflowException($"Could not create Tuple for type ({inputType})")
+        };
     }
 
     protected abstract Task<Either<WorkflowException, TReturn>> RunInternal(TInput input);

@@ -76,13 +76,15 @@ public class WorkflowTests : TestSetup
     public async Task TestChain()
     {
         var workflow = new ChainTest(_brew);
-
-        var result = await workflow.Run(new Ingredients()
+        
+        var ingredients = new Ingredients()
         {
             Apples = 1,
             BrownSugar = 1,
             Cinnamon = 1,
             Yeast = 1
-        });
+        };
+
+        var result = await workflow.Run(ingredients);
     }
 }

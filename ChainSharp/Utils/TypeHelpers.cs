@@ -2,26 +2,9 @@ using ChainSharp.Exceptions;
 
 namespace ChainSharp.Utils;
 
-public static class TypeHelpers
+internal static class TypeHelpers
 {
-    public static dynamic ExtractTuple(Dictionary<Type, object> memory, Type inputType)
-    {
-        var dynamicList = ExtractTypes(memory, inputType);
-
-        return dynamicList.Count switch
-        {
-            0 => throw new WorkflowException($"Cannot have Tuple of length 0."),
-            2 => ConvertTwoTuple(dynamicList),
-            3 => ConvertThreeTuple(dynamicList),
-            4 => ConvertFourTuple(dynamicList),
-            5 => ConvertFiveTuple(dynamicList),
-            6 => ConvertSixTuple(dynamicList),
-            7 => ConvertSevenTuple(dynamicList),
-            _ => throw new WorkflowException($"Could not create Tuple for type ({inputType})")
-        };
-    }
-
-    private static List<dynamic> ExtractTypes(Dictionary<Type, object> memory, Type inputType)
+    internal static List<dynamic> ExtractTypes(Dictionary<Type, object> memory, Type inputType)
     {
         var dynamicList = new List<dynamic>();
         foreach (var type in inputType.GenericTypeArguments)
@@ -37,7 +20,7 @@ public static class TypeHelpers
         return dynamicList;
     }
 
-    private static dynamic ConvertTwoTuple(List<dynamic> dynamicList)
+    internal static dynamic ConvertTwoTuple(List<dynamic> dynamicList)
     {
         ArgumentNullException.ThrowIfNull(dynamicList);
 
@@ -49,7 +32,7 @@ public static class TypeHelpers
             dynamicList[1]);
     }
     
-    private static dynamic ConvertThreeTuple(List<dynamic> dynamicList)
+    internal static dynamic ConvertThreeTuple(List<dynamic> dynamicList)
     {
         ArgumentNullException.ThrowIfNull(dynamicList);
 
@@ -62,7 +45,7 @@ public static class TypeHelpers
             dynamicList[2]);
     }
     
-    private static dynamic ConvertFourTuple(List<dynamic> dynamicList)
+    internal static dynamic ConvertFourTuple(List<dynamic> dynamicList)
     {
         ArgumentNullException.ThrowIfNull(dynamicList);
 
@@ -76,7 +59,7 @@ public static class TypeHelpers
             dynamicList[4]);
     }
     
-    private static dynamic ConvertFiveTuple(List<dynamic> dynamicList)
+    internal static dynamic ConvertFiveTuple(List<dynamic> dynamicList)
     {
         ArgumentNullException.ThrowIfNull(dynamicList);
 
@@ -91,7 +74,7 @@ public static class TypeHelpers
             dynamicList[4]);
     }
     
-    private static dynamic ConvertSixTuple(List<dynamic> dynamicList)
+    internal static dynamic ConvertSixTuple(List<dynamic> dynamicList)
     {
         ArgumentNullException.ThrowIfNull(dynamicList);
 
@@ -107,7 +90,7 @@ public static class TypeHelpers
             dynamicList[5]);
     }
     
-    private static dynamic ConvertSevenTuple(List<dynamic> dynamicList)
+    internal static dynamic ConvertSevenTuple(List<dynamic> dynamicList)
     {
         ArgumentNullException.ThrowIfNull(dynamicList);
 

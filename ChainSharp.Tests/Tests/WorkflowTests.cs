@@ -45,6 +45,22 @@ public class WorkflowTests : TestSetup
                 .Chain<Bottle, BrewingJug, List<GlassBottle>>()
                 .Resolve();
     }
+    
+    private class ChainTestWithNoInputs : Workflow<Ingredients, List<GlassBottle>>
+    {
+        protected override async Task<Either<WorkflowException, List<GlassBottle>>> RunInternal(Ingredients input)
+        {
+            var brew = new Brew();
+            return Activate(input, "this is a test string to make sure it gets added to memory")
+                .Chain<Prepare>()
+                .Chain<Ferment>()
+                .Chain<TwoTupleStepTest>()
+                .Chain<ThreeTupleStepTest>()
+                .Chain(brew)
+                .Chain<Bottle>()
+                .Resolve();
+        }
+    }
 
     private class TwoTupleStepTest : Step<(Ingredients, BrewingJug), Unit>
     {
@@ -76,6 +92,22 @@ public class WorkflowTests : TestSetup
     public async Task TestChain()
     {
         var workflow = new ChainTest(_brew);
+        
+        var ingredients = new Ingredients()
+        {
+            Apples = 1,
+            BrownSugar = 1,
+            Cinnamon = 1,
+            Yeast = 1
+        };
+
+        var result = await workflow.Run(ingredients);
+    }
+    
+    [Theory]
+    public async Task TestChainWithNoInputs()
+    {
+        var workflow = new ChainTestWithNoInputs();
         
         var ingredients = new Ingredients()
         {

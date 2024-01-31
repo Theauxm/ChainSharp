@@ -1,8 +1,10 @@
+using System.Reflection;
 using ChainSharp.Exceptions;
 using ChainSharp.Extensions;
 using ChainSharp.Utils;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
+using static ChainSharp.Utils.ReflectionHelpers;
 
 namespace ChainSharp;
 
@@ -86,7 +88,27 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
     public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>()
         where TStep : IStep<TIn, TOut>, new()
         => Chain<TStep, TIn, TOut>(new TStep());
+    
+    /// Chain<TStep>()
+    public Workflow<TInput, TReturn> Chain<TStep>() where TStep : new()
+    {
+        var (tIn, tOut) = ExtractStepTypeArguments<TStep>();
+        var chainMethod = FindGenericChainMethod<TStep, TInput, TReturn>(this, tIn, tOut);
+        var stepInstance = Activator.CreateInstance(typeof(TStep));
+        var result = chainMethod.Invoke(this, new object[] { stepInstance });
+        return (Workflow<TInput, TReturn>)result;
+    }
 
+    /// Chain<TStep>(TStep)
+    public Workflow<TInput, TReturn> Chain<TStep>(TStep stepInstance) where TStep : new()
+    {
+        var (tIn, tOut) = ExtractStepTypeArguments<TStep>();
+        var chainMethod = FindGenericChainMethod<TStep, TInput, TReturn>(this, tIn, tOut);
+        var result = chainMethod.Invoke(this, new object[] { stepInstance });
+        return (Workflow<TInput, TReturn>)result;
+    }
+
+    
     
     /// Chain<TStep, TIn>(TStep, In)
     public Workflow<TInput, TReturn> Chain<TStep, TIn>(TStep step, Either<WorkflowException, TIn> previousStep)

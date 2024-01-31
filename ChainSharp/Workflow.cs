@@ -21,6 +21,8 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
 
     public Workflow<TInput, TReturn> Activate(TInput input, params object[] otherTypes)
     {
+        Memory ??= new Dictionary<Type, object>();
+        
         if (input is null)
             Exception ??= new WorkflowException($"Input ({typeof(TInput)}) is null.");
         else 

@@ -4,6 +4,7 @@ using ChainSharp.Extensions;
 using ChainSharp.Utils;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
+using static ChainSharp.Utils.ReflectionHelpers;
 
 namespace ChainSharp;
 
@@ -91,71 +92,19 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
     /// Chain<TStep>()
     public Workflow<TInput, TReturn> Chain<TStep>() where TStep : new()
     {
-        var stepType = typeof(TStep);
-        var interfaceType = stepType.GetInterfaces().FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IStep<,>));
-        if (interfaceType == null)
-        {
-            throw new InvalidOperationException($"{nameof(TStep)} does not implement IStep<TIn, TOut>.");
-        }
-
-        var types = interfaceType.GetGenericArguments();
-        var tIn = types[0];
-        var tOut = types[1];
-
-        // Find a Generic Chain with 3 Type arguments and 1 Parameter
-        var methods = this.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public)
-            .Where(m => m is { Name: "Chain", IsGenericMethodDefinition: true })
-            .Where(m => m.GetGenericArguments().Length == 3)
-            .Where(m => m.GetParameters().Length == 1)
-            .ToList();
-
-        var method = methods.FirstOrDefault(); // For example, if you know the count
-
-        if (method == null)
-        {
-            throw new InvalidOperationException("Suitable 'Chain' method not found.");
-        }
-        
-        var genericMethod = method.MakeGenericMethod(typeof(TStep), tIn, tOut);
-
+        var (tIn, tOut) = ExtractStepTypeArguments<TStep>();
+        var chainMethod = FindGenericChainMethod<TStep, TInput, TReturn>(this, tIn, tOut);
         var stepInstance = Activator.CreateInstance(typeof(TStep));
-        var result = genericMethod.Invoke(this, new object[] { stepInstance });
-        
+        var result = chainMethod.Invoke(this, new object[] { stepInstance });
         return (Workflow<TInput, TReturn>)result;
     }
 
     /// Chain<TStep>(TStep)
     public Workflow<TInput, TReturn> Chain<TStep>(TStep stepInstance) where TStep : new()
     {
-        var stepType = typeof(TStep);
-        var interfaceType = stepType.GetInterfaces().FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IStep<,>));
-        if (interfaceType == null)
-        {
-            throw new InvalidOperationException($"{nameof(TStep)} does not implement IStep<TIn, TOut>.");
-        }
-
-        var types = interfaceType.GetGenericArguments();
-        var tIn = types[0];
-        var tOut = types[1];
-
-        // Find a Generic Chain with 3 Type arguments and 1 Parameter
-        var methods = this.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public)
-            .Where(m => m is { Name: "Chain", IsGenericMethodDefinition: true })
-            .Where(m => m.GetGenericArguments().Length == 3)
-            .Where(m => m.GetParameters().Length == 1)
-            .ToList();
-
-        var method = methods.FirstOrDefault(); // For example, if you know the count
-
-        if (method == null)
-        {
-            throw new InvalidOperationException("Suitable 'Chain' method not found.");
-        }
-        
-        var genericMethod = method.MakeGenericMethod(typeof(TStep), tIn, tOut);
-
-        var result = genericMethod.Invoke(this, new object[] { stepInstance });
-        
+        var (tIn, tOut) = ExtractStepTypeArguments<TStep>();
+        var chainMethod = FindGenericChainMethod<TStep, TInput, TReturn>(this, tIn, tOut);
+        var result = chainMethod.Invoke(this, new object[] { stepInstance });
         return (Workflow<TInput, TReturn>)result;
     }
 

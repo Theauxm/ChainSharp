@@ -63,13 +63,14 @@ public class WorkflowTests : TestSetup
     }
     
     
-    private class ChainTestWithShortCircuit: Workflow<Ingredients, List<GlassBottle>>
+    private class ChainTestWithShortCircuit(IPrepare prepare) : Workflow<Ingredients, List<GlassBottle>>
     {
         protected override async Task<Either<WorkflowException, List<GlassBottle>>> RunInternal(Ingredients input)
         {
             var brew = new Brew();
-            return Activate(input, "this is a test string to make sure it gets added to memory")
-                .Chain<Prepare>()
+            return AddServices(prepare)
+                .Activate(input)
+                .IChain<IPrepare>()
                 .Chain<Ferment>()
                 .Chain<TwoTupleStepTest>()
                 .Chain<ThreeTupleStepTest>()
@@ -141,7 +142,9 @@ public class WorkflowTests : TestSetup
     [Theory]
     public async Task TestChainWithShortCircuit()
     {
-        var workflow = new ChainTestWithShortCircuit();
+        var prepare = ServiceProvider.GetRequiredService<IPrepare>();
+        
+        var workflow = new ChainTestWithShortCircuit(prepare);
         
         var ingredients = new Ingredients()
         {

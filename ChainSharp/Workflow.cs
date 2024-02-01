@@ -1,11 +1,10 @@
-using System.Reflection;
 using ChainSharp.Exceptions;
 using ChainSharp.Extensions;
 using ChainSharp.Utils;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
+using Microsoft.Extensions.DependencyInjection;
 using static ChainSharp.Utils.ReflectionHelpers;
-using static LanguageExt.Prelude;
 
 namespace ChainSharp;
 
@@ -23,6 +22,38 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
         
         return await RunInternal(input).Unwrap();
     }
+    
+    protected abstract Task<Either<WorkflowException, TReturn>> RunInternal(TInput input);
+
+    #region AddServices
+
+    public Workflow<TInput, TReturn> AddServices(params object[] services)
+    {
+        Memory ??= new Dictionary<Type, object>();
+
+        foreach (var service in services)
+        {
+            var serviceType = service.GetType();
+
+            if (!serviceType.IsClass)
+                throw new WorkflowException("Params to AddServices must be Classes.");
+            
+            var serviceInterface = serviceType
+                .GetInterfaces()
+                .FirstOrDefault(x => !x.IsGenericType || x.GetGenericTypeDefinition() != typeof(IStep<,>));
+
+            if (serviceInterface is null)
+                throw new WorkflowException("Class does not have any interfaces.");
+
+            Memory.TryAdd(serviceInterface, service);
+        }
+
+        return this;
+    } 
+
+    #endregion
+
+    #region Activate
 
     public Workflow<TInput, TReturn> Activate(TInput input, params object[] otherTypes)
     {
@@ -37,19 +68,13 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
             Memory.TryAdd(otherType.GetType(), otherType);
 
         return this;
-    }
-    
-    /// Current Implementations:
-    /// Chain<TStep, TIn, TOut>(TStep, TIn, TOut)
-    /// Chain<TStep, TIn, TOut>(TIn, TOut)
-    /// Chain<TStep, TIn, TOut>(TStep)
-    /// Chain<TStep, TIn, TOut>()
-    /// Chain<TStep, TIn>(TStep, TIn)
-    /// Chain<TStep, TIn>(TIn)
-    /// Chain<TStep, TIn>(TStep)
-    /// Chain<TStep, TIn>()
-    
-    /// Chain<TStep, TIn, TOut>(TStep, TIn, TOut)
+    } 
+
+    #endregion
+
+    #region Chain TStep, TIn, TOut
+
+    // Chain<TStep, TIn, TOut>(TStep, TIn, TOut)
     public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(TStep step, Either<WorkflowException, TIn> previousStep, out Either<WorkflowException, TOut> outVar)
         where TStep : IStep<TIn, TOut>
     {
@@ -64,32 +89,12 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
         if (outVar.IsLeft)
             Exception ??= outVar.Swap().ValueUnsafe();
 
-        Memory.TryAdd(typeof(TOut), outVar.Unwrap());
+        Memory.TryAdd(typeof(TOut), outVar.Unwrap()!);
         
         return this;
     }
-    
-     /// Chain<TStep, TIn, TOut>(TStep, TIn, TOut)
-        public Workflow<TInput, TReturn> InternalChain<TStep, TIn, TOut>(TStep step, TIn previousStep, out Either<WorkflowException, TOut> outVar)
-            where TStep : IStep<TIn, TOut>
-        {
-            if (Exception is not null)
-            {
-                outVar = Exception;
-                return this;
-            }
-            
-            outVar = Task.Run(() => step.RailwayStep(previousStep)).Result;
-    
-            if (outVar.IsLeft)
-                Exception ??= outVar.Swap().ValueUnsafe();
-    
-            Memory.TryAdd(typeof(TOut), outVar.Unwrap());
-            
-            return this;
-        }
 
-    /// Chain<TStep, TIn, TOut>(TStep)
+    // Chain<TStep, TIn, TOut>(TStep)
     public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(TStep step)
         where TStep : IStep<TIn, TOut>
     {
@@ -101,58 +106,110 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
         return Chain<TStep, TIn, TOut>(step, input, out var x);
     }
     
-    /// Chain<TStep, TIn, TOut>(TIn, TOut)
+    // Chain<TStep, TIn, TOut>(TIn, TOut)
     public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(Either<WorkflowException, TIn> previousStep,
         out Either<WorkflowException, TOut> outVar)
         where TStep : IStep<TIn, TOut>, new()
         => Chain<TStep, TIn, TOut>(new TStep(), previousStep, out outVar);
     
-    /// Chain<TStep, TIn, TOut>()
+    // Chain<TStep, TIn, TOut>()
     public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>()
         where TStep : IStep<TIn, TOut>, new()
-        => Chain<TStep, TIn, TOut>(new TStep());
+        => Chain<TStep, TIn, TOut>(new TStep()); 
+
+    #endregion
     
-    /// Chain<TStep>()
+    #region Chain<TStep>
+    
+    // Chain<TStep>()
+    // ReSharper disable once InconsistentNaming
+    public Workflow<TInput, TReturn> IChain<TStep>()
+    {
+        var (tIn, tOut) = ExtractStepTypeArguments<TStep>();
+        var chainMethod = FindGenericChainMethod<TStep, TInput, TReturn>(this, tIn, tOut, 1);
+        
+        var stepService = ExtractTypeFromMemory<TStep>();
+
+        if (stepService is null)
+            throw new NullReferenceException($"Could not find ({typeof(TStep)}) in Memory.");
+        
+        var result = chainMethod.Invoke(this, new object[] { stepService });
+        return (Workflow<TInput, TReturn>)result!;
+    }
+    
+    // Chain<TStep>()
     public Workflow<TInput, TReturn> Chain<TStep>() where TStep : new()
     {
         var (tIn, tOut) = ExtractStepTypeArguments<TStep>();
         var chainMethod = FindGenericChainMethod<TStep, TInput, TReturn>(this, tIn, tOut, 1);
         var stepInstance = Activator.CreateInstance(typeof(TStep));
-        var result = chainMethod.Invoke(this, new object[] { stepInstance });
-        return (Workflow<TInput, TReturn>)result;
+        var result = chainMethod.Invoke(this, new object[] { stepInstance! });
+        return (Workflow<TInput, TReturn>)result!;
     }
 
-    /// Chain<TStep>(TStep)
+    // Chain<TStep>(TStep)
     public Workflow<TInput, TReturn> Chain<TStep>(TStep stepInstance) where TStep : new()
     {
         var (tIn, tOut) = ExtractStepTypeArguments<TStep>();
         var chainMethod = FindGenericChainMethod<TStep, TInput, TReturn>(this, tIn, tOut, 1);
-        var result = chainMethod.Invoke(this, new object[] { stepInstance });
-        return (Workflow<TInput, TReturn>)result;
+        var result = chainMethod.Invoke(this, new object[] { stepInstance! });
+        return (Workflow<TInput, TReturn>)result!;
     }
     
-    /// Chain<TStep, TIn>(TStep, In)
+    #endregion
+
+    #region Chain<TStep, TIn>
+       
+    // Chain<TStep, TIn>(TStep, In)
     public Workflow<TInput, TReturn> Chain<TStep, TIn>(TStep step, Either<WorkflowException, TIn> previousStep)
         where TStep : IStep<TIn, Unit>
         => Chain<TStep, TIn, Unit>(step, previousStep, out var x);
     
-    /// Chain<TStep, TIn>(TStep)
+    // Chain<TStep, TIn>(TStep)
     public Workflow<TInput, TReturn> Chain<TStep, TIn>(TStep step)
         where TStep : IStep<TIn, Unit>
         => Chain<TStep, TIn, Unit>(step);
 
 
-    /// Chain<TStep, TIn>(TIn)
+    // Chain<TStep, TIn>(TIn)
     public Workflow<TInput, TReturn> Chain<TStep, TIn>(Either<WorkflowException, TIn> previousStep)
         where TStep : IStep<TIn, Unit>, new()
         => Chain<TStep, TIn, Unit>(new TStep(), previousStep, out var x);
     
-    /// Chain<TStep, TIn>()
+    // Chain<TStep, TIn>()
     public Workflow<TInput, TReturn> Chain<TStep, TIn>()
         where TStep : IStep<TIn, Unit>, new()
-        => Chain<TStep, TIn, Unit>(new TStep());
+        => Chain<TStep, TIn, Unit>(new TStep()); 
 
-    /// ShortCircuit<TStep>()
+    #endregion
+
+    #region InternalChain
+
+    // InternalChain<TStep, TIn, TOut>(TStep, TIn, TOut)
+    public Workflow<TInput, TReturn> InternalChain<TStep, TIn, TOut>(TStep step, TIn previousStep, out Either<WorkflowException, TOut> outVar)
+        where TStep : IStep<TIn, TOut>
+    {
+        if (Exception is not null)
+        {
+            outVar = Exception;
+            return this;
+        }
+            
+        outVar = Task.Run(() => step.RailwayStep(previousStep)).Result;
+    
+        if (outVar.IsLeft)
+            Exception ??= outVar.Swap().ValueUnsafe();
+    
+        Memory.TryAdd(typeof(TOut), outVar.Unwrap()!);
+            
+        return this;
+    } 
+
+    #endregion
+
+    #region ShortCircuit
+
+    // ShortCircuit<TStep>()
     public Workflow<TInput, TReturn> ShortCircuit<TStep>() where TStep : new()
     {
         var (tIn, tOut) = ExtractStepTypeArguments<TStep>();
@@ -160,7 +217,7 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
             FindGenericChainInternalMethod<TStep, TInput, TReturn>(this, tIn, tOut, 3);
         var stepInstance = Activator.CreateInstance(typeof(TStep));
         var input = ExtractTypeFromMemory(tIn);
-        if (input is null) 
+        if (input == null) 
             return this;
             
         object[] parameters = [stepInstance, input, null];
@@ -170,18 +227,18 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
         var maybeRightValue = GetRightFromDynamicEither(outParam);
         maybeRightValue.Iter(rightValue => ShortCircuitValue = (TReturn?)rightValue);
         
-        var workflow = (Workflow<TInput, TReturn>)result;
-        return workflow;
+        return (Workflow<TInput, TReturn>)result!;
     }
     
-    /// ShortCircuit<TStep>(TStep)
+    // ShortCircuit<TStep>(TStep)
     public Workflow<TInput, TReturn> ShortCircuit<TStep>(TStep stepInstance) where TStep : new()
     {
         var (tIn, tOut) = ExtractStepTypeArguments<TStep>();
         var chainMethod = 
             FindGenericChainInternalMethod<TStep, TInput, TReturn>(this, tIn, tOut, 3);
         var input = ExtractTypeFromMemory(tIn);
-        if (input is null) 
+        
+        if (input == null) 
             return this;
             
         object[] parameters = [stepInstance, input, null];
@@ -191,9 +248,12 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
         var maybeRightValue = GetRightFromDynamicEither(outParam);
         maybeRightValue.Iter(rightValue => ShortCircuitValue = (TReturn?)rightValue);
         
-        var workflow = (Workflow<TInput, TReturn>)result;
-        return workflow;
-    }
+        return (Workflow<TInput, TReturn>)result!;
+    } 
+
+    #endregion
+
+    #region Resolve
 
     public Either<WorkflowException, TReturn> Resolve(Either<WorkflowException, TReturn> returnType)
         => Exception ?? returnType;
@@ -207,13 +267,17 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
             return ShortCircuitValue;
         
         var result = Memory.GetValueOrDefault(
-                typeof(TReturn));
+            typeof(TReturn));
         
         if (result is null)
             return new WorkflowException($"Could not find type: ({typeof(TReturn)}).");
 
         return (TReturn)result;
-    }
+    } 
+
+    #endregion
+
+    #region Types
 
     private T? ExtractTypeFromMemory<T>()
     {
@@ -280,7 +344,7 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
             7 => TypeHelpers.ConvertSevenTuple(dynamicList),
             _ => throw new WorkflowException($"Could not create Tuple for type ({inputType})")
         };
-    }
+    } 
 
-    protected abstract Task<Either<WorkflowException, TReturn>> RunInternal(TInput input);
+    #endregion
 }

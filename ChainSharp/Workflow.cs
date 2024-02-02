@@ -196,10 +196,10 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
 
     #endregion
 
-    #region InternalChain
-
-    // InternalChain<TStep, TIn, TOut>(TStep, TIn, TOut)
-    public Workflow<TInput, TReturn> InternalChain<TStep, TIn, TOut>(TStep step, TIn previousStep, out Either<WorkflowException, TOut> outVar)
+    #region ShortCircuit
+    
+    // ShortCircuitChain<TStep, TIn, TOut>(TStep, TIn, TOut)
+    public Workflow<TInput, TReturn> ShortCircuitChain<TStep, TIn, TOut>(TStep step, TIn previousStep, out Either<WorkflowException, TOut> outVar)
         where TStep : IStep<TIn, TOut>
     {
         if (Exception is not null)
@@ -210,17 +210,14 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
             
         outVar = Task.Run(() => step.RailwayStep(previousStep)).Result;
     
-        if (outVar.IsLeft)
-            Exception ??= outVar.Swap().ValueUnsafe();
-    
-        Memory.TryAdd(typeof(TOut), outVar.Unwrap()!);
+        // We skip the Left for Short Circuiting
+        if (outVar.IsRight)
+            Memory.TryAdd(typeof(TOut), outVar.Unwrap()!);
             
         return this;
     } 
 
-    #endregion
 
-    #region ShortCircuit
 
     // ShortCircuit<TStep>()
     public Workflow<TInput, TReturn> ShortCircuit<TStep>() where TStep : class

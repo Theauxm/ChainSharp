@@ -66,6 +66,8 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
     {
         // Always allow input type of Unit for parameterless invocation
         Memory ??= new Dictionary<Type, object>() {{ typeof(Unit), unit }};
+
+        var inputType = typeof(TInput);
         
         if (input is null)
             Exception ??= new WorkflowException($"Input ({inputType}) is null.");

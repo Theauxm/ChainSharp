@@ -64,7 +64,25 @@ public class WorkflowTests : TestSetup
     }
     
     
-    private class ChainTestWithShortCircuit(IPrepare prepare, IFerment ferment) : Workflow<Ingredients, List<GlassBottle>>
+    private class ChainTestWithUnitInput: Workflow<Ingredients, List<GlassBottle>>
+    {
+        protected override async Task<Either<WorkflowException, List<GlassBottle>>> RunInternal(Ingredients input)
+        {
+            var brew = new Brew();
+            return Activate(input, "this is a test string to make sure it gets added to memory")
+                .Chain<Meditate>()
+                .Chain<Prepare>()
+                .Chain<Ferment>()
+                .Chain<TwoTupleStepTest>()
+                .Chain<ThreeTupleStepTest>()
+                .Chain(brew)
+                .Chain<Bottle>()
+                .Resolve();
+        }
+    }
+    
+    
+    private class ChainTestWithShortCircuit(IPrepare prepare) : Workflow<Ingredients, List<GlassBottle>>
     {
         protected override async Task<Either<WorkflowException, List<GlassBottle>>> RunInternal(Ingredients input)
         {
@@ -159,6 +177,24 @@ public class WorkflowTests : TestSetup
             Yeast = 1
         };
         
+        var result = await workflow.Run(ingredients);
+    }
+    
+    [Theory]
+    public async Task TestChainWithUnitInput()
+    {
+        var prepare = ServiceProvider.GetRequiredService<IPrepare>();
+        
+        var workflow = new ChainTestWithUnitInput();
+        
+        var ingredients = new Ingredients()
+        {
+            Apples = 1,
+            BrownSugar = 1,
+            Cinnamon = 1,
+            Yeast = 1
+        };
+
         var result = await workflow.Run(ingredients);
     }
 }

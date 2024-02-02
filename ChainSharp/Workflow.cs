@@ -9,6 +9,7 @@ using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
 using Microsoft.Extensions.DependencyInjection;
 using static ChainSharp.Utils.ReflectionHelpers;
+using static LanguageExt.Prelude;
 
 namespace ChainSharp;
 
@@ -22,7 +23,8 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
 
     public async Task<TReturn> Run(TInput input)
     {
-        Memory = new Dictionary<Type, object>();
+        // Always allow input type of Unit for parameterless invocation
+        Memory = new Dictionary<Type, object>() {{ typeof(Unit), unit }};
         
         return await RunInternal(input).Unwrap();
     }
@@ -33,7 +35,8 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
 
     public Workflow<TInput, TReturn> AddServices(params object[] services)
     {
-        Memory ??= new Dictionary<Type, object>();
+        // Always allow input type of Unit for parameterless invocation
+        Memory ??= new Dictionary<Type, object>() {{ typeof(Unit), unit }};
 
         foreach (var service in services)
         {
@@ -61,9 +64,8 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
 
     public Workflow<TInput, TReturn> Activate(TInput input, params object[] otherTypes)
     {
-        Memory ??= new Dictionary<Type, object>();
-
-        var inputType = typeof(TInput);
+        // Always allow input type of Unit for parameterless invocation
+        Memory ??= new Dictionary<Type, object>() {{ typeof(Unit), unit }};
         
         if (input is null)
             Exception ??= new WorkflowException($"Input ({inputType}) is null.");

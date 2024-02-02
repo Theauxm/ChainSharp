@@ -39,7 +39,7 @@ internal static class ReflectionHelpers
     {
         // Find a Generic Chain with 3 Type arguments and parameterCount
         var methods = workflow.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public)
-            .Where(m => m is { Name: "InternalChain", IsGenericMethodDefinition: true })
+            .Where(m => m is { Name: "ShortCircuitChain", IsGenericMethodDefinition: true })
             .Where(m => m.GetGenericArguments().Length == 3)
             .Where(m => m.GetParameters().Length == parameterCount)
             .ToList();

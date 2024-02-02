@@ -104,6 +104,24 @@ public class WorkflowTests : TestSetup
         }
     }
 
+    private class ChainTestWithShortCircuitStaysLeft(IPrepare prepare, IFerment ferment) : Workflow<Ingredients, List<GlassBottle>>
+    {
+        protected override async Task<Either<WorkflowException, List<GlassBottle>>> RunInternal(Ingredients input)
+        {
+            var brew = new Brew();
+            return Activate(input)
+                .AddServices(prepare, ferment)
+                .IChain<IPrepare>()
+                .ShortCircuit<TripTryingToSteal>()
+                .Chain<Ferment>()
+                .Chain<TwoTupleStepTest>()
+                .Chain<ThreeTupleStepTest>()
+                .Chain(brew)
+                .Chain<Bottle>()
+                .Resolve();
+        }
+    }
+    
     private class TwoTupleStepTest : Step<(Ingredients, BrewingJug), Unit>
     {
         public override async Task<Either<WorkflowException, Unit>> Run((Ingredients, BrewingJug) input)
@@ -199,6 +217,25 @@ public class WorkflowTests : TestSetup
             Yeast = 1
         };
 
+        var result = await workflow.Run(ingredients);
+    }
+    
+    [Theory]
+    public async Task TestChainWithShortCircuitStaysLeft()
+    {
+        var prepare = ServiceProvider.GetRequiredService<IPrepare>();
+        var ferment = ServiceProvider.GetRequiredService<IFerment>();
+        
+        var workflow = new ChainTestWithShortCircuitStaysLeft(prepare, ferment);
+        
+        var ingredients = new Ingredients()
+        {
+            Apples = 1,
+            BrownSugar = 1,
+            Cinnamon = 1,
+            Yeast = 1
+        };
+        
         var result = await workflow.Run(ingredients);
     }
 }

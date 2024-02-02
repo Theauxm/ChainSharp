@@ -4,7 +4,7 @@ using LanguageExt;
 
 namespace ChainSharp.Tests.Examples.Brewery.Steps.Brew;
 
-internal class Brew : Step<BrewingJug, Unit>, IBrew
+public class Brew : Step<BrewingJug, Unit>, IBrew
 {
     public override async Task<Either<WorkflowException, Unit>> Run(BrewingJug input)
     {

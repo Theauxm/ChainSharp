@@ -5,7 +5,7 @@ namespace ChainSharp.Tests;
 
 public abstract class TestSetup
 {
-    internal IServiceProvider ServiceProvider { get; set; }
+    public IServiceProvider ServiceProvider { get; set; }
 
     public abstract IServiceProvider ConfigureServices(IServiceCollection services);
 

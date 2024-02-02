@@ -20,6 +20,7 @@ public class WorkflowTests : TestSetup
         services.AddScoped<IPrepare, Prepare>();
         services.AddScoped<IBrew, Brew>();
         services.AddScoped<IFerment, Ferment>();
+        services.AddScoped<IBottle, Bottle>();
         
         return services.BuildServiceProvider();
     }
@@ -33,16 +34,16 @@ public class WorkflowTests : TestSetup
             ServiceProvider.GetRequiredService<IBrew>();
     }
     
-    private class ChainTest(IBrew brew) : Workflow<Ingredients, List<GlassBottle>>
+    private class ChainTest(IBrew brew, IPrepare prepare, IBottle bottle) : Workflow<Ingredients, List<GlassBottle>>
     {
         protected override async Task<Either<WorkflowException, List<GlassBottle>>> RunInternal(Ingredients input)
             => Activate(input, "this is a test string to make sure it gets added to memory")
-                .Chain<Prepare, Ingredients, BrewingJug>()
+                .Chain<IPrepare, Ingredients, BrewingJug>(prepare)
                 .Chain<Ferment, BrewingJug>()
                 .Chain<TwoTupleStepTest, (Ingredients, BrewingJug)>()
                 .Chain<ThreeTupleStepTest, (Ingredients, BrewingJug, Unit)>()
                 .Chain<IBrew, BrewingJug>(brew)
-                .Chain<Bottle, BrewingJug, List<GlassBottle>>()
+                .Chain<IBottle, BrewingJug, List<GlassBottle>>(bottle)
                 .Resolve();
     }
     
@@ -63,13 +64,13 @@ public class WorkflowTests : TestSetup
     }
     
     
-    private class ChainTestWithShortCircuit(IPrepare prepare) : Workflow<Ingredients, List<GlassBottle>>
+    private class ChainTestWithShortCircuit(IPrepare prepare, IFerment ferment) : Workflow<Ingredients, List<GlassBottle>>
     {
         protected override async Task<Either<WorkflowException, List<GlassBottle>>> RunInternal(Ingredients input)
         {
             var brew = new Brew();
-            return AddServices(prepare)
-                .Activate(input)
+            return Activate(input)
+                .AddServices(prepare, ferment)
                 .IChain<IPrepare>()
                 .Chain<Ferment>()
                 .Chain<TwoTupleStepTest>()
@@ -110,7 +111,10 @@ public class WorkflowTests : TestSetup
     [Theory]
     public async Task TestChain()
     {
-        var workflow = new ChainTest(_brew);
+        var prepare = ServiceProvider.GetRequiredService<IPrepare>();
+        var bottle = ServiceProvider.GetRequiredService<IBottle>();
+        
+        var workflow = new ChainTest(_brew, prepare, bottle);
         
         var ingredients = new Ingredients()
         {
@@ -143,8 +147,9 @@ public class WorkflowTests : TestSetup
     public async Task TestChainWithShortCircuit()
     {
         var prepare = ServiceProvider.GetRequiredService<IPrepare>();
+        var ferment = ServiceProvider.GetRequiredService<IFerment>();
         
-        var workflow = new ChainTestWithShortCircuit(prepare);
+        var workflow = new ChainTestWithShortCircuit(prepare, ferment);
         
         var ingredients = new Ingredients()
         {
@@ -153,7 +158,7 @@ public class WorkflowTests : TestSetup
             Cinnamon = 1,
             Yeast = 1
         };
-
+        
         var result = await workflow.Run(ingredients);
     }
 }

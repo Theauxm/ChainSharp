@@ -1,10 +1,11 @@
 using ChainSharp.Exceptions;
+using ChainSharp.Tests.Examples.Brewery.Steps.Ferment;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
 
 namespace ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
 
-internal class Prepare : Step<Ingredients, BrewingJug>, IPrepare
+public class Prepare(IFerment ferment) : Step<Ingredients, BrewingJug>, IPrepare
 {
     public override async Task<Either<WorkflowException, BrewingJug>> Run(Ingredients input)
     {

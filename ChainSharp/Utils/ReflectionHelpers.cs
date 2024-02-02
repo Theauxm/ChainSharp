@@ -5,12 +5,11 @@ namespace ChainSharp.Utils;
 
 internal static class ReflectionHelpers
 {
+    
     /// <summary>
     /// Given a well-formed IStep implementation, extract the two Type arguments
     /// TIn and TOut from the interface.
     /// </summary>
-    /// <typeparam name="TStep"></typeparam>
-    /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
     public static (Type, Type) ExtractStepTypeArguments<TStep>()
     {
@@ -34,14 +33,6 @@ internal static class ReflectionHelpers
     /// implementation that can be invoked from the Workflow. Instantiate (prime?)
     /// the method with the TIn and TOut arguments for actual invocation.
     /// </summary>
-    /// <param name="workflow"></param>
-    /// <param name="tIn"></param>
-    /// <param name="tOut"></param>
-    /// <param name="parameterCount"></param>
-    /// <typeparam name="TStep"></typeparam>
-    /// <typeparam name="TInput"></typeparam>
-    /// <typeparam name="TReturn"></typeparam>
-    /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
     public static MethodInfo FindGenericChainInternalMethod<TStep, TInput, TReturn>(Workflow<TInput, TReturn> workflow,
         Type tIn, Type tOut, int parameterCount)
@@ -71,14 +62,6 @@ internal static class ReflectionHelpers
     /// implementation that can be invoked from the Workflow. Instantiate (prime?)
     /// the method with the TIn and TOut arguments for actual invocation.
     /// </summary>
-    /// <param name="workflow"></param>
-    /// <param name="tIn"></param>
-    /// <param name="tOut"></param>
-    /// <param name="parameterCount"></param>
-    /// <typeparam name="TStep"></typeparam>
-    /// <typeparam name="TInput"></typeparam>
-    /// <typeparam name="TReturn"></typeparam>
-    /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
     public static MethodInfo FindGenericChainMethod<TStep, TInput, TReturn>(Workflow<TInput, TReturn> workflow,
         Type tIn, Type tOut, int parameterCount)

@@ -1,10 +1,11 @@
 using ChainSharp.Exceptions;
+using ChainSharp.Tests.Examples.Brewery.Steps.Ferment;
 using ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
 using LanguageExt;
 
 namespace ChainSharp.Tests.Examples.Brewery.Steps.Bottle;
 
-internal class Bottle : Step<BrewingJug, List<GlassBottle>>, IBottle
+public class Bottle(IFerment ferment) : Step<BrewingJug, List<GlassBottle>>, IBottle
 {
     public override async Task<Either<WorkflowException, List<GlassBottle>>> Run(BrewingJug input)
     {

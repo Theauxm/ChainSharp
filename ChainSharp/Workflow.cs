@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using ChainSharp.Exceptions;
 using ChainSharp.Extensions;
 using ChainSharp.Utils;
@@ -39,14 +43,14 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
             var serviceType = service.GetType();
 
             if (!serviceType.IsClass)
-                throw new WorkflowException("Params to AddServices must be Classes.");
+                throw new WorkflowException($"Params ({serviceType}) to AddServices must be Classes."); 
             
             var serviceInterface = serviceType
                 .GetInterfaces()
                 .FirstOrDefault(x => !x.IsGenericType || x.GetGenericTypeDefinition() != typeof(IStep<,>));
 
             if (serviceInterface is null)
-                throw new WorkflowException("Class does not have any interfaces.");
+                throw new WorkflowException($"Class ({serviceType}) does not have any interfaces.");
 
             Memory.TryAdd(serviceInterface, service);
         }
@@ -62,11 +66,13 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
     {
         // Always allow input type of Unit for parameterless invocation
         Memory ??= new Dictionary<Type, object>() {{ typeof(Unit), unit }};
+
+        var inputType = typeof(TInput);
         
         if (input is null)
-            Exception ??= new WorkflowException($"Input ({typeof(TInput)}) is null.");
+            Exception ??= new WorkflowException($"Input ({inputType}) is null.");
         else 
-            Memory.TryAdd(typeof(TInput), input);
+            Memory.TryAdd(inputType, input);
 
         foreach (var otherType in otherTypes)
             Memory.TryAdd(otherType.GetType(), otherType);
@@ -76,7 +82,7 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
 
     #endregion
 
-    #region Chain TStep, TIn, TOut
+    #region Chain<TStep, TIn, TOut>
 
     // Chain<TStep, TIn, TOut>(TStep, TIn, TOut)
     public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(TStep step, Either<WorkflowException, TIn> previousStep, out Either<WorkflowException, TOut> outVar)
@@ -118,8 +124,7 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
     
     // Chain<TStep, TIn, TOut>()
     public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>()
-        where TStep : IStep<TIn, TOut>, new()
-        => Chain<TStep, TIn, TOut>(new TStep()); 
+        where TStep : IStep<TIn, TOut>, new() => Chain<TStep, TIn, TOut>(new TStep()); 
 
     #endregion
     
@@ -127,36 +132,40 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
     
     // Chain<TStep>()
     // ReSharper disable once InconsistentNaming
-    public Workflow<TInput, TReturn> IChain<TStep>()
+    public Workflow<TInput, TReturn> IChain<TStep>() where TStep : class
     {
-        var (tIn, tOut) = ExtractStepTypeArguments<TStep>();
-        var chainMethod = FindGenericChainMethod<TStep, TInput, TReturn>(this, tIn, tOut, 1);
+        var stepType = typeof(TStep);
+
+        if (!stepType.IsInterface)
+            Exception ??= new WorkflowException($"Step ({stepType}) must be an interface to call IChain.");
         
         var stepService = ExtractTypeFromMemory<TStep>();
 
         if (stepService is null)
-            throw new NullReferenceException($"Could not find ({typeof(TStep)}) in Memory.");
-        
-        var result = chainMethod.Invoke(this, new object[] { stepService });
-        return (Workflow<TInput, TReturn>)result!;
+            return this;
+
+        return Chain<TStep>(stepService);
     }
     
     // Chain<TStep>()
-    public Workflow<TInput, TReturn> Chain<TStep>() where TStep : new()
+    public Workflow<TInput, TReturn> Chain<TStep>() where TStep : class
     {
-        var (tIn, tOut) = ExtractStepTypeArguments<TStep>();
-        var chainMethod = FindGenericChainMethod<TStep, TInput, TReturn>(this, tIn, tOut, 1);
-        var stepInstance = Activator.CreateInstance(typeof(TStep));
-        var result = chainMethod.Invoke(this, new object[] { stepInstance! });
-        return (Workflow<TInput, TReturn>)result!;
+        var stepInstance = InitializeStep<TStep>();
+
+        if (stepInstance is null)
+            return this;
+
+        return Chain<TStep>(stepInstance);
     }
 
     // Chain<TStep>(TStep)
-    public Workflow<TInput, TReturn> Chain<TStep>(TStep stepInstance) where TStep : new()
+    public Workflow<TInput, TReturn> Chain<TStep>(TStep stepInstance) where TStep : class
     {
         var (tIn, tOut) = ExtractStepTypeArguments<TStep>();
         var chainMethod = FindGenericChainMethod<TStep, TInput, TReturn>(this, tIn, tOut, 1);
-        var result = chainMethod.Invoke(this, new object[] { stepInstance! });
+        
+        var result = chainMethod.Invoke(this, [stepInstance]);
+        
         return (Workflow<TInput, TReturn>)result!;
     }
     
@@ -214,35 +223,25 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
     #region ShortCircuit
 
     // ShortCircuit<TStep>()
-    public Workflow<TInput, TReturn> ShortCircuit<TStep>() where TStep : new()
+    public Workflow<TInput, TReturn> ShortCircuit<TStep>() where TStep : class
     {
-        var (tIn, tOut) = ExtractStepTypeArguments<TStep>();
-        var chainMethod = 
-            FindGenericChainInternalMethod<TStep, TInput, TReturn>(this, tIn, tOut, 3);
-        var stepInstance = Activator.CreateInstance(typeof(TStep));
-        var input = ExtractTypeFromMemory(tIn);
-        if (input == null) 
-            return this;
-            
-        object[] parameters = [stepInstance, input, null];
-        var result = chainMethod.Invoke(this, parameters);
-        var outParam = parameters[2];
+        var stepInstance = InitializeStep<TStep>();
 
-        var maybeRightValue = GetRightFromDynamicEither(outParam);
-        maybeRightValue.Iter(rightValue => ShortCircuitValue = (TReturn?)rightValue);
-        
-        return (Workflow<TInput, TReturn>)result!;
+        if (stepInstance is null)
+            return this;
+
+        return ShortCircuit<TStep>(stepInstance);
     }
     
     // ShortCircuit<TStep>(TStep)
-    public Workflow<TInput, TReturn> ShortCircuit<TStep>(TStep stepInstance) where TStep : new()
+    public Workflow<TInput, TReturn> ShortCircuit<TStep>(TStep stepInstance) where TStep : class
     {
         var (tIn, tOut) = ExtractStepTypeArguments<TStep>();
         var chainMethod = 
             FindGenericChainInternalMethod<TStep, TInput, TReturn>(this, tIn, tOut, 3);
         var input = ExtractTypeFromMemory(tIn);
-        
-        if (input == null) 
+
+        if (input == null)
             return this;
             
         object[] parameters = [stepInstance, input, null];
@@ -281,7 +280,52 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
 
     #endregion
 
-    #region Types
+    #region Helpers
+
+    private TStep? InitializeStep<TStep>() where TStep : class
+    {
+        var stepType = typeof(TStep);
+
+        if (!stepType.IsClass)
+        {
+            Exception ??= new WorkflowException($"Step ({stepType}) must be a class.");
+            return null;
+        }
+        
+        var constructors = stepType.GetConstructors();
+
+        if (constructors.Length != 1)
+        {
+            Exception ??= new WorkflowException($"Step classes can only have a single constructor ({stepType}).");
+            return null;
+        }
+
+        var constructorArguments = constructors
+            .First()
+            .GetParameters()
+            .Select(x => x.ParameterType)
+            .ToArray();
+
+        var constructor = stepType.GetConstructor(constructorArguments);
+
+        if (constructor is null)
+        {
+            Exception ??= new WorkflowException($"Could not find constructor for ({stepType})");
+            return null;
+        }
+        
+        var constructorParameters = ExtractTypesFromMemory(constructorArguments);
+    
+        var initializedStep = (TStep?)constructor.Invoke(constructorParameters);
+
+        if (initializedStep is null)
+        {
+            Exception ??= new WorkflowException($"Could not invoke constructor for ({stepType}).");
+            return null;
+        }
+
+        return initializedStep;
+    }
 
     private T? ExtractTypeFromMemory<T>()
     {
@@ -307,6 +351,9 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
 
         return input;
     }
+
+    private dynamic[] ExtractTypesFromMemory(IEnumerable<Type> types)
+        => types.Select(type => ExtractTypeFromMemory(type)).ToArray();
     
     private dynamic ExtractTypeFromMemory(Type tIn)
     {

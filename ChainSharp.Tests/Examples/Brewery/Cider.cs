@@ -7,7 +7,7 @@ using LanguageExt;
 
 namespace ChainSharp.Tests.Examples.Brewery;
 
-internal class Cider(
+public class Cider(
     IPrepare prepare,
     IFerment ferment,
     IBrew brew,

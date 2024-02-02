@@ -5,7 +5,7 @@ using LanguageExt.UnsafeValueAccess;
 
 namespace ChainSharp.Tests.Examples.Brewery.Steps.Ferment;
 
-internal class Ferment : Step<BrewingJug, Unit>, IFerment
+public class Ferment : Step<BrewingJug, Unit>, IFerment
 {
     public override async Task<Either<WorkflowException, Unit>> Run(BrewingJug input)
     {

@@ -6,7 +6,7 @@ namespace ChainSharp;
 
 public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
 {
-    public abstract Task<Either<WorkflowException, TOut>> Run(TIn input);
+    public abstract Task<TOut> Run(TIn input);
     
     public async Task<Either<WorkflowException, TOut>> RailwayStep(
         Either<WorkflowException, TIn> previousStep)
@@ -15,6 +15,15 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
             return previousStep.Swap().ValueUnsafe();
 
         Console.WriteLine($"Running Step ({previousStep.GetUnderlyingRightType().Name})");
-        return await Run(previousStep.ValueUnsafe());
+
+        try
+        {
+            return await Run(previousStep.ValueUnsafe());
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Found Exception ({e})");
+            return new WorkflowException(e.Message);
+        }
     }
 }

@@ -7,14 +7,14 @@ namespace ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
 
 public class Prepare(IFerment ferment) : Step<Ingredients, BrewingJug>, IPrepare
 {
-    public override async Task<Either<WorkflowException, BrewingJug>> Run(Ingredients input)
+    public override async Task<BrewingJug> Run(Ingredients input)
     {
         const int gallonWater = 1;
 
         var gallonAppleJuice = await Boil(gallonWater, input.Apples, input.BrownSugar);
 
         if (gallonAppleJuice.IsLeft)
-            return gallonAppleJuice.Swap().ValueUnsafe();
+            throw gallonAppleJuice.Swap().ValueUnsafe();
         
         return new BrewingJug()
         {

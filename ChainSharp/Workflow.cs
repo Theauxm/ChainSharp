@@ -22,11 +22,14 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
     private TReturn? ShortCircuitValue { get; set; }
 
     public async Task<TReturn> Run(TInput input)
+        => await RunEither(input).Unwrap();
+    
+    public async Task<Either<WorkflowException, TReturn>> RunEither(TInput input)
     {
         // Always allow input type of Unit for parameterless invocation
         Memory = new Dictionary<Type, object>() {{ typeof(Unit), unit }};
         
-        return await RunInternal(input).Unwrap();
+        return await RunInternal(input);
     }
     
     protected abstract Task<Either<WorkflowException, TReturn>> RunInternal(TInput input);
@@ -99,7 +102,8 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
         if (outVar.IsLeft)
             Exception ??= outVar.Swap().ValueUnsafe();
 
-        Memory.TryAdd(typeof(TOut), outVar.Unwrap()!);
+        if (outVar.IsRight)
+            Memory.TryAdd(typeof(TOut), outVar.Unwrap()!);
         
         return this;
     }

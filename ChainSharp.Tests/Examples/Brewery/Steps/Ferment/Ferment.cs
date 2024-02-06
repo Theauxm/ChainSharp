@@ -7,17 +7,17 @@ namespace ChainSharp.Tests.Examples.Brewery.Steps.Ferment;
 
 public class Ferment : Step<BrewingJug, Unit>, IFerment
 {
-    public override async Task<Either<WorkflowException, Unit>> Run(BrewingJug input)
+    public override async Task<Unit> Run(BrewingJug input)
     {
         var cinnamonSticks = await AddCinnamonSticks(input);
 
         if (cinnamonSticks.IsLeft)
-            return cinnamonSticks.Swap().ValueUnsafe();
+            throw cinnamonSticks.Swap().ValueUnsafe();
 
         var yeast = await AddYeast(input);
 
         if (yeast.IsLeft)
-            return yeast.Swap().ValueUnsafe();
+            throw yeast.Swap().ValueUnsafe();
 
         input.IsFermented = true;
 

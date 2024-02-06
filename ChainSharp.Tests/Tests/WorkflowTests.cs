@@ -124,7 +124,7 @@ public class WorkflowTests : TestSetup
     
     private class TwoTupleStepTest : Step<(Ingredients, BrewingJug), Unit>
     {
-        public override async Task<Either<WorkflowException, Unit>> Run((Ingredients, BrewingJug) input)
+        public override async Task<Unit> Run((Ingredients, BrewingJug) input)
         {
             var (x, y) = input;
 
@@ -137,7 +137,7 @@ public class WorkflowTests : TestSetup
     
     private class ThreeTupleStepTest : Step<(Ingredients, BrewingJug, Unit), Unit>
     {
-        public override async Task<Either<WorkflowException, Unit>> Run((Ingredients, BrewingJug, Unit) input)
+        public override async Task<Unit> Run((Ingredients, BrewingJug, Unit) input)
         {
             var (x, y, z) = input;
 

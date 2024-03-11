@@ -15,7 +15,7 @@ namespace ChainSharp;
 
 public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
 {
-    private WorkflowException? Exception { get; set; }
+    private Exception? Exception { get; set; }
     
     private Dictionary<Type, object> Memory { get; set; }
     
@@ -24,7 +24,7 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
     public async Task<TReturn> Run(TInput input)
         => await RunEither(input).Unwrap();
     
-    public async Task<Either<WorkflowException, TReturn>> RunEither(TInput input)
+    public async Task<Either<Exception, TReturn>> RunEither(TInput input)
     {
         // Always allow input type of Unit for parameterless invocation
         Memory = new Dictionary<Type, object>() {{ typeof(Unit), unit }};
@@ -32,7 +32,7 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
         return await RunInternal(input);
     }
     
-    protected abstract Task<Either<WorkflowException, TReturn>> RunInternal(TInput input);
+    protected abstract Task<Either<Exception, TReturn>> RunInternal(TInput input);
 
     #region AddServices
 
@@ -88,7 +88,7 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
     #region Chain<TStep, TIn, TOut>
 
     // Chain<TStep, TIn, TOut>(TStep, TIn, TOut)
-    public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(TStep step, Either<WorkflowException, TIn> previousStep, out Either<WorkflowException, TOut> outVar)
+    public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(TStep step, Either<Exception, TIn> previousStep, out Either<Exception, TOut> outVar)
         where TStep : IStep<TIn, TOut>
     {
         if (Exception is not null)
@@ -121,8 +121,8 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
     }
     
     // Chain<TStep, TIn, TOut>(TIn, TOut)
-    public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(Either<WorkflowException, TIn> previousStep,
-        out Either<WorkflowException, TOut> outVar)
+    public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(Either<Exception, TIn> previousStep,
+        out Either<Exception, TOut> outVar)
         where TStep : IStep<TIn, TOut>, new()
         => Chain<TStep, TIn, TOut>(new TStep(), previousStep, out outVar);
     
@@ -178,7 +178,7 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
     #region Chain<TStep, TIn>
        
     // Chain<TStep, TIn>(TStep, In)
-    public Workflow<TInput, TReturn> Chain<TStep, TIn>(TStep step, Either<WorkflowException, TIn> previousStep)
+    public Workflow<TInput, TReturn> Chain<TStep, TIn>(TStep step, Either<Exception, TIn> previousStep)
         where TStep : IStep<TIn, Unit>
         => Chain<TStep, TIn, Unit>(step, previousStep, out var x);
     
@@ -189,7 +189,7 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
 
 
     // Chain<TStep, TIn>(TIn)
-    public Workflow<TInput, TReturn> Chain<TStep, TIn>(Either<WorkflowException, TIn> previousStep)
+    public Workflow<TInput, TReturn> Chain<TStep, TIn>(Either<Exception, TIn> previousStep)
         where TStep : IStep<TIn, Unit>, new()
         => Chain<TStep, TIn, Unit>(new TStep(), previousStep, out var x);
     
@@ -203,7 +203,7 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
     #region ShortCircuit
     
     // ShortCircuitChain<TStep, TIn, TOut>(TStep, TIn, TOut)
-    public Workflow<TInput, TReturn> ShortCircuitChain<TStep, TIn, TOut>(TStep step, TIn previousStep, out Either<WorkflowException, TOut> outVar)
+    public Workflow<TInput, TReturn> ShortCircuitChain<TStep, TIn, TOut>(TStep step, TIn previousStep, out Either<Exception, TOut> outVar)
         where TStep : IStep<TIn, TOut>
     {
         if (Exception is not null)
@@ -259,10 +259,10 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
 
     #region Resolve
 
-    public Either<WorkflowException, TReturn> Resolve(Either<WorkflowException, TReturn> returnType)
+    public Either<Exception, TReturn> Resolve(Either<Exception, TReturn> returnType)
         => Exception ?? returnType;
 
-    public Either<WorkflowException, TReturn> Resolve()
+    public Either<Exception, TReturn> Resolve()
     {
         if (Exception is not null)
             return Exception;

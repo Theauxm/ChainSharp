@@ -13,7 +13,7 @@ public class Cider(
     IBrew brew,
     IBottle bottle) : Workflow<Ingredients, List<GlassBottle>>, ICider
 {
-    protected override async Task<Either<WorkflowException, List<GlassBottle>>> RunInternal(Ingredients input)
+    protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(Ingredients input)
         => this
             .Chain<IPrepare, Ingredients, BrewingJug>(prepare, input, out var jug)
             .Chain<IFerment, BrewingJug>(ferment, jug)

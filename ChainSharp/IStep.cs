@@ -7,6 +7,6 @@ public interface IStep<TIn, TOut>
 {
     public Task<TOut> Run(TIn input);
 
-    public Task<Either<WorkflowException, TOut>> RailwayStep(
-        Either<WorkflowException, TIn> previousStep);
+    public Task<Either<Exception, TOut>> RailwayStep(
+        Either<Exception, TIn> previousStep);
 }

@@ -36,7 +36,7 @@ public class WorkflowTests : TestSetup
     
     private class ChainTest(IBrew brew, IPrepare prepare, IBottle bottle) : Workflow<Ingredients, List<GlassBottle>>
     {
-        protected override async Task<Either<WorkflowException, List<GlassBottle>>> RunInternal(Ingredients input)
+        protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(Ingredients input)
             => Activate(input, "this is a test string to make sure it gets added to memory")
                 .Chain<IPrepare, Ingredients, BrewingJug>(prepare)
                 .Chain<Ferment, BrewingJug>()
@@ -49,7 +49,7 @@ public class WorkflowTests : TestSetup
     
     private class ChainTestWithNoInputs : Workflow<Ingredients, List<GlassBottle>>
     {
-        protected override async Task<Either<WorkflowException, List<GlassBottle>>> RunInternal(Ingredients input)
+        protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(Ingredients input)
         {
             var brew = new Brew();
             var ferment = new Ferment() as IFerment;
@@ -68,7 +68,7 @@ public class WorkflowTests : TestSetup
     
     private class ChainTestWithUnitInput: Workflow<Ingredients, List<GlassBottle>>
     {
-        protected override async Task<Either<WorkflowException, List<GlassBottle>>> RunInternal(Ingredients input)
+        protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(Ingredients input)
         {
             var brew = new Brew();
             var ferment = new Ferment() as IFerment;
@@ -88,7 +88,7 @@ public class WorkflowTests : TestSetup
     
     private class ChainTestWithShortCircuit(IPrepare prepare, IFerment ferment) : Workflow<Ingredients, List<GlassBottle>>
     {
-        protected override async Task<Either<WorkflowException, List<GlassBottle>>> RunInternal(Ingredients input)
+        protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(Ingredients input)
         {
             var brew = new Brew();
             return Activate(input)
@@ -106,7 +106,7 @@ public class WorkflowTests : TestSetup
 
     private class ChainTestWithShortCircuitStaysLeft(IPrepare prepare, IFerment ferment) : Workflow<Ingredients, List<GlassBottle>>
     {
-        protected override async Task<Either<WorkflowException, List<GlassBottle>>> RunInternal(Ingredients input)
+        protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(Ingredients input)
         {
             var brew = new Brew();
             return Activate(input)

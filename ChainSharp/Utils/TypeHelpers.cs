@@ -55,8 +55,8 @@ internal static class TypeHelpers
         return ValueTuple.Create(
             dynamicList[0], 
             dynamicList[1], 
-            dynamicList[3], 
-            dynamicList[4]);
+            dynamicList[2], 
+            dynamicList[3]);
     }
     
     internal static dynamic ConvertFiveTuple(List<dynamic> dynamicList)
@@ -103,7 +103,7 @@ internal static class TypeHelpers
             dynamicList[2], 
             dynamicList[3], 
             dynamicList[4], 
-            dynamicList[6],
-            dynamicList[5]);
+            dynamicList[5],
+            dynamicList[6]);
     }
 } 

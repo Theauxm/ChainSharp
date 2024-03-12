@@ -341,7 +341,7 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
             }
             catch (Exception e)
             {
-                Exception ??= new WorkflowException(e.Message);
+                Exception ??= e;
             }
         }
 
@@ -369,7 +369,7 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
             }
             catch (Exception e)
             {
-                Exception ??= new WorkflowException(e.Message);
+                Exception ??= e;
             }
         }
 

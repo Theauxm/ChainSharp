@@ -64,6 +64,15 @@ public class WorkflowTests : TestSetup
                 .Resolve();
         }
     }
+
+    private class WorkflowTestWithTupleInput : Workflow<(int, string, object), Unit>
+    {
+        protected override async Task<Either<Exception, Unit>> RunInternal((int, string, object) input)
+            => Activate(input)
+                .Chain<TupleReturnStep>()
+                .ShortCircuit<TupleReturnStep>()
+                .Resolve();
+    }
     
     
     private class ChainTestWithUnitInput: Workflow<Ingredients, List<GlassBottle>>
@@ -135,6 +144,14 @@ public class WorkflowTests : TestSetup
         }
     }
     
+    private class TupleReturnStep : Step<Unit, (bool, double, object)>
+    {
+        public override async Task<(bool, double, object)> Run(Unit input)
+        {
+            return (true, 1, new object());
+        }
+    }
+
     private class ThreeTupleStepTest : Step<(Ingredients, BrewingJug, Unit), Unit>
     {
         public override async Task<Unit> Run((Ingredients, BrewingJug, Unit) input)
@@ -146,6 +163,17 @@ public class WorkflowTests : TestSetup
 
             return Unit.Default;
         }
+    }
+
+    [Theory]
+    public async Task TestInputOfTuple()
+    {
+        // Arrange
+        
+        // Act
+        var result = await new WorkflowTestWithTupleInput().Run((1, "hello", new object()));
+
+        // Assert
     }
     
     [Theory]

@@ -1,13 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 using ChainSharp.Exceptions;
 using ChainSharp.Extensions;
 using ChainSharp.Utils;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
-using Microsoft.Extensions.DependencyInjection;
 using static ChainSharp.Utils.ReflectionHelpers;
 using static LanguageExt.Prelude;
 
@@ -71,10 +67,16 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
         Memory ??= new Dictionary<Type, object>() {{ typeof(Unit), unit }};
 
         var inputType = typeof(TInput);
-        
+
         if (input is null)
+        {
             Exception ??= new WorkflowException($"Input ({inputType}) is null.");
-        else 
+            return this;
+        }
+
+        if (inputType.IsTuple())
+            AddTupleToMemory(input);
+        else
             Memory.TryAdd(inputType, input);
 
         foreach (var otherType in otherTypes)
@@ -101,9 +103,15 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
 
         if (outVar.IsLeft)
             Exception ??= outVar.Swap().ValueUnsafe();
+        else
+        {
+            var outValue = outVar.Unwrap()!;
 
-        if (outVar.IsRight)
-            Memory.TryAdd(typeof(TOut), outVar.Unwrap()!);
+            if (typeof(TOut).IsTuple())
+                AddTupleToMemory(outValue);
+            else
+                Memory.TryAdd(typeof(TOut), outValue);
+        }
         
         return this;
     }
@@ -216,7 +224,14 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
     
         // We skip the Left for Short Circuiting
         if (outVar.IsRight)
-            Memory.TryAdd(typeof(TOut), outVar.Unwrap()!);
+        {
+            var outValue = outVar.Unwrap()!;
+
+            if (typeof(TOut).IsTuple())
+                AddTupleToMemory(outValue);
+            else
+                Memory.TryAdd(typeof(TOut), outValue);
+        }
             
         return this;
     } 
@@ -396,6 +411,27 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
             7 => TypeHelpers.ConvertSevenTuple(dynamicList),
             _ => throw new WorkflowException($"Could not create Tuple for type ({inputType})")
         };
+    } 
+    
+    private Unit AddTupleToMemory<TIn>(TIn input)
+    {
+        if (!typeof(TIn).IsTuple())
+            throw new WorkflowException($"({typeof(TIn)}) is not a Tuple but was attempted to be extracted as one.");
+
+        if (input is null)
+            throw new WorkflowException($"Input of type ({typeof(TIn)} cannot be null.");
+
+        var inputTuple = (ITuple)input;
+        
+        var tupleList = Enumerable
+            .Range(0, inputTuple.Length)
+            .Select(i => inputTuple[i]!)
+            .ToList();
+
+        foreach (var tupleValue in tupleList)
+            Memory.TryAdd(tupleValue.GetType(), tupleValue);
+        
+        return Unit.Default;
     } 
 
     #endregion

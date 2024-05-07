@@ -41,6 +41,13 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
         {
             var serviceType = service.GetType();
 
+            if (serviceType.IsMoqProxy())
+            {
+                var mockedType = service.GetMockedTypeFromObject();
+                Memory.TryAdd(mockedType, service);
+                continue;
+            }
+                
             if (!serviceType.IsClass)
                 throw new WorkflowException($"Params ({serviceType}) to AddServices must be Classes."); 
             

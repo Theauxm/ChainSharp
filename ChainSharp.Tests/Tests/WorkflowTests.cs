@@ -6,6 +6,7 @@ using ChainSharp.Tests.Examples.Brewery.Steps.Ferment;
 using ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
 using LanguageExt;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using NUnit.Framework;
 
 namespace ChainSharp.Tests.Tests;
@@ -64,10 +65,30 @@ public class WorkflowTests : TestSetup
                 .Resolve();
         }
     }
-
-    private class WorkflowTestWithTupleInput : Workflow<(int, string, object), Unit>
+    
+    
+    private class ChainTestWithMockedService: Workflow<Ingredients, List<GlassBottle>>
     {
-        protected override async Task<Either<Exception, Unit>> RunInternal((int, string, object) input)
+        protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(Ingredients input)
+        {
+            var brew = new Brew();
+            var ferment = new Mock<IFerment>().Object;
+            return Activate(input, "this is a test string to make sure it gets added to memory")
+                .AddServices(ferment)
+                .Chain<Prepare>()
+                .Chain<Ferment>()
+                .Chain<TwoTupleStepTest>()
+                .Chain<ThreeTupleStepTest>()
+                .Chain(brew)
+                .Chain<Bottle>()
+                .Resolve();
+        }
+    }
+    
+
+    private class WorkflowTestWithTupleInput : Workflow<(int, string, object), (bool, double, object)>
+    {
+        protected override async Task<Either<Exception, (bool, double, object)>> RunInternal((int, string, object) input)
             => Activate(input)
                 .Chain<TupleReturnStep>()
                 .ShortCircuit<TupleReturnStep>()
@@ -183,6 +204,22 @@ public class WorkflowTests : TestSetup
         var bottle = ServiceProvider.GetRequiredService<IBottle>();
         
         var workflow = new ChainTest(_brew, prepare, bottle);
+        
+        var ingredients = new Ingredients()
+        {
+            Apples = 1,
+            BrownSugar = 1,
+            Cinnamon = 1,
+            Yeast = 1
+        };
+
+        var result = await workflow.Run(ingredients);
+    }
+    
+    [Theory]
+    public async Task TestChainWithMockedService()
+    {
+        var workflow = new ChainTestWithMockedService();
         
         var ingredients = new Ingredients()
         {

@@ -66,6 +66,53 @@ public class WorkflowTests : TestSetup
         }
     }
     
+    private class ChainTestWithOneTypedService: Workflow<Ingredients, List<GlassBottle>>
+    {
+        protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(Ingredients input)
+        {
+            var brew = new Brew();
+            var ferment = new Ferment();
+            
+            // IFerment implements IStep and IFerment
+            // Normally, AddServices looks for the First Interface that is not IStep
+            // This uses a Type argument to do a Service addition to find IFerment 
+            // (which is actually the second interface that it implements)
+            
+            return Activate(input, "this is a test string to make sure it gets added to memory")
+                .AddServices<IFerment>(ferment)
+                .Chain<Prepare>()
+                .IChain<IFerment>()
+                .Chain<TwoTupleStepTest>()
+                .Chain<ThreeTupleStepTest>()
+                .Chain(brew)
+                .Chain<Bottle>()
+                .Resolve();
+        }
+    }
+    private class ChainTestWithTwoTypedServices: Workflow<Ingredients, List<GlassBottle>>
+    {
+        protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(Ingredients input)
+        {
+            var brew = new Brew();
+            var ferment = new Ferment();
+            var prepare = new Prepare(ferment);
+            
+            // IFerment implements IStep and IFerment
+            // Normally, AddServices looks for the First Interface that is not IStep
+            // This uses a Type argument to do a Service addition to find IFerment 
+            // (which is actually the second interface that it implements)
+            
+            return Activate(input, "this is a test string to make sure it gets added to memory")
+                .AddServices<IPrepare, IFerment>(prepare, ferment)
+                .IChain<IPrepare>()
+                .IChain<IFerment>()
+                .Chain<TwoTupleStepTest>()
+                .Chain<ThreeTupleStepTest>()
+                .Chain(brew)
+                .Chain<Bottle>()
+                .Resolve();
+        }
+    }
     
     private class ChainTestWithMockedService: Workflow<Ingredients, List<GlassBottle>>
     {
@@ -236,6 +283,39 @@ public class WorkflowTests : TestSetup
     public async Task TestChainWithNoInputs()
     {
         var workflow = new ChainTestWithNoInputs();
+        
+        var ingredients = new Ingredients()
+        {
+            Apples = 1,
+            BrownSugar = 1,
+            Cinnamon = 1,
+            Yeast = 1
+        };
+
+        var result = await workflow.Run(ingredients);
+    }
+    
+    [Theory]
+    public async Task TestChainWithOneTypedService()
+    {
+        var workflow = new ChainTestWithOneTypedService();
+        
+        var ingredients = new Ingredients()
+        {
+            Apples = 1,
+            BrownSugar = 1,
+            Cinnamon = 1,
+            Yeast = 1
+        };
+
+        var result = await workflow.Run(ingredients);
+    }
+    
+    
+    [Theory]
+    public async Task TestChainWithTwoTypedService()
+    {
+        var workflow = new ChainTestWithTwoTypedServices();
         
         var ingredients = new Ingredients()
         {

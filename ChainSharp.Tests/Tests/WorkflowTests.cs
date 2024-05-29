@@ -66,6 +66,26 @@ public class WorkflowTests : TestSetup
         }
     }
     
+    
+    private class ChainTestWithInterfaceTuple: Workflow<Ingredients, List<GlassBottle>>
+    {
+        protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(Ingredients input)
+        {
+            var brew = new Brew();
+            var ferment = new Ferment() as IFerment;
+            return Activate(input, "this is a test string to make sure it gets added to memory")
+                .AddServices(ferment)
+                .Chain<PrepareWithInterface>()
+                .Chain<TwoTupleStepInterfaceTest>() // What we're really testing here
+                .Chain<CastBrewingJug>()
+                .Chain<Ferment>()
+                .Chain<ThreeTupleStepTest>()
+                .Chain(brew)
+                .Chain<Bottle>()
+                .Resolve();
+        }
+    }
+    
     private class ChainTestWithOneTypedService: Workflow<Ingredients, List<GlassBottle>>
     {
         protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(Ingredients input)
@@ -212,6 +232,33 @@ public class WorkflowTests : TestSetup
         }
     }
     
+    
+    /// <summary>
+    /// Tests to ensure that tuple casting to interface works correctly
+    /// </summary>
+    private class TwoTupleStepInterfaceTest : Step<(Ingredients, IBrewingJug), Unit>
+    {
+        public override async Task<Unit> Run((Ingredients, IBrewingJug) input)
+        {
+            var (x, y) = input;
+
+            x.Apples++;
+            y.Gallons++;
+
+            return Unit.Default;
+        }
+    }
+    
+    
+    private class CastBrewingJug: Step<IBrewingJug, BrewingJug>
+    {
+        public override async Task<BrewingJug> Run(IBrewingJug input)
+        {
+            // MAGIC!
+            return (BrewingJug)input;
+        }
+    }
+    
     private class TupleReturnStep : Step<Unit, (bool, double, object)>
     {
         public override async Task<(bool, double, object)> Run(Unit input)
@@ -283,6 +330,23 @@ public class WorkflowTests : TestSetup
     public async Task TestChainWithNoInputs()
     {
         var workflow = new ChainTestWithNoInputs();
+        
+        var ingredients = new Ingredients()
+        {
+            Apples = 1,
+            BrownSugar = 1,
+            Cinnamon = 1,
+            Yeast = 1
+        };
+
+        var result = await workflow.Run(ingredients);
+    }
+    
+    
+    [Theory]
+    public async Task TestChainWithInterfaceTupleArgument()
+    {
+        var workflow = new ChainTestWithInterfaceTuple();
         
         var ingredients = new Ingredients()
         {

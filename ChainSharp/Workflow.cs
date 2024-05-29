@@ -467,17 +467,17 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
     
     private dynamic ExtractTuple(Type inputType)
     {
-        var dynamicList = TypeHelpers.ExtractTypes(Memory, inputType);
+        var typeTuples = TypeHelpers.ExtractTypeTuples(Memory, inputType);
 
-        return dynamicList.Count switch
+        return typeTuples.Count switch
         {
             0 => throw new WorkflowException($"Cannot have Tuple of length 0."),
-            2 => TypeHelpers.ConvertTwoTuple(dynamicList),
-            3 => TypeHelpers.ConvertThreeTuple(dynamicList),
-            4 => TypeHelpers.ConvertFourTuple(dynamicList),
-            5 => TypeHelpers.ConvertFiveTuple(dynamicList),
-            6 => TypeHelpers.ConvertSixTuple(dynamicList),
-            7 => TypeHelpers.ConvertSevenTuple(dynamicList),
+            2 => TypeHelpers.ConvertTwoTuple(typeTuples),
+            3 => TypeHelpers.ConvertThreeTuple(typeTuples),
+            4 => TypeHelpers.ConvertFourTuple(typeTuples),
+            5 => TypeHelpers.ConvertFiveTuple(typeTuples),
+            6 => TypeHelpers.ConvertSixTuple(typeTuples),
+            7 => TypeHelpers.ConvertSevenTuple(typeTuples),
             _ => throw new WorkflowException($"Could not create Tuple for type ({inputType})")
         };
     } 

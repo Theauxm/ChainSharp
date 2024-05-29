@@ -1,6 +1,6 @@
 namespace ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
 
-public class BrewingJug
+public class BrewingJug : IBrewingJug
 {
     public required int Gallons { get; set; }
     

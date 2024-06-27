@@ -218,6 +218,26 @@ public class WorkflowTests : TestSetup
                 .Resolve();
         }
     }
+
+    private class Outer
+    {
+        public string OuterString { get; set; }
+        
+        public Inner Inner { get; set; }
+    }
+
+    private class Inner
+    {
+        public int Number { get; set; }
+    }
+
+    private class AccessInnerTypeWorkflow : Workflow<Outer, Inner>
+    {
+        protected override async Task<Either<Exception, Inner>> RunInternal(Outer input)
+            => Activate(input)
+                .Extract<Outer, Inner>()
+                .Resolve();
+    }
     
     private class TwoTupleStepTest : Step<(Ingredients, BrewingJug), Unit>
     {
@@ -288,6 +308,25 @@ public class WorkflowTests : TestSetup
         // Act
         var result = await new WorkflowTestWithTupleInput().Run((1, "hello", new object()));
 
+        // Assert
+    }
+
+    [Theory]
+    public async Task TestExtract()
+    {
+        // Arrange
+        var outer = new Outer()
+        {
+            OuterString = "hello world",
+            Inner = new Inner()
+            {
+                Number = 7
+            }
+        };
+        
+        // Act
+        var result = await new AccessInnerTypeWorkflow().Run(outer);
+        
         // Assert
     }
     

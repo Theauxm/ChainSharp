@@ -365,6 +365,56 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
 
     #endregion
 
+    #region Extract
+
+    public Workflow<TInput, TReturn> Extract<TIn, TOut>()
+    {
+        var typeFromMemory = (TIn?)Memory.GetValueOrDefault(typeof(TIn));
+
+        if (typeFromMemory is null)
+        {
+            Exception ??= new WorkflowException($"Could not find type: ({typeof(TIn)}).");
+
+            return this;
+        }
+        
+        return Extract<TIn, TOut>(typeFromMemory);
+    }
+
+    public Workflow<TInput, TReturn> Extract<TIn, TOut>(TIn input)
+    {
+        if (input is null)
+        {
+            Exception ??= new WorkflowException($"Null value for type: ({typeof(TIn)}) passed to Extract function.");
+            return this;
+        }
+
+        var propertyInfo = input
+            .GetType()
+            .GetProperties()
+            .FirstOrDefault(x => x.PropertyType == typeof(TOut));
+
+        if (propertyInfo is null)
+        {
+            Exception ??=
+                new WorkflowException(
+                    $"Could not find type: ({typeof(TOut)} in property list for ({typeof(TIn)}). Is it public?");
+            return this;
+        }
+
+        var propertyValue = propertyInfo.GetValue(input);
+        if (propertyValue is null)
+        {
+            Exception ??= new WorkflowException($"Null value found for type: ({typeof(TOut)}) on ({typeof(TIn)}");
+            return this;
+        }
+
+        Memory.TryAdd(typeof(TOut), propertyValue);
+        return this;
+    }
+
+    #endregion
+
     #region Helpers
 
     private TStep? InitializeStep<TStep>() where TStep : class

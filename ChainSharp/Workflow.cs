@@ -389,29 +389,38 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
             return this;
         }
 
-        var propertyInfo = input
+        var value = GetPropertyValue<TIn, TOut>(input) ?? GetFieldValue<TIn, TOut>(input);
+
+        if (value is null)
+        {
+            Exception ??= new WorkflowException(
+                $"Could not find non-null value of type: ({typeof(TOut)}) in properties or fields for ({typeof(TIn)}). Is it public?");
+            return this;
+        }
+
+        Memory.TryAdd(typeof(TOut), value);
+        return this;
+    }
+
+    private object? GetPropertyValue<TIn, TOut>(TIn input)
+    {
+        var propertyInfo = input!
             .GetType()
             .GetProperties()
             .FirstOrDefault(x => x.PropertyType == typeof(TOut));
 
-        if (propertyInfo is null)
-        {
-            Exception ??=
-                new WorkflowException(
-                    $"Could not find type: ({typeof(TOut)} in property list for ({typeof(TIn)}). Is it public?");
-            return this;
-        }
-
-        var propertyValue = propertyInfo.GetValue(input);
-        if (propertyValue is null)
-        {
-            Exception ??= new WorkflowException($"Null value found for type: ({typeof(TOut)}) on ({typeof(TIn)}");
-            return this;
-        }
-
-        Memory.TryAdd(typeof(TOut), propertyValue);
-        return this;
+        return propertyInfo?.GetValue(input);
     }
+
+    private object? GetFieldValue<TIn, TOut>(TIn input)
+    {
+        var fieldInfo = input!
+            .GetType()
+            .GetFields()
+            .FirstOrDefault(x => x.FieldType == typeof(TOut));
+
+        return fieldInfo?.GetValue(input);
+    } 
 
     #endregion
 

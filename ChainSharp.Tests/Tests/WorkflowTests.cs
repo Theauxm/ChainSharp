@@ -4,6 +4,7 @@ using ChainSharp.Tests.Examples.Brewery.Steps.Bottle;
 using ChainSharp.Tests.Examples.Brewery.Steps.Brew;
 using ChainSharp.Tests.Examples.Brewery.Steps.Ferment;
 using ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
+using FluentAssertions;
 using LanguageExt;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -219,23 +220,44 @@ public class WorkflowTests : TestSetup
         }
     }
 
-    private class Outer
+    private class OuterProperty
     {
         public string OuterString { get; set; }
         
-        public Inner Inner { get; set; }
+        public InnerProperty InnerProperty { get; set; }
     }
 
-    private class Inner
+    private class InnerProperty
     {
         public int Number { get; set; }
     }
-
-    private class AccessInnerTypeWorkflow : Workflow<Outer, Inner>
+    
+    
+    private class OuterField
     {
-        protected override async Task<Either<Exception, Inner>> RunInternal(Outer input)
+        public string OuterString;
+
+        public InnerField InnerProperty;
+    }
+
+    private class InnerField
+    {
+        public int Number;
+    }
+
+    private class AccessInnerPropertyTypeWorkflow : Workflow<OuterProperty, InnerProperty>
+    {
+        protected override async Task<Either<Exception, InnerProperty>> RunInternal(OuterProperty input)
             => Activate(input)
-                .Extract<Outer, Inner>()
+                .Extract<OuterProperty, InnerProperty>()
+                .Resolve();
+    }
+    
+    private class AccessInnerFieldTypeWorkflow : Workflow<OuterField, InnerField>
+    {
+        protected override async Task<Either<Exception, InnerField>> RunInternal(OuterField input)
+            => Activate(input)
+                .Extract<OuterField, InnerField>()
                 .Resolve();
     }
     
@@ -315,19 +337,32 @@ public class WorkflowTests : TestSetup
     public async Task TestExtract()
     {
         // Arrange
-        var outer = new Outer()
+        var outerProperty = new OuterProperty()
         {
             OuterString = "hello world",
-            Inner = new Inner()
+            InnerProperty = new InnerProperty()
             {
                 Number = 7
             }
         };
         
+        
+        var outerField = new OuterField()
+        {
+            OuterString = "hello mars",
+            InnerProperty = new InnerField()
+            {
+                Number = 8
+            }
+        };
+        
         // Act
-        var result = await new AccessInnerTypeWorkflow().Run(outer);
+        var propertyResult = await new AccessInnerPropertyTypeWorkflow().Run(outerProperty);
+        var fieldResult = await new AccessInnerFieldTypeWorkflow().Run(outerField);
         
         // Assert
+        propertyResult.Number.Should().Be(7);
+        fieldResult.Number.Should().Be(8);
     }
     
     [Theory]

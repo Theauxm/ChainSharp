@@ -107,7 +107,7 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
             if (serviceType.IsMoqProxy())
             {
                 var mockedType = service.GetMockedTypeFromObject();
-                Memory.TryAdd(mockedType, service);
+                Memory[mockedType] = service;
                 continue;
             }
 
@@ -120,7 +120,7 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
             if (foundInterface is null)
                 throw new WorkflowException($"Class ({serviceType}) does not have any interfaces.");
 
-            Memory.TryAdd(foundInterface, service);
+            Memory[foundInterface] = service;
         }
 
         return this;
@@ -146,10 +146,10 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
         if (inputType.IsTuple())
             AddTupleToMemory(input);
         else
-            Memory.TryAdd(inputType, input);
+            Memory[inputType] = input;
 
         foreach (var otherType in otherTypes)
-            Memory.TryAdd(otherType.GetType(), otherType);
+            Memory[otherType.GetType()] = otherType;
 
         return this;
     } 
@@ -179,7 +179,7 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
             if (typeof(TOut).IsTuple())
                 AddTupleToMemory(outValue);
             else
-                Memory.TryAdd(typeof(TOut), outValue);
+                Memory[typeof(TOut)] = outValue;
         }
         
         return this;
@@ -299,7 +299,7 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
             if (typeof(TOut).IsTuple())
                 AddTupleToMemory(outValue);
             else
-                Memory.TryAdd(typeof(TOut), outValue);
+                Memory[typeof(TOut)] = outValue;
         }
             
         return this;
@@ -398,7 +398,7 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
             return this;
         }
 
-        Memory.TryAdd(typeof(TOut), value);
+        Memory[typeof(TOut)] = value;
         return this;
     }
 
@@ -557,7 +557,7 @@ public abstract class Workflow<TInput, TReturn> : IWorkflow<TInput, TReturn>
             .ToList();
 
         foreach (var tupleValue in tupleList)
-            Memory.TryAdd(tupleValue.GetType(), tupleValue);
+            Memory[tupleValue.GetType()] = tupleValue;
         
         return Unit.Default;
     } 

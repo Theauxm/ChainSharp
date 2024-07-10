@@ -30,7 +30,7 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Install tools
-        run: dotnet tool restore --configfile ./nuget.config
+        run: dotnet tool restore
 
       - name: Cleanup Code
         run: dotnet dotnet-csharpier --check .

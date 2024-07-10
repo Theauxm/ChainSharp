@@ -1,0 +1,76 @@
+name: Release NuGet Package
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ChainSharp/ChainSharp.csproj'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '7.0.x' # Adjust the version as needed
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('ChainSharp/ChainSharp.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Verify version change
+        id: version
+        run: |
+          csproj_file="ChainSharp/ChainSharp.csproj"
+          version_line=$(grep '<Version>' $csproj_file)
+          new_version=$(echo $version_line | sed -E 's/.*<Version>(.*)<\/Version>.*/\1/')
+          echo "New version: $new_version"
+          git fetch --tags
+          last_tag=$(git describe --tags --abbrev=0)
+          echo "Last tag: $last_tag"
+          if [ "$new_version" == "${last_tag#v}" ]; then
+            echo "Version has not changed. Exiting."
+            exit 0
+          fi
+          echo "Version has changed. Proceeding."
+
+      - name: Build project
+        run: dotnet build --configuration Release
+
+      - name: Pack NuGet package
+        run: dotnet pack --configuration Release --no-build --output ./nupkgs
+
+      - name: Publish NuGet package
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          dotnet nuget push ./nupkgs/*.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json
+
+      - name: Create GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          new_version=$(grep '<Version>' ChainSharp/ChainSharp.csproj | sed -E 's/.*<Version>(.*)<\/Version>.*/\1/')
+          git tag v$new_version
+          git push origin v$new_version
+          curl -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/releases \
+            -d '{
+              "tag_name": "v'${new_version}'",
+              "target_commitish": "main",
+              "name": "v'${new_version}'",
+              "body": "Release of version '${new_version}'",
+              "draft": false,
+              "prerelease": false
+            }'

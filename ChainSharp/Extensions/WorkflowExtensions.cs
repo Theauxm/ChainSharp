@@ -8,7 +8,10 @@ namespace ChainSharp.Extensions;
 
 public static class WorkflowExtensions
 {
-    internal static TStep? InitializeStep<TStep, TInput, TReturn>(this Workflow<TInput, TReturn> workflow) where TStep : class
+    internal static TStep? InitializeStep<TStep, TInput, TReturn>(
+        this Workflow<TInput, TReturn> workflow
+    )
+        where TStep : class
     {
         var stepType = typeof(TStep);
 
@@ -17,12 +20,14 @@ public static class WorkflowExtensions
             workflow.Exception ??= new WorkflowException($"Step ({stepType}) must be a class.");
             return null;
         }
-        
+
         var constructors = stepType.GetConstructors();
 
         if (constructors.Length != 1)
         {
-            workflow.Exception ??= new WorkflowException($"Step classes can only have a single constructor ({stepType}).");
+            workflow.Exception ??= new WorkflowException(
+                $"Step classes can only have a single constructor ({stepType})."
+            );
             return null;
         }
 
@@ -36,24 +41,30 @@ public static class WorkflowExtensions
 
         if (constructor is null)
         {
-            workflow.Exception ??= new WorkflowException($"Could not find constructor for ({stepType})");
+            workflow.Exception ??= new WorkflowException(
+                $"Could not find constructor for ({stepType})"
+            );
             return null;
         }
-        
+
         var constructorParameters = ExtractTypesFromMemory(workflow, constructorArguments);
-    
+
         var initializedStep = (TStep?)constructor.Invoke(constructorParameters);
 
         if (initializedStep is null)
         {
-            workflow.Exception ??= new WorkflowException($"Could not invoke constructor for ({stepType}).");
+            workflow.Exception ??= new WorkflowException(
+                $"Could not invoke constructor for ({stepType})."
+            );
             return null;
         }
 
         return initializedStep;
     }
 
-    internal static T? ExtractTypeFromMemory<T, TInput, TReturn>(this Workflow<TInput, TReturn> workflow)
+    internal static T? ExtractTypeFromMemory<T, TInput, TReturn>(
+        this Workflow<TInput, TReturn> workflow
+    )
     {
         T? input = default;
 
@@ -71,17 +82,22 @@ public static class WorkflowExtensions
         }
 
         input ??= (T?)workflow.Memory.GetValueOrDefault(inputType);
-        
+
         if (input is null)
             workflow.Exception ??= new WorkflowException($"Could not find type: ({inputType}).");
 
         return input;
     }
 
-    internal static dynamic[] ExtractTypesFromMemory<TInput, TReturn>(this Workflow<TInput, TReturn> workflow, IEnumerable<Type> types)
-        => types.Select(type => ExtractTypeFromMemory(workflow, type)).ToArray();
-    
-    internal static dynamic ExtractTypeFromMemory<TInput, TReturn>(this Workflow<TInput, TReturn> workflow, Type tIn)
+    internal static dynamic[] ExtractTypesFromMemory<TInput, TReturn>(
+        this Workflow<TInput, TReturn> workflow,
+        IEnumerable<Type> types
+    ) => types.Select(type => ExtractTypeFromMemory(workflow, type)).ToArray();
+
+    internal static dynamic ExtractTypeFromMemory<TInput, TReturn>(
+        this Workflow<TInput, TReturn> workflow,
+        Type tIn
+    )
     {
         dynamic? input = null;
 
@@ -99,14 +115,17 @@ public static class WorkflowExtensions
         }
 
         input ??= workflow.Memory.GetValueOrDefault(inputType);
-        
+
         if (input is null)
             workflow.Exception ??= new WorkflowException($"Could not find type: ({inputType}).");
 
         return input!;
     }
-    
-    internal static dynamic ExtractTuple<TInput, TReturn>(this Workflow<TInput, TReturn> workflow, Type inputType)
+
+    internal static dynamic ExtractTuple<TInput, TReturn>(
+        this Workflow<TInput, TReturn> workflow,
+        Type inputType
+    )
     {
         var typeTuples = TypeHelpers.ExtractTypeTuples(workflow.Memory, inputType);
 
@@ -123,24 +142,26 @@ public static class WorkflowExtensions
         };
     }
 
-    internal static Unit AddTupleToMemory<TIn, TInput, TReturn>(this Workflow<TInput, TReturn> workflow, TIn input)
+    internal static Unit AddTupleToMemory<TIn, TInput, TReturn>(
+        this Workflow<TInput, TReturn> workflow,
+        TIn input
+    )
     {
         if (!typeof(TIn).IsTuple())
-            throw new WorkflowException($"({typeof(TIn)}) is not a Tuple but was attempted to be extracted as one.");
+            throw new WorkflowException(
+                $"({typeof(TIn)}) is not a Tuple but was attempted to be extracted as one."
+            );
 
         if (input is null)
             throw new WorkflowException($"Input of type ({typeof(TIn)} cannot be null.");
 
         var inputTuple = (ITuple)input;
-        
-        var tupleList = Enumerable
-            .Range(0, inputTuple.Length)
-            .Select(i => inputTuple[i]!)
-            .ToList();
+
+        var tupleList = Enumerable.Range(0, inputTuple.Length).Select(i => inputTuple[i]!).ToList();
 
         foreach (var tupleValue in tupleList)
             workflow.Memory[tupleValue.GetType()] = tupleValue;
-        
+
         return Unit.Default;
-    } 
+    }
 }

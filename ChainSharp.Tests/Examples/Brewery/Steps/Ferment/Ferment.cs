@@ -31,7 +31,7 @@ public class Ferment : Step<BrewingJug, Unit>, IFerment
 
         return Unit.Default;
     }
-    
+
     public async Task<Either<WorkflowException, Unit>> AddYeast(BrewingJug jug)
     {
         if (jug.Ingredients.Yeast <= 0)

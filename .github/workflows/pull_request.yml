@@ -1,0 +1,53 @@
+name: "ChainSharp: Run CI/CD Test Suite"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches:
+      - "main"
+  push:
+    branches:
+      - "main"
+
+  # Allow manual runs
+  workflow_dispatch: ~
+
+env:
+  DOTNET_VERSION: '8.0.204' # The .NET SDK version to use
+
+jobs:
+  cleanupcode:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install tools
+        run: dotnet tool restore
+
+      - name: Cleanup Code
+        run: dotnet dotnet-csharpier --check .
+  
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Build Project
+        run: dotnet build --configuration Release /clp:ErrorsOnly
+
+      - name: Run Tests
+        run: dotnet test --configuration Release --no-restore /clp:ErrorsOnly

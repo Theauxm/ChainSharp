@@ -16,15 +16,15 @@ public class Prepare(IFerment ferment) : Step<Ingredients, BrewingJug>, IPrepare
 
         if (gallonAppleJuice.IsLeft)
             throw gallonAppleJuice.Swap().ValueUnsafe();
-        
-        return new BrewingJug()
-        {
-            Gallons = gallonAppleJuice.ValueUnsafe(),
-            Ingredients = input
-        };
+
+        return new BrewingJug() { Gallons = gallonAppleJuice.ValueUnsafe(), Ingredients = input };
     }
 
-    private async Task<Either<WorkflowException, int>> Boil(int gallonWater, int numApples, int ozBrownSugar)
+    private async Task<Either<WorkflowException, int>> Boil(
+        int gallonWater,
+        int numApples,
+        int ozBrownSugar
+    )
     {
         return gallonWater + (numApples / 8) + (ozBrownSugar / 128);
     }

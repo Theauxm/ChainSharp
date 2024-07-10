@@ -11,7 +11,7 @@ public class Brew : Step<BrewingJug, Unit>, IBrew
     {
         if (!input.IsFermented)
             throw new WorkflowException("We cannot brew our Cider before it is fermented!");
-        
+
         // Pretend that we waited 2 days...
         input.IsBrewed = true;
 

@@ -6,9 +6,8 @@ namespace ChainSharp.Step;
 public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
 {
     public abstract Task<TOut> Run(TIn input);
-    
-    public async Task<Either<Exception, TOut>> RailwayStep(
-        Either<Exception, TIn> previousStep)
+
+    public async Task<Either<Exception, TOut>> RailwayStep(Either<Exception, TIn> previousStep)
     {
         if (previousStep.IsLeft)
             return previousStep.Swap().ValueUnsafe();

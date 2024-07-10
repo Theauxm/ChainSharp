@@ -4,6 +4,4 @@ using LanguageExt;
 
 namespace ChainSharp.Tests.Examples.Brewery.Steps.Ferment;
 
-public interface IFerment : IStep<BrewingJug, Unit>
-{
-}
+public interface IFerment : IStep<BrewingJug, Unit> { }

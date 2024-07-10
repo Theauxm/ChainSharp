@@ -12,7 +12,11 @@ public partial class Workflow<TInput, TReturn>
     #region Chain<TStep, TIn, TOut>
 
     // Chain<TStep, TIn, TOut>(TStep, TIn, TOut)
-    public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(TStep step, Either<Exception, TIn> previousStep, out Either<Exception, TOut> outVar)
+    public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(
+        TStep step,
+        Either<Exception, TIn> previousStep,
+        out Either<Exception, TOut> outVar
+    )
         where TStep : IStep<TIn, TOut>
     {
         if (Exception is not null)
@@ -20,7 +24,7 @@ public partial class Workflow<TInput, TReturn>
             outVar = Exception;
             return this;
         }
-        
+
         outVar = Task.Run(() => step.RailwayStep(previousStep)).Result;
 
         if (outVar.IsLeft)
@@ -34,7 +38,7 @@ public partial class Workflow<TInput, TReturn>
             else
                 Memory[typeof(TOut)] = outValue;
         }
-        
+
         return this;
     }
 
@@ -44,35 +48,40 @@ public partial class Workflow<TInput, TReturn>
     {
         var input = this.ExtractTypeFromMemory<TIn, TInput, TReturn>();
 
-        if (input is null) 
+        if (input is null)
             return this;
-        
+
         return Chain<TStep, TIn, TOut>(step, input, out var x);
     }
-    
+
     // Chain<TStep, TIn, TOut>(TIn, TOut)
-    public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(Either<Exception, TIn> previousStep,
-        out Either<Exception, TOut> outVar)
-        where TStep : IStep<TIn, TOut>, new()
-        => Chain<TStep, TIn, TOut>(new TStep(), previousStep, out outVar);
-    
+    public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(
+        Either<Exception, TIn> previousStep,
+        out Either<Exception, TOut> outVar
+    )
+        where TStep : IStep<TIn, TOut>, new() =>
+        Chain<TStep, TIn, TOut>(new TStep(), previousStep, out outVar);
+
     // Chain<TStep, TIn, TOut>()
     public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>()
-        where TStep : IStep<TIn, TOut>, new() => Chain<TStep, TIn, TOut>(new TStep()); 
+        where TStep : IStep<TIn, TOut>, new() => Chain<TStep, TIn, TOut>(new TStep());
 
     #endregion
-    
+
     #region Chain<TStep>
-    
+
     // Chain<TStep>()
     // ReSharper disable once InconsistentNaming
-    public Workflow<TInput, TReturn> IChain<TStep>() where TStep : class
+    public Workflow<TInput, TReturn> IChain<TStep>()
+        where TStep : class
     {
         var stepType = typeof(TStep);
 
         if (!stepType.IsInterface)
-            Exception ??= new WorkflowException($"Step ({stepType}) must be an interface to call IChain.");
-        
+            Exception ??= new WorkflowException(
+                $"Step ({stepType}) must be an interface to call IChain."
+            );
+
         var stepService = this.ExtractTypeFromMemory<TStep, TInput, TReturn>();
 
         if (stepService is null)
@@ -80,9 +89,10 @@ public partial class Workflow<TInput, TReturn>
 
         return Chain<TStep>(stepService);
     }
-    
+
     // Chain<TStep>()
-    public Workflow<TInput, TReturn> Chain<TStep>() where TStep : class
+    public Workflow<TInput, TReturn> Chain<TStep>()
+        where TStep : class
     {
         var stepInstance = this.InitializeStep<TStep, TInput, TReturn>();
 
@@ -93,40 +103,45 @@ public partial class Workflow<TInput, TReturn>
     }
 
     // Chain<TStep>(TStep)
-    public Workflow<TInput, TReturn> Chain<TStep>(TStep stepInstance) where TStep : class
+    public Workflow<TInput, TReturn> Chain<TStep>(TStep stepInstance)
+        where TStep : class
     {
         var (tIn, tOut) = ReflectionHelpers.ExtractStepTypeArguments<TStep>();
-        var chainMethod = ReflectionHelpers.FindGenericChainMethod<TStep, TInput, TReturn>(this, tIn, tOut, 1);
-        
+        var chainMethod = ReflectionHelpers.FindGenericChainMethod<TStep, TInput, TReturn>(
+            this,
+            tIn,
+            tOut,
+            1
+        );
+
         var result = chainMethod.Invoke(this, [stepInstance]);
-        
+
         return (Workflow<TInput, TReturn>)result!;
     }
-    
+
     #endregion
 
     #region Chain<TStep, TIn>
-       
+
     // Chain<TStep, TIn>(TStep, In)
-    public Workflow<TInput, TReturn> Chain<TStep, TIn>(TStep step, Either<Exception, TIn> previousStep)
-        where TStep : IStep<TIn, Unit>
-        => Chain<TStep, TIn, Unit>(step, previousStep, out var x);
-    
+    public Workflow<TInput, TReturn> Chain<TStep, TIn>(
+        TStep step,
+        Either<Exception, TIn> previousStep
+    )
+        where TStep : IStep<TIn, Unit> => Chain<TStep, TIn, Unit>(step, previousStep, out var x);
+
     // Chain<TStep, TIn>(TStep)
     public Workflow<TInput, TReturn> Chain<TStep, TIn>(TStep step)
-        where TStep : IStep<TIn, Unit>
-        => Chain<TStep, TIn, Unit>(step);
-
+        where TStep : IStep<TIn, Unit> => Chain<TStep, TIn, Unit>(step);
 
     // Chain<TStep, TIn>(TIn)
     public Workflow<TInput, TReturn> Chain<TStep, TIn>(Either<Exception, TIn> previousStep)
-        where TStep : IStep<TIn, Unit>, new()
-        => Chain<TStep, TIn, Unit>(new TStep(), previousStep, out var x);
-    
+        where TStep : IStep<TIn, Unit>, new() =>
+        Chain<TStep, TIn, Unit>(new TStep(), previousStep, out var x);
+
     // Chain<TStep, TIn>()
     public Workflow<TInput, TReturn> Chain<TStep, TIn>()
-        where TStep : IStep<TIn, Unit>, new()
-        => Chain<TStep, TIn, Unit>(new TStep()); 
+        where TStep : IStep<TIn, Unit>, new() => Chain<TStep, TIn, Unit>(new TStep());
 
-    #endregion 
+    #endregion
 }

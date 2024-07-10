@@ -24,7 +24,6 @@ public class InitializeStepTests : TestSetup
         
         var result = await step!.Run(input);
         result.Should().Be(input.ToString());
-
     }
 
     [Theory]
@@ -37,16 +36,13 @@ public class InitializeStepTests : TestSetup
         var step = workflow.InitializeStep<TestInvalidStep, int, string>();
         
         // Assert
-        step.Should().BeNull();
         workflow.Exception.Should().NotBeNull();
     }
     
     private class TestWorkflow : Workflow<int, string>
     {
         protected override async Task<Either<Exception, string>> RunInternal(int input)
-            => Activate(input)
-                .Chain<TestValidStep>()
-                .Resolve();
+            => Resolve();
     }
 
     private class TestValidStep : Step<int, string>

@@ -13,16 +13,16 @@ public static class FunctionalExtensions
         else
             throw result.LeftToSeq().Head;
     }
-    
+
     internal static R Unwrap<L, R>(this Either<L, R> option)
         where L : Exception
     {
         if (option.IsRight)
             return option.RightToSeq().Head();
-        
+
         throw option.LeftToSeq().Head;
     }
 
-    internal static bool IsTuple(this Type type)
-        => type.IsGenericType && type.FullName.StartsWith("System.ValueTuple`");
+    internal static bool IsTuple(this Type type) =>
+        type.IsGenericType && type.FullName.StartsWith("System.ValueTuple`");
 }

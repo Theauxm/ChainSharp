@@ -5,7 +5,7 @@ using LanguageExt;
 
 namespace ChainSharp.Tests.Examples.Brewery.Steps.Bottle;
 
-public class TripTryingToSteal: Step<BrewingJug, List<GlassBottle>>
+public class TripTryingToSteal : Step<BrewingJug, List<GlassBottle>>
 {
     public override async Task<List<GlassBottle>> Run(BrewingJug input)
     {

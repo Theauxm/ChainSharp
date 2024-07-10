@@ -6,7 +6,7 @@ using static LanguageExt.Prelude;
 
 namespace ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
 
-internal class Meditate: Step<Unit, Unit>
+internal class Meditate : Step<Unit, Unit>
 {
     public override async Task<Unit> Run(Unit input)
     {

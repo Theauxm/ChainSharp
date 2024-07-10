@@ -9,7 +9,7 @@ public partial class Workflow<TInput, TReturn>
     public Workflow<TInput, TReturn> Activate(TInput input, params object[] otherTypes)
     {
         // Always allow input type of Unit for parameterless invocation
-        Memory ??= new Dictionary<Type, object>() {{ typeof(Unit), Unit.Default }};
+        Memory ??= new Dictionary<Type, object>() { { typeof(Unit), Unit.Default } };
 
         var inputType = typeof(TInput);
 
@@ -28,5 +28,5 @@ public partial class Workflow<TInput, TReturn>
             Memory[otherType.GetType()] = otherType;
 
         return this;
-    } 
+    }
 }

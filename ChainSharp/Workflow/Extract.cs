@@ -14,7 +14,7 @@ public partial class Workflow<TInput, TReturn>
 
             return this;
         }
-        
+
         return Extract<TIn, TOut>(typeFromMemory);
     }
 
@@ -22,7 +22,9 @@ public partial class Workflow<TInput, TReturn>
     {
         if (input is null)
         {
-            Exception ??= new WorkflowException($"Null value for type: ({typeof(TIn)}) passed to Extract function.");
+            Exception ??= new WorkflowException(
+                $"Null value for type: ({typeof(TIn)}) passed to Extract function."
+            );
             return this;
         }
 
@@ -31,7 +33,8 @@ public partial class Workflow<TInput, TReturn>
         if (value is null)
         {
             Exception ??= new WorkflowException(
-                $"Could not find non-null value of type: ({typeof(TOut)}) in properties or fields for ({typeof(TIn)}). Is it public?");
+                $"Could not find non-null value of type: ({typeof(TOut)}) in properties or fields for ({typeof(TIn)}). Is it public?"
+            );
             return this;
         }
 
@@ -57,5 +60,5 @@ public partial class Workflow<TInput, TReturn>
             .FirstOrDefault(x => x.FieldType == typeof(TOut));
 
         return fieldInfo?.GetValue(input);
-    } 
+    }
 }

@@ -4,7 +4,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <Version>2.0.5</Version>
+        <Version>2.0.6</Version>
         <Authors>Theauxm,mark-keaton</Authors>
         <PackageDescription>Railway Oriented .NET Programming</PackageDescription>
         <RepositoryUrl>https://github.com/Theauxm/ChainSharp</RepositoryUrl>
@@ -16,11 +16,16 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="/"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="LanguageExt.Core" Version="4.4.7" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
     </ItemGroup>
 
     <PropertyGroup>
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 </Project>

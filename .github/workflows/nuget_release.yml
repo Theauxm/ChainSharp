@@ -7,6 +7,9 @@ on:
     paths:
       - 'ChainSharp/ChainSharp.csproj'
 
+permissions:
+  contents: write  # Ensure the token has write permissions to contents
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -60,6 +63,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           new_version=$(grep '<Version>' ChainSharp/ChainSharp.csproj | sed -E 's/.*<Version>(.*)<\/Version>.*/\1/')
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag v$new_version
           git push origin v$new_version
           curl -X POST \

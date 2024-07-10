@@ -1,8 +1,7 @@
-using ChainSharp.Exceptions;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
 
-namespace ChainSharp;
+namespace ChainSharp.Step;
 
 public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
 {

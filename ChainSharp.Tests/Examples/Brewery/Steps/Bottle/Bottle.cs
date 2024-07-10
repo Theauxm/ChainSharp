@@ -1,4 +1,5 @@
 using ChainSharp.Exceptions;
+using ChainSharp.Step;
 using ChainSharp.Tests.Examples.Brewery.Steps.Ferment;
 using ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
 using LanguageExt;

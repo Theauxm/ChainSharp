@@ -1,4 +1,4 @@
-namespace ChainSharp;
+namespace ChainSharp.Workflow;
 
 public interface IWorkflow<in TInput, TReturn>
 {

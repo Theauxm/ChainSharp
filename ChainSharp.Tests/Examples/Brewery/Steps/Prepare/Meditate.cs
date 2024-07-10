@@ -1,4 +1,5 @@
 using ChainSharp.Exceptions;
+using ChainSharp.Step;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
 using static LanguageExt.Prelude;

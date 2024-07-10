@@ -17,7 +17,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '7.0.x' # Adjust the version as needed
+          dotnet-version: '8.0.204'
 
       - name: Cache NuGet packages
         uses: actions/cache@v3
@@ -35,7 +35,7 @@ jobs:
           new_version=$(echo $version_line | sed -E 's/.*<Version>(.*)<\/Version>.*/\1/')
           echo "New version: $new_version"
           git fetch --tags
-          last_tag=$(git describe --tags --abbrev=0)
+          last_tag=$(git tag --sort=-creatordate | head -n 1)
           echo "Last tag: $last_tag"
           if [ "$new_version" == "${last_tag#v}" ]; then
             echo "Version has not changed. Exiting."

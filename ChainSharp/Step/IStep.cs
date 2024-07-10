@@ -1,7 +1,6 @@
-using ChainSharp.Exceptions;
 using LanguageExt;
 
-namespace ChainSharp;
+namespace ChainSharp.Step;
 
 public interface IStep<TIn, TOut>
 {

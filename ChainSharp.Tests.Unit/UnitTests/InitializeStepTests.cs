@@ -13,15 +13,15 @@ public class InitializeStepTests : TestSetup
     {
         // Arrange
         var input = 1;
-        
+
         var workflow = new TestWorkflow();
 
         // Act
         var step = workflow.InitializeStep<TestValidStep, int, string>();
-        
+
         // Assert
         step.Should().NotBeNull();
-        
+
         var result = await step!.Run(input);
         result.Should().Be(input.ToString());
     }
@@ -31,18 +31,18 @@ public class InitializeStepTests : TestSetup
     {
         // Arrange
         var workflow = new TestWorkflow().Activate(1);
-        
+
         // Act
         var step = workflow.InitializeStep<TestInvalidStep, int, string>();
-        
+
         // Assert
         workflow.Exception.Should().NotBeNull();
     }
-    
+
     private class TestWorkflow : Workflow<int, string>
     {
-        protected override async Task<Either<Exception, string>> RunInternal(int input)
-            => Resolve();
+        protected override async Task<Either<Exception, string>> RunInternal(int input) =>
+            Resolve();
     }
 
     private class TestValidStep : Step<int, string>
@@ -53,7 +53,5 @@ public class InitializeStepTests : TestSetup
         }
     }
 
-    private class TestInvalidStep(int intInput, string stringInput)
-    {
-    }
+    private class TestInvalidStep(int intInput, string stringInput) { }
 }

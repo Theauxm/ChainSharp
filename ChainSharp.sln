@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp", "ChainSharp\Ch
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests", "ChainSharp.Tests\ChainSharp.Tests.csproj", "{DA06ED54-A8D0-4325-86C7-443815E8DD7F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests.Unit", "ChainSharp.Tests.Unit\ChainSharp.Tests.Unit.csproj", "{379B1514-B3D7-4D85-ABBB-F4E04137453F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{DA06ED54-A8D0-4325-86C7-443815E8DD7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DA06ED54-A8D0-4325-86C7-443815E8DD7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DA06ED54-A8D0-4325-86C7-443815E8DD7F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{379B1514-B3D7-4D85-ABBB-F4E04137453F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{379B1514-B3D7-4D85-ABBB-F4E04137453F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{379B1514-B3D7-4D85-ABBB-F4E04137453F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{379B1514-B3D7-4D85-ABBB-F4E04137453F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

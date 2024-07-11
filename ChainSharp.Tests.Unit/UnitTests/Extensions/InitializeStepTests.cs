@@ -4,7 +4,7 @@ using ChainSharp.Workflow;
 using FluentAssertions;
 using LanguageExt;
 
-namespace ChainSharp.Tests.Unit.UnitTests;
+namespace ChainSharp.Tests.Unit.UnitTests.Extensions;
 
 public class InitializeStepTests : TestSetup
 {

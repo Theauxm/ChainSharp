@@ -9,7 +9,8 @@ public abstract partial class Workflow<TInput, TReturn> : IWorkflow<TInput, TRet
 
     protected internal Dictionary<Type, object> Memory { get; private set; } = null!;
 
-    private TReturn? ShortCircuitValue { get; set; }
+    private TReturn ShortCircuitValue { get; set; } = default!;
+    private bool ShortCircuitValueSet { get; set; } = false;
 
     public async Task<TReturn> Run(TInput input) => await RunEither(input).Unwrap();
 

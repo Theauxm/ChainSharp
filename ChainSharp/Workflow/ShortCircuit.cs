@@ -70,7 +70,11 @@ public partial class Workflow<TInput, TReturn>
         var outParam = parameters[2];
 
         var maybeRightValue = ReflectionHelpers.GetRightFromDynamicEither(outParam);
-        maybeRightValue.Iter(rightValue => ShortCircuitValue = (TReturn?)rightValue);
+        maybeRightValue.Iter(rightValue =>
+        {
+            ShortCircuitValue = (TReturn?)rightValue;
+            ShortCircuitValueSet = true;
+        });
 
         return (Workflow<TInput, TReturn>)result!;
     }

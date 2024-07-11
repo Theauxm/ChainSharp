@@ -64,7 +64,7 @@ public class ActivateTests : TestSetup
         // Arrange
         var inputObject = new object();
         var input = (1, inputObject);
-        var workflow = new TestWorkflow();
+        var workflow = new TestTupleWorkflow();
 
         // Act
         workflow.Activate(input, 2, "hello", false);
@@ -72,7 +72,7 @@ public class ActivateTests : TestSetup
         // Assert
         workflow.Memory.Should().NotBeNull();
         workflow.Memory.Count.Should().Be(5);
-        workflow.Memory.Should().ContainValue(input);
+        workflow.Memory.Should().ContainValue(inputObject);
         workflow.Memory.Should().ContainValue(2);
         workflow.Memory.Should().ContainValue(false);
         workflow.Memory.Should().ContainValue("hello");

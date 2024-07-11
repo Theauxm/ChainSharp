@@ -93,6 +93,45 @@ public class ExtractTypeFromMemoryTests : TestSetup
         result.Should().BeNull();
     }
 
+    [Theory]
+    public async Task TestValidExtractTypesFromMemory()
+    {
+        // Arrange
+        var input = 1;
+        var tupleInput = ("hello", false);
+
+        var workflow = new TestWorkflow().Activate(input, tupleInput);
+
+        List<Type> typesToExtract = [ typeof(bool), typeof(string), typeof(int) ];
+        
+        // Act
+        var result = workflow.ExtractTypesFromMemory(typesToExtract);
+
+        result.Should().NotBeNull();
+        result.Length.Should().Be(3);
+        result.Should().Contain(false);
+        result.Should().Contain("hello");
+        result.Should().Contain(1);
+    }
+    
+    [Theory]
+    public async Task TestInvalidExtractTypesFromMemory()
+    {
+        // Arrange
+        var input = 1;
+
+        var workflow = new TestWorkflow().Activate(input);
+
+        List<Type> typesToExtract = [ typeof(bool), typeof(string), typeof(int) ];
+        
+        // Act
+        var result = workflow.ExtractTypesFromMemory(typesToExtract);
+
+        result.Should().NotBeNull();
+        result.Length.Should().Be(3);
+        workflow.Exception.Should().NotBeNull();
+    }
+
     private class TestWorkflow : Workflow<int, string>
     {
         protected override async Task<Either<Exception, string>> RunInternal(int input) =>

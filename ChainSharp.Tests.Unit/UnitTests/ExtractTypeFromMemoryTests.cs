@@ -102,8 +102,8 @@ public class ExtractTypeFromMemoryTests : TestSetup
 
         var workflow = new TestWorkflow().Activate(input, tupleInput);
 
-        List<Type> typesToExtract = [ typeof(bool), typeof(string), typeof(int) ];
-        
+        List<Type> typesToExtract = [typeof(bool), typeof(string), typeof(int)];
+
         // Act
         var result = workflow.ExtractTypesFromMemory(typesToExtract);
 
@@ -113,7 +113,7 @@ public class ExtractTypeFromMemoryTests : TestSetup
         result.Should().Contain("hello");
         result.Should().Contain(1);
     }
-    
+
     [Theory]
     public async Task TestInvalidExtractTypesFromMemory()
     {
@@ -122,8 +122,8 @@ public class ExtractTypeFromMemoryTests : TestSetup
 
         var workflow = new TestWorkflow().Activate(input);
 
-        List<Type> typesToExtract = [ typeof(bool), typeof(string), typeof(int) ];
-        
+        List<Type> typesToExtract = [typeof(bool), typeof(string), typeof(int)];
+
         // Act
         var result = workflow.ExtractTypesFromMemory(typesToExtract);
 

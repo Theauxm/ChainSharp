@@ -62,64 +62,58 @@ public static class WorkflowExtensions
         return initializedStep;
     }
 
-    internal static T? ExtractTypeFromMemory<T, TInput, TReturn>(
-        this Workflow<TInput, TReturn> workflow
-    )
-    {
-        T? input = default;
-
-        var inputType = typeof(T);
-        if (inputType.IsTuple())
-        {
-            try
-            {
-                input = ExtractTuple(workflow, inputType);
-            }
-            catch (Exception e)
-            {
-                workflow.Exception ??= e;
-            }
-        }
-
-        input ??= (T?)workflow.Memory.GetValueOrDefault(inputType);
-
-        if (input is null)
-            workflow.Exception ??= new WorkflowException($"Could not find type: ({inputType}).");
-
-        return input;
-    }
-
-    internal static dynamic[] ExtractTypesFromMemory<TInput, TReturn>(
+    internal static dynamic?[] ExtractTypesFromMemory<TInput, TReturn>(
         this Workflow<TInput, TReturn> workflow,
         IEnumerable<Type> types
     ) => types.Select(type => ExtractTypeFromMemory(workflow, type)).ToArray();
 
-    internal static dynamic ExtractTypeFromMemory<TInput, TReturn>(
+    internal static T? ExtractTypeFromMemory<T, TInput, TReturn>(
+        this Workflow<TInput, TReturn> workflow
+    )
+    {
+        try
+        {
+            var inputType = typeof(T);
+
+            var input = inputType.IsTuple()
+                ? ExtractTuple(workflow, inputType)
+                : (T?)workflow.Memory.GetValueOrDefault(inputType);
+
+            if (input is null)
+                workflow.Exception ??= new WorkflowException(
+                    $"Could not find type: ({inputType})."
+                );
+
+            return input;
+        }
+        catch (Exception e)
+        {
+            workflow.Exception ??= e;
+            return default;
+        }
+    }
+
+    internal static dynamic? ExtractTypeFromMemory<TInput, TReturn>(
         this Workflow<TInput, TReturn> workflow,
         Type tIn
     )
     {
-        dynamic? input = null;
-
-        var inputType = tIn;
-        if (inputType.IsTuple())
+        try
         {
-            try
-            {
-                input = ExtractTuple(workflow, inputType);
-            }
-            catch (Exception e)
-            {
-                workflow.Exception ??= e;
-            }
+            var input = tIn.IsTuple()
+                ? ExtractTuple(workflow, tIn)
+                : workflow.Memory.GetValueOrDefault(tIn);
+
+            if (input is null)
+                throw new WorkflowException($"Could not find type: ({tIn}).");
+
+            return input;
         }
-
-        input ??= workflow.Memory.GetValueOrDefault(inputType);
-
-        if (input is null)
-            workflow.Exception ??= new WorkflowException($"Could not find type: ({inputType}).");
-
-        return input!;
+        catch (Exception e)
+        {
+            workflow.Exception ??= e;
+            return null;
+        }
     }
 
     internal static dynamic ExtractTuple<TInput, TReturn>(
@@ -132,6 +126,10 @@ public static class WorkflowExtensions
         return typeTuples.Count switch
         {
             0 => throw new WorkflowException($"Cannot have Tuple of length 0."),
+            1
+                => throw new WorkflowException(
+                    "Tuple of a single length should be passed as the value itself."
+                ),
             2 => TypeHelpers.ConvertTwoTuple(typeTuples),
             3 => TypeHelpers.ConvertThreeTuple(typeTuples),
             4 => TypeHelpers.ConvertFourTuple(typeTuples),
@@ -156,6 +154,11 @@ public static class WorkflowExtensions
             throw new WorkflowException($"Input of type ({typeof(TIn)} cannot be null.");
 
         var inputTuple = (ITuple)input;
+
+        if (inputTuple.Length > 7)
+            throw new WorkflowException(
+                $"Tuple input ({typeof(TIn)}) cannot have a length greater than 7."
+            );
 
         var tupleList = Enumerable.Range(0, inputTuple.Length).Select(i => inputTuple[i]!).ToList();
 

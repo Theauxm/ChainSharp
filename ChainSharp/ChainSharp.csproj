@@ -16,16 +16,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Include="README.md" Pack="true" PackagePath="/"/>
-    </ItemGroup>
-
-    <ItemGroup>
         <PackageReference Include="LanguageExt.Core" Version="4.4.7" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
     </ItemGroup>
-
-    <PropertyGroup>
-        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
-    </PropertyGroup>
 </Project>

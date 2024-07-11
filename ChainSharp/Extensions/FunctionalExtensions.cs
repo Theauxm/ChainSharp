@@ -24,5 +24,6 @@ public static class FunctionalExtensions
     }
 
     internal static bool IsTuple(this Type type) =>
-        type.IsGenericType && type.FullName.StartsWith("System.ValueTuple`");
+        (type.IsGenericType && type.FullName.StartsWith("System.ValueTuple`"))
+        || type.FullName.StartsWith("System.Runtime.CompilerServices.ITuple");
 }

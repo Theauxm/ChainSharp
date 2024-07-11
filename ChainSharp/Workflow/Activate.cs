@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using ChainSharp.Exceptions;
 using ChainSharp.Extensions;
 using LanguageExt;
@@ -6,7 +7,7 @@ namespace ChainSharp.Workflow;
 
 public partial class Workflow<TInput, TReturn>
 {
-    public Workflow<TInput, TReturn> Activate(TInput input, params object[] otherTypes)
+    public Workflow<TInput, TReturn> Activate(TInput input, params object[] otherInputs)
     {
         // Always allow input type of Unit for parameterless invocation
         Memory ??= new Dictionary<Type, object>() { { typeof(Unit), Unit.Default } };
@@ -24,8 +25,15 @@ public partial class Workflow<TInput, TReturn>
         else
             Memory[inputType] = input;
 
-        foreach (var otherType in otherTypes)
-            Memory[otherType.GetType()] = otherType;
+        foreach (var otherInput in otherInputs)
+        {
+            var otherType = otherInput.GetType();
+
+            if (otherType.IsTuple())
+                this.AddTupleToMemory((ITuple)otherInput);
+            else
+                Memory[otherType] = otherInput;
+        }
 
         return this;
     }

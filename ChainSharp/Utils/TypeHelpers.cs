@@ -131,7 +131,7 @@ internal static class TypeHelpers
     {
         ArgumentNullException.ThrowIfNull(dynamicList);
 
-        if (dynamicList.Count < 6)
+        if (dynamicList.Count < 7)
             throw new ArgumentException(
                 "List must have at least six elements.",
                 nameof(dynamicList)

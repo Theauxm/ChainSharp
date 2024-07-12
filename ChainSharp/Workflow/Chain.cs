@@ -78,9 +78,13 @@ public partial class Workflow<TInput, TReturn>
         var stepType = typeof(TStep);
 
         if (!stepType.IsInterface)
+        {
             Exception ??= new WorkflowException(
                 $"Step ({stepType}) must be an interface to call IChain."
             );
+
+            return this;
+        }
 
         var stepService = this.ExtractTypeFromMemory<TStep, TInput, TReturn>();
 
@@ -123,7 +127,7 @@ public partial class Workflow<TInput, TReturn>
 
     #region Chain<TStep, TIn>
 
-    // Chain<TStep, TIn>(TStep, In)
+    // Chain<TStep, TIn>(TStep, TIn)
     public Workflow<TInput, TReturn> Chain<TStep, TIn>(
         TStep step,
         Either<Exception, TIn> previousStep

@@ -84,7 +84,7 @@ public static class WorkflowExtensions
                     $"Could not find type: ({inputType})."
                 );
 
-            return input;
+            return (T?)input;
         }
         catch (Exception e)
         {

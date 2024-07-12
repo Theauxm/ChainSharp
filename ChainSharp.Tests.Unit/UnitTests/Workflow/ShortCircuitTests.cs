@@ -57,28 +57,6 @@ public class ShortCircuitTests : TestSetup
     }
 
     [Theory]
-    public async Task TestInvalidShortCircuitChain()
-    {
-        // Arrange
-        var input = 1;
-        var testStep = new TestStep();
-        var workflow = new TestWorkflow().Activate(input);
-
-        // Act
-        workflow.ShortCircuitChain<TestStep, string, bool>(
-            testStep,
-            new Exception(),
-            out var returnValue
-        );
-
-        // Assert
-        workflow.Memory.Should().NotBeNull();
-        workflow.Exception.Should().BeNull();
-        returnValue.IsLeft.Should().BeTrue();
-        returnValue.Swap().ValueUnsafe().Should().BeOfType<Exception>();
-    }
-
-    [Theory]
     public async Task TestShortCircuitChainFailure()
     {
         // Arrange
@@ -102,6 +80,38 @@ public class ShortCircuitTests : TestSetup
         workflow.Memory.Should().NotContainValue(inputString.Equals("hello"));
     }
 
+    [Theory]
+    public async Task TestShortCircuitOneType()
+    {
+        // Arrange
+        var input = 1;
+        var inputString = "hello";
+        var workflow = new TestWorkflow().Activate(input, inputString);
+
+        // Act
+        workflow.ShortCircuit<TestStepStringOutput>();
+
+        // Assert
+        workflow.Memory.Should().NotBeNull();
+        workflow.Exception.Should().BeNull();
+        workflow.Memory.Should().ContainValue("helloworld");
+    }
+
+    [Theory]
+    public async Task TestInvalidShortCircuitOneType()
+    {
+        // Arrange
+        var input = 1;
+        var workflow = new TestWorkflow().Activate(input);
+
+        // Act
+        workflow.ShortCircuit<TestStepStringOutput>();
+
+        // Assert
+        workflow.Memory.Should().NotBeNull();
+        workflow.Exception.Should().NotBeNull();
+    }
+
     private class TestExceptionStep : Step<string, bool>
     {
         public override Task<bool> Run(string input) => throw new NotImplementedException();
@@ -116,6 +126,11 @@ public class ShortCircuitTests : TestSetup
     private class TestStep : Step<string, bool>
     {
         public override async Task<bool> Run(string input) => input.Equals("hello");
+    }
+
+    private class TestStepStringOutput : Step<string, string>
+    {
+        public override async Task<string> Run(string input) => input + "world";
     }
 
     private class TestWorkflow : Workflow<int, string>

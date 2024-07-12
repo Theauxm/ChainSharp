@@ -1,3 +1,4 @@
+using ChainSharp.Exceptions;
 using ChainSharp.Extensions;
 using ChainSharp.Step;
 using ChainSharp.Utils;
@@ -10,7 +11,7 @@ public partial class Workflow<TInput, TReturn>
     // ShortCircuitChain<TStep, TIn, TOut>(TStep, TIn, TOut)
     public Workflow<TInput, TReturn> ShortCircuitChain<TStep, TIn, TOut>(
         TStep step,
-        Either<Exception, TIn> previousStep,
+        TIn previousStep,
         out Either<Exception, TOut> outVar
     )
         where TStep : IStep<TIn, TOut>
@@ -63,7 +64,10 @@ public partial class Workflow<TInput, TReturn>
         var input = this.ExtractTypeFromMemory(tIn);
 
         if (input == null)
+        {
+            Exception ??= new WorkflowException($"Could not find ({tIn}) in Memory.");
             return this;
+        }
 
         object[] parameters = [stepInstance, input, null];
         var result = chainMethod.Invoke(this, parameters);

@@ -10,7 +10,7 @@ public partial class Workflow<TInput, TReturn>
     // ShortCircuitChain<TStep, TIn, TOut>(TStep, TIn, TOut)
     public Workflow<TInput, TReturn> ShortCircuitChain<TStep, TIn, TOut>(
         TStep step,
-        TIn previousStep,
+        Either<Exception, TIn> previousStep,
         out Either<Exception, TOut> outVar
     )
         where TStep : IStep<TIn, TOut>

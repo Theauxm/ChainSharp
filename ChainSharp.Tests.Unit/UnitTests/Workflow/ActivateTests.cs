@@ -99,13 +99,13 @@ public class ActivateTests : TestSetup
         workflow.Exception.Should().BeNull();
     }
 
-    public class TestWorkflow : Workflow<object, string>
+    private class TestWorkflow : Workflow<object, string>
     {
         protected override Task<Either<Exception, string>> RunInternal(object input) =>
             throw new NotImplementedException();
     }
 
-    public class TestTupleWorkflow : Workflow<(int, object), string>
+    private class TestTupleWorkflow : Workflow<(int, object), string>
     {
         protected override Task<Either<Exception, string>> RunInternal((int, object) input) =>
             throw new NotImplementedException();

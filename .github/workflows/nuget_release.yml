@@ -26,14 +26,14 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('Directory.Build.Props') }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('Directory.Build.props') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
 
       - name: Verify version change
         id: version
         run: |
-          props_file="Directory.Build.Props"
+          props_file="Directory.Build.props"
           version_line=$(grep '<Version>' $props_file)
           new_version=$(echo $version_line | sed -E 's/.*<Version>(.*)<\/Version>.*/\1/')
           echo "New version: $new_version"
@@ -62,7 +62,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          new_version=$(grep '<Version>' Directory.Build.Props | sed -E 's/.*<Version>(.*)<\/Version>.*/\1/')
+          new_version=$(grep '<Version>' Directory.Build.props | sed -E 's/.*<Version>(.*)<\/Version>.*/\1/')
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag v$new_version

@@ -2,9 +2,9 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp", "ChainSharp\ChainSharp.csproj", "{E73AB948-40E3-416B-958A-8CBD8A09F3ED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests", "ChainSharp.Tests\ChainSharp.Tests.csproj", "{DA06ED54-A8D0-4325-86C7-443815E8DD7F}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests.Unit", "ChainSharp.Tests.Unit\ChainSharp.Tests.Unit.csproj", "{379B1514-B3D7-4D85-ABBB-F4E04137453F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests.Integration", "ChainSharp.Tests.Integration\ChainSharp.Tests.Integration.csproj", "{A85242EF-2527-4EBF-874D-789594863F62}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -16,13 +16,13 @@ Global
 		{E73AB948-40E3-416B-958A-8CBD8A09F3ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E73AB948-40E3-416B-958A-8CBD8A09F3ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E73AB948-40E3-416B-958A-8CBD8A09F3ED}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DA06ED54-A8D0-4325-86C7-443815E8DD7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DA06ED54-A8D0-4325-86C7-443815E8DD7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DA06ED54-A8D0-4325-86C7-443815E8DD7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DA06ED54-A8D0-4325-86C7-443815E8DD7F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{379B1514-B3D7-4D85-ABBB-F4E04137453F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{379B1514-B3D7-4D85-ABBB-F4E04137453F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{379B1514-B3D7-4D85-ABBB-F4E04137453F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{379B1514-B3D7-4D85-ABBB-F4E04137453F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A85242EF-2527-4EBF-874D-789594863F62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A85242EF-2527-4EBF-874D-789594863F62}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A85242EF-2527-4EBF-874D-789594863F62}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A85242EF-2527-4EBF-874D-789594863F62}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

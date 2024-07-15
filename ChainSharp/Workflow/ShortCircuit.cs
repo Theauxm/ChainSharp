@@ -22,7 +22,7 @@ public partial class Workflow<TInput, TReturn>
             return this;
         }
 
-        outVar = Task.Run(() => step.RailwayStep(previousValue)).Result;
+        outVar = Task.Run(() => step.RailwayStep(previousStep)).Result;
 
         // We skip the Left for Short Circuiting
         if (outVar.IsRight)

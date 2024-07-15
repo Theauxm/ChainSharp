@@ -37,6 +37,385 @@ public class WorkflowTests : TestSetup
         _brew = ServiceProvider.GetRequiredService<IBrew>();
     }
 
+    [Theory]
+    public async Task TestInputOfTuple()
+    {
+        // Arrange
+        var intInput = 1;
+        var stringInput = "hello";
+        var objectInput = new object();
+        var input = (intInput, stringInput, objectInput);
+        var workflow = new WorkflowTestWithTupleInput();
+
+        // Act
+        var result = await workflow.Run(input);
+
+        // Assert
+        workflow.Exception.Should().BeNull();
+        workflow.Memory.Should().NotBeNull();
+        workflow.Memory.Count.Should().Be(6);
+        result.Should().NotBeNull();
+
+        var (boolResult, doubleResult, objectResult) = result;
+        boolResult.Should().BeTrue();
+        doubleResult.Should().Be(1);
+        objectResult.Should().NotBe(objectInput);
+    }
+
+    [Theory]
+    public async Task TestExtractProperty()
+    {
+        // Arrange
+        var outerProperty = new OuterProperty()
+        {
+            OuterString = "hello world",
+            InnerProperty = new InnerProperty() { Number = 7 }
+        };
+        var workflow = new AccessInnerPropertyTypeWorkflow();
+
+        // Act
+        var propertyResult = await workflow.Run(outerProperty);
+
+        // Assert
+        workflow.Memory.Should().NotBeNull();
+        workflow.Exception.Should().BeNull();
+        workflow.Memory.Count.Should().Be(3);
+        propertyResult.Number.Should().Be(7);
+    }
+    
+    [Theory]
+    public async Task TestExtractField()
+    {
+        // Arrange
+        var outerField = new OuterField()
+        {
+            OuterString = "hello mars",
+            InnerProperty = new InnerField() { Number = 8 }
+        };
+        var workflow = new AccessInnerFieldTypeWorkflow();
+
+        // Act
+        var fieldResult = await workflow.Run(outerField);
+
+        // Assert
+        workflow.Memory.Should().NotBeNull();
+        workflow.Exception.Should().BeNull();
+        fieldResult.Number.Should().Be(8);
+    }
+
+    [Theory]
+    public async Task TestChain()
+    {
+        // Arrange
+        var prepare = ServiceProvider.GetRequiredService<IPrepare>();
+        var bottle = ServiceProvider.GetRequiredService<IBottle>();
+
+        var workflow = new ChainTest(_brew, prepare, bottle);
+
+        var ingredients = new Ingredients()
+        {
+            Apples = 1,
+            BrownSugar = 1,
+            Cinnamon = 1,
+            Yeast = 1
+        };
+
+        // Act
+        var result = await workflow.Run(ingredients);
+        
+        // Assert
+        workflow.Memory.Should().NotBeNull();
+        workflow.Exception.Should().BeNull();
+        result.Should().NotBeNull();
+    }
+
+    [Theory]
+    public async Task TestChainWithMockedService()
+    {
+        // Arrange
+        var workflow = new ChainTestWithMockedService();
+
+        var ingredients = new Ingredients()
+        {
+            Apples = 1,
+            BrownSugar = 1,
+            Cinnamon = 1,
+            Yeast = 1
+        };
+
+        // Act
+        var result = await workflow.Run(ingredients);
+        
+        // Assert
+        workflow.Memory.Should().NotBeNull();
+        workflow.Exception.Should().BeNull();
+        result.Should().NotBeNull();
+    }
+
+    [Theory]
+    public async Task TestChainWithNoInputs()
+    {
+        // Arrange
+        var workflow = new ChainTestWithNoInputs();
+
+        var ingredients = new Ingredients()
+        {
+            Apples = 1,
+            BrownSugar = 1,
+            Cinnamon = 1,
+            Yeast = 1
+        };
+
+        // Act
+        var result = await workflow.Run(ingredients);
+        
+        // Assert
+        workflow.Exception.Should().BeNull();
+        workflow.Memory.Should().NotBeNull();
+        result.Should().NotBeNull();
+    }
+
+    [Theory]
+    public async Task TestChainWithInterfaceTupleArgument()
+    {
+        // Arrange
+        var workflow = new ChainTestWithInterfaceTuple();
+
+        var ingredients = new Ingredients()
+        {
+            Apples = 1,
+            BrownSugar = 1,
+            Cinnamon = 1,
+            Yeast = 1
+        };
+
+        // Act
+        var result = await workflow.Run(ingredients);
+        
+        // Assert
+        workflow.Exception.Should().BeNull();
+        workflow.Memory.Should().NotBeNull();
+        result.Should().NotBeNull(); 
+    }
+
+    [Theory]
+    public async Task TestChainWithOneTypedService()
+    {
+        // Arrange
+        var workflow = new ChainTestWithOneTypedService();
+
+        var ingredients = new Ingredients()
+        {
+            Apples = 1,
+            BrownSugar = 1,
+            Cinnamon = 1,
+            Yeast = 1
+        };
+
+        // Act
+        var result = await workflow.Run(ingredients);
+        
+        // Assert
+        workflow.Exception.Should().BeNull();
+        workflow.Memory.Should().NotBeNull();
+        result.Should().NotBeNull(); 
+    }
+
+    [Theory]
+    public async Task TestChainWithTwoTypedService()
+    {
+        // Arrange
+        var workflow = new ChainTestWithTwoTypedServices();
+
+        var ingredients = new Ingredients()
+        {
+            Apples = 1,
+            BrownSugar = 1,
+            Cinnamon = 1,
+            Yeast = 1
+        };
+
+        // Act
+        var result = await workflow.Run(ingredients);
+        
+        // Assert
+        workflow.Exception.Should().BeNull();
+        workflow.Memory.Should().NotBeNull();
+        result.Should().NotBeNull();  
+    }
+
+    [Theory]
+    public async Task TestChainWithShortCircuit()
+    {
+        // Arrange
+        var prepare = ServiceProvider.GetRequiredService<IPrepare>();
+        var ferment = ServiceProvider.GetRequiredService<IFerment>();
+
+        var workflow = new ChainTestWithShortCircuit(prepare, ferment);
+
+        var ingredients = new Ingredients()
+        {
+            Apples = 1,
+            BrownSugar = 1,
+            Cinnamon = 1,
+            Yeast = 1
+        };
+
+        // Act
+        var result = await workflow.Run(ingredients);
+        
+        // Assert
+        workflow.Exception.Should().BeNull();
+        workflow.Memory.Should().NotBeNull();
+        result.Should().NotBeNull();  
+    }
+
+    [Theory]
+    public async Task TestChainWithUnitInput()
+    {
+        // Arrange
+        var workflow = new ChainTestWithUnitInput();
+
+        var ingredients = new Ingredients()
+        {
+            Apples = 1,
+            BrownSugar = 1,
+            Cinnamon = 1,
+            Yeast = 1
+        };
+
+        // Act
+        var result = await workflow.Run(ingredients);
+        
+        // Assert
+        workflow.Exception.Should().BeNull();
+        workflow.Memory.Should().NotBeNull();
+        result.Should().NotBeNull();  
+    }
+
+    [Theory]
+    public async Task TestChainWithShortCircuitStaysLeft()
+    {
+        // Arrange
+        var prepare = ServiceProvider.GetRequiredService<IPrepare>();
+        var ferment = ServiceProvider.GetRequiredService<IFerment>();
+
+        var workflow = new ChainTestWithShortCircuitStaysLeft(prepare, ferment);
+
+        var ingredients = new Ingredients()
+        {
+            Apples = 1,
+            BrownSugar = 1,
+            Cinnamon = 1,
+            Yeast = 1
+        };
+
+        // Act
+        var result = await workflow.Run(ingredients);
+        
+        // Assert
+        workflow.Exception.Should().BeNull();
+        workflow.Memory.Should().NotBeNull();
+        result.Should().NotBeNull();  
+    }
+    
+    private class OuterProperty
+    {
+        public string OuterString { get; set; }
+
+        public InnerProperty InnerProperty { get; set; }
+    }
+
+    private class InnerProperty
+    {
+        public int Number { get; set; }
+    }
+
+    private class OuterField
+    {
+        public string OuterString;
+
+        public InnerField InnerProperty;
+    }
+
+    private class InnerField
+    {
+        public int Number;
+    }
+
+    private class AccessInnerPropertyTypeWorkflow : Workflow<OuterProperty, InnerProperty>
+    {
+        protected override async Task<Either<Exception, InnerProperty>> RunInternal(
+            OuterProperty input
+        ) => Activate(input).Extract<OuterProperty, InnerProperty>().Resolve();
+    }
+
+    private class AccessInnerFieldTypeWorkflow : Workflow<OuterField, InnerField>
+    {
+        protected override async Task<Either<Exception, InnerField>> RunInternal(
+            OuterField input
+        ) => Activate(input).Extract<OuterField, InnerField>().Resolve();
+    }
+
+    private class TwoTupleStepTest : Step<(Ingredients, BrewingJug), Unit>
+    {
+        public override async Task<Unit> Run((Ingredients, BrewingJug) input)
+        {
+            var (x, y) = input;
+
+            x.Apples++;
+            y.Gallons++;
+
+            return Unit.Default;
+        }
+    }
+
+    /// <summary>
+    /// Tests to ensure that tuple casting to interface works correctly
+    /// </summary>
+    private class TwoTupleStepInterfaceTest : Step<(Ingredients, IBrewingJug), Unit>
+    {
+        public override async Task<Unit> Run((Ingredients, IBrewingJug) input)
+        {
+            var (x, y) = input;
+
+            x.Apples++;
+            y.Gallons++;
+
+            return Unit.Default;
+        }
+    }
+
+    private class CastBrewingJug : Step<IBrewingJug, BrewingJug>
+    {
+        public override async Task<BrewingJug> Run(IBrewingJug input)
+        {
+            // MAGIC!
+            return (BrewingJug)input;
+        }
+    }
+
+    private class TupleReturnStep : Step<Unit, (bool, double, object)>
+    {
+        public override async Task<(bool, double, object)> Run(Unit input)
+        {
+            return (true, 1, new object());
+        }
+    }
+
+    private class ThreeTupleStepTest : Step<(Ingredients, BrewingJug, Unit), Unit>
+    {
+        public override async Task<Unit> Run((Ingredients, BrewingJug, Unit) input)
+        {
+            var (x, y, z) = input;
+
+            x.Apples++;
+            y.Gallons++;
+
+            return Unit.Default;
+        }
+    }
+    
     private class ChainTest(IBrew brew, IPrepare prepare, IBottle bottle)
         : Workflow<Ingredients, List<GlassBottle>>
     {
@@ -172,7 +551,10 @@ public class WorkflowTests : TestSetup
     {
         protected override async Task<Either<Exception, (bool, double, object)>> RunInternal(
             (int, string, object) input
-        ) => Activate(input).Chain<TupleReturnStep>().ShortCircuit<TupleReturnStep>().Resolve();
+        ) => Activate(input)
+            .Chain<TupleReturnStep>()
+            .ShortCircuit<TupleReturnStep>()
+            .Resolve();
     }
 
     private class ChainTestWithUnitInput : Workflow<Ingredients, List<GlassBottle>>
@@ -236,293 +618,5 @@ public class WorkflowTests : TestSetup
                 .Chain<Bottle>()
                 .Resolve();
         }
-    }
-
-    private class OuterProperty
-    {
-        public string OuterString { get; set; }
-
-        public InnerProperty InnerProperty { get; set; }
-    }
-
-    private class InnerProperty
-    {
-        public int Number { get; set; }
-    }
-
-    private class OuterField
-    {
-        public string OuterString;
-
-        public InnerField InnerProperty;
-    }
-
-    private class InnerField
-    {
-        public int Number;
-    }
-
-    private class AccessInnerPropertyTypeWorkflow : Workflow<OuterProperty, InnerProperty>
-    {
-        protected override async Task<Either<Exception, InnerProperty>> RunInternal(
-            OuterProperty input
-        ) => Activate(input).Extract<OuterProperty, InnerProperty>().Resolve();
-    }
-
-    private class AccessInnerFieldTypeWorkflow : Workflow<OuterField, InnerField>
-    {
-        protected override async Task<Either<Exception, InnerField>> RunInternal(
-            OuterField input
-        ) => Activate(input).Extract<OuterField, InnerField>().Resolve();
-    }
-
-    private class TwoTupleStepTest : Step<(Ingredients, BrewingJug), Unit>
-    {
-        public override async Task<Unit> Run((Ingredients, BrewingJug) input)
-        {
-            var (x, y) = input;
-
-            x.Apples++;
-            y.Gallons++;
-
-            return Unit.Default;
-        }
-    }
-
-    /// <summary>
-    /// Tests to ensure that tuple casting to interface works correctly
-    /// </summary>
-    private class TwoTupleStepInterfaceTest : Step<(Ingredients, IBrewingJug), Unit>
-    {
-        public override async Task<Unit> Run((Ingredients, IBrewingJug) input)
-        {
-            var (x, y) = input;
-
-            x.Apples++;
-            y.Gallons++;
-
-            return Unit.Default;
-        }
-    }
-
-    private class CastBrewingJug : Step<IBrewingJug, BrewingJug>
-    {
-        public override async Task<BrewingJug> Run(IBrewingJug input)
-        {
-            // MAGIC!
-            return (BrewingJug)input;
-        }
-    }
-
-    private class TupleReturnStep : Step<Unit, (bool, double, object)>
-    {
-        public override async Task<(bool, double, object)> Run(Unit input)
-        {
-            return (true, 1, new object());
-        }
-    }
-
-    private class ThreeTupleStepTest : Step<(Ingredients, BrewingJug, Unit), Unit>
-    {
-        public override async Task<Unit> Run((Ingredients, BrewingJug, Unit) input)
-        {
-            var (x, y, z) = input;
-
-            x.Apples++;
-            y.Gallons++;
-
-            return Unit.Default;
-        }
-    }
-
-    [Theory]
-    public async Task TestInputOfTuple()
-    {
-        // Arrange
-
-        // Act
-        var result = await new WorkflowTestWithTupleInput().Run((1, "hello", new object()));
-
-        // Assert
-    }
-
-    [Theory]
-    public async Task TestExtract()
-    {
-        // Arrange
-        var outerProperty = new OuterProperty()
-        {
-            OuterString = "hello world",
-            InnerProperty = new InnerProperty() { Number = 7 }
-        };
-
-        var outerField = new OuterField()
-        {
-            OuterString = "hello mars",
-            InnerProperty = new InnerField() { Number = 8 }
-        };
-
-        // Act
-        var propertyResult = await new AccessInnerPropertyTypeWorkflow().Run(outerProperty);
-        var fieldResult = await new AccessInnerFieldTypeWorkflow().Run(outerField);
-
-        // Assert
-        propertyResult.Number.Should().Be(7);
-        fieldResult.Number.Should().Be(8);
-    }
-
-    [Theory]
-    public async Task TestChain()
-    {
-        var prepare = ServiceProvider.GetRequiredService<IPrepare>();
-        var bottle = ServiceProvider.GetRequiredService<IBottle>();
-
-        var workflow = new ChainTest(_brew, prepare, bottle);
-
-        var ingredients = new Ingredients()
-        {
-            Apples = 1,
-            BrownSugar = 1,
-            Cinnamon = 1,
-            Yeast = 1
-        };
-
-        var result = await workflow.Run(ingredients);
-    }
-
-    [Theory]
-    public async Task TestChainWithMockedService()
-    {
-        var workflow = new ChainTestWithMockedService();
-
-        var ingredients = new Ingredients()
-        {
-            Apples = 1,
-            BrownSugar = 1,
-            Cinnamon = 1,
-            Yeast = 1
-        };
-
-        var result = await workflow.Run(ingredients);
-    }
-
-    [Theory]
-    public async Task TestChainWithNoInputs()
-    {
-        var workflow = new ChainTestWithNoInputs();
-
-        var ingredients = new Ingredients()
-        {
-            Apples = 1,
-            BrownSugar = 1,
-            Cinnamon = 1,
-            Yeast = 1
-        };
-
-        var result = await workflow.Run(ingredients);
-    }
-
-    [Theory]
-    public async Task TestChainWithInterfaceTupleArgument()
-    {
-        var workflow = new ChainTestWithInterfaceTuple();
-
-        var ingredients = new Ingredients()
-        {
-            Apples = 1,
-            BrownSugar = 1,
-            Cinnamon = 1,
-            Yeast = 1
-        };
-
-        var result = await workflow.Run(ingredients);
-    }
-
-    [Theory]
-    public async Task TestChainWithOneTypedService()
-    {
-        var workflow = new ChainTestWithOneTypedService();
-
-        var ingredients = new Ingredients()
-        {
-            Apples = 1,
-            BrownSugar = 1,
-            Cinnamon = 1,
-            Yeast = 1
-        };
-
-        var result = await workflow.Run(ingredients);
-    }
-
-    [Theory]
-    public async Task TestChainWithTwoTypedService()
-    {
-        var workflow = new ChainTestWithTwoTypedServices();
-
-        var ingredients = new Ingredients()
-        {
-            Apples = 1,
-            BrownSugar = 1,
-            Cinnamon = 1,
-            Yeast = 1
-        };
-
-        var result = await workflow.Run(ingredients);
-    }
-
-    [Theory]
-    public async Task TestChainWithShortCircuit()
-    {
-        var prepare = ServiceProvider.GetRequiredService<IPrepare>();
-        var ferment = ServiceProvider.GetRequiredService<IFerment>();
-
-        var workflow = new ChainTestWithShortCircuit(prepare, ferment);
-
-        var ingredients = new Ingredients()
-        {
-            Apples = 1,
-            BrownSugar = 1,
-            Cinnamon = 1,
-            Yeast = 1
-        };
-
-        var result = await workflow.Run(ingredients);
-    }
-
-    [Theory]
-    public async Task TestChainWithUnitInput()
-    {
-        var prepare = ServiceProvider.GetRequiredService<IPrepare>();
-
-        var workflow = new ChainTestWithUnitInput();
-
-        var ingredients = new Ingredients()
-        {
-            Apples = 1,
-            BrownSugar = 1,
-            Cinnamon = 1,
-            Yeast = 1
-        };
-
-        var result = await workflow.Run(ingredients);
-    }
-
-    [Theory]
-    public async Task TestChainWithShortCircuitStaysLeft()
-    {
-        var prepare = ServiceProvider.GetRequiredService<IPrepare>();
-        var ferment = ServiceProvider.GetRequiredService<IFerment>();
-
-        var workflow = new ChainTestWithShortCircuitStaysLeft(prepare, ferment);
-
-        var ingredients = new Ingredients()
-        {
-            Apples = 1,
-            BrownSugar = 1,
-            Cinnamon = 1,
-            Yeast = 1
-        };
-
-        var result = await workflow.Run(ingredients);
     }
 }

@@ -82,7 +82,7 @@ public class WorkflowTests : TestSetup
         workflow.Memory.Count.Should().Be(3);
         propertyResult.Number.Should().Be(7);
     }
-    
+
     [Theory]
     public async Task TestExtractField()
     {
@@ -122,7 +122,7 @@ public class WorkflowTests : TestSetup
 
         // Act
         var result = await workflow.Run(ingredients);
-        
+
         // Assert
         workflow.Memory.Should().NotBeNull();
         workflow.Exception.Should().BeNull();
@@ -145,7 +145,7 @@ public class WorkflowTests : TestSetup
 
         // Act
         var result = await workflow.Run(ingredients);
-        
+
         // Assert
         workflow.Memory.Should().NotBeNull();
         workflow.Exception.Should().BeNull();
@@ -168,7 +168,7 @@ public class WorkflowTests : TestSetup
 
         // Act
         var result = await workflow.Run(ingredients);
-        
+
         // Assert
         workflow.Exception.Should().BeNull();
         workflow.Memory.Should().NotBeNull();
@@ -191,11 +191,11 @@ public class WorkflowTests : TestSetup
 
         // Act
         var result = await workflow.Run(ingredients);
-        
+
         // Assert
         workflow.Exception.Should().BeNull();
         workflow.Memory.Should().NotBeNull();
-        result.Should().NotBeNull(); 
+        result.Should().NotBeNull();
     }
 
     [Theory]
@@ -214,11 +214,11 @@ public class WorkflowTests : TestSetup
 
         // Act
         var result = await workflow.Run(ingredients);
-        
+
         // Assert
         workflow.Exception.Should().BeNull();
         workflow.Memory.Should().NotBeNull();
-        result.Should().NotBeNull(); 
+        result.Should().NotBeNull();
     }
 
     [Theory]
@@ -237,11 +237,11 @@ public class WorkflowTests : TestSetup
 
         // Act
         var result = await workflow.Run(ingredients);
-        
+
         // Assert
         workflow.Exception.Should().BeNull();
         workflow.Memory.Should().NotBeNull();
-        result.Should().NotBeNull();  
+        result.Should().NotBeNull();
     }
 
     [Theory]
@@ -263,11 +263,11 @@ public class WorkflowTests : TestSetup
 
         // Act
         var result = await workflow.Run(ingredients);
-        
+
         // Assert
         workflow.Exception.Should().BeNull();
         workflow.Memory.Should().NotBeNull();
-        result.Should().NotBeNull();  
+        result.Should().NotBeNull();
     }
 
     [Theory]
@@ -286,11 +286,11 @@ public class WorkflowTests : TestSetup
 
         // Act
         var result = await workflow.Run(ingredients);
-        
+
         // Assert
         workflow.Exception.Should().BeNull();
         workflow.Memory.Should().NotBeNull();
-        result.Should().NotBeNull();  
+        result.Should().NotBeNull();
     }
 
     [Theory]
@@ -312,13 +312,13 @@ public class WorkflowTests : TestSetup
 
         // Act
         var result = await workflow.Run(ingredients);
-        
+
         // Assert
         workflow.Exception.Should().BeNull();
         workflow.Memory.Should().NotBeNull();
-        result.Should().NotBeNull();  
+        result.Should().NotBeNull();
     }
-    
+
     private class OuterProperty
     {
         public string OuterString { get; set; }
@@ -415,7 +415,7 @@ public class WorkflowTests : TestSetup
             return Unit.Default;
         }
     }
-    
+
     private class ChainTest(IBrew brew, IPrepare prepare, IBottle bottle)
         : Workflow<Ingredients, List<GlassBottle>>
     {
@@ -551,10 +551,7 @@ public class WorkflowTests : TestSetup
     {
         protected override async Task<Either<Exception, (bool, double, object)>> RunInternal(
             (int, string, object) input
-        ) => Activate(input)
-            .Chain<TupleReturnStep>()
-            .ShortCircuit<TupleReturnStep>()
-            .Resolve();
+        ) => Activate(input).Chain<TupleReturnStep>().ShortCircuit<TupleReturnStep>().Resolve();
     }
 
     private class ChainTestWithUnitInput : Workflow<Ingredients, List<GlassBottle>>

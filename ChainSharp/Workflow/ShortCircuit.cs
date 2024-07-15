@@ -1,3 +1,4 @@
+using ChainSharp.Exceptions;
 using ChainSharp.Extensions;
 using ChainSharp.Step;
 using ChainSharp.Utils;
@@ -63,14 +64,21 @@ public partial class Workflow<TInput, TReturn>
         var input = this.ExtractTypeFromMemory(tIn);
 
         if (input == null)
+        {
+            Exception ??= new WorkflowException($"Could not find ({tIn}) in Memory.");
             return this;
+        }
 
         object[] parameters = [stepInstance, input, null];
         var result = chainMethod.Invoke(this, parameters);
         var outParam = parameters[2];
 
         var maybeRightValue = ReflectionHelpers.GetRightFromDynamicEither(outParam);
-        maybeRightValue.Iter(rightValue => ShortCircuitValue = (TReturn?)rightValue);
+        maybeRightValue.Iter(rightValue =>
+        {
+            ShortCircuitValue = (TReturn?)rightValue;
+            ShortCircuitValueSet = true;
+        });
 
         return (Workflow<TInput, TReturn>)result!;
     }

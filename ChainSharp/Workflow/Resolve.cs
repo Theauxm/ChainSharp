@@ -13,7 +13,7 @@ public partial class Workflow<TInput, TReturn>
         if (Exception is not null)
             return Exception;
 
-        if (ShortCircuitValue is not null)
+        if (ShortCircuitValueSet)
             return ShortCircuitValue;
 
         var result = Memory.GetValueOrDefault(typeof(TReturn));

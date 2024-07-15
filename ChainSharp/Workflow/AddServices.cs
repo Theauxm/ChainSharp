@@ -96,7 +96,7 @@ public partial class Workflow<TInput, TReturn>
         return AddServices(services, typeArray);
     }
 
-    private Workflow<TInput, TReturn> AddServices(object[] services, Type[] typeArray)
+    internal Workflow<TInput, TReturn> AddServices(object[] services, Type[] typeArray)
     {
         // Always allow input type of Unit for parameterless invocation
         Memory ??= new Dictionary<Type, object>() { { typeof(Unit), Unit.Default } };
@@ -113,15 +113,23 @@ public partial class Workflow<TInput, TReturn>
             }
 
             if (!serviceType.IsClass)
-                throw new WorkflowException(
+            {
+                Exception ??= new WorkflowException(
                     $"Params ({serviceType}) to AddServices must be Classes."
                 );
+                return this;
+            }
 
             var interfaces = serviceType.GetInterfaces();
-            var foundInterface = interfaces.FirstOrDefault(x => typeArray.Contains(x));
+            var foundInterface = interfaces.FirstOrDefault(typeArray.Contains);
 
             if (foundInterface is null)
-                throw new WorkflowException($"Class ({serviceType}) does not have any interfaces.");
+            {
+                Exception ??= new WorkflowException(
+                    $"Class ({serviceType}) does not have any interfaces."
+                );
+                return this;
+            }
 
             Memory[foundInterface] = service;
         }

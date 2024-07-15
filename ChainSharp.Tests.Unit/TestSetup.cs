@@ -1,6 +1,6 @@
 namespace ChainSharp.Tests.Unit;
 
-public abstract class TestSetup : ITestSetup
+public abstract class TestSetup
 {
     [SetUp]
     public virtual async Task TestSetUp() { }

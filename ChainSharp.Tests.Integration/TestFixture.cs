@@ -1,4 +1,4 @@
-namespace ChainSharp.Tests.Unit;
+namespace ChainSharp.Tests.Integration;
 
 [SetUpFixture]
 public class TestFixture

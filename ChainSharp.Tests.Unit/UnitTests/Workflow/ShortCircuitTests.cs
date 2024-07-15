@@ -12,9 +12,10 @@ public class ShortCircuitTests : TestSetup
     public async Task TestShortCircuitChain()
     {
         // Arrange
+        var input = 1;
         var testStep = new TestStep();
         var inputString = "hello";
-        var workflow = new TestWorkflow();
+        var workflow = new TestWorkflow().Activate(input);
 
         // Act
         workflow.ShortCircuitChain<TestStep, string, bool>(

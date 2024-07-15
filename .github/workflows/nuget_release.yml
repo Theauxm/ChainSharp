@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'Directory.Build.Props'
+      - 'Directory.Build.props'
 
 permissions:
   contents: write  # Ensure the token has write permissions to contents

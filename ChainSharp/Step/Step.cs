@@ -20,8 +20,8 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Found Exception ({e})");
-            return e;
+            Console.WriteLine($"Found Exception ({e.InnerException ?? e})");
+            return e.InnerException ?? e;
         }
     }
 }

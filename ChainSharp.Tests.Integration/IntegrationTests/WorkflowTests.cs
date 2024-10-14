@@ -1,3 +1,4 @@
+using ChainSharp.Exceptions;
 using ChainSharp.Step;
 using ChainSharp.Tests.Examples.Brewery;
 using ChainSharp.Tests.Examples.Brewery.Steps.Bottle;
@@ -318,6 +319,24 @@ public class WorkflowTests : TestSetup
         workflow.Memory.Should().NotBeNull();
         result.Should().NotBeNull();
     }
+    
+    [Theory]
+    public async Task TestWithException()
+    {
+        // Arrange
+        var workflow = new ChainTestWithException();
+
+        // Act
+        // Assert
+
+        Assert.ThrowsAsync<WorkflowException>(async () => await workflow.Run(Unit.Default));
+    }
+    
+    private class ThrowsStep : Step<Unit, Unit>
+    {
+        public override Task<Unit> Run(Unit input)
+            => throw new WorkflowException("This is a workflow exception.");
+    }
 
     private class OuterProperty
     {
@@ -615,5 +634,14 @@ public class WorkflowTests : TestSetup
                 .Chain<Bottle>()
                 .Resolve();
         }
+    }
+    
+    private class ChainTestWithException
+        : Workflow<Unit, Unit>
+    {
+        protected override async Task<Either<Exception, Unit>> RunInternal(Unit input)
+            => Activate(input)
+                .Chain<ThrowsStep>()
+                .Resolve();
     }
 }

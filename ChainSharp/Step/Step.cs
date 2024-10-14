@@ -21,11 +21,17 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
         }
         catch (Exception e)
         {
-            var messageField = typeof(Exception).GetField("_message", BindingFlags.Instance | BindingFlags.NonPublic);
-    
+            var messageField = typeof(Exception).GetField(
+                "_message",
+                BindingFlags.Instance | BindingFlags.NonPublic
+            );
+
             if (messageField != null)
-                messageField.SetValue(e, $"{{ \"Step\": \"{GetType().Name}\", \"Type\": \"{e.GetType().Name}\", \"Message\": \"{e.Message}\" }}");            
-            
+                messageField.SetValue(
+                    e,
+                    $"{{ \"Step\": \"{GetType().Name}\", \"Type\": \"{e.GetType().Name}\", \"Message\": \"{e.Message}\" }}"
+                );
+
             Console.WriteLine($"Step: ({GetType().Name}) failed with Exception: ({e.Message})");
             return e;
         }

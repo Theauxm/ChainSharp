@@ -1,5 +1,6 @@
 using ChainSharp.Extensions;
 using LanguageExt;
+using LanguageExt.UnsafeValueAccess;
 
 namespace ChainSharp.Workflow;
 
@@ -12,7 +13,15 @@ public abstract partial class Workflow<TInput, TReturn> : IWorkflow<TInput, TRet
     private TReturn ShortCircuitValue { get; set; } = default!;
     private bool ShortCircuitValueSet { get; set; } = false;
 
-    public async Task<TReturn> Run(TInput input) => await RunEither(input).Unwrap();
+    public async Task<TReturn> Run(TInput input)
+    {
+        var resultEither = await RunEither(input);
+
+        if (resultEither.IsLeft)
+            resultEither.Swap().ValueUnsafe().Rethrow();
+
+        return resultEither.Unwrap();
+    }
 
     public Task<Either<Exception, TReturn>> RunEither(TInput input)
     {

@@ -8,16 +8,21 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
 {
     public abstract Task<TOut> Run(TIn input);
 
-    public async Task<Either<Exception, TOut>> RailwayStep(Either<Exception, TIn> previousStep)
+    public async Task<Either<Exception, TOut>> RailwayStep(Either<Exception, TIn> previousOutput)
     {
-        if (previousStep.IsLeft)
-            return previousStep.Swap().ValueUnsafe();
+        if (previousOutput.IsLeft)
+            return previousOutput.Swap().ValueUnsafe();
 
-        Console.WriteLine($"Running Step ({previousStep.GetUnderlyingRightType().Name})");
+        var stepName = GetType().Name;
+        var previousOutputName = previousOutput.GetUnderlyingRightType().Name;
+
+        Console.WriteLine(
+            $"Running Step ({stepName}). Previous Output Type ({previousOutputName})"
+        );
 
         try
         {
-            return await Run(previousStep.ValueUnsafe());
+            return await Run(previousOutput.ValueUnsafe());
         }
         catch (Exception e)
         {
@@ -29,10 +34,10 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
             if (messageField != null)
                 messageField.SetValue(
                     e,
-                    $"{{ \"Step\": \"{GetType().Name}\", \"Type\": \"{e.GetType().Name}\", \"Message\": \"{e.Message}\" }}"
+                    $"{{ \"step\": \"{stepName}\", \"type\": \"{e.GetType().Name}\", \"message\": \"{e.Message}\" }}"
                 );
 
-            Console.WriteLine($"Step: ({GetType().Name}) failed with Exception: ({e.Message})");
+            Console.WriteLine($"Step: ({stepName}) failed with Exception: ({e.Message})");
             return e;
         }
     }

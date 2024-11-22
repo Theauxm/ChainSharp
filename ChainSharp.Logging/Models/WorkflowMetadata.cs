@@ -4,11 +4,12 @@ using System.Text.Json;
 using ChainSharp.Exceptions;
 using ChainSharp.Logging.Enums;
 using ChainSharp.Logging.Extensions;
+using ChainSharp.Logging.Services.ChainSharpProvider;
 using LanguageExt;
 
 namespace ChainSharp.Logging.Models;
 
-public class WorkflowMetadata
+public class WorkflowMetadata : IWorkflowMetadata
 {
     [Column("id")]
     public int Id { get; private set; }
@@ -59,7 +60,7 @@ public class WorkflowMetadata
             StartTime = DateTime.UtcNow
         };
 
-        provider.Track();
+        provider.Track(newWorkflow);
 
         return newWorkflow;
     }

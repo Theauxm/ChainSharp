@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore.Storage;
 
-namespace ChainSharp.Logging;
+namespace ChainSharp.Logging.Services.ChainSharpProvider;
 
 public interface IChainSharpProvider
 {

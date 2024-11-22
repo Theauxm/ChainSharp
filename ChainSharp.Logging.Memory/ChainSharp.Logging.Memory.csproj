@@ -10,4 +10,12 @@
         <AssemblyName>Theauxm.ChainSharp</AssemblyName>
     </PropertyGroup>
 
+    <ItemGroup>
+      <Folder Include="Extensions\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ChainSharp.Logging\ChainSharp.Logging.csproj" />
+    </ItemGroup>
+
 </Project>

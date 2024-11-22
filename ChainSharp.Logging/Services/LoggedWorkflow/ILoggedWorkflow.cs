@@ -1,7 +1,7 @@
 using ChainSharp.Logging.Models;
 using ChainSharp.Workflow;
 
-namespace ChainSharp.Logging;
+namespace ChainSharp.Logging.Services.LoggedWorkflow;
 
 public interface ILoggedWorkflow<in TIn, TOut> : IWorkflow<TIn, TOut>
 {

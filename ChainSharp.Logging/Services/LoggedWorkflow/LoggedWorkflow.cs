@@ -1,10 +1,11 @@
 using ChainSharp.Logging.Enums;
 using ChainSharp.Logging.Models;
+using ChainSharp.Logging.Services.ChainSharpProvider;
 using ChainSharp.Workflow;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
 
-namespace ChainSharp.Logging;
+namespace ChainSharp.Logging.Services.LoggedWorkflow;
 
 /// <summary>
 /// Adds information to the database about a given workflow being run.

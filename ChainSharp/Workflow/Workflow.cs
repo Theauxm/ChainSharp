@@ -26,7 +26,7 @@ public abstract partial class Workflow<TInput, TReturn> : IWorkflow<TInput, TRet
     public Task<Either<Exception, TReturn>> RunEither(TInput input)
     {
         // Always allow input type of Unit for parameterless invocation
-        Memory = new Dictionary<Type, object> { { typeof(Unit), Unit.Default } };
+        Memory ??= new Dictionary<Type, object> { { typeof(Unit), Unit.Default } };
 
         return RunInternal(input);
     }

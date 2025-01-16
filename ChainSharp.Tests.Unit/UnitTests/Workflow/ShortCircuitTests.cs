@@ -113,6 +113,21 @@ public class ShortCircuitTests : TestSetup
         workflow.Exception.Should().NotBeNull();
     }
 
+    [Theory]
+    public async Task TestValidOptionStepTest()
+    {
+        // Arrange
+        var input = new Option<object>();
+        var workflow = new TestWorkflowOption().Activate(input);
+
+        // Act
+        workflow.ShortCircuit<TestOptionStepTest>();
+
+        // Assert
+        workflow.Memory.Should().NotBeNull();
+        workflow.Exception.Should().NotBeNull(); 
+    }
+
     private class TestExceptionStep : Step<string, bool>
     {
         public override Task<bool> Run(string input) => throw new NotImplementedException();
@@ -138,5 +153,19 @@ public class ShortCircuitTests : TestSetup
     {
         protected override Task<Either<Exception, string>> RunInternal(int input) =>
             throw new NotImplementedException();
+    }
+    
+    public class TestOptionStepTest : Step<Option<object>, object>
+    {
+        public override async Task<object> Run(Option<object> input)
+        {
+            return null;
+        }
+    }
+    
+    private class TestWorkflowOption : Workflow<Option<object>, string>
+    {
+        protected override Task<Either<Exception, string>> RunInternal(Option<object> input)
+            => throw new NotImplementedException();
     }
 }

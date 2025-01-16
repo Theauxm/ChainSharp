@@ -20,7 +20,7 @@ internal static class ReflectionHelpers
             .FirstOrDefault(
                 i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IStep<,>)
             );
-        if (interfaceType == null)
+        if (interfaceType is null)
         {
             throw new InvalidOperationException(
                 $"{nameof(TStep)} does not implement IStep<TIn, TOut>."

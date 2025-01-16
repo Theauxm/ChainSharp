@@ -125,7 +125,7 @@ public class ShortCircuitTests : TestSetup
 
         // Assert
         workflow.Memory.Should().NotBeNull();
-        workflow.Exception.Should().NotBeNull(); 
+        workflow.Exception.Should().BeNull();
     }
 
     private class TestExceptionStep : Step<string, bool>
@@ -154,18 +154,18 @@ public class ShortCircuitTests : TestSetup
         protected override Task<Either<Exception, string>> RunInternal(int input) =>
             throw new NotImplementedException();
     }
-    
-    public class TestOptionStepTest : Step<Option<object>, object>
+
+    public class TestOptionStepTest : Step<Option<object>, string>
     {
-        public override async Task<object> Run(Option<object> input)
+        public override async Task<string> Run(Option<object> input)
         {
-            return null;
+            return "hello world";
         }
     }
-    
+
     private class TestWorkflowOption : Workflow<Option<object>, string>
     {
-        protected override Task<Either<Exception, string>> RunInternal(Option<object> input)
-            => throw new NotImplementedException();
+        protected override Task<Either<Exception, string>> RunInternal(Option<object> input) =>
+            throw new NotImplementedException();
     }
 }

@@ -63,7 +63,7 @@ public partial class Workflow<TInput, TReturn>
         );
         var input = this.ExtractTypeFromMemory(tIn);
 
-        if (input == null)
+        if (input is null)
         {
             Exception ??= new WorkflowException($"Could not find ({tIn}) in Memory.");
             return this;

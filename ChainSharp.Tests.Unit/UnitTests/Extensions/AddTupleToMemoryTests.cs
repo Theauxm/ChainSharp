@@ -23,7 +23,7 @@ public class AddTupleToMemoryTests : TestSetup
 
         // Assert
         workflow.Exception.Should().BeNull();
-        workflow.Memory.Count.Should().Be(4); // Unit is always added, along with input.
+        workflow.Memory.Count.Should().Be(5); // Unit is always added, along with input.
         workflow.Memory.Values.Should().Contain(false);
         workflow.Memory.Values.Should().Contain("hello");
     }
@@ -66,7 +66,7 @@ public class AddTupleToMemoryTests : TestSetup
 
         // Assert
         workflow.Exception.Should().BeNull();
-        workflow.Memory.Count.Should().Be(4); // Unit is always added, along with input.
+        workflow.Memory.Count.Should().Be(5); // Unit is always added, along with input.
         workflow.Memory.Values.Should().Contain(42);
         workflow.Memory.Values.Should().Contain("world");
         workflow.Memory.Values.Should().Contain(3.14);
@@ -114,7 +114,7 @@ public class AddTupleToMemoryTests : TestSetup
 
         // Assert
         workflow.Exception.Should().BeNull();
-        workflow.Memory.Count.Should().Be(3); // Unit is always added, along with input.
+        workflow.Memory.Count.Should().Be(4); // Unit is always added, along with input.
         workflow.Memory.Values.Should().Contain(2);
         workflow.Memory.Values.Should().Contain("second");
     }

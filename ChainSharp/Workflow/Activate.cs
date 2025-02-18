@@ -28,7 +28,7 @@ public partial class Workflow<TInput, TReturn>
 
             var interfaces = inputType.GetInterfaces();
             var foundInterface = interfaces.FirstOrDefault();
-            
+
             if (foundInterface != null)
                 Memory[foundInterface] = input;
         }
@@ -42,10 +42,10 @@ public partial class Workflow<TInput, TReturn>
             else
             {
                 Memory[otherType] = otherInput;
-                
+
                 var interfaces = otherType.GetInterfaces();
                 var foundInterface = interfaces.FirstOrDefault();
-            
+
                 if (foundInterface != null)
                     Memory[foundInterface] = otherInput;
             }

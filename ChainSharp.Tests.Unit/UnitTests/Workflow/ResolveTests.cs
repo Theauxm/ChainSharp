@@ -42,6 +42,27 @@ public class ResolveTests : TestSetup
     }
 
     [Theory]
+    public async Task TestResolveTuple()
+    {
+        // Arrange
+        var intInput = 1;
+        var stringInput = "string";
+        var workflow = new TestTupleWorkflow().Activate(
+            LanguageExt.Unit.Default,
+            intInput,
+            stringInput
+        );
+
+        // Act
+        var result = workflow.Resolve();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsRight.Should().BeTrue();
+        result.ValueUnsafe().Should().Be((intInput, stringInput));
+    }
+
+    [Theory]
     public async Task TestResolveShortCircuitValueSet()
     {
         // Arrange
@@ -91,6 +112,13 @@ public class ResolveTests : TestSetup
     {
         protected override Task<Either<Exception, object>> RunInternal(object input) =>
             throw new NotImplementedException();
+    }
+
+    private class TestTupleWorkflow : Workflow<LanguageExt.Unit, (int, string)>
+    {
+        protected override Task<Either<Exception, (int, string)>> RunInternal(
+            LanguageExt.Unit input
+        ) => throw new NotImplementedException();
     }
 
     private class TestShortCircuitStep : Step<int, string>

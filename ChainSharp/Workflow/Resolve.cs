@@ -1,4 +1,5 @@
 using ChainSharp.Exceptions;
+using ChainSharp.Extensions;
 using LanguageExt;
 
 namespace ChainSharp.Workflow;
@@ -16,7 +17,7 @@ public partial class Workflow<TInput, TReturn>
         if (ShortCircuitValueSet)
             return ShortCircuitValue;
 
-        var result = Memory.GetValueOrDefault(typeof(TReturn));
+        var result = this.ExtractTypeFromMemory<TReturn, TInput, TReturn>();
 
         if (result is null)
             return new WorkflowException($"Could not find type: ({typeof(TReturn)}).");

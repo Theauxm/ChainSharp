@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Logging.InMemory
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Logging.Postgres", "ChainSharp.Logging.Postgres\ChainSharp.Logging.Postgres.csproj", "{F023424B-0B78-480F-A68F-D6038BE9DEED}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests.Logging.InMemory.Integration", "ChainSharp.Tests.Logging.InMemory.Integration\ChainSharp.Tests.Logging.InMemory.Integration.csproj", "{1D00984B-0959-43AC-9148-CA27CE577282}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,5 +44,9 @@ Global
 		{F023424B-0B78-480F-A68F-D6038BE9DEED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F023424B-0B78-480F-A68F-D6038BE9DEED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F023424B-0B78-480F-A68F-D6038BE9DEED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D00984B-0959-43AC-9148-CA27CE577282}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D00984B-0959-43AC-9148-CA27CE577282}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D00984B-0959-43AC-9148-CA27CE577282}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D00984B-0959-43AC-9148-CA27CE577282}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

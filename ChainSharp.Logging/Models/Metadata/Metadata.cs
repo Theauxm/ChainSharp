@@ -57,12 +57,13 @@ public class Metadata : IMetadata
         var newWorkflow = new Metadata
         {
             Name = metadata.Name,
+            ExternalId = Guid.NewGuid().ToString("N"),
             WorkflowState = WorkflowState.Pending,
             Executor = Assembly.GetEntryAssembly()?.GetAssemblyProject(),
             StartTime = DateTime.UtcNow
         };
 
-        loggingProviderContextFactory.TrackedIn(loggingProviderContextFactory);
+        newWorkflow.TrackedIn(loggingProviderContextFactory);
 
         return newWorkflow;
     }

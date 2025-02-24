@@ -7,7 +7,7 @@
         <Authors>Theauxm,mark-keaton</Authors>
         <PackageDescription>In Memory Provider for ChainSharp.Logging Library</PackageDescription>
         <RepositoryUrl>https://github.com/Theauxm/ChainSharp</RepositoryUrl>
-        <AssemblyName>Theauxm.ChainSharp</AssemblyName>
+        <AssemblyName>Theauxm.ChainSharp.Logging.InMemory</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>
@@ -20,6 +20,7 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.10" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.10" />
     </ItemGroup>
 
 </Project>

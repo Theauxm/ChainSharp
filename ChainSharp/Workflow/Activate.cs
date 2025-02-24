@@ -23,7 +23,15 @@ public partial class Workflow<TInput, TReturn>
         if (inputType.IsTuple())
             this.AddTupleToMemory(input);
         else
+        {
             Memory[inputType] = input;
+
+            var interfaces = inputType.GetInterfaces();
+            var foundInterface = interfaces.FirstOrDefault();
+
+            if (foundInterface != null)
+                Memory[foundInterface] = input;
+        }
 
         foreach (var otherInput in otherInputs)
         {
@@ -32,7 +40,15 @@ public partial class Workflow<TInput, TReturn>
             if (otherType.IsTuple())
                 this.AddTupleToMemory((ITuple)otherInput);
             else
+            {
                 Memory[otherType] = otherInput;
+
+                var interfaces = otherType.GetInterfaces();
+                var foundInterface = interfaces.FirstOrDefault();
+
+                if (foundInterface != null)
+                    Memory[foundInterface] = otherInput;
+            }
         }
 
         return this;

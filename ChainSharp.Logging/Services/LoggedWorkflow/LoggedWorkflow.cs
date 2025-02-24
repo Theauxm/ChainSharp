@@ -1,6 +1,9 @@
 using ChainSharp.Logging.Enums;
-using ChainSharp.Logging.Models;
-using ChainSharp.Logging.Services.ChainSharpProvider;
+using ChainSharp.Logging.Models.Metadata;
+using ChainSharp.Logging.Models.Metadata.DTOs;
+using ChainSharp.Logging.Services.LoggingProviderContext;
+using ChainSharp.Logging.Services.LoggingProviderContextFactory;
+using ChainSharp.Logging.Services.WorkflowLogger;
 using ChainSharp.Workflow;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
@@ -12,38 +15,18 @@ namespace ChainSharp.Logging.Services.LoggedWorkflow;
 /// </summary>
 /// <typeparam name="TIn"></typeparam>
 /// <typeparam name="TOut"></typeparam>
-public abstract class LoggedWorkflow<TIn, TOut>(IChainSharpProvider provider)
-    : Workflow<TIn, TOut>, ILoggedWorkflow<TIn, TOut>
+public abstract class LoggedWorkflow<TIn, TOut>(
+    ILoggingProviderContextFactory contextFactory,
+    IWorkflowLogger logger
+) : Workflow<TIn, TOut>, ILoggedWorkflow<TIn, TOut>
 {
-    public WorkflowMetadata Workflow { get; private set; }
-
     /// <summary>
-    /// Will run the Workflow without a transaction, meaning all changes
-    /// will be applied to the database if a transaction is not active.
-    ///
-    /// It is recommended to run this Function only if there is an active
-    /// transaction.
+    /// DataContextFactory for all connections required in the Workflow
     /// </summary>
-    /// <param name="input"></param>
-    /// <returns></returns>
-    public async Task<TOut> Run(TIn input)
-    {
-        await InitializeWorkflow();
+    protected internal ILoggingProviderContextFactory LoggingProviderContextFactory { get; } =
+        contextFactory;
 
-        try
-        {
-            var result = await base.Run(input);
-
-            await FinishWorkflow(result);
-
-            return result;
-        }
-        catch (Exception e)
-        {
-            await FinishWorkflow(e);
-            throw;
-        }
-    }
+    private string WorkflowName => GetType().Name;
 
     /// <summary>
     /// Overrides base Workflow Run to also include details about the workflow itself in
@@ -51,70 +34,71 @@ public abstract class LoggedWorkflow<TIn, TOut>(IChainSharpProvider provider)
     /// </summary>
     /// <param name="input"></param>
     /// <returns></returns>
-    public virtual async Task<TOut> RunWithTransaction(TIn input)
+    public new virtual async Task<TOut> Run(TIn input)
     {
-        await InitializeWorkflow();
-
-        var transaction = await provider.BeginTransaction(CancellationToken.None);
+        logger.Info($"Running Workflow ({WorkflowName}).");
+        var context = LoggingProviderContextFactory.Create();
+        var metadata = await InitializeWorkflow(context, logger, WorkflowName);
+        await context.SaveChanges();
 
         try
         {
+            logger.Info($"Running ({WorkflowName})");
             var result = await base.Run(input);
+            logger.Info($"({WorkflowName}) completed successfully");
 
-            await provider.SaveChanges();
-            await transaction.CommitAsync();
-
-            await FinishWorkflow(result);
+            await FinishWorkflow(logger, metadata, WorkflowName, result);
+            await context.SaveChanges();
 
             return result;
         }
         catch (Exception e)
         {
-            await transaction.RollbackAsync();
+            logger.Error($"Caught Exception ({e.GetType()}) with Message ({e.Message}).");
 
-            await FinishWorkflow(e);
+            await FinishWorkflow(logger, metadata, WorkflowName, e);
+            await context.SaveChanges();
 
             throw;
         }
-    }
-
-    public async Task InitializeWorkflow()
-    {
-        if (Workflow is not null)
-            return;
-
-        var workflowName = GetType().Name;
-
-        Workflow = WorkflowMetadata.Create(
-            provider,
-            workflowName: workflowName
-            );
-
-        Workflow.WorkflowState = WorkflowState.InProgress;
-
-        await provider.SaveChanges();
-    }
-
-    private async Task FinishWorkflow(
-        Either<Exception, TOut> result)
-    {
-        if (Workflow is null)
-            throw new NullReferenceException(
-                "Workflow cannot be null. Was it initialized correctly?"
-            );
-
-        if (result.IsLeft)
+        finally
         {
-            Workflow.AddException(result.Swap().ValueUnsafe());
-            Workflow.WorkflowState = WorkflowState.Failed;
+            context.Dispose();
         }
-        else
-            Workflow.WorkflowState = WorkflowState.Completed;
+    }
 
-        Workflow.EndTime = DateTime.UtcNow;
-        Workflow.Changes = provider.Changes;
+    private static async Task<Metadata> InitializeWorkflow(
+        ILoggingProviderContext context,
+        IWorkflowLogger logger,
+        string workflowName
+    )
+    {
+        logger.Info($"Initializing ({workflowName}");
 
-        await provider.SaveChanges();
+        var metadata = Metadata.Create(context, new CreateMetadata { Name = workflowName });
+
+        logger.Info($"Setting ({workflowName}) to In Progress.");
+        metadata.WorkflowState = WorkflowState.InProgress;
+
+        return metadata;
+    }
+
+    private static async Task<Unit> FinishWorkflow(
+        IWorkflowLogger logger,
+        Metadata metadata,
+        string workflowName,
+        Either<Exception, TOut> result
+    )
+    {
+        var failureReason = result.IsRight ? null : result.Swap().ValueUnsafe();
+
+        var resultState = result.IsRight ? WorkflowState.Completed : WorkflowState.Failed;
+        logger.Info($"Setting ({workflowName}) to ({resultState.ToString()}).");
+
+        if (failureReason != null)
+            metadata.AddException(failureReason);
+
+        return Unit.Default;
     }
 
     protected abstract override Task<Either<Exception, TOut>> RunInternal(TIn input);

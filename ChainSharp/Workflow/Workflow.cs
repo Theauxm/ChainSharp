@@ -22,7 +22,7 @@ public abstract partial class Workflow<TInput, TReturn> : IWorkflow<TInput, TRet
 
         return resultEither.Unwrap();
     }
-    
+
     public async Task<TReturn> Run(TInput input, params object[] args)
     {
         var resultEither = await RunEither(input);

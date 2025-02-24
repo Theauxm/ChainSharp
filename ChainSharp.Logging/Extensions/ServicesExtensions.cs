@@ -6,6 +6,6 @@ public static class ServicesExtensions
 {
     public static IServiceCollection AddChainSharpLogging(this IServiceCollection services)
     {
-        
+        return services;
     }
 }

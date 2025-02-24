@@ -1,15 +1,17 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using ChainSharp.Exceptions;
 using ChainSharp.Logging.Enums;
 using ChainSharp.Logging.Extensions;
-using ChainSharp.Logging.Services.ChainSharpProvider;
+using ChainSharp.Logging.Models.Metadata.DTOs;
+using ChainSharp.Logging.Services.LoggingProviderContext;
 using LanguageExt;
 
-namespace ChainSharp.Logging.Models;
+namespace ChainSharp.Logging.Models.Metadata;
 
-public class WorkflowMetadata : IWorkflowMetadata
+public class Metadata : IMetadata
 {
     [Column("id")]
     public int Id { get; private set; }
@@ -26,12 +28,9 @@ public class WorkflowMetadata : IWorkflowMetadata
     [Column("workflow_state")]
     public WorkflowState WorkflowState { get; set; }
 
-    [Column("changes")]
-    public int Changes { get; set; }
-
     [Column("failure_step")]
     public string? FailureStep { get; private set; }
-    
+
     [Column("failure_exception")]
     public string? FailureException { get; private set; }
 
@@ -40,27 +39,30 @@ public class WorkflowMetadata : IWorkflowMetadata
 
     [Column("stack_trace")]
     public string? StackTrace { get; set; }
-    
+
     [Column("start_time")]
     public DateTime StartTime { get; set; }
 
     [Column("end_time")]
     public DateTime? EndTime { get; set; }
 
-    private WorkflowMetadata() {}
+    [JsonConstructor]
+    private Metadata() { }
 
-    public static WorkflowMetadata Create(IChainSharpProvider provider, string workflowName)
+    public static Metadata Create(
+        ILoggingProviderContext loggingProviderContextFactory,
+        CreateMetadata metadata
+    )
     {
-        var newWorkflow = new WorkflowMetadata
+        var newWorkflow = new Metadata
         {
-            Name = workflowName,
+            Name = metadata.Name,
             WorkflowState = WorkflowState.Pending,
             Executor = Assembly.GetEntryAssembly()?.GetAssemblyProject(),
-            Changes = 0,
             StartTime = DateTime.UtcNow
         };
 
-        provider.Track(newWorkflow);
+        loggingProviderContextFactory.TrackedIn(loggingProviderContextFactory);
 
         return newWorkflow;
     }
@@ -69,21 +71,27 @@ public class WorkflowMetadata : IWorkflowMetadata
     {
         try
         {
-            var deserializedException = JsonSerializer.Deserialize<WorkflowExceptionData>(workflowException.Message);
+            var deserializedException = JsonSerializer.Deserialize<WorkflowExceptionData>(
+                workflowException.Message
+            );
 
             if (deserializedException == null)
-                throw new Exception($"Could not deserialize exception data from ({Name}) workflow.");
-            
+                throw new Exception(
+                    $"Could not deserialize exception data from ({Name}) workflow."
+                );
+
             FailureException = deserializedException.Type;
             FailureReason = deserializedException.Message;
             FailureStep = deserializedException.Step;
             StackTrace = workflowException.StackTrace;
-            
+
             return Unit.Default;
         }
         catch (Exception e)
         {
-            throw new WorkflowException($"Found Exception Type ({e.GetType()}) with Message ({e.Message}). Could not deserialize exception data from ({Name}) workflow. This is likely because this function was not correctly called or the RailwayStep function did not process the exception Message correctly.");
+            throw new WorkflowException(
+                $"Found Exception Type ({e.GetType()}) with Message ({e.Message}). Could not deserialize exception data from ({Name}) workflow. This is likely because this function was not correctly called or the RailwayStep function did not process the exception Message correctly."
+            );
         }
     }
 }

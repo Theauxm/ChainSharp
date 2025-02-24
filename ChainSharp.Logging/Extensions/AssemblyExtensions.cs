@@ -17,5 +17,5 @@ public static class AssemblyExtensions
             throw new Exception($"Could not get name of Assembly from ({assembly.FullName})");
 
         return assemblyName;
-    } 
+    }
 }

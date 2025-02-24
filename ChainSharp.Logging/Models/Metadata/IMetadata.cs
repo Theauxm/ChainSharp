@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using ChainSharp.Logging.Enums;
 
-namespace ChainSharp.Logging.Models;
+namespace ChainSharp.Logging.Models.Metadata;
 
-public interface IWorkflowMetadata
+public interface IMetadata : IModel
 {
     [Column("id")]
     public int Id { get; }
@@ -20,12 +20,9 @@ public interface IWorkflowMetadata
     [Column("workflow_state")]
     public WorkflowState WorkflowState { get; set; }
 
-    [Column("changes")]
-    public int Changes { get; set; }
-
     [Column("failure_step")]
     public string? FailureStep { get; }
-    
+
     [Column("failure_exception")]
     public string? FailureException { get; }
 
@@ -34,7 +31,7 @@ public interface IWorkflowMetadata
 
     [Column("stack_trace")]
     public string? StackTrace { get; set; }
-    
+
     [Column("start_time")]
     public DateTime StartTime { get; set; }
 

@@ -7,13 +7,11 @@ namespace ChainSharp.Logging.Postgres.Services.PostgresContextFactory;
 
 public class PostgresContextFactory(NpgsqlDataSource dataSource) : ILoggingProviderContextFactory
 {
-    public ILoggingProviderContext Create()
-    {
-        return new PostgresContext.PostgresContext(
+    public ILoggingProviderContext Create() =>
+        new PostgresContext.PostgresContext(
             new DbContextOptionsBuilder<PostgresContext.PostgresContext>()
                 .UseNpgsql(dataSource)
                 .UseSnakeCaseNamingConvention()
                 .Options
         );
-    }
 }

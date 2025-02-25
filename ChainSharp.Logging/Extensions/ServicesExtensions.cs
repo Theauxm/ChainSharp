@@ -9,7 +9,7 @@ public static class ServicesExtensions
 {
     public static IServiceCollection AddChainSharpLogging(
         this IServiceCollection serviceCollection,
-        Action<ChainSharpLoggingBuilder>? options = null
+        Action<ChainSharpLoggingConfigurationBuilder>? options = null
     )
     {
         var configuration = BuildConfiguration(serviceCollection, options);
@@ -19,11 +19,11 @@ public static class ServicesExtensions
 
     private static ChainSharpLoggingConfiguration BuildConfiguration(
         IServiceCollection serviceCollection,
-        Action<ChainSharpLoggingBuilder>? options
+        Action<ChainSharpLoggingConfigurationBuilder>? options
     )
     {
         // Create Builder to be used after Options are invoked
-        var builder = new ChainSharpLoggingBuilder(serviceCollection);
+        var builder = new ChainSharpLoggingConfigurationBuilder(serviceCollection);
 
         // Options able to be null since all values have defaults
         options?.Invoke(builder);
@@ -31,17 +31,17 @@ public static class ServicesExtensions
         return builder.Build();
     }
 
-    public static ChainSharpLoggingBuilder AddConsoleLogger(
-        this ChainSharpLoggingBuilder builder
-    ) => builder.AddCustomLogger<WorkflowLogger>();
+    public static ChainSharpLoggingConfigurationBuilder AddConsoleLogger(
+        this ChainSharpLoggingConfigurationBuilder configurationBuilder
+    ) => configurationBuilder.AddCustomLogger<WorkflowLogger>();
 
-    public static ChainSharpLoggingBuilder AddCustomLogger<TWorkflowLogger>(
-        this ChainSharpLoggingBuilder builder
+    public static ChainSharpLoggingConfigurationBuilder AddCustomLogger<TWorkflowLogger>(
+        this ChainSharpLoggingConfigurationBuilder configurationBuilder
     )
         where TWorkflowLogger : class, IWorkflowLogger
     {
-        builder.ServiceCollection.AddScoped<IWorkflowLogger, TWorkflowLogger>();
+        configurationBuilder.ServiceCollection.AddScoped<IWorkflowLogger, TWorkflowLogger>();
 
-        return builder;
+        return configurationBuilder;
     }
 }

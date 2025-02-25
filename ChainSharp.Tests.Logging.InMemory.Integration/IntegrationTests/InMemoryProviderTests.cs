@@ -1,6 +1,4 @@
 using ChainSharp.Logging.Enums;
-using ChainSharp.Logging.InMemory;
-using ChainSharp.Logging.InMemory.Services.InMemoryContextFactory;
 using ChainSharp.Logging.Models.Metadata;
 using ChainSharp.Logging.Models.Metadata.DTOs;
 using ChainSharp.Logging.Services.LoggedWorkflow;
@@ -9,6 +7,7 @@ using ChainSharp.Logging.Services.WorkflowLogger;
 using FluentAssertions;
 using LanguageExt;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ChainSharp.Tests.Logging.InMemory.Integration.IntegrationTests;
 
@@ -18,7 +17,8 @@ public class InMemoryProviderTests : TestSetup
     public async Task TestInMemoryProviderCanCreateMetadata()
     {
         // Arrange
-        var inMemoryContextFactory = new InMemoryContextFactory();
+        var inMemoryContextFactory =
+            Scope.ServiceProvider.GetRequiredService<ILoggingProviderContextFactory>();
 
         var context = inMemoryContextFactory.Create();
 
@@ -40,11 +40,11 @@ public class InMemoryProviderTests : TestSetup
     public async Task TestInMemoryProviderCanRunWorkflow()
     {
         // Arrange
-        var inMemoryContextFactory = new InMemoryContextFactory();
+        var inMemoryContextFactory =
+            Scope.ServiceProvider.GetRequiredService<ILoggingProviderContextFactory>();
         var logger = new WorkflowLogger();
 
         var workflow = new TestWorkflow(inMemoryContextFactory, logger);
-        await workflow.Run(Unit.Default);
 
         // Act
         await workflow.Run(Unit.Default);

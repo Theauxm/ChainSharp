@@ -11,8 +11,8 @@ namespace ChainSharp.Logging.Postgres.Extensions;
 
 public static class ServiceExtensions
 {
-    public static ChainSharpLoggingBuilder UsePostgresProvider(
-        this ChainSharpLoggingBuilder builder,
+    public static ChainSharpLoggingConfigurationBuilder UsePostgresProvider(
+        this ChainSharpLoggingConfigurationBuilder configurationBuilder,
         string connectionString
     )
     {
@@ -21,7 +21,7 @@ public static class ServiceExtensions
         var dataSource = ModelBuilderExtensions.BuildDataSource(connectionString);
         var postgresConnectionFactory = new PostgresContextFactory(dataSource);
 
-        builder
+        configurationBuilder
             .ServiceCollection.AddSingleton<ILoggingProviderContextFactory>(
                 postgresConnectionFactory
             )
@@ -32,6 +32,6 @@ public static class ServiceExtensions
                 options.UseNpgsql(dataSource).UseSnakeCaseNamingConvention();
             });
 
-        return builder;
+        return configurationBuilder;
     }
 }

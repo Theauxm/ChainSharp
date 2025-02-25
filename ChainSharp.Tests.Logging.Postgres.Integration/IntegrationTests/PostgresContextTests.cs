@@ -49,7 +49,6 @@ public class PostgresContextTests : TestSetup
         var logger = new WorkflowLogger();
 
         var workflow = new TestWorkflow(postgresContextFactory, logger);
-        await workflow.Run(Unit.Default);
 
         // Act
         await workflow.Run(Unit.Default);

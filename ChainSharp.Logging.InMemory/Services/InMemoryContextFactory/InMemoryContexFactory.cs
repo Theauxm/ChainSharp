@@ -10,7 +10,7 @@ namespace ChainSharp.Logging.InMemory.Services.InMemoryContextFactory;
 public class InMemoryContextFactory : ILoggingProviderContextFactory
 {
     public ILoggingProviderContext Create() =>
-        new LoggingProviderContext<InMemoryContext.InMemoryContext>(
+        new InMemoryContext.InMemoryContext(
             new DbContextOptionsBuilder<InMemoryContext.InMemoryContext>()
                 .UseInMemoryDatabase("InMemoryDb")
                 .Options

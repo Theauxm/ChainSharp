@@ -1,3 +1,4 @@
+using ChainSharp.Logging.Extensions;
 using ChainSharp.Logging.Postgres.Extensions;
 using ChainSharp.Logging.Postgres.Services.PostgresContext;
 using ChainSharp.Logging.Postgres.Services.PostgresContextFactory;
@@ -31,21 +32,9 @@ public abstract class TestSetup
             "DatabaseConnectionString"
         ]!;
 
-        var connection = new NpgsqlConnection(connectionString);
-        await connection.OpenAsync();
-        await connection.ReloadTypesAsync();
-
-        var command = new NpgsqlCommand("create schema if not exists chain_sharp;", connection);
-        await command.ExecuteNonQueryAsync();
-
-        var result = DatabaseMigrator
-            .CreateEngineWithEmbeddedScripts(connectionString)
-            .PerformUpgrade();
-
-        var dataSource = ModelBuilderExtensions.BuildDataSource(connectionString);
-        var postgresConnectionFactory = new PostgresContextFactory(dataSource);
-
-        ServiceCollection.AddSingleton<ILoggingProviderContextFactory>(postgresConnectionFactory);
+        ServiceCollection.AddChainSharpLogging(
+            options => options.UsePostgresProvider(connectionString).AddConsoleLogger()
+        );
 
         ServiceProvider = ConfigureServices(ServiceCollection);
     }

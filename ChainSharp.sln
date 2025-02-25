@@ -6,15 +6,17 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests.Unit", "Ch
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests.Integration", "ChainSharp.Tests.Integration\ChainSharp.Tests.Integration.csproj", "{A85242EF-2527-4EBF-874D-789594863F62}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Logging", "ChainSharp.Logging\ChainSharp.Logging.csproj", "{A3016672-341E-40EA-B215-17A0055FA401}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Effect.Data", "ChainSharp.Effect.Data\ChainSharp.Effect.Data.csproj", "{A3016672-341E-40EA-B215-17A0055FA401}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Logging.InMemory", "ChainSharp.Logging.InMemory\ChainSharp.Logging.InMemory.csproj", "{7889F596-FE90-4B79-8452-C1B5B998ADF7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Effect.Data.InMemory", "ChainSharp.Effect.Data.InMemory\ChainSharp.Effect.Data.InMemory.csproj", "{7889F596-FE90-4B79-8452-C1B5B998ADF7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Logging.Postgres", "ChainSharp.Logging.Postgres\ChainSharp.Logging.Postgres.csproj", "{F023424B-0B78-480F-A68F-D6038BE9DEED}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Effect.Data.Postgres", "ChainSharp.Effect.Data.Postgres\ChainSharp.Effect.Data.Postgres.csproj", "{F023424B-0B78-480F-A68F-D6038BE9DEED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests.Logging.InMemory.Integration", "ChainSharp.Tests.Logging.InMemory.Integration\ChainSharp.Tests.Logging.InMemory.Integration.csproj", "{1D00984B-0959-43AC-9148-CA27CE577282}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests.Effect.Data.InMemory.Integration", "ChainSharp.Tests.Effect.Data.InMemory.Integration\ChainSharp.Tests.Effect.Data.InMemory.Integration.csproj", "{1D00984B-0959-43AC-9148-CA27CE577282}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests.Logging.Postgres.Integration", "ChainSharp.Tests.Logging.Postgres.Integration\ChainSharp.Tests.Logging.Postgres.Integration.csproj", "{B06B9007-740B-4650-B8FE-E91C2A078575}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests.Effect.Data.Postgres.Integration", "ChainSharp.Tests.Effect.Data.Postgres.Integration\ChainSharp.Tests.Effect.Data.Postgres.Integration.csproj", "{B06B9007-740B-4650-B8FE-E91C2A078575}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Effect", "ChainSharp.Effect\ChainSharp.Effect.csproj", "{D960CE78-4617-455E-9219-89B45A1A7C6C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -54,5 +56,9 @@ Global
 		{B06B9007-740B-4650-B8FE-E91C2A078575}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B06B9007-740B-4650-B8FE-E91C2A078575}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B06B9007-740B-4650-B8FE-E91C2A078575}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D960CE78-4617-455E-9219-89B45A1A7C6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D960CE78-4617-455E-9219-89B45A1A7C6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D960CE78-4617-455E-9219-89B45A1A7C6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D960CE78-4617-455E-9219-89B45A1A7C6C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

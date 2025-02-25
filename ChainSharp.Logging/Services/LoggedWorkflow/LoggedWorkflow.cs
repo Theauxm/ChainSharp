@@ -20,6 +20,8 @@ public abstract class LoggedWorkflow<TIn, TOut>(
     IWorkflowLogger logger
 ) : Workflow<TIn, TOut>, ILoggedWorkflow<TIn, TOut>
 {
+    public Metadata Metadata { get; private set; }
+
     /// <summary>
     /// DataContextFactory for all connections required in the Workflow
     /// </summary>
@@ -38,7 +40,7 @@ public abstract class LoggedWorkflow<TIn, TOut>(
     {
         logger.Info($"Running Workflow ({WorkflowName}).");
         var context = LoggingProviderContextFactory.Create();
-        var metadata = await InitializeWorkflow(context, logger, WorkflowName);
+        Metadata = await InitializeWorkflow(context, logger, WorkflowName);
         await context.SaveChanges();
 
         try
@@ -47,7 +49,7 @@ public abstract class LoggedWorkflow<TIn, TOut>(
             var result = await base.Run(input);
             logger.Info($"({WorkflowName}) completed successfully");
 
-            await FinishWorkflow(logger, metadata, WorkflowName, result);
+            await FinishWorkflow(logger, Metadata, WorkflowName, result);
             await context.SaveChanges();
 
             return result;
@@ -56,7 +58,7 @@ public abstract class LoggedWorkflow<TIn, TOut>(
         {
             logger.Error($"Caught Exception ({e.GetType()}) with Message ({e.Message}).");
 
-            await FinishWorkflow(logger, metadata, WorkflowName, e);
+            await FinishWorkflow(logger, Metadata, WorkflowName, e);
             await context.SaveChanges();
 
             throw;
@@ -94,6 +96,7 @@ public abstract class LoggedWorkflow<TIn, TOut>(
 
         var resultState = result.IsRight ? WorkflowState.Completed : WorkflowState.Failed;
         logger.Info($"Setting ({workflowName}) to ({resultState.ToString()}).");
+        metadata.WorkflowState = resultState;
 
         if (failureReason != null)
             metadata.AddException(failureReason);

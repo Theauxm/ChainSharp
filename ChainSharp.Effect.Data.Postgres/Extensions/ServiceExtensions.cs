@@ -1,4 +1,4 @@
-using ChainSharp.Effect.Data.Configuration.ChainSharpLoggingBuilder;
+using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 using ChainSharp.Effect.Data.Postgres.Services.PostgresContext;
 using ChainSharp.Effect.Data.Postgres.Services.PostgresContextFactory;
 using ChainSharp.Effect.Data.Postgres.Utils;
@@ -11,8 +11,8 @@ namespace ChainSharp.Effect.Data.Postgres.Extensions;
 
 public static class ServiceExtensions
 {
-    public static ChainSharpLoggingConfigurationBuilder UsePostgresProvider(
-        this ChainSharpLoggingConfigurationBuilder configurationBuilder,
+    public static ChainSharpEffectConfigurationBuilder AddPostgresProvider(
+        this ChainSharpEffectConfigurationBuilder configurationBuilder,
         string connectionString
     )
     {

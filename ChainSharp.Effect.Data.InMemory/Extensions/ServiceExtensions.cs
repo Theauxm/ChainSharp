@@ -1,4 +1,4 @@
-using ChainSharp.Effect.Data.Configuration.ChainSharpLoggingBuilder;
+using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 using ChainSharp.Effect.Data.InMemory.Services.InMemoryContext;
 using ChainSharp.Effect.Data.InMemory.Services.InMemoryContextFactory;
 using ChainSharp.Effect.Data.Services.DataContext;
@@ -9,8 +9,8 @@ namespace ChainSharp.Effect.Data.InMemory.Extensions;
 
 public static class ServiceExtensions
 {
-    public static ChainSharpLoggingConfigurationBuilder UseInMemoryProvider(
-        this ChainSharpLoggingConfigurationBuilder configurationBuilder
+    public static ChainSharpEffectConfigurationBuilder AddInMemoryProvider(
+        this ChainSharpEffectConfigurationBuilder configurationBuilder
     )
     {
         var inMemoryContextFactory = new InMemoryContextFactory();

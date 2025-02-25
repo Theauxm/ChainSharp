@@ -1,5 +1,6 @@
 using ChainSharp.Effect.Data.Extensions;
 using ChainSharp.Effect.Data.InMemory.Extensions;
+using ChainSharp.Effect.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ChainSharp.Tests.Effect.Data.InMemory.Integration;
@@ -18,7 +19,7 @@ public abstract class TestSetup
         ServiceCollection = new ServiceCollection();
 
         ServiceProvider = ServiceCollection
-            .AddChainSharpLogging(options => options.UseInMemoryProvider().AddConsoleLogger())
+            .AddChainSharpEffects(options => options.AddInMemoryProvider().AddConsoleLogger())
             .BuildServiceProvider();
     }
 

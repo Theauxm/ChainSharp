@@ -1,5 +1,6 @@
 using ChainSharp.Effect.Data.Extensions;
 using ChainSharp.Effect.Data.Postgres.Extensions;
+using ChainSharp.Effect.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -26,8 +27,8 @@ public abstract class TestSetup
             "DatabaseConnectionString"
         ]!;
 
-        ServiceCollection.AddChainSharpLogging(
-            options => options.UsePostgresProvider(connectionString).AddConsoleLogger()
+        ServiceCollection.AddChainSharpEffects(
+            options => options.AddPostgresProvider(connectionString).AddConsoleLogger()
         );
 
         ServiceProvider = ConfigureServices(ServiceCollection);

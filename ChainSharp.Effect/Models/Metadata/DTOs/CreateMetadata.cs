@@ -1,4 +1,4 @@
-namespace ChainSharp.Effect.Data.Models.Metadata.DTOs;
+namespace ChainSharp.Effect.Models.Metadata.DTOs;
 
 public class CreateMetadata
 {

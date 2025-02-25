@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
-using ChainSharp.Effect.Data.Enums;
+using ChainSharp.Effect.Enums;
 
-namespace ChainSharp.Effect.Data.Models.Metadata;
+namespace ChainSharp.Effect.Models.Metadata;
 
 public interface IMetadata : IModel
 {

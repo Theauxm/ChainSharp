@@ -1,7 +1,8 @@
 using System.Data;
-using ChainSharp.Effect.Data.Models;
 using ChainSharp.Effect.Data.Models.Metadata;
 using ChainSharp.Effect.Data.Services.DataContextTransaction;
+using ChainSharp.Effect.Models;
+using ChainSharp.Effect.Models.Metadata;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChainSharp.Effect.Data.Services.DataContext;
@@ -19,8 +20,8 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
 {
     #region Tables
 
-    public DbSet<Metadata> Metadatas { get; set; }
-    IQueryable<Metadata> IDataContext.Metadatas => Metadatas;
+    public DbSet<PersistentMetadata> PersistentMetadatas { get; set; }
+    IQueryable<PersistentMetadata> IDataContext.PersistentMetadatas => PersistentMetadatas;
 
     #endregion
 
@@ -44,7 +45,10 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
         Add(model);
     }
 
-    public new async Task<int> SaveChanges() => await base.SaveChangesAsync();
+    public new async Task SaveChanges()
+    {
+        await base.SaveChangesAsync();
+    }
 
     public void Reset() => ChangeTracker.Clear();
 }

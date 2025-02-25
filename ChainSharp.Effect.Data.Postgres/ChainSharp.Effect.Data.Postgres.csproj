@@ -4,7 +4,10 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>ChainSharp.Effect.Data.Postgres</RootNamespace>
+        <Authors>Theauxm,mark-keaton</Authors>
+        <PackageDescription>Postgres Provider for ChainSharp.Effect.Data Library</PackageDescription>
+        <RepositoryUrl>https://github.com/Theauxm/ChainSharp</RepositoryUrl>
+        <AssemblyName>Theauxm.ChainSharp.Effect.Data.Postgres</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>

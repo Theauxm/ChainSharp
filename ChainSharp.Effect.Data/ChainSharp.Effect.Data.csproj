@@ -5,12 +5,13 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Authors>Theauxm,mark-keaton</Authors>
-        <PackageDescription>Logging for ChainSharp Workflows</PackageDescription>
+        <PackageDescription>Effect Data for ChainSharp Workflows</PackageDescription>
         <RepositoryUrl>https://github.com/Theauxm/ChainSharp</RepositoryUrl>
         <AssemblyName>Theauxm.ChainSharp.Effect.Data</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\ChainSharp.Effect\ChainSharp.Effect.csproj" />
       <ProjectReference Include="..\ChainSharp\ChainSharp.csproj" />
     </ItemGroup>
 

@@ -2,18 +2,17 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using ChainSharp.Effect.Data.Enums;
-using ChainSharp.Effect.Data.Extensions;
-using ChainSharp.Effect.Data.Models.Metadata.DTOs;
-using ChainSharp.Effect.Data.Services.DataContext;
+using ChainSharp.Effect.Enums;
+using ChainSharp.Effect.Extensions;
+using ChainSharp.Effect.Models.Metadata.DTOs;
+using ChainSharp.Effect.Services.Effect;
 using ChainSharp.Exceptions;
 using LanguageExt;
-using Microsoft.EntityFrameworkCore;
 
-namespace ChainSharp.Effect.Data.Models.Metadata;
+namespace ChainSharp.Effect.Models.Metadata;
 
 [Table("metadata", Schema = "chain_sharp")]
-public class Metadata : IMetadata
+public partial class Metadata : IMetadata
 {
     #region Columns
 
@@ -57,17 +56,9 @@ public class Metadata : IMetadata
 
     #endregion
 
-    #region ForeignKeys
-
-    public Metadata Parent { get; private set; }
-
-    public ICollection<Metadata> Children { get; private set; }
-
-    #endregion
-
     #region Functions
 
-    public static Metadata Create(IDataContext dataContext, CreateMetadata metadata)
+    public static Metadata Create(IEffect dataContext, CreateMetadata metadata)
     {
         var newWorkflow = new Metadata
         {
@@ -113,38 +104,6 @@ public class Metadata : IMetadata
 
     #endregion
 
-    #region OnModelCreating
-
-    internal static void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<Metadata>(entity =>
-        {
-            // entity.ToTable("metadata", "chain_sharp");
-
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Id).ValueGeneratedOnAdd();
-
-            entity.HasIndex(e => e.ExternalId).IsUnique();
-
-            // entity.Property(e => e.ExternalId).HasColumnType("char(32)").IsRequired();
-            // entity.Property(e => e.Name).HasColumnType("varchar").IsRequired();
-            // entity.Property(e => e.StartTime).HasColumnType("timestamp with time zone").IsRequired();
-            // entity.Property(e => e.EndTime).HasColumnType("timestamp with time zone");
-
-            entity
-                .HasOne(x => x.Parent)
-                .WithMany(x => x.Children)
-                .HasForeignKey(e => e.ParentId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // entity.Property(e => e.WorkflowState)
-            // .HasColumnType("chain_sharp.workflow_state")
-            // .HasDefaultValue("pending");
-        });
-    }
-
-    #endregion
-
     [JsonConstructor]
-    private Metadata() { }
+    public Metadata() { }
 }

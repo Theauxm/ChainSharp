@@ -1,7 +1,7 @@
 using System.Reflection;
-using ChainSharp.Effect.Data.Enums;
-using ChainSharp.Effect.Data.Models;
 using ChainSharp.Effect.Data.Postgres.Utils;
+using ChainSharp.Effect.Enums;
+using ChainSharp.Effect.Models;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 

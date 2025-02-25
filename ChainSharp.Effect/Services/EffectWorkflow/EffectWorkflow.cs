@@ -1,23 +1,23 @@
-using ChainSharp.Effect.Data.Enums;
-using ChainSharp.Effect.Data.Models.Metadata;
-using ChainSharp.Effect.Data.Models.Metadata.DTOs;
-using ChainSharp.Effect.Data.Services.DataContext;
-using ChainSharp.Effect.Data.Services.EffectLogger;
+using ChainSharp.Effect.Enums;
+using ChainSharp.Effect.Models.Metadata;
+using ChainSharp.Effect.Models.Metadata.DTOs;
+using ChainSharp.Effect.Services.Effect;
+using ChainSharp.Effect.Services.EffectFactory;
+using ChainSharp.Effect.Services.EffectLogger;
 using ChainSharp.Workflow;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
 
-namespace ChainSharp.Effect.Data.Services.EffectWorkflow;
+namespace ChainSharp.Effect.Services.EffectWorkflow;
 
 /// <summary>
 /// Adds information to the database about a given workflow being run.
 /// </summary>
 /// <typeparam name="TIn"></typeparam>
 /// <typeparam name="TOut"></typeparam>
-public abstract class EffectWorkflow<TIn, TOut>(
-    IDataContextFactory.IDataContextFactory contextFactory,
-    IEffectLogger logger
-) : Workflow<TIn, TOut>, IEffectWorkflow<TIn, TOut>
+public abstract class EffectWorkflow<TIn, TOut>(IEffectFactory contextFactory, IEffectLogger logger)
+    : Workflow<TIn, TOut>,
+        IEffectWorkflow<TIn, TOut>
 {
     /// <summary>
     /// Database Metadata row associated with the workflow
@@ -27,8 +27,7 @@ public abstract class EffectWorkflow<TIn, TOut>(
     /// <summary>
     /// DataContextFactory for all connections required in the Workflow
     /// </summary>
-    protected internal IDataContextFactory.IDataContextFactory DataContextFactory { get; } =
-        contextFactory;
+    protected internal IEffectFactory EffectFactory { get; } = contextFactory;
 
     /// <summary>
     /// Gets base type name, typically the name of the class inheriting the LoggedWorkflow
@@ -44,7 +43,7 @@ public abstract class EffectWorkflow<TIn, TOut>(
     public new virtual async Task<TOut> Run(TIn input)
     {
         logger.Info($"Running Workflow ({WorkflowName}).");
-        var context = DataContextFactory.Create();
+        var context = EffectFactory.Create();
         Metadata = await InitializeWorkflow(context, logger, WorkflowName);
         await context.SaveChanges();
 
@@ -82,7 +81,7 @@ public abstract class EffectWorkflow<TIn, TOut>(
     /// <param name="workflowName"></param>
     /// <returns></returns>
     private static async Task<Metadata> InitializeWorkflow(
-        IDataContext context,
+        IEffect context,
         IEffectLogger logger,
         string workflowName
     )

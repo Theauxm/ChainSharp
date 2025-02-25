@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace ChainSharp.Effect.Data.Models;
+namespace ChainSharp.Effect.Models;
 
 /// <summary>
 /// Object for an exception that occurs

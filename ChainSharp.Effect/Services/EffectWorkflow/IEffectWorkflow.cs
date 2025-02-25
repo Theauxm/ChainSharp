@@ -1,6 +1,6 @@
 using ChainSharp.Workflow;
 
-namespace ChainSharp.Effect.Data.Services.EffectWorkflow;
+namespace ChainSharp.Effect.Services.EffectWorkflow;
 
 public interface IEffectWorkflow<in TIn, TOut> : IWorkflow<TIn, TOut>
 {

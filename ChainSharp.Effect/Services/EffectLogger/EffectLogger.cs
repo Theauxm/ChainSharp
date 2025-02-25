@@ -1,4 +1,4 @@
-namespace ChainSharp.Effect.Data.Services.EffectLogger;
+namespace ChainSharp.Effect.Services.EffectLogger;
 
 /// <summary>
 /// Logger for Workflow injection.

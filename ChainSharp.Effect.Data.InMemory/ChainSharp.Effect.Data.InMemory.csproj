@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Authors>Theauxm,mark-keaton</Authors>
-        <PackageDescription>In Memory Provider for ChainSharp.Logging Library</PackageDescription>
+        <PackageDescription>In Memory Provider for ChainSharp.Effect.Data Library</PackageDescription>
         <RepositoryUrl>https://github.com/Theauxm/ChainSharp</RepositoryUrl>
         <AssemblyName>Theauxm.ChainSharp.Effect.Data.InMemory</AssemblyName>
     </PropertyGroup>

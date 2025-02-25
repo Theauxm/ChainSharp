@@ -1,7 +1,9 @@
 using System.Data;
-using ChainSharp.Effect.Data.Models;
 using ChainSharp.Effect.Data.Models.Metadata;
 using ChainSharp.Effect.Data.Services.DataContextTransaction;
+using ChainSharp.Effect.Models;
+using ChainSharp.Effect.Models.Metadata;
+using ChainSharp.Effect.Services.Effect;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChainSharp.Effect.Data.Services.DataContext;
@@ -11,11 +13,11 @@ namespace ChainSharp.Effect.Data.Services.DataContext;
 /// any implementation. Includes all tables, and common
 /// functions necessary to run each workflow.
 /// </summary>
-public interface IDataContext : IDisposable
+public interface IDataContext : IEffect
 {
     #region Tables
 
-    IQueryable<Metadata> Metadatas { get; }
+    IQueryable<PersistentMetadata> PersistentMetadatas { get; }
 
     #endregion
 
@@ -29,10 +31,6 @@ public interface IDataContext : IDisposable
     public Task CommitTransaction();
 
     public Task RollbackTransaction();
-
-    public Task Track(IModel model);
-
-    public Task<int> SaveChanges();
 
     public void Reset();
 }

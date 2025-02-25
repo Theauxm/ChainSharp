@@ -1,6 +1,6 @@
 using ChainSharp.Effect.Data.Configuration.ChainSharpLoggingBuilder;
 using ChainSharp.Effect.Data.Configuration.ChainSharpLoggingConfiguration;
-using ChainSharp.Effect.Data.Services.EffectLogger;
+using ChainSharp.Effect.Services.EffectLogger;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ChainSharp.Effect.Data.Extensions;

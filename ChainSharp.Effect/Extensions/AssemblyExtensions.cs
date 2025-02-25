@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace ChainSharp.Effect.Data.Extensions;
+namespace ChainSharp.Effect.Extensions;
 
 public static class AssemblyExtensions
 {

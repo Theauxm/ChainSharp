@@ -2,6 +2,10 @@ using System.Text.Json.Serialization;
 
 namespace ChainSharp.Logging.Models;
 
+/// <summary>
+/// Object for an exception that occurs
+/// within a step of a workflow.
+/// </summary>
 public class WorkflowExceptionData
 {
     [JsonPropertyName("type")]

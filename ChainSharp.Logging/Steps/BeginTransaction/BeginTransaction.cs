@@ -4,12 +4,14 @@ using LanguageExt;
 
 namespace ChainSharp.Logging.Steps.BeginTransaction;
 
-public class BeginTransaction(ILoggingProviderContext loggingProviderContextFactory)
-    : Step<Unit, Unit>
+/// <summary>
+/// Built-in step allowing for transactions to occur.
+/// </summary>
+public class BeginTransaction(ILoggingProviderContext loggingProviderContext) : Step<Unit, Unit>
 {
     public override async Task<Unit> Run(Unit input)
     {
-        await loggingProviderContextFactory.BeginTransaction();
+        await loggingProviderContext.BeginTransaction();
 
         return Unit.Default;
     }

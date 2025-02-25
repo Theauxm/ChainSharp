@@ -1,5 +1,6 @@
 using ChainSharp.Logging.Enums;
 using ChainSharp.Logging.InMemory;
+using ChainSharp.Logging.InMemory.Services.InMemoryContextFactory;
 using ChainSharp.Logging.Models.Metadata;
 using ChainSharp.Logging.Models.Metadata.DTOs;
 using ChainSharp.Logging.Services.LoggedWorkflow;

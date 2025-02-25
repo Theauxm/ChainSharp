@@ -5,6 +5,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ChainSharp.Logging.Services.LoggingProviderContext;
 
+/// <summary>
+/// EFCore DbContext that is meant to act as a wrapper for
+/// any implementation. Includes all tables, and common
+/// functions necessary to run each workflow.
+/// </summary>
+/// <param name="options"></param>
 public class LoggingProviderContext(DbContextOptions<LoggingProviderContext> options)
     : DbContext(options),
         ILoggingProviderContext

@@ -11,8 +11,11 @@ using LanguageExt;
 
 namespace ChainSharp.Logging.Models.Metadata;
 
+[Table("metadata", Schema = "chain_sharp")]
 public class Metadata : IMetadata
 {
+    #region Columns
+
     [Column("id")]
     public int Id { get; private set; }
 
@@ -46,8 +49,9 @@ public class Metadata : IMetadata
     [Column("end_time")]
     public DateTime? EndTime { get; set; }
 
-    [JsonConstructor]
-    private Metadata() { }
+    #endregion
+
+    #region Functions
 
     public static Metadata Create(
         ILoggingProviderContext loggingProviderContextFactory,
@@ -95,4 +99,9 @@ public class Metadata : IMetadata
             );
         }
     }
+
+    #endregion
+
+    [JsonConstructor]
+    private Metadata() { }
 }

@@ -20,6 +20,9 @@ public abstract class LoggedWorkflow<TIn, TOut>(
     IWorkflowLogger logger
 ) : Workflow<TIn, TOut>, ILoggedWorkflow<TIn, TOut>
 {
+    /// <summary>
+    /// Database Metadata row associated with the workflow
+    /// </summary>
     public Metadata Metadata { get; private set; }
 
     /// <summary>
@@ -28,6 +31,9 @@ public abstract class LoggedWorkflow<TIn, TOut>(
     protected internal ILoggingProviderContextFactory LoggingProviderContextFactory { get; } =
         contextFactory;
 
+    /// <summary>
+    /// Gets base type name, typically the name of the class inheriting the LoggedWorkflow
+    /// </summary>
     private string WorkflowName => GetType().Name;
 
     /// <summary>
@@ -69,6 +75,13 @@ public abstract class LoggedWorkflow<TIn, TOut>(
         }
     }
 
+    /// <summary>
+    /// initializes and begins the Workflow.
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="logger"></param>
+    /// <param name="workflowName"></param>
+    /// <returns></returns>
     private static async Task<Metadata> InitializeWorkflow(
         ILoggingProviderContext context,
         IWorkflowLogger logger,
@@ -85,6 +98,14 @@ public abstract class LoggedWorkflow<TIn, TOut>(
         return metadata;
     }
 
+    /// <summary>
+    /// Finishes a Workflow with either an exception or a result.
+    /// </summary>
+    /// <param name="logger"></param>
+    /// <param name="metadata"></param>
+    /// <param name="workflowName"></param>
+    /// <param name="result"></param>
+    /// <returns></returns>
     private static async Task<Unit> FinishWorkflow(
         IWorkflowLogger logger,
         Metadata metadata,

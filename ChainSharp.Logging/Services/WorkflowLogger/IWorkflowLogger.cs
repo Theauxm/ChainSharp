@@ -1,5 +1,8 @@
 namespace ChainSharp.Logging.Services.WorkflowLogger;
 
+/// <summary>
+/// Logger for Workflow injection.
+/// </summary>
 public interface IWorkflowLogger
 {
     public void Info(string message);

@@ -4,6 +4,9 @@ using LanguageExt;
 
 namespace ChainSharp.Logging.Steps.CommitTransaction;
 
+/// <summary>
+/// Built-in step allowing for transactions to be committed.
+/// </summary>
 public class CommitTransaction(ILoggingProviderContext loggingProviderContextFactory)
     : Step<Unit, Unit>
 {

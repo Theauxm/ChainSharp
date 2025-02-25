@@ -15,10 +15,6 @@ public class PostgresContext(DbContextOptions<PostgresContext> options)
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder
-            .HasDefaultSchema("chain_sharp")
-            .AddPostgresEnums()
-            .ApplyEntityOnModelCreating()
-            .ApplyUtcDateTimeConverter();
+        modelBuilder.HasDefaultSchema("chain_sharp").AddPostgresEnums().ApplyUtcDateTimeConverter();
     }
 }

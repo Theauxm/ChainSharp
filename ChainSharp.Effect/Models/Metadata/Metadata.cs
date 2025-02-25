@@ -11,8 +11,7 @@ using LanguageExt;
 
 namespace ChainSharp.Effect.Models.Metadata;
 
-[Table("metadata", Schema = "chain_sharp")]
-public partial class Metadata : IMetadata
+public class Metadata : IMetadata
 {
     #region Columns
 
@@ -53,6 +52,14 @@ public partial class Metadata : IMetadata
     public DateTime? EndTime { get; set; }
 
     public bool IsChild => ParentId is not null;
+
+    #endregion
+
+    #region ForeignKeys
+
+    public Metadata Parent { get; private set; }
+
+    public ICollection<Metadata> Children { get; private set; }
 
     #endregion
 

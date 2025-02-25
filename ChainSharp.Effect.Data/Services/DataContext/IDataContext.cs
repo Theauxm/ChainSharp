@@ -17,7 +17,7 @@ public interface IDataContext : IEffect
 {
     #region Tables
 
-    IQueryable<PersistentMetadata> PersistentMetadatas { get; }
+    IQueryable<Metadata> Metadatas { get; }
 
     #endregion
 

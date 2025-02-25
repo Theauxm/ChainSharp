@@ -9,6 +9,7 @@ using FluentAssertions;
 using LanguageExt;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Metadata = ChainSharp.Effect.Models.Metadata.Metadata;
 
 namespace ChainSharp.Tests.Effect.Data.InMemory.Integration.IntegrationTests;
 
@@ -29,9 +30,7 @@ public class InMemoryProviderTests : TestSetup
         context.Reset();
 
         // Act
-        var foundMetadata = await context.PersistentMetadatas.FirstOrDefaultAsync(
-            x => x.Id == metadata.Id
-        );
+        var foundMetadata = await context.Metadatas.FirstOrDefaultAsync(x => x.Id == metadata.Id);
 
         // Assert
         foundMetadata.Should().NotBeNull();

@@ -9,6 +9,7 @@ using FluentAssertions;
 using LanguageExt;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Metadata = ChainSharp.Effect.Models.Metadata.Metadata;
 
 namespace ChainSharp.Tests.Effect.Data.Postgres.Integration.IntegrationTests;
 

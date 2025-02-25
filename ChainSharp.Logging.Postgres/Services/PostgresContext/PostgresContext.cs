@@ -8,13 +8,17 @@ namespace ChainSharp.Logging.Postgres.Services.PostgresContext;
 ///
 /// </summary>
 /// <param name="options"></param>
-public class PostgresContext(DbContextOptions<LoggingProviderContext> options)
-    : LoggingProviderContext(options)
+public class PostgresContext(DbContextOptions<PostgresContext> options)
+    : LoggingProviderContext<PostgresContext>(options)
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.AddPostgresEnums().ApplyEntityOnModelCreating().ApplyUtcDateTimeConverter();
+        modelBuilder
+            .HasDefaultSchema("chain_sharp")
+            .AddPostgresEnums()
+            .ApplyEntityOnModelCreating()
+            .ApplyUtcDateTimeConverter();
     }
 }

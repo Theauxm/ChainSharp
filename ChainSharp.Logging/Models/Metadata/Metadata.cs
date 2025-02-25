@@ -8,6 +8,7 @@ using ChainSharp.Logging.Extensions;
 using ChainSharp.Logging.Models.Metadata.DTOs;
 using ChainSharp.Logging.Services.LoggingProviderContext;
 using LanguageExt;
+using Microsoft.EntityFrameworkCore;
 
 namespace ChainSharp.Logging.Models.Metadata;
 
@@ -18,6 +19,9 @@ public class Metadata : IMetadata
 
     [Column("id")]
     public int Id { get; private set; }
+
+    [Column("parent_id")]
+    public int? ParentId { get; set; }
 
     [Column("external_id")]
     public string ExternalId { get; set; }
@@ -49,12 +53,22 @@ public class Metadata : IMetadata
     [Column("end_time")]
     public DateTime? EndTime { get; set; }
 
+    public bool IsChild => ParentId is not null;
+
+    #endregion
+
+    #region ForeignKeys
+
+    public Metadata Parent { get; private set; }
+
+    public ICollection<Metadata> Children { get; private set; }
+
     #endregion
 
     #region Functions
 
     public static Metadata Create(
-        ILoggingProviderContext loggingProviderContextFactory,
+        ILoggingProviderContext loggingProviderContext,
         CreateMetadata metadata
     )
     {
@@ -67,7 +81,7 @@ public class Metadata : IMetadata
             StartTime = DateTime.UtcNow
         };
 
-        newWorkflow.TrackedIn(loggingProviderContextFactory);
+        loggingProviderContext.Track(newWorkflow);
 
         return newWorkflow;
     }
@@ -98,6 +112,38 @@ public class Metadata : IMetadata
                 $"Found Exception Type ({e.GetType()}) with Message ({e.Message}). Could not deserialize exception data from ({Name}) workflow. This is likely because this function was not correctly called or the RailwayStep function did not process the exception Message correctly."
             );
         }
+    }
+
+    #endregion
+
+    #region OnModelCreating
+
+    internal static void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Metadata>(entity =>
+        {
+            // entity.ToTable("metadata", "chain_sharp");
+
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedOnAdd();
+
+            entity.HasIndex(e => e.ExternalId).IsUnique();
+
+            // entity.Property(e => e.ExternalId).HasColumnType("char(32)").IsRequired();
+            // entity.Property(e => e.Name).HasColumnType("varchar").IsRequired();
+            // entity.Property(e => e.StartTime).HasColumnType("timestamp with time zone").IsRequired();
+            // entity.Property(e => e.EndTime).HasColumnType("timestamp with time zone");
+
+            entity
+                .HasOne(x => x.Parent)
+                .WithMany(x => x.Children)
+                .HasForeignKey(e => e.ParentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // entity.Property(e => e.WorkflowState)
+            // .HasColumnType("chain_sharp.workflow_state")
+            // .HasDefaultValue("pending");
+        });
     }
 
     #endregion

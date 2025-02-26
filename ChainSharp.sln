@@ -18,6 +18,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests.Effect.Dat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Effect", "ChainSharp.Effect\ChainSharp.Effect.csproj", "{D960CE78-4617-455E-9219-89B45A1A7C6C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Effect.Json", "ChainSharp.Effect.Json\ChainSharp.Effect.Json.csproj", "{C210DADC-1873-4698-BFBB-BF1BEBCE0E5F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests.Effect.Json.Integration", "ChainSharp.Tests.Effect.Json.Integration\ChainSharp.Tests.Effect.Json.Integration.csproj", "{0BE750CF-2096-4AEB-AEDA-E3CEE25C54BC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -60,5 +64,13 @@ Global
 		{D960CE78-4617-455E-9219-89B45A1A7C6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D960CE78-4617-455E-9219-89B45A1A7C6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D960CE78-4617-455E-9219-89B45A1A7C6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C210DADC-1873-4698-BFBB-BF1BEBCE0E5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C210DADC-1873-4698-BFBB-BF1BEBCE0E5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C210DADC-1873-4698-BFBB-BF1BEBCE0E5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C210DADC-1873-4698-BFBB-BF1BEBCE0E5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BE750CF-2096-4AEB-AEDA-E3CEE25C54BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BE750CF-2096-4AEB-AEDA-E3CEE25C54BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BE750CF-2096-4AEB-AEDA-E3CEE25C54BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BE750CF-2096-4AEB-AEDA-E3CEE25C54BC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

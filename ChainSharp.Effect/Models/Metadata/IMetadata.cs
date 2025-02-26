@@ -5,9 +5,6 @@ namespace ChainSharp.Effect.Models.Metadata;
 
 public interface IMetadata : IModel
 {
-    [Column("id")]
-    public int Id { get; }
-
     [Column("external_id")]
     public string ExternalId { get; set; }
 

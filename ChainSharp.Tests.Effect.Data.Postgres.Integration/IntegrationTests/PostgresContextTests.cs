@@ -14,7 +14,7 @@ namespace ChainSharp.Tests.Effect.Data.Postgres.Integration.IntegrationTests;
 public class PostgresContextTests : TestSetup
 {
     public override ServiceProvider ConfigureServices(IServiceCollection services) =>
-        services.AddChainSharpWorkflow<ITestWorkflow, TestWorkflow>().BuildServiceProvider();
+        services.AddScopedChainSharpWorkflow<ITestWorkflow, TestWorkflow>().BuildServiceProvider();
 
     [Theory]
     public async Task TestPostgresProviderCanCreateMetadata()

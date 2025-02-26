@@ -17,7 +17,7 @@ namespace ChainSharp.Tests.Effect.Data.InMemory.Integration.IntegrationTests;
 public class InMemoryProviderTests : TestSetup
 {
     public override ServiceProvider ConfigureServices(IServiceCollection services) =>
-        services.AddChainSharpWorkflow<ITestWorkflow, TestWorkflow>().BuildServiceProvider();
+        services.AddScopedChainSharpWorkflow<ITestWorkflow, TestWorkflow>().BuildServiceProvider();
 
     [Theory]
     public async Task TestInMemoryProviderCanCreateMetadata()

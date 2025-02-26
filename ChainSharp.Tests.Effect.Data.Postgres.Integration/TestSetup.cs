@@ -28,7 +28,7 @@ public abstract class TestSetup
         ]!;
 
         ServiceCollection.AddChainSharpEffects(
-            options => options.AddPostgresProvider(connectionString).AddConsoleLogger()
+            options => options.AddPostgresEffect(connectionString).AddConsoleLogger()
         );
 
         ServiceProvider = ConfigureServices(ServiceCollection);

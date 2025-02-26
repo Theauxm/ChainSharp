@@ -5,7 +5,6 @@ using System.Text.Json.Serialization;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Metadata.DTOs;
-using ChainSharp.Effect.Services.Effect;
 using ChainSharp.Exceptions;
 using LanguageExt;
 
@@ -16,9 +15,12 @@ public class Metadata : IMetadata
     #region Columns
 
     [Column("id")]
+    [JsonPropertyName("id")]
     public int Id { get; private set; }
 
     [Column("parent_id")]
+    [JsonPropertyName("parent_id")]
+    [JsonInclude]
     public int? ParentId { get; set; }
 
     [Column("external_id")]

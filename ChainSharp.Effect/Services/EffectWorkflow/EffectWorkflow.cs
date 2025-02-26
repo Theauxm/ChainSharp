@@ -126,6 +126,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
             logger => logger.Info($"Setting ({workflowName}) to ({resultState.ToString()}).")
         );
         metadata.WorkflowState = resultState;
+        metadata.EndTime = DateTime.UtcNow;
 
         if (failureReason != null)
             metadata.AddException(failureReason);

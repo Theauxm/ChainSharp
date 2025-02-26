@@ -81,10 +81,6 @@ public static class ServiceExtensions
         return builder.AddEffect(factory);
     }
 
-    public static ChainSharpEffectConfigurationBuilder AddConsoleLogger(
-        this ChainSharpEffectConfigurationBuilder configurationBuilder
-    ) => configurationBuilder.AddCustomLogger<EffectLogger>();
-
     public static ChainSharpEffectConfigurationBuilder AddCustomLogger<TWorkflowLogger>(
         this ChainSharpEffectConfigurationBuilder configurationBuilder
     )

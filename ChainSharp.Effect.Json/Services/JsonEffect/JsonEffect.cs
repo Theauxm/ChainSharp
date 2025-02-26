@@ -1,11 +1,13 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models;
 using ChainSharp.Effect.Services.Effect;
+using ChainSharp.Effect.Services.EffectLogger;
 
 namespace ChainSharp.Effect.Json.Services.JsonEffect;
 
-public class JsonEffect : IEffect
+public class JsonEffect(IEnumerable<IEffectLogger> loggers) : IEffect
 {
     private readonly Dictionary<IModel, string> _previousStates = new();
     private readonly HashSet<IModel> _trackedModels = new();
@@ -39,7 +41,7 @@ public class JsonEffect : IEffect
         }
 
         foreach (var model in changedModels)
-            Console.WriteLine(_previousStates[model]);
+            loggers.RunAll(logger => logger.Log(_previousStates[model]));
     }
 
     public async Task Track(IModel model)

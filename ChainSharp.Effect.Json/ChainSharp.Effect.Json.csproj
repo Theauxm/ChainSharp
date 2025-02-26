@@ -4,6 +4,10 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <Authors>Theauxm,mark-keaton</Authors>
+        <PackageDescription>Railway Oriented .NET Programming</PackageDescription>
+        <RepositoryUrl>https://github.com/Theauxm/ChainSharp</RepositoryUrl>
+        <AssemblyName>Theauxm.ChainSharp.Effect.Json</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>

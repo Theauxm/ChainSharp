@@ -1,4 +1,3 @@
-using ChainSharp.Effect.Data.Extensions;
 using ChainSharp.Effect.Data.Postgres.Extensions;
 using ChainSharp.Effect.Extensions;
 using Microsoft.Extensions.Configuration;
@@ -28,7 +27,7 @@ public abstract class TestSetup
         ]!;
 
         ServiceCollection.AddChainSharpEffects(
-            options => options.AddPostgresEffect(connectionString).AddConsoleLogger()
+            options => options.AddPostgresEffect(connectionString)
         );
 
         ServiceProvider = ConfigureServices(ServiceCollection);

@@ -1,3 +1,5 @@
+using System.Reflection;
+using ChainSharp.Effect.Attributes;
 using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
 using ChainSharp.Effect.Services.EffectLogger;
@@ -43,5 +45,72 @@ public static class ServiceExtensions
         configurationBuilder.ServiceCollection.AddScoped<IEffectLogger, TWorkflowLogger>();
 
         return configurationBuilder;
+    }
+
+    public static void InjectProperties(this IServiceProvider serviceProvider, object instance)
+    {
+        var properties = instance
+            .GetType()
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.IsDefined(typeof(InjectAttribute)) && p.CanWrite);
+
+        foreach (var property in properties)
+        {
+            var propertyType = property.PropertyType;
+
+            object? service = null;
+
+            // Handle IEnumerable<T>
+            if (
+                propertyType.IsGenericType
+                && propertyType.GetGenericTypeDefinition() == typeof(IEnumerable<>)
+            )
+            {
+                var serviceType = propertyType.GetGenericArguments()[0];
+                var serviceCollectionType = typeof(IEnumerable<>).MakeGenericType(serviceType);
+                service = serviceProvider.GetService(serviceCollectionType);
+            }
+            else
+            {
+                service = serviceProvider.GetService(propertyType);
+            }
+
+            if (service != null)
+            {
+                property.SetValue(instance, service);
+            }
+        }
+    }
+
+    public static IServiceCollection AddChainSharpWorkflow<TService, TImplementation>(
+        this IServiceCollection services
+    )
+        where TService : class
+        where TImplementation : class, TService
+    {
+        services.AddScoped<TImplementation>();
+        services.AddScoped<TService>(sp =>
+        {
+            var instance = sp.GetRequiredService<TImplementation>();
+            sp.InjectProperties(instance);
+            return instance;
+        });
+
+        return services;
+    }
+
+    public static IServiceCollection AddChainSharpWorkflow<TService>(
+        this IServiceCollection services
+    )
+        where TService : class
+    {
+        services.AddScoped<TService>(sp =>
+        {
+            var instance = ActivatorUtilities.CreateInstance<TService>(sp);
+            sp.InjectProperties(instance);
+            return instance;
+        });
+
+        return services;
     }
 }

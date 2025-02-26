@@ -1,6 +1,7 @@
 using ChainSharp.Effect.Data.Models.Metadata;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Enums;
+using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.Metadata.DTOs;
 using ChainSharp.Effect.Services.EffectLogger;
@@ -15,6 +16,9 @@ namespace ChainSharp.Tests.Effect.Data.InMemory.Integration.IntegrationTests;
 
 public class InMemoryProviderTests : TestSetup
 {
+    public override ServiceProvider ConfigureServices(IServiceCollection services) =>
+        services.AddChainSharpWorkflow<ITestWorkflow, TestWorkflow>().BuildServiceProvider();
+
     [Theory]
     public async Task TestInMemoryProviderCanCreateMetadata()
     {
@@ -24,7 +28,9 @@ public class InMemoryProviderTests : TestSetup
 
         var context = inMemoryContextFactory.Create();
 
-        var metadata = Metadata.Create(context, new CreateMetadata() { Name = "TestMetadata" });
+        var metadata = Metadata.Create(new CreateMetadata() { Name = "TestMetadata" });
+
+        await context.Track(metadata);
 
         await context.SaveChanges();
         context.Reset();
@@ -42,11 +48,8 @@ public class InMemoryProviderTests : TestSetup
     public async Task TestInMemoryProviderCanRunWorkflow()
     {
         // Arrange
-        var inMemoryContextFactory =
-            Scope.ServiceProvider.GetRequiredService<IDataContextFactory>();
-        var logger = new EffectLogger();
 
-        var workflow = new TestWorkflow(inMemoryContextFactory, logger);
+        var workflow = Scope.ServiceProvider.GetRequiredService<ITestWorkflow>();
 
         // Act
         await workflow.Run(Unit.Default);
@@ -59,10 +62,11 @@ public class InMemoryProviderTests : TestSetup
         workflow.Metadata.WorkflowState.Should().Be(WorkflowState.Completed);
     }
 
-    private class TestWorkflow(IDataContextFactory contextFactory, IEffectLogger logger)
-        : EffectWorkflow<Unit, Unit>(contextFactory, logger)
+    private class TestWorkflow : EffectWorkflow<Unit, Unit>, ITestWorkflow
     {
         protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
             Activate(input).Resolve();
     }
+
+    private interface ITestWorkflow : IEffectWorkflow<Unit, Unit> { }
 }

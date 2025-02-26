@@ -1,3 +1,5 @@
+using LanguageExt;
+
 namespace ChainSharp.Effect.Services.EffectLogger;
 
 /// <summary>
@@ -5,28 +7,38 @@ namespace ChainSharp.Effect.Services.EffectLogger;
 /// </summary>
 public class EffectLogger : IEffectLogger
 {
-    public void Info(string message)
+    public Unit Info(string message)
     {
         Console.WriteLine($"INFO: {message}");
+
+        return Unit.Default;
     }
 
-    public void Debug(string message)
+    public Unit Debug(string message)
     {
         Console.WriteLine($"DEBUG: {message}");
+
+        return Unit.Default;
     }
 
-    public void Warning(string message)
+    public Unit Warning(string message)
     {
         Console.WriteLine($"WARNING: {message}");
+
+        return Unit.Default;
     }
 
-    public void Error(string message)
+    public Unit Error(string message)
     {
         Console.WriteLine($"ERROR: {message}");
+
+        return Unit.Default;
     }
 
-    public void Error(string message, Exception exception)
+    public Unit Error(string message, Exception exception)
     {
         Console.WriteLine($"ERROR: {message}");
+
+        return Unit.Default;
     }
 }

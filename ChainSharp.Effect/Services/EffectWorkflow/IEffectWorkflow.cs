@@ -1,3 +1,4 @@
+using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Workflow;
 
 namespace ChainSharp.Effect.Services.EffectWorkflow;
@@ -11,4 +12,6 @@ public interface IEffectWorkflow<in TIn, TOut> : IWorkflow<TIn, TOut>
     /// <param name="input"></param>
     /// <returns></returns>
     new Task<TOut> Run(TIn input);
+
+    public Metadata Metadata { get; }
 }

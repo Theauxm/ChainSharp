@@ -4,6 +4,8 @@ using ChainSharp.Effect.Data.Postgres.Services.PostgresContextFactory;
 using ChainSharp.Effect.Data.Postgres.Utils;
 using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
+using ChainSharp.Effect.Services.EffectFactory;
+using ChainSharp.Effect.Services.EffectLogger;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -23,12 +25,7 @@ public static class ServiceExtensions
 
         configurationBuilder
             .ServiceCollection.AddSingleton<IDataContextFactory>(postgresConnectionFactory)
-            .AddDbContext<IDataContext, PostgresContext>(options =>
-            {
-                // builder.ConfigureWarnings(configurationBuilder => configurationBuilder
-                // .Ignore([CoreEventId.ManyServiceProvidersCreatedWarning]));
-                options.UseNpgsql(dataSource).UseSnakeCaseNamingConvention();
-            });
+            .AddSingleton<IEffectFactory>(postgresConnectionFactory);
 
         return configurationBuilder;
     }

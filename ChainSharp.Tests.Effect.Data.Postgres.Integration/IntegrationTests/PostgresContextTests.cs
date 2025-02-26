@@ -1,9 +1,7 @@
-using ChainSharp.Effect.Data.Models.Metadata;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Enums;
-using ChainSharp.Effect.Models.Metadata;
+using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Metadata.DTOs;
-using ChainSharp.Effect.Services.EffectLogger;
 using ChainSharp.Effect.Services.EffectWorkflow;
 using FluentAssertions;
 using LanguageExt;
@@ -16,7 +14,7 @@ namespace ChainSharp.Tests.Effect.Data.Postgres.Integration.IntegrationTests;
 public class PostgresContextTests : TestSetup
 {
     public override ServiceProvider ConfigureServices(IServiceCollection services) =>
-        services.BuildServiceProvider();
+        services.AddChainSharpWorkflow<ITestWorkflow, TestWorkflow>().BuildServiceProvider();
 
     [Theory]
     public async Task TestPostgresProviderCanCreateMetadata()
@@ -27,7 +25,9 @@ public class PostgresContextTests : TestSetup
 
         var context = postgresContextFactory.Create();
 
-        var metadata = Metadata.Create(context, new CreateMetadata() { Name = "TestMetadata" });
+        var metadata = Metadata.Create(new CreateMetadata() { Name = "TestMetadata" });
+
+        await context.Track(metadata);
 
         await context.SaveChanges();
         context.Reset();
@@ -45,11 +45,7 @@ public class PostgresContextTests : TestSetup
     public async Task TestPostgresProviderCanRunWorkflow()
     {
         // Arrange
-        var postgresContextFactory =
-            Scope.ServiceProvider.GetRequiredService<IDataContextFactory>();
-        var logger = new EffectLogger();
-
-        var workflow = new TestWorkflow(postgresContextFactory, logger);
+        var workflow = Scope.ServiceProvider.GetRequiredService<ITestWorkflow>();
 
         // Act
         await workflow.Run(Unit.Default);
@@ -62,10 +58,11 @@ public class PostgresContextTests : TestSetup
         workflow.Metadata.WorkflowState.Should().Be(WorkflowState.Completed);
     }
 
-    private class TestWorkflow(IDataContextFactory contextFactory, IEffectLogger logger)
-        : EffectWorkflow<Unit, Unit>(contextFactory, logger)
+    private class TestWorkflow : EffectWorkflow<Unit, Unit>, ITestWorkflow
     {
         protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
             Activate(input).Resolve();
     }
+
+    private interface ITestWorkflow : IEffectWorkflow<Unit, Unit> { }
 }

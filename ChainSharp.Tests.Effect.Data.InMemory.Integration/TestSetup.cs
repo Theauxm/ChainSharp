@@ -18,9 +18,11 @@ public abstract class TestSetup
     {
         ServiceCollection = new ServiceCollection();
 
-        ServiceProvider = ServiceCollection
-            .AddChainSharpEffects(options => options.AddInMemoryProvider().AddConsoleLogger())
-            .BuildServiceProvider();
+        ServiceCollection.AddChainSharpEffects(
+            options => options.AddInMemoryProvider().AddConsoleLogger()
+        );
+
+        ServiceProvider = ConfigureServices(ServiceCollection);
     }
 
     [OneTimeTearDown]
@@ -40,4 +42,6 @@ public abstract class TestSetup
     {
         Scope.Dispose();
     }
+
+    public abstract ServiceProvider ConfigureServices(IServiceCollection services);
 }

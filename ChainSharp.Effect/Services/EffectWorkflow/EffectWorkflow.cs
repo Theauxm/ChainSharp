@@ -1,4 +1,6 @@
+using ChainSharp.Effect.Attributes;
 using ChainSharp.Effect.Enums;
+using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.Metadata.DTOs;
 using ChainSharp.Effect.Services.Effect;
@@ -15,9 +17,7 @@ namespace ChainSharp.Effect.Services.EffectWorkflow;
 /// </summary>
 /// <typeparam name="TIn"></typeparam>
 /// <typeparam name="TOut"></typeparam>
-public abstract class EffectWorkflow<TIn, TOut>(IEffectFactory contextFactory, IEffectLogger logger)
-    : Workflow<TIn, TOut>,
-        IEffectWorkflow<TIn, TOut>
+public abstract class EffectWorkflow<TIn, TOut>() : Workflow<TIn, TOut>, IEffectWorkflow<TIn, TOut>
 {
     /// <summary>
     /// Database Metadata row associated with the workflow
@@ -27,7 +27,11 @@ public abstract class EffectWorkflow<TIn, TOut>(IEffectFactory contextFactory, I
     /// <summary>
     /// DataContextFactory for all connections required in the Workflow
     /// </summary>
-    protected internal IEffectFactory EffectFactory { get; } = contextFactory;
+    [Inject]
+    public IEnumerable<IEffectFactory> EffectFactories { get; set; }
+
+    [Inject]
+    public IEnumerable<IEffectLogger> Loggers { get; set; }
 
     /// <summary>
     /// Gets base type name, typically the name of the class inheriting the LoggedWorkflow
@@ -42,55 +46,59 @@ public abstract class EffectWorkflow<TIn, TOut>(IEffectFactory contextFactory, I
     /// <returns></returns>
     public new virtual async Task<TOut> Run(TIn input)
     {
-        logger.Info($"Running Workflow ({WorkflowName}).");
-        var context = EffectFactory.Create();
-        Metadata = await InitializeWorkflow(context, logger, WorkflowName);
-        await context.SaveChanges();
+        Loggers.RunAll(logger => logger.Info($"Running Workflow: ({WorkflowName})"));
+
+        var effects = EffectFactories.RunAll(factory => factory.Create());
+        Metadata = await InitializeWorkflow(effects, Loggers, WorkflowName);
+        await effects.RunAllAsync(context => context.SaveChanges());
 
         try
         {
-            logger.Info($"Running ({WorkflowName})");
             var result = await base.Run(input);
-            logger.Info($"({WorkflowName}) completed successfully");
+            Loggers.RunAll(logger => logger.Info($"({WorkflowName}) completed successfully."));
 
-            await FinishWorkflow(logger, Metadata, WorkflowName, result);
-            await context.SaveChanges();
+            await FinishWorkflow(Loggers, Metadata, WorkflowName, result);
+            await effects.RunAllAsync(context => context.SaveChanges());
 
             return result;
         }
         catch (Exception e)
         {
-            logger.Error($"Caught Exception ({e.GetType()}) with Message ({e.Message}).");
+            Loggers.RunAll(
+                logger =>
+                    logger.Error($"Caught Exception ({e.GetType()}) with Message ({e.Message}).")
+            );
 
-            await FinishWorkflow(logger, Metadata, WorkflowName, e);
-            await context.SaveChanges();
+            await FinishWorkflow(Loggers, Metadata, WorkflowName, e);
+            await effects.RunAllAsync(context => context.SaveChanges());
 
             throw;
         }
         finally
         {
-            context.Dispose();
+            effects.RunAll(context => context.Dispose());
         }
     }
 
     /// <summary>
     /// initializes and begins the Workflow.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="logger"></param>
     /// <param name="workflowName"></param>
+    /// <param name="effects"></param>
+    /// <param name="loggers"></param>
     /// <returns></returns>
     private static async Task<Metadata> InitializeWorkflow(
-        IEffect context,
-        IEffectLogger logger,
+        IEnumerable<IEffect> effects,
+        IEnumerable<IEffectLogger> loggers,
         string workflowName
     )
     {
-        logger.Info($"Initializing ({workflowName}");
+        loggers.RunAll(logger => logger.Info($"Initializing ({workflowName})"));
 
-        var metadata = Metadata.Create(context, new CreateMetadata { Name = workflowName });
+        var metadata = Metadata.Create(new CreateMetadata { Name = workflowName });
+        await effects.RunAllAsync(effect => effect.Track(metadata));
 
-        logger.Info($"Setting ({workflowName}) to In Progress.");
+        loggers.RunAll(logger => logger.Info($"Setting ({workflowName}) to In Progress."));
         metadata.WorkflowState = WorkflowState.InProgress;
 
         return metadata;
@@ -105,7 +113,7 @@ public abstract class EffectWorkflow<TIn, TOut>(IEffectFactory contextFactory, I
     /// <param name="result"></param>
     /// <returns></returns>
     private static async Task<Unit> FinishWorkflow(
-        IEffectLogger logger,
+        IEnumerable<IEffectLogger> loggers,
         Metadata metadata,
         string workflowName,
         Either<Exception, TOut> result
@@ -114,7 +122,9 @@ public abstract class EffectWorkflow<TIn, TOut>(IEffectFactory contextFactory, I
         var failureReason = result.IsRight ? null : result.Swap().ValueUnsafe();
 
         var resultState = result.IsRight ? WorkflowState.Completed : WorkflowState.Failed;
-        logger.Info($"Setting ({workflowName}) to ({resultState.ToString()}).");
+        loggers.RunAll(
+            logger => logger.Info($"Setting ({workflowName}) to ({resultState.ToString()}).")
+        );
         metadata.WorkflowState = resultState;
 
         if (failureReason != null)

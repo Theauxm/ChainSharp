@@ -1,3 +1,5 @@
+using LanguageExt;
+
 namespace ChainSharp.Effect.Services.EffectLogger;
 
 /// <summary>
@@ -5,13 +7,13 @@ namespace ChainSharp.Effect.Services.EffectLogger;
 /// </summary>
 public interface IEffectLogger
 {
-    public void Info(string message);
+    public Unit Info(string message);
 
-    public void Debug(string message);
+    public Unit Debug(string message);
 
-    public void Warning(string message);
+    public Unit Warning(string message);
 
-    public void Error(string message);
+    public Unit Error(string message);
 
-    public void Error(string message, Exception exception);
+    public Unit Error(string message, Exception exception);
 }

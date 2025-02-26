@@ -65,7 +65,7 @@ public class Metadata : IMetadata
 
     #region Functions
 
-    public static Metadata Create(IEffect dataContext, CreateMetadata metadata)
+    public static Metadata Create(CreateMetadata metadata)
     {
         var newWorkflow = new Metadata
         {
@@ -75,8 +75,6 @@ public class Metadata : IMetadata
             Executor = Assembly.GetEntryAssembly()?.GetAssemblyProject(),
             StartTime = DateTime.UtcNow
         };
-
-        dataContext.Track(newWorkflow);
 
         return newWorkflow;
     }

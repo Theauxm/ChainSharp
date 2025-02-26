@@ -22,7 +22,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Effect.Json", "C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests.Effect.Json.Integration", "ChainSharp.Tests.Effect.Json.Integration\ChainSharp.Tests.Effect.Json.Integration.csproj", "{0BE750CF-2096-4AEB-AEDA-E3CEE25C54BC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Effect.Log", "ChainSharp.Effect.Log\ChainSharp.Effect.Log.csproj", "{0A17ADFA-AD24-4A52-9418-1B85F9C83ED5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Effect.Logging", "ChainSharp.Effect.Logging\ChainSharp.Effect.Logging.csproj", "{0A17ADFA-AD24-4A52-9418-1B85F9C83ED5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

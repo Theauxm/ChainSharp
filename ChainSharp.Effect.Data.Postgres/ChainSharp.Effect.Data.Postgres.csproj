@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Authors>Theauxm,mark-keaton</Authors>
+        <PackageDescription>Postgres Provider for ChainSharp.Effect.Data Library</PackageDescription>
+        <RepositoryUrl>https://github.com/Theauxm/ChainSharp</RepositoryUrl>
+        <AssemblyName>Theauxm.ChainSharp.Effect.Data.Postgres</AssemblyName>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="Migrations\*.sql" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.8" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.8" />
+        <PackageReference Include="EFCore.NamingConventions" Version="8.0.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ChainSharp.Effect.Data\ChainSharp.Effect.Data.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="dbup-core" Version="5.0.87" />
+        <PackageReference Include="dbup-postgresql" Version="5.0.40" />
+    </ItemGroup>
+
+</Project>

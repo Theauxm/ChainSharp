@@ -45,6 +45,9 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+          
+      - name: Docker
+        run: docker compose up -d
 
       - name: Build Project
         run: dotnet build --configuration Release /clp:ErrorsOnly

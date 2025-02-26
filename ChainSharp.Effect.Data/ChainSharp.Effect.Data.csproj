@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Authors>Theauxm,mark-keaton</Authors>
+        <PackageDescription>Effect Data for ChainSharp Workflows</PackageDescription>
+        <RepositoryUrl>https://github.com/Theauxm/ChainSharp</RepositoryUrl>
+        <AssemblyName>Theauxm.ChainSharp.Effect.Data</AssemblyName>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ChainSharp.Effect\ChainSharp.Effect.csproj" />
+      <ProjectReference Include="..\ChainSharp\ChainSharp.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.8" />
+      <PackageReference Include="Npgsql" Version="8.0.5" />
+    </ItemGroup>
+
+</Project>

@@ -1,7 +1,7 @@
 using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
-using ChainSharp.Effect.Services.Effect;
-using ChainSharp.Effect.Services.EffectFactory;
+using ChainSharp.Effect.Services.EffectProvider;
+using ChainSharp.Effect.Services.EffectProviderFactory;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChainSharp.Effect.Data.InMemory.Services.InMemoryContextFactory;
@@ -9,7 +9,7 @@ namespace ChainSharp.Effect.Data.InMemory.Services.InMemoryContextFactory;
 /// <summary>
 /// InMemory Provider Context Factory implementation.
 /// </summary>
-public class InMemoryContextFactory : IDataContextFactory
+public class InMemoryContextProviderFactory : IDataContextProviderFactory
 {
     public IDataContext Create() =>
         new InMemoryContext.InMemoryContext(
@@ -18,5 +18,5 @@ public class InMemoryContextFactory : IDataContextFactory
                 .Options
         );
 
-    IEffect IEffectFactory.Create() => Create();
+    IEffectProvider IEffectProviderFactory.Create() => Create();
 }

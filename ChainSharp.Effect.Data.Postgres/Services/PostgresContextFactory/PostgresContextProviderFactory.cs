@@ -1,13 +1,14 @@
 using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
-using ChainSharp.Effect.Services.Effect;
-using ChainSharp.Effect.Services.EffectFactory;
+using ChainSharp.Effect.Services.EffectProvider;
+using ChainSharp.Effect.Services.EffectProviderFactory;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
 namespace ChainSharp.Effect.Data.Postgres.Services.PostgresContextFactory;
 
-public class PostgresContextFactory(NpgsqlDataSource dataSource) : IDataContextFactory
+public class PostgresContextProviderFactory(NpgsqlDataSource dataSource)
+    : IDataContextProviderFactory
 {
     public IDataContext Create() =>
         new PostgresContext.PostgresContext(
@@ -17,5 +18,5 @@ public class PostgresContextFactory(NpgsqlDataSource dataSource) : IDataContextF
                 .Options
         );
 
-    IEffect IEffectFactory.Create() => Create();
+    IEffectProvider IEffectProviderFactory.Create() => Create();
 }

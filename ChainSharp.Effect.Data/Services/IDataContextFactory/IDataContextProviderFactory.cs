@@ -1,5 +1,5 @@
 using ChainSharp.Effect.Data.Services.DataContext;
-using ChainSharp.Effect.Services.EffectFactory;
+using ChainSharp.Effect.Services.EffectProviderFactory;
 
 namespace ChainSharp.Effect.Data.Services.IDataContextFactory;
 
@@ -7,7 +7,7 @@ namespace ChainSharp.Effect.Data.Services.IDataContextFactory;
 /// Factory for each LoggingProviderContext.
 /// Each provider will likely implement this on their own.
 /// </summary>
-public interface IDataContextFactory : IEffectFactory
+public interface IDataContextProviderFactory : IEffectProviderFactory
 {
     public new IDataContext Create();
 }

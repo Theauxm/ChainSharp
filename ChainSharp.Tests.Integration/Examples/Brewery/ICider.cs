@@ -1,7 +1,7 @@
-using ChainSharp.Tests.Examples.Brewery.Steps.Bottle;
-using ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
+using ChainSharp.Tests.Integration.Examples.Brewery.Steps.Bottle;
+using ChainSharp.Tests.Integration.Examples.Brewery.Steps.Prepare;
 using ChainSharp.Workflow;
 
-namespace ChainSharp.Tests.Examples.Brewery;
+namespace ChainSharp.Tests.Integration.Examples.Brewery;
 
 public interface ICider : IWorkflow<Ingredients, List<GlassBottle>> { }

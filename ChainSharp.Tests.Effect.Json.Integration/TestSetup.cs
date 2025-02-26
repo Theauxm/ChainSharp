@@ -1,5 +1,6 @@
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Json.Extensions;
+using ChainSharp.Effect.Log.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ChainSharp.Tests.Effect.Json.Integration;
@@ -17,7 +18,9 @@ public abstract class TestSetup
     {
         ServiceCollection = new ServiceCollection();
 
-        ServiceCollection.AddChainSharpEffects(options => options.AddJsonEffect());
+        ServiceCollection.AddChainSharpEffects(
+            options => options.AddEffectLogger().AddJsonEffect()
+        );
 
         ServiceProvider = ConfigureServices(ServiceCollection);
     }

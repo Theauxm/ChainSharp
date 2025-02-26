@@ -1,4 +1,4 @@
-namespace ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
+namespace ChainSharp.Tests.Integration.Examples.Brewery.Steps.Prepare;
 
 public interface IBrewingJug
 {

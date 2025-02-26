@@ -1,9 +1,7 @@
-using ChainSharp.Exceptions;
 using ChainSharp.Step;
-using ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
-using LanguageExt;
+using ChainSharp.Tests.Integration.Examples.Brewery.Steps.Prepare;
 
-namespace ChainSharp.Tests.Examples.Brewery.Steps.Bottle;
+namespace ChainSharp.Tests.Integration.Examples.Brewery.Steps.Bottle;
 
 public class StealCinnamonAndRunAway : Step<BrewingJug, List<GlassBottle>>
 {

@@ -1,7 +1,7 @@
 using ChainSharp.Step;
-using ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
+using ChainSharp.Tests.Integration.Examples.Brewery.Steps.Prepare;
 using LanguageExt;
 
-namespace ChainSharp.Tests.Examples.Brewery.Steps.Brew;
+namespace ChainSharp.Tests.Integration.Examples.Brewery.Steps.Brew;
 
 public interface IBrew : IStep<BrewingJug, Unit> { }

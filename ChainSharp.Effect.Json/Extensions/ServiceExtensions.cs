@@ -8,5 +8,5 @@ public static class ServiceExtensions
 {
     public static ChainSharpEffectConfigurationBuilder AddJsonEffect(
         this ChainSharpEffectConfigurationBuilder configurationBuilder
-    ) => configurationBuilder.AddEffect<JsonEffectFactory>();
+    ) => configurationBuilder.AddEffect<JsonEffectProviderFactory>();
 }

@@ -24,7 +24,7 @@ public class InMemoryProviderTests : TestSetup
     {
         // Arrange
         var inMemoryContextFactory =
-            Scope.ServiceProvider.GetRequiredService<IDataContextFactory>();
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
 
         var context = inMemoryContextFactory.Create();
 

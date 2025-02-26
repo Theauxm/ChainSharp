@@ -1,8 +1,8 @@
 using ChainSharp.Effect.Models;
 
-namespace ChainSharp.Effect.Services.Effect;
+namespace ChainSharp.Effect.Services.EffectRunner;
 
-public interface IEffect : IDisposable
+public interface IEffectRunner : IDisposable
 {
     public Task SaveChanges();
 

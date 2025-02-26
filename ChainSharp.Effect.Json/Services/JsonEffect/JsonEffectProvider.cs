@@ -1,21 +1,31 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ChainSharp.Effect.Attributes;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models;
-using ChainSharp.Effect.Services.Effect;
 using ChainSharp.Effect.Services.EffectLogger;
+using ChainSharp.Effect.Services.EffectProvider;
+using ChainSharp.Exceptions;
 
 namespace ChainSharp.Effect.Json.Services.JsonEffect;
 
-public class JsonEffect(IEnumerable<IEffectLogger> loggers) : IEffect
+public class JsonEffectProvider : IEffectProvider
 {
     private readonly Dictionary<IModel, string> _previousStates = new();
     private readonly HashSet<IModel> _trackedModels = new();
+
+    [Inject]
+    public IEffectLogger? Logger { get; set; }
 
     public void Dispose() { }
 
     public async Task SaveChanges()
     {
+        if (Logger == null)
+            throw new WorkflowException(
+                "Logger has not been injected. Ensure you are using an EffectLogger by calling services.AddChainSharpEffects(options => options.AddEffectLogger())"
+            );
+
         var options = new JsonSerializerOptions
         {
             WriteIndented = true,
@@ -41,7 +51,7 @@ public class JsonEffect(IEnumerable<IEffectLogger> loggers) : IEffect
         }
 
         foreach (var model in changedModels)
-            loggers.RunAll(logger => logger.Log(_previousStates[model]));
+            Logger.Log(_previousStates[model]);
     }
 
     public async Task Track(IModel model)

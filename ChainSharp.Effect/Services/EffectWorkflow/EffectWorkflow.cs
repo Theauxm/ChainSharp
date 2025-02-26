@@ -17,7 +17,7 @@ namespace ChainSharp.Effect.Services.EffectWorkflow;
 /// </summary>
 /// <typeparam name="TIn"></typeparam>
 /// <typeparam name="TOut"></typeparam>
-public abstract class EffectWorkflow<TIn, TOut>() : Workflow<TIn, TOut>, IEffectWorkflow<TIn, TOut>
+public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWorkflow<TIn, TOut>
 {
     /// <summary>
     /// Database Metadata row associated with the workflow

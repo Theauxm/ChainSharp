@@ -3,7 +3,7 @@ using ChainSharp.Effect.Data.Models.Metadata;
 using ChainSharp.Effect.Data.Services.DataContextTransaction;
 using ChainSharp.Effect.Models;
 using ChainSharp.Effect.Models.Metadata;
-using ChainSharp.Effect.Services.Effect;
+using ChainSharp.Effect.Services.EffectProvider;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChainSharp.Effect.Data.Services.DataContext;
@@ -13,7 +13,7 @@ namespace ChainSharp.Effect.Data.Services.DataContext;
 /// any implementation. Includes all tables, and common
 /// functions necessary to run each workflow.
 /// </summary>
-public interface IDataContext : IEffect
+public interface IDataContext : IEffectProvider
 {
     #region Tables
 

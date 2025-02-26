@@ -2,9 +2,9 @@ using System.Reflection;
 using ChainSharp.Effect.Attributes;
 using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
-using ChainSharp.Effect.Services.Effect;
-using ChainSharp.Effect.Services.EffectFactory;
 using ChainSharp.Effect.Services.EffectLogger;
+using ChainSharp.Effect.Services.EffectProviderFactory;
+using ChainSharp.Effect.Services.EffectRunner;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ChainSharp.Effect.Extensions;
@@ -18,7 +18,7 @@ public static class ServiceExtensions
     {
         var configuration = BuildConfiguration(serviceCollection, options);
 
-        return serviceCollection;
+        return serviceCollection.AddScoped<IEffectRunner, EffectRunner>();
     }
 
     private static ChainSharpEffectConfiguration BuildConfiguration(
@@ -36,26 +36,26 @@ public static class ServiceExtensions
     }
 
     public static ChainSharpEffectConfigurationBuilder AddEffect<TIEffectFactory, TEffectFactory>(
-        this ChainSharpEffectConfigurationBuilder builder
-    )
-        where TIEffectFactory : class, IEffectFactory
-        where TEffectFactory : class, TIEffectFactory, new()
-    {
-        var effectFactory = new TEffectFactory();
-
-        return builder.AddEffect<TIEffectFactory, TEffectFactory>(effectFactory);
-    }
-
-    public static ChainSharpEffectConfigurationBuilder AddEffect<TIEffectFactory, TEffectFactory>(
         this ChainSharpEffectConfigurationBuilder builder,
         TEffectFactory factory
     )
-        where TIEffectFactory : class, IEffectFactory
+        where TIEffectFactory : class, IEffectProviderFactory
         where TEffectFactory : class, TIEffectFactory
     {
         builder
             .ServiceCollection.AddSingleton<TIEffectFactory>(factory)
-            .AddSingleton<IEffectFactory>(factory);
+            .AddSingleton<IEffectProviderFactory>(factory);
+
+        return builder;
+    }
+
+    public static ChainSharpEffectConfigurationBuilder AddEffect<TIEffectFactory, TEffectFactory>(
+        this ChainSharpEffectConfigurationBuilder builder
+    )
+        where TIEffectFactory : class, IEffectProviderFactory
+        where TEffectFactory : class, TIEffectFactory
+    {
+        builder.ServiceCollection.AddSingleton<TIEffectFactory, TEffectFactory>();
 
         return builder;
     }
@@ -64,9 +64,9 @@ public static class ServiceExtensions
         this ChainSharpEffectConfigurationBuilder builder,
         TEffectFactory factory
     )
-        where TEffectFactory : class, IEffectFactory
+        where TEffectFactory : class, IEffectProviderFactory
     {
-        builder.ServiceCollection.AddSingleton<IEffectFactory>(factory);
+        builder.ServiceCollection.AddSingleton<IEffectProviderFactory>(factory);
 
         return builder;
     }
@@ -74,16 +74,12 @@ public static class ServiceExtensions
     public static ChainSharpEffectConfigurationBuilder AddEffect<TEffectFactory>(
         this ChainSharpEffectConfigurationBuilder builder
     )
-        where TEffectFactory : class, IEffectFactory, new()
+        where TEffectFactory : class, IEffectProviderFactory, new()
     {
         var factory = new TEffectFactory();
 
         return builder.AddEffect(factory);
     }
-
-    public static ChainSharpEffectConfigurationBuilder AddConsoleLogger(
-        this ChainSharpEffectConfigurationBuilder configurationBuilder
-    ) => configurationBuilder.AddCustomLogger<EffectLogger>();
 
     public static ChainSharpEffectConfigurationBuilder AddCustomLogger<TWorkflowLogger>(
         this ChainSharpEffectConfigurationBuilder configurationBuilder

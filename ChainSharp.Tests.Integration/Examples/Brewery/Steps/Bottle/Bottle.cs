@@ -1,10 +1,9 @@
 using ChainSharp.Exceptions;
 using ChainSharp.Step;
-using ChainSharp.Tests.Examples.Brewery.Steps.Ferment;
-using ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
-using LanguageExt;
+using ChainSharp.Tests.Integration.Examples.Brewery.Steps.Ferment;
+using ChainSharp.Tests.Integration.Examples.Brewery.Steps.Prepare;
 
-namespace ChainSharp.Tests.Examples.Brewery.Steps.Bottle;
+namespace ChainSharp.Tests.Integration.Examples.Brewery.Steps.Bottle;
 
 public class Bottle(IFerment ferment) : Step<BrewingJug, List<GlassBottle>>, IBottle
 {

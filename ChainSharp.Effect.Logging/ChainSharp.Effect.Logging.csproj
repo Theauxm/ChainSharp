@@ -7,12 +7,18 @@
         <Authors>Theauxm,mark-keaton</Authors>
         <PackageDescription>Railway Oriented .NET Programming</PackageDescription>
         <RepositoryUrl>https://github.com/Theauxm/ChainSharp</RepositoryUrl>
-        <AssemblyName>Theauxm.ChainSharp.Effect.Json</AssemblyName>
+        <AssemblyName>Theauxm.ChainSharp.Effect.Log</AssemblyName>
+        <RootNamespace>ChainSharp.Effect.Logging</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ChainSharp.Effect.Logging\ChainSharp.Effect.Logging.csproj" />
       <ProjectReference Include="..\ChainSharp.Effect\ChainSharp.Effect.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="8.0.0" />
     </ItemGroup>
 
 </Project>

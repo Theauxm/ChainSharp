@@ -1,4 +1,4 @@
-namespace ChainSharp.Tests.Examples.Brewery.Steps.Bottle;
+namespace ChainSharp.Tests.Integration.Examples.Brewery.Steps.Bottle;
 
 public class GlassBottle
 {

@@ -5,7 +5,6 @@ using ChainSharp.Effect.Data.Postgres.Utils;
 using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Extensions;
-using ChainSharp.Effect.Services.EffectFactory;
 using ChainSharp.Effect.Services.EffectLogger;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,10 +21,11 @@ public static class ServiceExtensions
         DatabaseMigrator.Migrate(connectionString).Wait();
 
         var dataSource = ModelBuilderExtensions.BuildDataSource(connectionString);
-        var postgresConnectionFactory = new PostgresContextFactory(dataSource);
+        var postgresConnectionFactory = new PostgresContextProviderFactory(dataSource);
 
-        return configurationBuilder.AddEffect<IDataContextFactory, PostgresContextFactory>(
-            postgresConnectionFactory
-        );
+        return configurationBuilder.AddEffect<
+            IDataContextProviderFactory,
+            PostgresContextProviderFactory
+        >(postgresConnectionFactory);
     }
 }

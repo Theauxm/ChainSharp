@@ -16,4 +16,10 @@ public interface IEffectLogger
     public Unit Error(string message);
 
     public Unit Error(string message, Exception exception);
+
+    public Unit Critical(string message);
+
+    public Unit Trace(string message);
+
+    public Unit Log(string message);
 }

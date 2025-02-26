@@ -9,5 +9,9 @@ public static class ServiceExtensions
 {
     public static ChainSharpEffectConfigurationBuilder AddInMemoryEffect(
         this ChainSharpEffectConfigurationBuilder configurationBuilder
-    ) => configurationBuilder.AddEffect<IDataContextFactory, InMemoryContextFactory>();
+    ) =>
+        configurationBuilder.AddEffect<
+            IDataContextProviderFactory,
+            InMemoryContextProviderFactory
+        >();
 }

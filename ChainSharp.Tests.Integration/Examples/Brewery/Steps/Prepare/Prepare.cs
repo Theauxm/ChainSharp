@@ -1,10 +1,10 @@
 using ChainSharp.Exceptions;
 using ChainSharp.Step;
-using ChainSharp.Tests.Examples.Brewery.Steps.Ferment;
+using ChainSharp.Tests.Integration.Examples.Brewery.Steps.Ferment;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
 
-namespace ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
+namespace ChainSharp.Tests.Integration.Examples.Brewery.Steps.Prepare;
 
 public class Prepare(IFerment ferment) : Step<Ingredients, BrewingJug>, IPrepare
 {

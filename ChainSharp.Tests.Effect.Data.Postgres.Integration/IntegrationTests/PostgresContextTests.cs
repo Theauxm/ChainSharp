@@ -21,7 +21,7 @@ public class PostgresContextTests : TestSetup
     {
         // Arrange
         var postgresContextFactory =
-            Scope.ServiceProvider.GetRequiredService<IDataContextFactory>();
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
 
         var context = postgresContextFactory.Create();
 

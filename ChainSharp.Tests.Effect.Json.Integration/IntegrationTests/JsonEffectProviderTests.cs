@@ -7,12 +7,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace ChainSharp.Tests.Effect.Json.Integration.IntegrationTests;
 
-public class JsonEffectTests : TestSetup
+public class JsonEffectProviderTests : TestSetup
 {
     public override ServiceProvider ConfigureServices(IServiceCollection services) =>
-        services
-            .AddTransientChainSharpWorkflow<ITestWorkflow, TestWorkflow>()
-            .BuildServiceProvider();
+        services.AddScopedChainSharpWorkflow<ITestWorkflow, TestWorkflow>().BuildServiceProvider();
 
     [Theory]
     public async Task TestJsonEffect()

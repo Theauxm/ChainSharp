@@ -3,9 +3,11 @@ using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.Metadata.DTOs;
-using ChainSharp.Effect.Services.Effect;
-using ChainSharp.Effect.Services.EffectFactory;
 using ChainSharp.Effect.Services.EffectLogger;
+using ChainSharp.Effect.Services.EffectProvider;
+using ChainSharp.Effect.Services.EffectProviderFactory;
+using ChainSharp.Effect.Services.EffectRunner;
+using ChainSharp.Exceptions;
 using ChainSharp.Workflow;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
@@ -22,16 +24,16 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// <summary>
     /// Database Metadata row associated with the workflow
     /// </summary>
-    public Metadata Metadata { get; private set; }
+    public Metadata? Metadata { get; private set; }
 
     /// <summary>
     /// DataContextFactory for all connections required in the Workflow
     /// </summary>
     [Inject]
-    public IEnumerable<IEffectFactory> EffectFactories { get; set; }
+    public IEffectRunner? EffectRunner { get; set; }
 
     [Inject]
-    public IEnumerable<IEffectLogger> Loggers { get; set; }
+    public IEffectLogger? EffectLogger { get; set; }
 
     /// <summary>
     /// Gets base type name, typically the name of the class inheriting the LoggedWorkflow
@@ -46,59 +48,60 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// <returns></returns>
     public new virtual async Task<TOut> Run(TIn input)
     {
-        Loggers.RunAll(logger => logger.Info($"Running Workflow: ({WorkflowName})"));
+        if (EffectRunner == null)
+            throw new WorkflowException(
+                "EffectRunner is null. Ensure services.AddChainSharpEffects() is being added to your Dependency Injection Container."
+            );
 
-        var effects = EffectFactories.RunAll(factory => factory.Create());
-        Metadata = await InitializeWorkflow(effects, Loggers, WorkflowName);
-        await effects.RunAllAsync(context => context.SaveChanges());
+        EffectLogger?.Info($"Running Workflow: ({WorkflowName})");
+
+        Metadata = await InitializeWorkflow();
+        await EffectRunner.SaveChanges();
 
         try
         {
             var result = await base.Run(input);
-            Loggers.RunAll(logger => logger.Info($"({WorkflowName}) completed successfully."));
+            EffectLogger?.Info($"({WorkflowName}) completed successfully.");
 
-            await FinishWorkflow(Loggers, Metadata, WorkflowName, result);
-            await effects.RunAllAsync(context => context.SaveChanges());
+            await FinishWorkflow(result);
+            await EffectRunner.SaveChanges();
 
             return result;
         }
         catch (Exception e)
         {
-            Loggers.RunAll(
-                logger =>
-                    logger.Error($"Caught Exception ({e.GetType()}) with Message ({e.Message}).")
-            );
+            EffectLogger?.Error($"Caught Exception ({e.GetType()}) with Message ({e.Message}).");
 
-            await FinishWorkflow(Loggers, Metadata, WorkflowName, e);
-            await effects.RunAllAsync(context => context.SaveChanges());
+            await FinishWorkflow(e);
+            await EffectRunner.SaveChanges();
 
             throw;
         }
         finally
         {
-            effects.RunAll(context => context.Dispose());
+            EffectRunner.Dispose();
         }
     }
 
     /// <summary>
     /// initializes and begins the Workflow.
     /// </summary>
+    /// <param name="effectRunner"></param>
     /// <param name="workflowName"></param>
-    /// <param name="effects"></param>
-    /// <param name="loggers"></param>
     /// <returns></returns>
-    private static async Task<Metadata> InitializeWorkflow(
-        IEnumerable<IEffect> effects,
-        IEnumerable<IEffectLogger> loggers,
-        string workflowName
-    )
+    private async Task<Metadata> InitializeWorkflow()
     {
-        loggers.RunAll(logger => logger.Info($"Initializing ({workflowName})"));
+        if (EffectRunner == null)
+            throw new WorkflowException(
+                "EffectLogger is null. Something has gone horribly wrong. Ensure services.AddChainSharpEffects() is being added to your Dependency Injection Container."
+            );
 
-        var metadata = Metadata.Create(new CreateMetadata { Name = workflowName });
-        await effects.RunAllAsync(effect => effect.Track(metadata));
+        EffectLogger?.Info($"Initializing ({WorkflowName})");
 
-        loggers.RunAll(logger => logger.Info($"Setting ({workflowName}) to In Progress."));
+        var metadata = Metadata.Create(new CreateMetadata { Name = WorkflowName });
+        await EffectRunner.Track(metadata);
+
+        EffectLogger?.Info($"Setting ({WorkflowName}) to In Progress.");
         metadata.WorkflowState = WorkflowState.InProgress;
 
         return metadata;
@@ -112,24 +115,22 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// <param name="workflowName"></param>
     /// <param name="result"></param>
     /// <returns></returns>
-    private static async Task<Unit> FinishWorkflow(
-        IEnumerable<IEffectLogger> loggers,
-        Metadata metadata,
-        string workflowName,
-        Either<Exception, TOut> result
-    )
+    private async Task<Unit> FinishWorkflow(Either<Exception, TOut> result)
     {
+        if (Metadata == null)
+            throw new WorkflowException(
+                "Metadata object has not been set. Was Run() called initially? If so, please submit a ticket on the ChainSharp GitHub repository. Something has gone horribly wrong."
+            );
+
         var failureReason = result.IsRight ? null : result.Swap().ValueUnsafe();
 
         var resultState = result.IsRight ? WorkflowState.Completed : WorkflowState.Failed;
-        loggers.RunAll(
-            logger => logger.Info($"Setting ({workflowName}) to ({resultState.ToString()}).")
-        );
-        metadata.WorkflowState = resultState;
-        metadata.EndTime = DateTime.UtcNow;
+        EffectLogger?.Info($"Setting ({WorkflowName}) to ({resultState.ToString()}).");
+        Metadata.WorkflowState = resultState;
+        Metadata.EndTime = DateTime.UtcNow;
 
         if (failureReason != null)
-            metadata.AddException(failureReason);
+            Metadata.AddException(failureReason);
 
         return Unit.Default;
     }

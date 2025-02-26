@@ -1,12 +1,11 @@
-using ChainSharp.Exceptions;
-using ChainSharp.Tests.Examples.Brewery.Steps.Bottle;
-using ChainSharp.Tests.Examples.Brewery.Steps.Brew;
-using ChainSharp.Tests.Examples.Brewery.Steps.Ferment;
-using ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
+using ChainSharp.Tests.Integration.Examples.Brewery.Steps.Bottle;
+using ChainSharp.Tests.Integration.Examples.Brewery.Steps.Brew;
+using ChainSharp.Tests.Integration.Examples.Brewery.Steps.Ferment;
+using ChainSharp.Tests.Integration.Examples.Brewery.Steps.Prepare;
 using ChainSharp.Workflow;
 using LanguageExt;
 
-namespace ChainSharp.Tests.Examples.Brewery;
+namespace ChainSharp.Tests.Integration.Examples.Brewery;
 
 public class Cider(IPrepare prepare, IFerment ferment, IBrew brew, IBottle bottle)
     : Workflow<Ingredients, List<GlassBottle>>,

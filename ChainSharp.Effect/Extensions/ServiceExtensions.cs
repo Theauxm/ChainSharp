@@ -36,17 +36,6 @@ public static class ServiceExtensions
     }
 
     public static ChainSharpEffectConfigurationBuilder AddEffect<TIEffectFactory, TEffectFactory>(
-        this ChainSharpEffectConfigurationBuilder builder
-    )
-        where TIEffectFactory : class, IEffectProviderFactory
-        where TEffectFactory : class, TIEffectFactory, new()
-    {
-        var effectFactory = new TEffectFactory();
-
-        return builder.AddEffect<TIEffectFactory, TEffectFactory>(effectFactory);
-    }
-
-    public static ChainSharpEffectConfigurationBuilder AddEffect<TIEffectFactory, TEffectFactory>(
         this ChainSharpEffectConfigurationBuilder builder,
         TEffectFactory factory
     )
@@ -56,6 +45,17 @@ public static class ServiceExtensions
         builder
             .ServiceCollection.AddSingleton<TIEffectFactory>(factory)
             .AddSingleton<IEffectProviderFactory>(factory);
+
+        return builder;
+    }
+
+    public static ChainSharpEffectConfigurationBuilder AddEffect<TIEffectFactory, TEffectFactory>(
+        this ChainSharpEffectConfigurationBuilder builder
+    )
+        where TIEffectFactory : class, IEffectProviderFactory
+        where TEffectFactory : class, TIEffectFactory
+    {
+        builder.ServiceCollection.AddSingleton<TIEffectFactory, TEffectFactory>();
 
         return builder;
     }

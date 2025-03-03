@@ -24,6 +24,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests.Effect.Jso
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Effect.Logging", "ChainSharp.Effect.Logging\ChainSharp.Effect.Logging.csproj", "{0A17ADFA-AD24-4A52-9418-1B85F9C83ED5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Blazor", "ChainSharp.Blazor\ChainSharp.Blazor.csproj", "{0D97A7A0-13E4-41E8-BC97-4E8282CE8766}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -78,5 +80,9 @@ Global
 		{0A17ADFA-AD24-4A52-9418-1B85F9C83ED5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0A17ADFA-AD24-4A52-9418-1B85F9C83ED5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0A17ADFA-AD24-4A52-9418-1B85F9C83ED5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D97A7A0-13E4-41E8-BC97-4E8282CE8766}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D97A7A0-13E4-41E8-BC97-4E8282CE8766}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D97A7A0-13E4-41E8-BC97-4E8282CE8766}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D97A7A0-13E4-41E8-BC97-4E8282CE8766}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

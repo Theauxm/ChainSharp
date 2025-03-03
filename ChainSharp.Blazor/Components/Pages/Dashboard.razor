@@ -1,0 +1,23 @@
+@page "/"
+<PageTitle>Dashboard</PageTitle>
+
+<RadzenColumn>
+    <RadzenRow Style="margin: 10px; padding: 10px">
+        <RadzenCard>
+            <RadzenArcGauge>
+                <RadzenArcGaugeScale>
+                    <RadzenArcGaugeScaleValue Value="@Counter" />
+                </RadzenArcGaugeScale>
+            </RadzenArcGauge>
+        </RadzenCard>
+    </RadzenRow>
+    <RadzenRow Style="margin: 10px; padding: 10px">
+        <RadzenCard Style="width: auto; height: auto">
+        </RadzenCard>
+    </RadzenRow>
+    <RadzenRow>
+        <RadzenCard>
+            <RadzenButton Click="@Increment"></RadzenButton>
+        </RadzenCard>
+    </RadzenRow>
+</RadzenColumn>

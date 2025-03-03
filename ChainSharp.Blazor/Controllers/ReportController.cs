@@ -33,17 +33,36 @@ namespace ChainSharp.Blazor.Controllers
         [Route("/ssrsproxy/{*url}")]
         public async Task Proxy()
         {
-            var urlToReplace = String.Format("{0}://{1}{2}/{3}/", Request.Scheme, Request.Host.Value, Request.PathBase, "ssrsproxy");
-            var requestedUrl = Request.GetDisplayUrl().Replace(urlToReplace, "", StringComparison.InvariantCultureIgnoreCase);
-            var reportServerIndex = requestedUrl.IndexOf("/ReportServer", StringComparison.InvariantCultureIgnoreCase);
+            var urlToReplace = String.Format(
+                "{0}://{1}{2}/{3}/",
+                Request.Scheme,
+                Request.Host.Value,
+                Request.PathBase,
+                "ssrsproxy"
+            );
+            var requestedUrl = Request
+                .GetDisplayUrl()
+                .Replace(urlToReplace, "", StringComparison.InvariantCultureIgnoreCase);
+            var reportServerIndex = requestedUrl.IndexOf(
+                "/ReportServer",
+                StringComparison.InvariantCultureIgnoreCase
+            );
             if (reportServerIndex == -1)
             {
-                reportServerIndex = requestedUrl.IndexOf("/Reports", StringComparison.InvariantCultureIgnoreCase);
+                reportServerIndex = requestedUrl.IndexOf(
+                    "/Reports",
+                    StringComparison.InvariantCultureIgnoreCase
+                );
             }
             var reportUrlParts = requestedUrl.Substring(0, reportServerIndex).Split('/');
 
-            var url = String.Format("{0}://{1}:{2}{3}", reportUrlParts[0], reportUrlParts[1], reportUrlParts[2],
-                requestedUrl.Substring(reportServerIndex, requestedUrl.Length - reportServerIndex));
+            var url = String.Format(
+                "{0}://{1}:{2}{3}",
+                reportUrlParts[0],
+                reportUrlParts[1],
+                reportUrlParts[2],
+                requestedUrl.Substring(reportServerIndex, requestedUrl.Length - reportServerIndex)
+            );
 
             using (var httpClient = CreateHttpClient())
             {
@@ -57,15 +76,24 @@ namespace ChainSharp.Blazor.Controllers
                 }
                 else
                 {
-                    if (responseMessage.Content.Headers.ContentType != null && responseMessage.Content.Headers.ContentType.MediaType == "text/html")
+                    if (
+                        responseMessage.Content.Headers.ContentType != null
+                        && responseMessage.Content.Headers.ContentType.MediaType == "text/html"
+                    )
                     {
                         await WriteResponse(Request, url, responseMessage, Response, false);
                     }
                     else
                     {
-                        using (var responseStream = await responseMessage.Content.ReadAsStreamAsync())
+                        using (
+                            var responseStream = await responseMessage.Content.ReadAsStreamAsync()
+                        )
                         {
-                            await responseStream.CopyToAsync(Response.Body, 81920, HttpContext.RequestAborted);
+                            await responseStream.CopyToAsync(
+                                Response.Body,
+                                81920,
+                                HttpContext.RequestAborted
+                            );
                         }
                     }
                 }
@@ -83,7 +111,8 @@ namespace ChainSharp.Blazor.Controllers
 
             if (httpClientHandler.SupportsAutomaticDecompression)
             {
-                httpClientHandler.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+                httpClientHandler.AutomaticDecompression =
+                    DecompressionMethods.GZip | DecompressionMethods.Deflate;
             }
 
             OnHttpClientHandlerCreate(ref httpClientHandler);
@@ -93,15 +122,25 @@ namespace ChainSharp.Blazor.Controllers
 
         partial void OnReportRequest(ref HttpRequestMessage requestMessage);
 
-        async Task<HttpResponseMessage> ForwardRequest(HttpClient httpClient, HttpRequest currentReqest, string url)
+        async Task<HttpResponseMessage> ForwardRequest(
+            HttpClient httpClient,
+            HttpRequest currentReqest,
+            string url
+        )
         {
-            var proxyRequestMessage = new HttpRequestMessage(new HttpMethod(currentReqest.Method), url);
+            var proxyRequestMessage = new HttpRequestMessage(
+                new HttpMethod(currentReqest.Method),
+                url
+            );
 
             foreach (var header in currentReqest.Headers)
             {
                 if (header.Key != "Host")
                 {
-                    proxyRequestMessage.Headers.TryAddWithoutValidation(header.Key, new string[] { header.Value });
+                    proxyRequestMessage.Headers.TryAddWithoutValidation(
+                        header.Key,
+                        new string[] { header.Value }
+                    );
                 }
             }
 
@@ -120,7 +159,10 @@ namespace ChainSharp.Blazor.Controllers
                     if (body.IndexOf("AjaxScriptManager") != -1)
                     {
                         proxyRequestMessage.Content.Headers.Remove("Content-Type");
-                        proxyRequestMessage.Content.Headers.Add("Content-Type", new string[] { currentReqest.ContentType });
+                        proxyRequestMessage.Content.Headers.Add(
+                            "Content-Type",
+                            new string[] { currentReqest.ContentType }
+                        );
                     }
                 }
             }
@@ -144,15 +186,33 @@ namespace ChainSharp.Blazor.Controllers
             response.Headers.Remove("transfer-encoding");
         }
 
-        static async Task WriteResponse(HttpRequest currentReqest, string url, HttpResponseMessage responseMessage, HttpResponse response, bool isAjax)
+        static async Task WriteResponse(
+            HttpRequest currentReqest,
+            string url,
+            HttpResponseMessage responseMessage,
+            HttpResponse response,
+            bool isAjax
+        )
         {
             var result = await responseMessage.Content.ReadAsStringAsync();
 
-            var ReportServer = url.Contains("/ReportServer/", StringComparison.InvariantCultureIgnoreCase) ? "ReportServer" : "Reports";
+            var ReportServer = url.Contains(
+                "/ReportServer/",
+                StringComparison.InvariantCultureIgnoreCase
+            )
+                ? "ReportServer"
+                : "Reports";
 
             var reportUri = new Uri(url);
-            var proxyUrl = String.Format("{0}://{1}{2}/ssrsproxy/{3}/{4}/{5}", currentReqest.Scheme, currentReqest.Host.Value, currentReqest.PathBase,
-                reportUri.Scheme, reportUri.Host, reportUri.Port);
+            var proxyUrl = String.Format(
+                "{0}://{1}{2}/ssrsproxy/{3}/{4}/{5}",
+                currentReqest.Scheme,
+                currentReqest.Host.Value,
+                currentReqest.PathBase,
+                reportUri.Scheme,
+                reportUri.Host,
+                reportUri.Port
+            );
 
             if (isAjax && result.IndexOf("|") != -1)
             {
@@ -205,37 +265,76 @@ namespace ChainSharp.Blazor.Controllers
                     }
                     index++;
 
-                    content = content.Replace($"/{ReportServer}/", $"{proxyUrl}/{ReportServer}/", StringComparison.InvariantCultureIgnoreCase);
-                    if (content.Contains("./ReportViewer.aspx", StringComparison.InvariantCultureIgnoreCase))
+                    content = content.Replace(
+                        $"/{ReportServer}/",
+                        $"{proxyUrl}/{ReportServer}/",
+                        StringComparison.InvariantCultureIgnoreCase
+                    );
+                    if (
+                        content.Contains(
+                            "./ReportViewer.aspx",
+                            StringComparison.InvariantCultureIgnoreCase
+                        )
+                    )
                     {
-                        content = content.Replace("./ReportViewer.aspx", $"{proxyUrl}/{ReportServer}/Pages/ReportViewer.aspx", StringComparison.InvariantCultureIgnoreCase);
+                        content = content.Replace(
+                            "./ReportViewer.aspx",
+                            $"{proxyUrl}/{ReportServer}/Pages/ReportViewer.aspx",
+                            StringComparison.InvariantCultureIgnoreCase
+                        );
                     }
                     else
                     {
-                        content = content.Replace("ReportViewer.aspx", $"{proxyUrl}/{ReportServer}/Pages/ReportViewer.aspx", StringComparison.InvariantCultureIgnoreCase);
+                        content = content.Replace(
+                            "ReportViewer.aspx",
+                            $"{proxyUrl}/{ReportServer}/Pages/ReportViewer.aspx",
+                            StringComparison.InvariantCultureIgnoreCase
+                        );
                     }
 
-                    builder.Append(String.Format("{0}|{1}|{2}|{3}|", content.Length, type, id, content));
+                    builder.Append(
+                        String.Format("{0}|{1}|{2}|{3}|", content.Length, type, id, content)
+                    );
                 }
 
                 result = builder.ToString();
             }
             else
             {
-                result = result.Replace($"/{ReportServer}/", $"{proxyUrl}/{ReportServer}/", StringComparison.InvariantCultureIgnoreCase);
+                result = result.Replace(
+                    $"/{ReportServer}/",
+                    $"{proxyUrl}/{ReportServer}/",
+                    StringComparison.InvariantCultureIgnoreCase
+                );
 
-                if (result.Contains("./ReportViewer.aspx", StringComparison.InvariantCultureIgnoreCase))
+                if (
+                    result.Contains(
+                        "./ReportViewer.aspx",
+                        StringComparison.InvariantCultureIgnoreCase
+                    )
+                )
                 {
-                    result = result.Replace("./ReportViewer.aspx", $"{proxyUrl}/{ReportServer}/Pages/ReportViewer.aspx", StringComparison.InvariantCultureIgnoreCase);
+                    result = result.Replace(
+                        "./ReportViewer.aspx",
+                        $"{proxyUrl}/{ReportServer}/Pages/ReportViewer.aspx",
+                        StringComparison.InvariantCultureIgnoreCase
+                    );
                 }
                 else
                 {
-                    result = result.Replace("ReportViewer.aspx", $"{proxyUrl}/{ReportServer}/Pages/ReportViewer.aspx", StringComparison.InvariantCultureIgnoreCase);
+                    result = result.Replace(
+                        "ReportViewer.aspx",
+                        $"{proxyUrl}/{ReportServer}/Pages/ReportViewer.aspx",
+                        StringComparison.InvariantCultureIgnoreCase
+                    );
                 }
             }
 
             response.Headers.Remove("Content-Length");
-            response.Headers.Append("Content-Length", new string[] { System.Text.Encoding.UTF8.GetByteCount(result).ToString() });
+            response.Headers.Append(
+                "Content-Length",
+                new string[] { System.Text.Encoding.UTF8.GetByteCount(result).ToString() }
+            );
 
             await response.WriteAsync(result);
         }

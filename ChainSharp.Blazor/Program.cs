@@ -1,13 +1,15 @@
-using Radzen;
 using ChainSharp.Blazor.Components;
 using ChainSharp.Effect.Data.Postgres.Extensions;
 using ChainSharp.Effect.Extensions;
+using Radzen;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddRazorComponents()
-      .AddInteractiveServerComponents().AddHubOptions(options => options.MaximumReceiveMessageSize = 10 * 1024 * 1024);
+builder
+    .Services.AddRazorComponents()
+    .AddInteractiveServerComponents()
+    .AddHubOptions(options => options.MaximumReceiveMessageSize = 10 * 1024 * 1024);
 
 builder.Services.AddControllers();
 builder.Services.AddRadzenComponents();
@@ -44,7 +46,6 @@ app.MapControllers();
 app.UseStaticFiles();
 app.UseAntiforgery();
 
-app.MapRazorComponents<App>()
-   .AddInteractiveServerRenderMode();
+app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
 app.Run();

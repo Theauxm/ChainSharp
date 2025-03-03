@@ -1,8 +1,8 @@
 using System;
 using System.IO;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ChainSharp.Blazor.Controllers
 {
@@ -68,7 +68,12 @@ namespace ChainSharp.Blazor.Controllers
             {
                 var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
 
-                using (var stream = new FileStream(Path.Combine(environment.WebRootPath, fileName), FileMode.Create))
+                using (
+                    var stream = new FileStream(
+                        Path.Combine(environment.WebRootPath, fileName),
+                        FileMode.Create
+                    )
+                )
                 {
                     // Save the file
                     file.CopyTo(stream);

@@ -8,14 +8,14 @@ public partial class WorkflowTable
 {
     [Inject]
     private IDataContextProviderFactory DataContextProviderFactory { get; set; }
-    
+
     private IQueryable<Metadata> _metadatas;
 
     private IList<Metadata> _selectedMetadatas;
-    
+
     private bool isLoading = true;
     private int totalCount;
-    
+
     protected override async Task OnInitializedAsync()
     {
         try

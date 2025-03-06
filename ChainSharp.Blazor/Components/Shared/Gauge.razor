@@ -3,6 +3,19 @@
 @using Microsoft.EntityFrameworkCore
 @rendermode InteractiveServer
 
+<RadzenArcGauge Style="width: 100%; height: 250px;">
+    <RadzenArcGaugeScale Step="10" Min="0" Max="100" MinorStep="2" Radius="1.5" TickPosition=@GaugeTickPosition.Inside Y="0.9" Margin="0">
+        <RadzenArcGaugeScaleValue Value=@percentage ShowValue=true>
+            <Template Context="pointer">
+                <RadzenStack AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -10%;">
+                    <RadzenText TextStyle="TextStyle.H5" class="rz-m-0"><strong>@pointer.Value</strong></RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption">Percent Complete Workflows 24h</RadzenText>
+                </RadzenStack>
+            </Template>
+        </RadzenArcGaugeScaleValue>
+    </RadzenArcGaugeScale>
+</RadzenArcGauge>
+
 @code {
     private double percentage = 0;
     private bool isLoading = true;
@@ -43,16 +56,3 @@
         public int Amount { get; set; }
     }
 }
-
-<RadzenArcGauge Style="width: 100%; height: 250px;">
-    <RadzenArcGaugeScale Step="10" Min="0" Max="100" MinorStep="2" Radius="1.5" TickPosition=@GaugeTickPosition.Inside Y="0.9" Margin="0">
-        <RadzenArcGaugeScaleValue Value=@percentage ShowValue=true>
-            <Template Context="pointer">
-                <RadzenStack AlignItems="AlignItems.Center" Gap="0" Style="margin-top: -10%;">
-                    <RadzenText TextStyle="TextStyle.H5" class="rz-m-0"><strong>@pointer.Value</strong></RadzenText>
-                    <RadzenText TextStyle="TextStyle.Caption">Percent Complete Workflows 24h</RadzenText>
-                </RadzenStack>
-            </Template>
-        </RadzenArcGaugeScaleValue>
-    </RadzenArcGaugeScale>
-</RadzenArcGauge>

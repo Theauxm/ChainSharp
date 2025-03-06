@@ -1,37 +1,30 @@
 @using ChainSharp.Effect.Models.Metadata
 
-@if (isLoading)
-{
-    <Spinner />
-}
-else
-{
-    <RadzenDataGrid
-        TItem="Metadata"
-        Data="@_metadatas"
-        Count="@totalCount"
-        AllowPaging="true"
-        PageSize="100"
-        AllowFiltering="true"
-        AllowColumnResize="true"
-        AllowAlternatingRows="false"
-        FilterMode="FilterMode.Advanced"
-        AllowSorting="true"
-        PagerHorizontalAlign="HorizontalAlign.Left"
-        ShowPagingSummary="true"
-        ColumnWidth="300px"
-        LogicalFilterOperator="LogicalFilterOperator.Or"
-        SelectionMode="DataGridSelectionMode.Single"
-        @bind-Value=@_selectedMetadatas
-    >
-        <Columns>
-            <RadzenDataGridColumn TItem="Metadata" Property="ExternalId" Title="ExternalId"/>
-            <RadzenDataGridColumn TItem="Metadata" Property="Name" Title="Name"/>
-            <RadzenDataGridColumn TItem="Metadata" Property="Executor" Title="Executor"/>
-            <RadzenDataGridColumn TItem="Metadata" Property="WorkflowState" Title="State"/>
-            <RadzenDataGridColumn TItem="Metadata" Property="FailureStep" Title="FailureStep"/>
-            <RadzenDataGridColumn TItem="Metadata" Property="StartTime" Title="StartTime"/>
-            <RadzenDataGridColumn TItem="Metadata" Property="EndTime" Title="EndTime"/>
-        </Columns>
-    </RadzenDataGrid>
-}
+<RadzenDataGrid
+    TItem="Metadata"
+    Data="@_metadatas"
+    Count="@totalCount"
+    AllowPaging="true"
+    PageSize="100"
+    AllowFiltering="true"
+    AllowColumnResize="true"
+    AllowAlternatingRows="false"
+    FilterMode="FilterMode.Advanced"
+    AllowSorting="true"
+    PagerHorizontalAlign="HorizontalAlign.Left"
+    ShowPagingSummary="true"
+    ColumnWidth="300px"
+    LogicalFilterOperator="LogicalFilterOperator.Or"
+    SelectionMode="DataGridSelectionMode.Single"
+    @bind-Value=@_selectedMetadatas
+>
+    <Columns>
+        <RadzenDataGridColumn TItem="Metadata" Property="ExternalId" Title="ExternalId"/>
+        <RadzenDataGridColumn TItem="Metadata" Property="Name" Title="Name"/>
+        <RadzenDataGridColumn TItem="Metadata" Property="Executor" Title="Executor"/>
+        <RadzenDataGridColumn TItem="Metadata" Property="WorkflowState" Title="State"/>
+        <RadzenDataGridColumn TItem="Metadata" Property="FailureStep" Title="FailureStep"/>
+        <RadzenDataGridColumn TItem="Metadata" Property="StartTime" Title="StartTime"/>
+        <RadzenDataGridColumn TItem="Metadata" Property="EndTime" Title="EndTime"/>
+    </Columns>
+</RadzenDataGrid>

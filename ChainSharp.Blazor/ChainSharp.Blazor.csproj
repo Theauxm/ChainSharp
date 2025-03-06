@@ -15,8 +15,4 @@
     <ProjectReference Include="..\ChainSharp.Effect.Data\ChainSharp.Effect.Data.csproj" />
     <ProjectReference Include="..\ChainSharp.Tests.Effect.Data.Postgres.Integration\ChainSharp.Tests.Effect.Data.Postgres.Integration.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <AdditionalFiles Include="Components\Shared\WorkflowTable.razor" />
-  </ItemGroup>
 </Project>

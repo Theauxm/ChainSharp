@@ -3,4 +3,11 @@
     
 <PageTitle>Dashboard</PageTitle>
 
-<WorkflowTable></WorkflowTable>
+@if (isLoading)
+{
+  <Spinner />
+}
+else
+{
+  <WorkflowTable @rendermode="InteractiveServer"/>
+}

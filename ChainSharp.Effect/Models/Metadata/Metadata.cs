@@ -90,23 +90,31 @@ public class Metadata : IMetadata
             );
 
             if (deserializedException == null)
-                throw new Exception(
-                    $"Could not deserialize exception data from ({Name}) workflow."
-                );
-
-            FailureException = deserializedException.Type;
-            FailureReason = deserializedException.Message;
-            FailureStep = deserializedException.Step;
-            StackTrace = workflowException.StackTrace;
+            {
+                FailureException = workflowException.GetType().Name;
+                FailureReason = workflowException.Message;
+                FailureStep = "WorkflowException";
+                StackTrace = workflowException.StackTrace;
+            }
+            else
+            {
+                FailureException = deserializedException.Type;
+                FailureReason = deserializedException.Message;
+                FailureStep = deserializedException.Step;
+                StackTrace = workflowException.StackTrace;
+            }
 
             return Unit.Default;
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            throw new WorkflowException(
-                $"Found Exception Type ({e.GetType()}) with Message ({e.Message}). Could not deserialize exception data from ({Name}) workflow. This is likely because this function was not correctly called or the RailwayStep function did not process the exception Message correctly."
-            );
+            FailureException = workflowException.GetType().Name;
+            FailureReason = workflowException.Message;
+            FailureStep = "WorkflowException";
+            StackTrace = workflowException.StackTrace;
         }
+
+        return Unit.Default;
     }
 
     #endregion

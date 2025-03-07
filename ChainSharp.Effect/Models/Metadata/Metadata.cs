@@ -94,16 +94,16 @@ public class Metadata : IMetadata
                 FailureException = workflowException.GetType().Name;
                 FailureReason = workflowException.Message;
                 FailureStep = "WorkflowException";
-                StackTrace = workflowException.StackTrace; 
+                StackTrace = workflowException.StackTrace;
             }
             else
             {
                 FailureException = deserializedException.Type;
                 FailureReason = deserializedException.Message;
                 FailureStep = deserializedException.Step;
-                StackTrace = workflowException.StackTrace; 
+                StackTrace = workflowException.StackTrace;
             }
-            
+
             return Unit.Default;
         }
         catch (Exception)
@@ -113,7 +113,7 @@ public class Metadata : IMetadata
             FailureStep = "WorkflowException";
             StackTrace = workflowException.StackTrace;
         }
-        
+
         return Unit.Default;
     }
 

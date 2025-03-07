@@ -64,5 +64,12 @@ public class PostgresContextTests : TestSetup
             Activate(input).Resolve();
     }
 
+    private class TestFailingWorkflow : EffectWorkflow<Unit, Unit>, ITestWorkflow
+    {
+        protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
+            Activate(input)
+            .Resolve();
+    }
+
     private interface ITestWorkflow : IEffectWorkflow<Unit, Unit> { }
 }

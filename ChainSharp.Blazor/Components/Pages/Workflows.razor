@@ -1,0 +1,13 @@
+@page "/workflows"
+@using ChainSharp.Blazor.Components.Shared
+    
+<PageTitle>Dashboard</PageTitle>
+
+@if (isLoading)
+{
+  <Spinner />
+}
+else
+{
+  <WorkflowTable @rendermode="InteractiveServer"/>
+}

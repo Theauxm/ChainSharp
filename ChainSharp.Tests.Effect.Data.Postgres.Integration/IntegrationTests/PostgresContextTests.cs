@@ -67,9 +67,10 @@ public class PostgresContextTests : TestSetup
     {
         // Arrange
         var workflow = Scope.ServiceProvider.GetRequiredService<ITestWorkflowWithinWorkflow>();
+        var dataContextProvider = Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
 
         // Act
-        await workflow.Run(Unit.Default);
+        var innerWorkflow = await workflow.Run(Unit.Default);
 
         // Assert
         workflow.Metadata.Name.Should().Be("TestWorkflowWithinWorkflow");
@@ -77,6 +78,23 @@ public class PostgresContextTests : TestSetup
         workflow.Metadata.FailureReason.Should().BeNullOrEmpty();
         workflow.Metadata.FailureStep.Should().BeNullOrEmpty();
         workflow.Metadata.WorkflowState.Should().Be(WorkflowState.Completed);
+        innerWorkflow.Metadata.Name.Should().Be("TestWorkflow");
+        innerWorkflow.Metadata.FailureException.Should().BeNullOrEmpty();
+        innerWorkflow.Metadata.FailureReason.Should().BeNullOrEmpty();
+        innerWorkflow.Metadata.FailureStep.Should().BeNullOrEmpty();
+        innerWorkflow.Metadata.WorkflowState.Should().Be(WorkflowState.Completed);
+
+        var dataContext = dataContextProvider.Create();
+        
+        var parentWorkflowResult = await dataContext.Metadatas.FirstOrDefaultAsync(x => x.Id == workflow.Metadata.Id);
+        var childWorkflowResult = await dataContext.Metadatas.FirstOrDefaultAsync(x => x.Id == innerWorkflow.Metadata.Id);
+        parentWorkflowResult.Should().NotBeNull();
+        parentWorkflowResult!.Id.Should().Be(workflow.Metadata.Id);
+        parentWorkflowResult!.WorkflowState.Should().Be(WorkflowState.Completed);
+        
+        childWorkflowResult.Should().NotBeNull();
+        childWorkflowResult!.Id.Should().Be(innerWorkflow.Metadata.Id);
+        childWorkflowResult!.WorkflowState.Should().Be(WorkflowState.Completed);
     }
 
     private class TestWorkflow : EffectWorkflow<Unit, Unit>, ITestWorkflow
@@ -86,24 +104,24 @@ public class PostgresContextTests : TestSetup
     }
 
     private class TestWorkflowWithinWorkflow(ITestWorkflow testWorkflow)
-        : EffectWorkflow<Unit, Unit>,
+        : EffectWorkflow<Unit, ITestWorkflow>,
             ITestWorkflowWithinWorkflow
     {
-        protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
+        protected override async Task<Either<Exception, ITestWorkflow>> RunInternal(Unit input) =>
             Activate(input).AddServices(testWorkflow).Chain<StepToRunTestWorkflow>().Resolve();
     }
 
-    private class StepToRunTestWorkflow(ITestWorkflow testWorkflow) : Step<Unit, Unit>
+    private class StepToRunTestWorkflow(ITestWorkflow testWorkflow) : Step<Unit, ITestWorkflow>
     {
-        public override async Task<Unit> Run(Unit input)
+        public override async Task<ITestWorkflow> Run(Unit input)
         {
             await testWorkflow.Run(Unit.Default);
 
-            return Unit.Default;
+            return testWorkflow;
         }
     }
 
     private interface ITestWorkflow : IEffectWorkflow<Unit, Unit> { }
 
-    private interface ITestWorkflowWithinWorkflow : IEffectWorkflow<Unit, Unit> { }
+    private interface ITestWorkflowWithinWorkflow : IEffectWorkflow<Unit, ITestWorkflow> { }
 }

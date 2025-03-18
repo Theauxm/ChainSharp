@@ -3,6 +3,7 @@ using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Metadata.DTOs;
 using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Step;
 using FluentAssertions;
 using LanguageExt;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,10 @@ namespace ChainSharp.Tests.Effect.Data.Postgres.Integration.IntegrationTests;
 public class PostgresContextTests : TestSetup
 {
     public override ServiceProvider ConfigureServices(IServiceCollection services) =>
-        services.AddScopedChainSharpWorkflow<ITestWorkflow, TestWorkflow>().BuildServiceProvider();
+        services
+            .AddScopedChainSharpWorkflow<ITestWorkflow, TestWorkflow>()
+            .AddScopedChainSharpWorkflow<ITestWorkflowWithinWorkflow, TestWorkflowWithinWorkflow>()
+            .BuildServiceProvider();
 
     [Theory]
     public async Task TestPostgresProviderCanCreateMetadata()
@@ -58,11 +62,71 @@ public class PostgresContextTests : TestSetup
         workflow.Metadata.WorkflowState.Should().Be(WorkflowState.Completed);
     }
 
+    [Theory]
+    public async Task TestPostgresProviderCanRunWorkflowWithinWorkflow()
+    {
+        // Arrange
+        var workflow = Scope.ServiceProvider.GetRequiredService<ITestWorkflowWithinWorkflow>();
+        var dataContextProvider =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        // Act
+        var innerWorkflow = await workflow.Run(Unit.Default);
+
+        // Assert
+        workflow.Metadata.Name.Should().Be("TestWorkflowWithinWorkflow");
+        workflow.Metadata.FailureException.Should().BeNullOrEmpty();
+        workflow.Metadata.FailureReason.Should().BeNullOrEmpty();
+        workflow.Metadata.FailureStep.Should().BeNullOrEmpty();
+        workflow.Metadata.WorkflowState.Should().Be(WorkflowState.Completed);
+        innerWorkflow.Metadata.Name.Should().Be("TestWorkflow");
+        innerWorkflow.Metadata.FailureException.Should().BeNullOrEmpty();
+        innerWorkflow.Metadata.FailureReason.Should().BeNullOrEmpty();
+        innerWorkflow.Metadata.FailureStep.Should().BeNullOrEmpty();
+        innerWorkflow.Metadata.WorkflowState.Should().Be(WorkflowState.Completed);
+
+        var dataContext = dataContextProvider.Create();
+
+        var parentWorkflowResult = await dataContext.Metadatas.FirstOrDefaultAsync(
+            x => x.Id == workflow.Metadata.Id
+        );
+        var childWorkflowResult = await dataContext.Metadatas.FirstOrDefaultAsync(
+            x => x.Id == innerWorkflow.Metadata.Id
+        );
+        parentWorkflowResult.Should().NotBeNull();
+        parentWorkflowResult!.Id.Should().Be(workflow.Metadata.Id);
+        parentWorkflowResult!.WorkflowState.Should().Be(WorkflowState.Completed);
+
+        childWorkflowResult.Should().NotBeNull();
+        childWorkflowResult!.Id.Should().Be(innerWorkflow.Metadata.Id);
+        childWorkflowResult!.WorkflowState.Should().Be(WorkflowState.Completed);
+    }
+
     private class TestWorkflow : EffectWorkflow<Unit, Unit>, ITestWorkflow
     {
         protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
             Activate(input).Resolve();
     }
 
+    private class TestWorkflowWithinWorkflow(ITestWorkflow testWorkflow)
+        : EffectWorkflow<Unit, ITestWorkflow>,
+            ITestWorkflowWithinWorkflow
+    {
+        protected override async Task<Either<Exception, ITestWorkflow>> RunInternal(Unit input) =>
+            Activate(input).AddServices(testWorkflow).Chain<StepToRunTestWorkflow>().Resolve();
+    }
+
+    private class StepToRunTestWorkflow(ITestWorkflow testWorkflow) : Step<Unit, ITestWorkflow>
+    {
+        public override async Task<ITestWorkflow> Run(Unit input)
+        {
+            await testWorkflow.Run(Unit.Default);
+
+            return testWorkflow;
+        }
+    }
+
     private interface ITestWorkflow : IEffectWorkflow<Unit, Unit> { }
+
+    private interface ITestWorkflowWithinWorkflow : IEffectWorkflow<Unit, ITestWorkflow> { }
 }

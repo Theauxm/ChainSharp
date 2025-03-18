@@ -18,7 +18,7 @@ public static class ServiceExtensions
     {
         var configuration = BuildConfiguration(serviceCollection, options);
 
-        return serviceCollection.AddScoped<IEffectRunner, EffectRunner>();
+        return serviceCollection.AddTransient<IEffectRunner, EffectRunner>();
     }
 
     private static ChainSharpEffectConfiguration BuildConfiguration(

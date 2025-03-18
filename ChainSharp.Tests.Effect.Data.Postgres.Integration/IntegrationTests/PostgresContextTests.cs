@@ -67,7 +67,8 @@ public class PostgresContextTests : TestSetup
     {
         // Arrange
         var workflow = Scope.ServiceProvider.GetRequiredService<ITestWorkflowWithinWorkflow>();
-        var dataContextProvider = Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+        var dataContextProvider =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
 
         // Act
         var innerWorkflow = await workflow.Run(Unit.Default);
@@ -85,13 +86,17 @@ public class PostgresContextTests : TestSetup
         innerWorkflow.Metadata.WorkflowState.Should().Be(WorkflowState.Completed);
 
         var dataContext = dataContextProvider.Create();
-        
-        var parentWorkflowResult = await dataContext.Metadatas.FirstOrDefaultAsync(x => x.Id == workflow.Metadata.Id);
-        var childWorkflowResult = await dataContext.Metadatas.FirstOrDefaultAsync(x => x.Id == innerWorkflow.Metadata.Id);
+
+        var parentWorkflowResult = await dataContext.Metadatas.FirstOrDefaultAsync(
+            x => x.Id == workflow.Metadata.Id
+        );
+        var childWorkflowResult = await dataContext.Metadatas.FirstOrDefaultAsync(
+            x => x.Id == innerWorkflow.Metadata.Id
+        );
         parentWorkflowResult.Should().NotBeNull();
         parentWorkflowResult!.Id.Should().Be(workflow.Metadata.Id);
         parentWorkflowResult!.WorkflowState.Should().Be(WorkflowState.Completed);
-        
+
         childWorkflowResult.Should().NotBeNull();
         childWorkflowResult!.Id.Should().Be(innerWorkflow.Metadata.Id);
         childWorkflowResult!.WorkflowState.Should().Be(WorkflowState.Completed);

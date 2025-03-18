@@ -3,6 +3,7 @@ using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Metadata.DTOs;
 using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Step;
 using FluentAssertions;
 using LanguageExt;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,10 @@ namespace ChainSharp.Tests.Effect.Data.Postgres.Integration.IntegrationTests;
 public class PostgresContextTests : TestSetup
 {
     public override ServiceProvider ConfigureServices(IServiceCollection services) =>
-        services.AddScopedChainSharpWorkflow<ITestWorkflow, TestWorkflow>().BuildServiceProvider();
+        services
+            .AddScopedChainSharpWorkflow<ITestWorkflow, TestWorkflow>()
+            .AddScopedChainSharpWorkflow<ITestWorkflowWithinWorkflow, TestWorkflowWithinWorkflow>()
+            .BuildServiceProvider();
 
     [Theory]
     public async Task TestPostgresProviderCanCreateMetadata()
@@ -57,12 +61,50 @@ public class PostgresContextTests : TestSetup
         workflow.Metadata.FailureStep.Should().BeNullOrEmpty();
         workflow.Metadata.WorkflowState.Should().Be(WorkflowState.Completed);
     }
+    
+    [Theory]
+    public async Task TestPostgresProviderCanRunWorkflowWithinWorkflow()
+    {
+        // Arrange
+        var workflow = Scope.ServiceProvider.GetRequiredService<ITestWorkflowWithinWorkflow>();
+
+        // Act
+        await workflow.Run(Unit.Default);
+
+        // Assert
+        workflow.Metadata.Name.Should().Be("TestWorkflowWithinWorkflow");
+        workflow.Metadata.FailureException.Should().BeNullOrEmpty();
+        workflow.Metadata.FailureReason.Should().BeNullOrEmpty();
+        workflow.Metadata.FailureStep.Should().BeNullOrEmpty();
+        workflow.Metadata.WorkflowState.Should().Be(WorkflowState.Completed);
+    }
 
     private class TestWorkflow : EffectWorkflow<Unit, Unit>, ITestWorkflow
     {
         protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
             Activate(input).Resolve();
     }
+    
+    private class TestWorkflowWithinWorkflow(ITestWorkflow testWorkflow) : EffectWorkflow<Unit, Unit>, ITestWorkflowWithinWorkflow
+    {
+        protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
+            Activate(input)
+                .AddServices(testWorkflow)
+                .Chain<StepToRunTestWorkflow>()
+                .Resolve();
+    }
+    
+    private class StepToRunTestWorkflow(ITestWorkflow testWorkflow) : Step<Unit, Unit>
+    {
+        public override async Task<Unit> Run(Unit input)
+        {
+            await testWorkflow.Run(Unit.Default);
+            
+            return Unit.Default;
+        }
+    }
 
     private interface ITestWorkflow : IEffectWorkflow<Unit, Unit> { }
+    
+    private interface ITestWorkflowWithinWorkflow : IEffectWorkflow<Unit, Unit> { }
 }

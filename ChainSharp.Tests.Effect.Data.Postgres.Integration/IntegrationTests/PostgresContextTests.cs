@@ -61,7 +61,7 @@ public class PostgresContextTests : TestSetup
         workflow.Metadata.FailureStep.Should().BeNullOrEmpty();
         workflow.Metadata.WorkflowState.Should().Be(WorkflowState.Completed);
     }
-    
+
     [Theory]
     public async Task TestPostgresProviderCanRunWorkflowWithinWorkflow()
     {
@@ -84,27 +84,26 @@ public class PostgresContextTests : TestSetup
         protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
             Activate(input).Resolve();
     }
-    
-    private class TestWorkflowWithinWorkflow(ITestWorkflow testWorkflow) : EffectWorkflow<Unit, Unit>, ITestWorkflowWithinWorkflow
+
+    private class TestWorkflowWithinWorkflow(ITestWorkflow testWorkflow)
+        : EffectWorkflow<Unit, Unit>,
+            ITestWorkflowWithinWorkflow
     {
         protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
-            Activate(input)
-                .AddServices(testWorkflow)
-                .Chain<StepToRunTestWorkflow>()
-                .Resolve();
+            Activate(input).AddServices(testWorkflow).Chain<StepToRunTestWorkflow>().Resolve();
     }
-    
+
     private class StepToRunTestWorkflow(ITestWorkflow testWorkflow) : Step<Unit, Unit>
     {
         public override async Task<Unit> Run(Unit input)
         {
             await testWorkflow.Run(Unit.Default);
-            
+
             return Unit.Default;
         }
     }
 
     private interface ITestWorkflow : IEffectWorkflow<Unit, Unit> { }
-    
+
     private interface ITestWorkflowWithinWorkflow : IEffectWorkflow<Unit, Unit> { }
 }

@@ -1,10 +1,13 @@
 using ChainSharp.Effect.Data.Postgres.Extensions;
 using ChainSharp.Effect.Extensions;
+using ChainSharp.Effect.Json.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace ChainSharp.Tests.Effect.Data.Postgres.Integration;
 
+[TestFixture]
 public abstract class TestSetup
 {
     private ServiceProvider ServiceProvider { get; set; }
@@ -26,9 +29,11 @@ public abstract class TestSetup
             "DatabaseConnectionString"
         ]!;
 
-        ServiceCollection.AddChainSharpEffects(
-            options => options.AddPostgresEffect(connectionString)
-        );
+        ServiceCollection
+            .AddTransient(typeof(ILogger<>), typeof(Logger<>))
+            .AddTransient<ILoggerFactory, LoggerFactory>()
+            .AddLogging(x => x.AddConsole())
+            .AddChainSharpEffects(options => options.AddPostgresEffect(connectionString));
 
         ServiceProvider = ConfigureServices(ServiceCollection);
     }

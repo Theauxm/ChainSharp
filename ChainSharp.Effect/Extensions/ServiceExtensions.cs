@@ -2,10 +2,10 @@ using System.Reflection;
 using ChainSharp.Effect.Attributes;
 using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
-using ChainSharp.Effect.Services.EffectLogger;
 using ChainSharp.Effect.Services.EffectProviderFactory;
 using ChainSharp.Effect.Services.EffectRunner;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace ChainSharp.Effect.Extensions;
 
@@ -81,16 +81,6 @@ public static class ServiceExtensions
         return builder.AddEffect(factory);
     }
 
-    public static ChainSharpEffectConfigurationBuilder AddCustomLogger<TWorkflowLogger>(
-        this ChainSharpEffectConfigurationBuilder configurationBuilder
-    )
-        where TWorkflowLogger : class, IEffectLogger
-    {
-        configurationBuilder.ServiceCollection.AddScoped<IEffectLogger, TWorkflowLogger>();
-
-        return configurationBuilder;
-    }
-
     public static void InjectProperties(this IServiceProvider serviceProvider, object instance)
     {
         var properties = instance
@@ -101,7 +91,6 @@ public static class ServiceExtensions
         foreach (var property in properties)
         {
             var propertyType = property.PropertyType;
-
             object? service = null;
 
             // Handle IEnumerable<T>
@@ -170,21 +159,6 @@ public static class ServiceExtensions
         services.AddSingleton<TService>(sp =>
         {
             var instance = sp.GetRequiredService<TImplementation>();
-            sp.InjectProperties(instance);
-            return instance;
-        });
-
-        return services;
-    }
-
-    public static IServiceCollection AddChainSharpWorkflow<TService>(
-        this IServiceCollection services
-    )
-        where TService : class
-    {
-        services.AddScoped<TService>(sp =>
-        {
-            var instance = ActivatorUtilities.CreateInstance<TService>(sp);
             sp.InjectProperties(instance);
             return instance;
         });

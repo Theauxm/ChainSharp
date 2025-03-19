@@ -1,16 +1,13 @@
 using ChainSharp.Effect.Attributes;
 using ChainSharp.Effect.Enums;
-using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.Metadata.DTOs;
-using ChainSharp.Effect.Services.EffectLogger;
-using ChainSharp.Effect.Services.EffectProvider;
-using ChainSharp.Effect.Services.EffectProviderFactory;
 using ChainSharp.Effect.Services.EffectRunner;
 using ChainSharp.Exceptions;
 using ChainSharp.Workflow;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
+using Microsoft.Extensions.Logging;
 
 namespace ChainSharp.Effect.Services.EffectWorkflow;
 
@@ -33,7 +30,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     public IEffectRunner? EffectRunner { get; set; }
 
     [Inject]
-    public IEffectLogger? EffectLogger { get; set; }
+    public ILogger<EffectWorkflow<TIn, TOut>>? EffectLogger { get; set; }
 
     /// <summary>
     /// Gets base type name, typically the name of the class inheriting the LoggedWorkflow
@@ -53,7 +50,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
                 "EffectRunner is null. Ensure services.AddChainSharpEffects() is being added to your Dependency Injection Container."
             );
 
-        EffectLogger?.Info($"Running Workflow: ({WorkflowName})");
+        EffectLogger?.LogInformation($"Running Workflow: ({WorkflowName})");
 
         Metadata = await InitializeWorkflow();
         await EffectRunner.SaveChanges();
@@ -61,7 +58,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
         try
         {
             var result = await base.Run(input);
-            EffectLogger?.Info($"({WorkflowName}) completed successfully.");
+            EffectLogger?.LogInformation($"({WorkflowName}) completed successfully.");
 
             await FinishWorkflow(result);
             await EffectRunner.SaveChanges();
@@ -70,7 +67,9 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
         }
         catch (Exception e)
         {
-            EffectLogger?.Error($"Caught Exception ({e.GetType()}) with Message ({e.Message}).");
+            EffectLogger?.LogInformation(
+                $"Caught Exception ({e.GetType()}) with Message ({e.Message})."
+            );
 
             await FinishWorkflow(e);
             await EffectRunner.SaveChanges();
@@ -96,12 +95,12 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
                 "EffectLogger is null. Something has gone horribly wrong. Ensure services.AddChainSharpEffects() is being added to your Dependency Injection Container."
             );
 
-        EffectLogger?.Info($"Initializing ({WorkflowName})");
+        EffectLogger?.LogInformation($"Initializing ({WorkflowName})");
 
         var metadata = Metadata.Create(new CreateMetadata { Name = WorkflowName });
         await EffectRunner.Track(metadata);
 
-        EffectLogger?.Info($"Setting ({WorkflowName}) to In Progress.");
+        EffectLogger?.LogInformation($"Setting ({WorkflowName}) to In Progress.");
         metadata.WorkflowState = WorkflowState.InProgress;
 
         return metadata;
@@ -125,7 +124,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
         var failureReason = result.IsRight ? null : result.Swap().ValueUnsafe();
 
         var resultState = result.IsRight ? WorkflowState.Completed : WorkflowState.Failed;
-        EffectLogger?.Info($"Setting ({WorkflowName}) to ({resultState.ToString()}).");
+        EffectLogger?.LogInformation($"Setting ({WorkflowName}) to ({resultState.ToString()}).");
         Metadata.WorkflowState = resultState;
         Metadata.EndTime = DateTime.UtcNow;
 

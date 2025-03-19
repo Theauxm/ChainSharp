@@ -15,6 +15,7 @@
         <PackageReference Include="FluentAssertions" Version="6.12.0" />
         <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0-preview.1.25080.5" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0"/>
         <PackageReference Include="NUnit" Version="3.14.0"/>
         <PackageReference Include="NUnit.Analyzers" Version="3.9.0"/>
@@ -27,6 +28,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\ChainSharp.Effect.Data.Postgres\ChainSharp.Effect.Data.Postgres.csproj" />
+      <ProjectReference Include="..\ChainSharp.Effect.Json\ChainSharp.Effect.Json.csproj" />
     </ItemGroup>
 
     <ItemGroup>

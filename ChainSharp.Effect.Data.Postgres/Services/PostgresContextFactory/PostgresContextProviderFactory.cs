@@ -10,13 +10,19 @@ namespace ChainSharp.Effect.Data.Postgres.Services.PostgresContextFactory;
 public class PostgresContextProviderFactory(NpgsqlDataSource dataSource)
     : IDataContextProviderFactory
 {
-    public IDataContext Create() =>
-        new PostgresContext.PostgresContext(
+    public int Count { get; private set; } = 0;
+
+    public IEffectProvider Create()
+    {
+        var context = new PostgresContext.PostgresContext(
             new DbContextOptionsBuilder<PostgresContext.PostgresContext>()
                 .UseNpgsql(dataSource)
                 .UseSnakeCaseNamingConvention()
                 .Options
         );
 
-    IEffectProvider IEffectProviderFactory.Create() => Create();
+        Count++;
+
+        return context;
+    }
 }

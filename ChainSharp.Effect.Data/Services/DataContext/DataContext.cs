@@ -48,14 +48,14 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
 
     public Task RollbackTransaction() => Database.RollbackTransactionAsync();
 
+    public async Task SaveChanges()
+    {
+        await base.SaveChangesAsync();
+    }
+
     public async Task Track(IModel model)
     {
         Add(model);
-    }
-
-    public new async Task SaveChanges()
-    {
-        await base.SaveChangesAsync();
     }
 
     public void Reset() => ChangeTracker.Clear();

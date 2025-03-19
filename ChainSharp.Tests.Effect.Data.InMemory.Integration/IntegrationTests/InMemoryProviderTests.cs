@@ -1,10 +1,8 @@
-using ChainSharp.Effect.Data.Models.Metadata;
+using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
-using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.Metadata.DTOs;
-using ChainSharp.Effect.Services.EffectLogger;
 using ChainSharp.Effect.Services.EffectWorkflow;
 using FluentAssertions;
 using LanguageExt;
@@ -26,7 +24,7 @@ public class InMemoryProviderTests : TestSetup
         var inMemoryContextFactory =
             Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
 
-        var context = inMemoryContextFactory.Create();
+        var context = (IDataContext)inMemoryContextFactory.Create();
 
         var metadata = Metadata.Create(new CreateMetadata() { Name = "TestMetadata" });
 

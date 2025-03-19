@@ -1,3 +1,4 @@
+using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
@@ -16,8 +17,11 @@ public class PostgresContextTests : TestSetup
 {
     public override ServiceProvider ConfigureServices(IServiceCollection services) =>
         services
-            .AddScopedChainSharpWorkflow<ITestWorkflow, TestWorkflow>()
-            .AddScopedChainSharpWorkflow<ITestWorkflowWithinWorkflow, TestWorkflowWithinWorkflow>()
+            .AddTransientChainSharpWorkflow<ITestWorkflow, TestWorkflow>()
+            .AddTransientChainSharpWorkflow<
+                ITestWorkflowWithinWorkflow,
+                TestWorkflowWithinWorkflow
+            >()
             .BuildServiceProvider();
 
     [Theory]
@@ -27,7 +31,7 @@ public class PostgresContextTests : TestSetup
         var postgresContextFactory =
             Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
 
-        var context = postgresContextFactory.Create();
+        var context = (IDataContext)postgresContextFactory.Create();
 
         var metadata = Metadata.Create(new CreateMetadata() { Name = "TestMetadata" });
 
@@ -63,12 +67,29 @@ public class PostgresContextTests : TestSetup
     }
 
     [Theory]
+    public async Task TestPostgresProviderCanRunWorkflowTwo()
+    {
+        // Arrange
+        var workflow = Scope.ServiceProvider.GetRequiredService<ITestWorkflow>();
+
+        // Act
+        await workflow.Run(Unit.Default);
+
+        // Assert
+        workflow.Metadata.Name.Should().Be("TestWorkflow");
+        workflow.Metadata.FailureException.Should().BeNullOrEmpty();
+        workflow.Metadata.FailureReason.Should().BeNullOrEmpty();
+        workflow.Metadata.FailureStep.Should().BeNullOrEmpty();
+        workflow.Metadata.WorkflowState.Should().Be(WorkflowState.Completed);
+    }
+
+    [Theory]
     public async Task TestPostgresProviderCanRunWorkflowWithinWorkflow()
     {
         // Arrange
-        var workflow = Scope.ServiceProvider.GetRequiredService<ITestWorkflowWithinWorkflow>();
         var dataContextProvider =
             Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+        var workflow = Scope.ServiceProvider.GetRequiredService<ITestWorkflowWithinWorkflow>();
 
         // Act
         var innerWorkflow = await workflow.Run(Unit.Default);
@@ -85,7 +106,7 @@ public class PostgresContextTests : TestSetup
         innerWorkflow.Metadata.FailureStep.Should().BeNullOrEmpty();
         innerWorkflow.Metadata.WorkflowState.Should().Be(WorkflowState.Completed);
 
-        var dataContext = dataContextProvider.Create();
+        var dataContext = (IDataContext)dataContextProvider.Create();
 
         var parentWorkflowResult = await dataContext.Metadatas.FirstOrDefaultAsync(
             x => x.Id == workflow.Metadata.Id
@@ -127,6 +148,8 @@ public class PostgresContextTests : TestSetup
     }
 
     private interface ITestWorkflow : IEffectWorkflow<Unit, Unit> { }
+
+    private interface ITestWorkflowThree : IEffectWorkflow<Unit, Unit> { }
 
     private interface ITestWorkflowWithinWorkflow : IEffectWorkflow<Unit, ITestWorkflow> { }
 }

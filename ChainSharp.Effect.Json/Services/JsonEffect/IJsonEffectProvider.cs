@@ -1,6 +1,5 @@
+using ChainSharp.Effect.Services.EffectProvider;
+
 namespace ChainSharp.Effect.Json.Services.JsonEffect;
 
-public interface IJsonEffectProvider
-{
-    
-}
+public interface IJsonEffectProvider : IEffectProvider { }

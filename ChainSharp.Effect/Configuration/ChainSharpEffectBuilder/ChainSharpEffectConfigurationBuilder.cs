@@ -6,5 +6,7 @@ public class ChainSharpEffectConfigurationBuilder(IServiceCollection serviceColl
 {
     public IServiceCollection ServiceCollection => serviceCollection;
 
+    public bool PostgresEffectsEnabled { get; set; } = false;
+
     protected internal ChainSharpEffectConfiguration.ChainSharpEffectConfiguration Build() => new();
 }

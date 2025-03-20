@@ -3,12 +3,14 @@ using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Metadata.DTOs;
+using ChainSharp.Effect.Services.ArrayLogger;
 using ChainSharp.Effect.Services.EffectWorkflow;
 using ChainSharp.Step;
 using FluentAssertions;
 using LanguageExt;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Metadata = ChainSharp.Effect.Models.Metadata.Metadata;
 
 namespace ChainSharp.Tests.Effect.Data.Postgres.Integration.IntegrationTests;
@@ -90,6 +92,7 @@ public class PostgresContextTests : TestSetup
         var dataContextProvider =
             Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
         var workflow = Scope.ServiceProvider.GetRequiredService<ITestWorkflowWithinWorkflow>();
+        var arrayLoggerProvider = Scope.ServiceProvider.GetRequiredService<IArrayLoggingProvider>();
 
         // Act
         var innerWorkflow = await workflow.Run(Unit.Default);
@@ -121,6 +124,12 @@ public class PostgresContextTests : TestSetup
         childWorkflowResult.Should().NotBeNull();
         childWorkflowResult!.Id.Should().Be(innerWorkflow.Metadata.Id);
         childWorkflowResult!.WorkflowState.Should().Be(WorkflowState.Completed);
+
+        var logLevel = arrayLoggerProvider
+            .Loggers.SelectMany(x => x.Logs)
+            .Select(x => x.Level)
+            .Count(x => x == LogLevel.Critical);
+        logLevel.Should().Be(1);
     }
 
     private class TestWorkflow : EffectWorkflow<Unit, Unit>, ITestWorkflow
@@ -129,19 +138,28 @@ public class PostgresContextTests : TestSetup
             Activate(input).Resolve();
     }
 
-    private class TestWorkflowWithinWorkflow(ITestWorkflow testWorkflow)
-        : EffectWorkflow<Unit, ITestWorkflow>,
-            ITestWorkflowWithinWorkflow
+    private class TestWorkflowWithinWorkflow(
+        ITestWorkflow testWorkflow,
+        ILoggerFactory loggerFactory
+    ) : EffectWorkflow<Unit, ITestWorkflow>, ITestWorkflowWithinWorkflow
     {
         protected override async Task<Either<Exception, ITestWorkflow>> RunInternal(Unit input) =>
-            Activate(input).AddServices(testWorkflow).Chain<StepToRunTestWorkflow>().Resolve();
+            Activate(input)
+                .AddServices(testWorkflow, loggerFactory)
+                .Chain<StepToRunTestWorkflow>()
+                .Resolve();
     }
 
-    private class StepToRunTestWorkflow(ITestWorkflow testWorkflow) : Step<Unit, ITestWorkflow>
+    private class StepToRunTestWorkflow(
+        ITestWorkflow testWorkflow,
+        ILogger<StepToRunTestWorkflow> logger
+    ) : Step<Unit, ITestWorkflow>
     {
         public override async Task<ITestWorkflow> Run(Unit input)
         {
             await testWorkflow.Run(Unit.Default);
+
+            logger.LogCritical("Ran TestWorkflow");
 
             return testWorkflow;
         }

@@ -63,6 +63,8 @@ public class Metadata : IMetadata
 
     public ICollection<Metadata> Children { get; private set; }
 
+    public ICollection<Log.Log> Logs { get; private set; }
+
     #endregion
 
     #region Functions

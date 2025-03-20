@@ -1,5 +1,6 @@
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
+using ChainSharp.Effect.Services.ArrayLogger;
 using ChainSharp.Effect.Services.EffectWorkflow;
 using FluentAssertions;
 using LanguageExt;
@@ -18,6 +19,7 @@ public class JsonEffectProviderTests : TestSetup
         // Arrange
         var workflow = Scope.ServiceProvider.GetRequiredService<ITestWorkflow>();
         var workflowTwo = Scope.ServiceProvider.GetRequiredService<ITestWorkflow>();
+        var arrayProvider = Scope.ServiceProvider.GetRequiredService<IArrayLoggingProvider>();
 
         // Act
         await workflow.Run(Unit.Default);
@@ -29,6 +31,8 @@ public class JsonEffectProviderTests : TestSetup
         workflow.Metadata.FailureReason.Should().BeNullOrEmpty();
         workflow.Metadata.FailureStep.Should().BeNullOrEmpty();
         workflow.Metadata.WorkflowState.Should().Be(WorkflowState.Completed);
+        arrayProvider.Loggers.Should().NotBeNullOrEmpty();
+        arrayProvider.Loggers.Should().HaveCount(2);
     }
 
     private class TestWorkflow : EffectWorkflow<Unit, Unit>, ITestWorkflow

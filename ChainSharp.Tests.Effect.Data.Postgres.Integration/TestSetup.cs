@@ -1,9 +1,9 @@
+using ChainSharp.Effect.Data.Enums;
 using ChainSharp.Effect.Data.Postgres.Extensions;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Json.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace ChainSharp.Tests.Effect.Data.Postgres.Integration;
 
@@ -19,7 +19,7 @@ public abstract class TestSetup
     [OneTimeSetUp]
     public async Task RunBeforeAnyTests()
     {
-        ServiceCollection = new ServiceCollection();
+        ServiceCollection = [];
 
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
@@ -30,10 +30,14 @@ public abstract class TestSetup
         ]!;
 
         ServiceCollection
-            .AddTransient(typeof(ILogger<>), typeof(Logger<>))
-            .AddTransient<ILoggerFactory, LoggerFactory>()
-            .AddLogging(x => x.AddConsole())
-            .AddChainSharpEffects(options => options.AddPostgresEffect(connectionString));
+            .AddLogging()
+            .AddChainSharpEffects(
+                options =>
+                    options
+                        .AddPostgresEffect(connectionString)
+                        .AddPostgresEffectLogging(EvaluationStrategy.Eager)
+                        .AddJsonEffect()
+            );
 
         ServiceProvider = ConfigureServices(ServiceCollection);
     }

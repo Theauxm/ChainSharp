@@ -3,6 +3,7 @@ using ChainSharp.Effect.Data.Extensions;
 using ChainSharp.Effect.Data.Models.Metadata;
 using ChainSharp.Effect.Data.Services.DataContextTransaction;
 using ChainSharp.Effect.Models;
+using ChainSharp.Effect.Models.Log;
 using ChainSharp.Effect.Models.Metadata;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,6 +24,9 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
 
     public DbSet<Metadata> Metadatas { get; set; }
     IQueryable<Metadata> IDataContext.Metadatas => Metadatas;
+
+    public DbSet<Log> Logs { get; set; }
+    IQueryable<Log> IDataContext.Logs => Logs;
 
     #endregion
 

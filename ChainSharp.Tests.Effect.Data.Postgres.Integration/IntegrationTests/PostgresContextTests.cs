@@ -9,6 +9,7 @@ using FluentAssertions;
 using LanguageExt;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Metadata = ChainSharp.Effect.Models.Metadata.Metadata;
 
 namespace ChainSharp.Tests.Effect.Data.Postgres.Integration.IntegrationTests;
@@ -129,19 +130,28 @@ public class PostgresContextTests : TestSetup
             Activate(input).Resolve();
     }
 
-    private class TestWorkflowWithinWorkflow(ITestWorkflow testWorkflow)
-        : EffectWorkflow<Unit, ITestWorkflow>,
-            ITestWorkflowWithinWorkflow
+    private class TestWorkflowWithinWorkflow(
+        ITestWorkflow testWorkflow,
+        ILoggerFactory loggerFactory
+    ) : EffectWorkflow<Unit, ITestWorkflow>, ITestWorkflowWithinWorkflow
     {
         protected override async Task<Either<Exception, ITestWorkflow>> RunInternal(Unit input) =>
-            Activate(input).AddServices(testWorkflow).Chain<StepToRunTestWorkflow>().Resolve();
+            Activate(input)
+                .AddServices(testWorkflow, loggerFactory)
+                .Chain<StepToRunTestWorkflow>()
+                .Resolve();
     }
 
-    private class StepToRunTestWorkflow(ITestWorkflow testWorkflow) : Step<Unit, ITestWorkflow>
+    private class StepToRunTestWorkflow(
+        ITestWorkflow testWorkflow,
+        ILogger<StepToRunTestWorkflow> logger
+    ) : Step<Unit, ITestWorkflow>
     {
         public override async Task<ITestWorkflow> Run(Unit input)
         {
             await testWorkflow.Run(Unit.Default);
+
+            logger.LogInformation("Ran TestWorkflow");
 
             return testWorkflow;
         }

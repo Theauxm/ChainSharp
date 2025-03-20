@@ -3,6 +3,7 @@ using ChainSharp.Exceptions;
 using ChainSharp.Utils;
 using ChainSharp.Workflow;
 using LanguageExt;
+using Microsoft.Extensions.Logging;
 
 namespace ChainSharp.Extensions;
 
@@ -39,7 +40,7 @@ public static class WorkflowExtensions
 
         var constructor = stepType.GetConstructor(constructorArguments);
 
-        if (constructor is null)
+        if (constructor == null)
         {
             workflow.Exception ??= new WorkflowException(
                 $"Could not find constructor for ({stepType})"
@@ -69,28 +70,32 @@ public static class WorkflowExtensions
 
     internal static T? ExtractTypeFromMemory<T, TInput, TReturn>(
         this Workflow<TInput, TReturn> workflow
+    ) => (T?)workflow.ExtractTypeFromMemory(typeof(T));
+
+    internal static dynamic? ExtractLoggerFromLoggerFactory<TInput, TReturn>(
+        this Workflow<TInput, TReturn> workflow,
+        Type tIn
     )
     {
-        try
-        {
-            var inputType = typeof(T);
+        if (tIn.IsGenericType == false || tIn.GetGenericTypeDefinition() != typeof(ILogger<>))
+            return null;
 
-            var input = inputType.IsTuple()
-                ? ExtractTuple(workflow, inputType)
-                : (T?)workflow.Memory.GetValueOrDefault(inputType);
+        if (
+            workflow.Memory.GetValueOrDefault(typeof(ILoggerFactory))
+            is not ILoggerFactory loggerFactory
+        )
+            throw new WorkflowException(
+                $"Could not find ILoggerFactory for input type: ({tIn}). Have you injected an ILoggerFactory into the Workflow's services?"
+            );
 
-            if (input is null)
-                workflow.Exception ??= new WorkflowException(
-                    $"Could not find type: ({inputType})."
-                );
+        var generics = tIn.GetGenericArguments();
 
-            return (T?)input;
-        }
-        catch (Exception e)
-        {
-            workflow.Exception ??= e;
-            return default;
-        }
+        if (generics.Length != 1)
+            throw new WorkflowException(
+                $"Incorrect number of generic arguments for input type ({tIn}). Found ({generics.Length}) generics with types ({string.Join(", ", generics.Select(x => x.Name))})."
+            );
+
+        return loggerFactory.CreateGenericLogger(generics.First());
     }
 
     internal static dynamic? ExtractTypeFromMemory<TInput, TReturn>(
@@ -102,7 +107,8 @@ public static class WorkflowExtensions
         {
             var input = tIn.IsTuple()
                 ? ExtractTuple(workflow, tIn)
-                : workflow.Memory.GetValueOrDefault(tIn);
+                : workflow.ExtractLoggerFromLoggerFactory(tIn)
+                    ?? workflow.Memory.GetValueOrDefault(tIn);
 
             if (input is null)
                 throw new WorkflowException($"Could not find type: ({tIn}).");

@@ -8,6 +8,7 @@ using ChainSharp.Tests.Integration.Examples.Brewery.Steps.Prepare;
 using ChainSharp.Workflow;
 using FluentAssertions;
 using LanguageExt;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace ChainSharp.Tests.Integration.IntegrationTests;
@@ -332,6 +333,21 @@ public class WorkflowTests : TestSetup
         Assert.ThrowsAsync<WorkflowException>(async () => await workflow.Run(Unit.Default));
     }
 
+    [Theory]
+    public async Task TestWithLoggerProvider()
+    {
+        // Arrange
+        var loggerProvider = LoggerFactory.Create(builder => builder.AddConsole());
+
+        var workflow = new ChainTestWithLoggerProvider(loggerProvider);
+
+        // Act
+        var result = await workflow.Run(Unit.Default);
+
+        // Assert
+        result.Should().Be(Unit.Default);
+    }
+
     private class ThrowsStep : Step<Unit, Unit>
     {
         public override Task<Unit> Run(Unit input) =>
@@ -430,6 +446,16 @@ public class WorkflowTests : TestSetup
 
             x.Apples++;
             y.Gallons++;
+
+            return Unit.Default;
+        }
+    }
+
+    private class LoggerTest(ILogger<LoggerTest> logger) : Step<Unit, Unit>
+    {
+        public override async Task<Unit> Run(Unit input)
+        {
+            logger.LogInformation("In LoggerTest");
 
             return Unit.Default;
         }
@@ -640,5 +666,11 @@ public class WorkflowTests : TestSetup
     {
         protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
             Activate(input).Chain<ThrowsStep>().Resolve();
+    }
+
+    private class ChainTestWithLoggerProvider(ILoggerFactory loggerFactory) : Workflow<Unit, Unit>
+    {
+        protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
+            Activate(input).AddServices(loggerFactory).Chain<LoggerTest>().Resolve();
     }
 }

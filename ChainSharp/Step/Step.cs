@@ -14,11 +14,6 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
             return previousOutput.Swap().ValueUnsafe();
 
         var stepName = GetType().Name;
-        var previousOutputName = previousOutput.GetUnderlyingRightType().Name;
-
-        Console.WriteLine(
-            $"Running Step ({stepName}). Previous Output Type ({previousOutputName})"
-        );
 
         try
         {
@@ -37,7 +32,6 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
                     $"{{ \"step\": \"{stepName}\", \"type\": \"{e.GetType().Name}\", \"message\": \"{e.Message}\" }}"
                 );
 
-            Console.WriteLine($"Step: ({stepName}) failed with Exception: ({e.Message})");
             return e;
         }
     }

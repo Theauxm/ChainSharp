@@ -15,7 +15,7 @@ create table chain_sharp.log
             primary key,
     metadata_id        integer,
     event_id integer not null,
-    level log_level not null,
+    level chain_sharp.log_level not null,
     message varchar not null,
     category varchar not null,
     exception varchar,

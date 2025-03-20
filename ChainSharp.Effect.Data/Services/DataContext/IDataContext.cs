@@ -2,6 +2,7 @@ using System.Data;
 using ChainSharp.Effect.Data.Models.Metadata;
 using ChainSharp.Effect.Data.Services.DataContextTransaction;
 using ChainSharp.Effect.Models;
+using ChainSharp.Effect.Models.Log;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Services.EffectProvider;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +19,8 @@ public interface IDataContext : IEffectProvider
     #region Tables
 
     IQueryable<Metadata> Metadatas { get; }
+
+    IQueryable<Log> Logs { get; }
 
     #endregion
 

@@ -1,6 +1,8 @@
+using ChainSharp.Effect.Data.Enums;
 using ChainSharp.Effect.Data.Postgres.Extensions;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Json.Extensions;
+using ChainSharp.Effect.Services.ArrayLogger;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -19,7 +21,7 @@ public abstract class TestSetup
     [OneTimeSetUp]
     public async Task RunBeforeAnyTests()
     {
-        ServiceCollection = new ServiceCollection();
+        ServiceCollection = [];
 
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
@@ -29,11 +31,19 @@ public abstract class TestSetup
             "DatabaseConnectionString"
         ]!;
 
+        var arrayLoggingProvider = new ArrayLoggingProvider();
+
         ServiceCollection
-            .AddTransient(typeof(ILogger<>), typeof(Logger<>))
-            .AddTransient<ILoggerFactory, LoggerFactory>()
-            .AddLogging(x => x.AddConsole())
-            .AddChainSharpEffects(options => options.AddPostgresEffect(connectionString));
+            .AddSingleton<ILoggerProvider>(arrayLoggingProvider)
+            .AddSingleton<IArrayLoggingProvider>(arrayLoggingProvider)
+            .AddLogging()
+            .AddChainSharpEffects(
+                options =>
+                    options
+                        .AddPostgresEffect(connectionString)
+                        .AddPostgresEffectLogging(EvaluationStrategy.Eager, LogLevel.Error)
+                        .AddJsonEffect()
+            );
 
         ServiceProvider = ConfigureServices(ServiceCollection);
     }

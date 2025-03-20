@@ -32,9 +32,19 @@ public static class ServiceExtensions
 
     public static ChainSharpEffectConfigurationBuilder AddPostgresEffectLogging(
         this ChainSharpEffectConfigurationBuilder configurationBuilder,
-        EvaluationStrategy evaluationStrategy
+        EvaluationStrategy evaluationStrategy,
+        LogLevel? minimumLogLevel = null
     )
     {
+        var logLevelEnvironment = Environment.GetEnvironmentVariable(
+            "CHAIN_SHARP_POSTGRES_LOG_LEVEL"
+        );
+
+        var parsed = Enum.TryParse<LogLevel>(logLevelEnvironment, out var logLevel);
+
+        if (parsed)
+            minimumLogLevel ??= logLevel;
+
         if (configurationBuilder.PostgresEffectsEnabled == false)
             throw new Exception(
                 "Postgres effect is not enabled in ChainSharp. Call .AddChainSharpEffects(x => x.AddPostgresEffect(connectionString).AddPostgresEffectLogging())"
@@ -42,7 +52,8 @@ public static class ServiceExtensions
 
         var credentials = new DataContextLoggingProviderCredentials()
         {
-            EvaluationStrategy = evaluationStrategy
+            EvaluationStrategy = evaluationStrategy,
+            MinimumLogLevel = minimumLogLevel ?? LogLevel.Information
         };
 
         configurationBuilder

@@ -11,7 +11,8 @@ namespace ChainSharp.Effect.Data.Services.DataContextLoggingProvider;
 public class DataContextLogger(
     IDataContext dataContext,
     EvaluationStrategy evaluationStrategy,
-    string categoryName
+    string categoryName,
+    LogLevel minimumLogLevel
 ) : ILogger
 {
     public List<Log> Logs { get; } = [];
@@ -26,6 +27,9 @@ public class DataContextLogger(
         Func<TState, Exception?, string> formatter
     )
     {
+        if (minimumLogLevel > logLevel)
+            return;
+
         var message = formatter(state, exception);
 
         var log = Effect.Models.Log.Log.Create(

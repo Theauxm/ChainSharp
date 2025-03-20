@@ -3,6 +3,7 @@ using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Metadata.DTOs;
+using ChainSharp.Effect.Services.ArrayLogger;
 using ChainSharp.Effect.Services.EffectWorkflow;
 using ChainSharp.Step;
 using FluentAssertions;
@@ -91,6 +92,7 @@ public class PostgresContextTests : TestSetup
         var dataContextProvider =
             Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
         var workflow = Scope.ServiceProvider.GetRequiredService<ITestWorkflowWithinWorkflow>();
+        var arrayLoggerProvider = Scope.ServiceProvider.GetRequiredService<IArrayLoggingProvider>();
 
         // Act
         var innerWorkflow = await workflow.Run(Unit.Default);
@@ -122,6 +124,12 @@ public class PostgresContextTests : TestSetup
         childWorkflowResult.Should().NotBeNull();
         childWorkflowResult!.Id.Should().Be(innerWorkflow.Metadata.Id);
         childWorkflowResult!.WorkflowState.Should().Be(WorkflowState.Completed);
+
+        var logLevel = arrayLoggerProvider
+            .Loggers.SelectMany(x => x.Logs)
+            .Select(x => x.Level)
+            .Count(x => x == LogLevel.Critical);
+        logLevel.Should().Be(1);
     }
 
     private class TestWorkflow : EffectWorkflow<Unit, Unit>, ITestWorkflow
@@ -151,7 +159,7 @@ public class PostgresContextTests : TestSetup
         {
             await testWorkflow.Run(Unit.Default);
 
-            logger.LogInformation("Ran TestWorkflow");
+            logger.LogCritical("Ran TestWorkflow");
 
             return testWorkflow;
         }

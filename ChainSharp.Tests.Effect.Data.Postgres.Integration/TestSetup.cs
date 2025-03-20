@@ -2,8 +2,10 @@ using ChainSharp.Effect.Data.Enums;
 using ChainSharp.Effect.Data.Postgres.Extensions;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Json.Extensions;
+using ChainSharp.Effect.Services.ArrayLogger;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace ChainSharp.Tests.Effect.Data.Postgres.Integration;
 
@@ -29,13 +31,17 @@ public abstract class TestSetup
             "DatabaseConnectionString"
         ]!;
 
+        var arrayLoggingProvider = new ArrayLoggingProvider();
+
         ServiceCollection
+            .AddSingleton<ILoggerProvider>(arrayLoggingProvider)
+            .AddSingleton<IArrayLoggingProvider>(arrayLoggingProvider)
             .AddLogging()
             .AddChainSharpEffects(
                 options =>
                     options
                         .AddPostgresEffect(connectionString)
-                        .AddPostgresEffectLogging(EvaluationStrategy.Eager)
+                        .AddPostgresEffectLogging(EvaluationStrategy.Eager, LogLevel.Error)
                         .AddJsonEffect()
             );
 

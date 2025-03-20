@@ -21,7 +21,12 @@ public class DataContextLoggingProvider(
     {
         var context = (IDataContext)dataContextProviderFactory.Create();
 
-        var logger = new DataContextLogger(context, credentials.EvaluationStrategy, categoryName);
+        var logger = new DataContextLogger(
+            context,
+            credentials.EvaluationStrategy,
+            categoryName,
+            credentials.MinimumLogLevel
+        );
 
         Contexts.Add(logger);
 

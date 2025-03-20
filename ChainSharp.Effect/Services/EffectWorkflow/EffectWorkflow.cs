@@ -1,3 +1,5 @@
+using System.Reflection;
+using System.Reflection.Emit;
 using ChainSharp.Effect.Attributes;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.Metadata;

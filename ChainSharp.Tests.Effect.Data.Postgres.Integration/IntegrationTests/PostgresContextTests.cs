@@ -27,6 +27,8 @@ public class PostgresContextTests : TestSetup
     [Theory]
     public async Task TestPostgresProviderCanCreateMetadata()
     {
+        var x = TestWorkflowWithinWorkflow.ExtractChainTypes<TestWorkflowWithinWorkflow>();
+        
         // Arrange
         var postgresContextFactory =
             Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();

@@ -72,22 +72,32 @@ public static class WorkflowExtensions
         this Workflow<TInput, TReturn> workflow
     ) => workflow.ExtractTypeFromMemory(typeof(T));
 
-    internal static dynamic? ExtractLoggerFromLoggerFactory<TInput, TReturn>(this Workflow<TInput, TReturn> workflow, Type tIn)
+    internal static dynamic? ExtractLoggerFromLoggerFactory<TInput, TReturn>(
+        this Workflow<TInput, TReturn> workflow,
+        Type tIn
+    )
     {
-        if (tIn.IsGenericType == false || tIn.GetGenericTypeDefinition() != typeof(ILogger<>)) 
+        if (tIn.IsGenericType == false || tIn.GetGenericTypeDefinition() != typeof(ILogger<>))
             return null;
-        
-        if (workflow.Memory.GetValueOrDefault(typeof(ILoggerFactory)) is not ILoggerFactory loggerFactory)
-            throw new WorkflowException($"Could not find ILoggerFactory for input type: ({tIn}). Have you injected an ILoggerFactory into the Workflow's services?");
+
+        if (
+            workflow.Memory.GetValueOrDefault(typeof(ILoggerFactory))
+            is not ILoggerFactory loggerFactory
+        )
+            throw new WorkflowException(
+                $"Could not find ILoggerFactory for input type: ({tIn}). Have you injected an ILoggerFactory into the Workflow's services?"
+            );
 
         var generics = tIn.GetGenericArguments();
-                
+
         if (generics.Length != 1)
-            throw new WorkflowException($"Incorrect number of generic arguments for input type ({tIn}). Found ({generics.Length}) generics with types ({string.Join(", ", generics.Select(x => x.Name))}).");
+            throw new WorkflowException(
+                $"Incorrect number of generic arguments for input type ({tIn}). Found ({generics.Length}) generics with types ({string.Join(", ", generics.Select(x => x.Name))})."
+            );
 
         return loggerFactory.CreateGenericLogger(generics.First());
     }
-    
+
     internal static dynamic? ExtractTypeFromMemory<TInput, TReturn>(
         this Workflow<TInput, TReturn> workflow,
         Type tIn
@@ -97,7 +107,8 @@ public static class WorkflowExtensions
         {
             var input = tIn.IsTuple()
                 ? ExtractTuple(workflow, tIn)
-                : workflow.ExtractLoggerFromLoggerFactory(tIn) ?? workflow.Memory.GetValueOrDefault(tIn);
+                : workflow.ExtractLoggerFromLoggerFactory(tIn)
+                    ?? workflow.Memory.GetValueOrDefault(tIn);
 
             if (input is null)
                 throw new WorkflowException($"Could not find type: ({tIn}).");

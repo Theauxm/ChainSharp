@@ -332,18 +332,18 @@ public class WorkflowTests : TestSetup
 
         Assert.ThrowsAsync<WorkflowException>(async () => await workflow.Run(Unit.Default));
     }
-    
+
     [Theory]
     public async Task TestWithLoggerProvider()
     {
         // Arrange
         var loggerProvider = LoggerFactory.Create(builder => builder.AddConsole());
-        
+
         var workflow = new ChainTestWithLoggerProvider(loggerProvider);
 
         // Act
         var result = await workflow.Run(Unit.Default);
-        
+
         // Assert
         result.Should().Be(Unit.Default);
     }
@@ -450,7 +450,7 @@ public class WorkflowTests : TestSetup
             return Unit.Default;
         }
     }
-    
+
     private class LoggerTest(ILogger<LoggerTest> logger) : Step<Unit, Unit>
     {
         public override async Task<Unit> Run(Unit input)
@@ -667,12 +667,10 @@ public class WorkflowTests : TestSetup
         protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
             Activate(input).Chain<ThrowsStep>().Resolve();
     }
-    
+
     private class ChainTestWithLoggerProvider(ILoggerFactory loggerFactory) : Workflow<Unit, Unit>
     {
         protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
-            Activate(input)
-                .AddServices(loggerFactory)
-                .Chain<LoggerTest>().Resolve();
+            Activate(input).AddServices(loggerFactory).Chain<LoggerTest>().Resolve();
     }
 }

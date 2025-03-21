@@ -9,27 +9,15 @@ public class DataContextLoggingProvider(
     IDataContextLoggingProviderCredentials credentials
 ) : IDataContextLoggingProvider
 {
-    private List<DataContextLogger> Contexts { get; } = [];
-
-    public void Dispose()
-    {
-        foreach (var context in Contexts)
-            context.DataContext.Dispose();
-    }
+    public void Dispose() { }
 
     public ILogger CreateLogger(string categoryName)
     {
-        var context = (IDataContext)dataContextProviderFactory.Create();
-
-        var logger = new DataContextLogger(
-            context,
+        return new DataContextLogger(
+            dataContextProviderFactory,
             credentials.EvaluationStrategy,
             categoryName,
             credentials.MinimumLogLevel
         );
-
-        Contexts.Add(logger);
-
-        return logger;
     }
 }

@@ -23,10 +23,35 @@ public abstract partial class Workflow<TInput, TReturn> : IWorkflow<TInput, TRet
         return resultEither.Unwrap();
     }
 
+    public async Task<TReturn> Run(TInput input, IServiceProvider serviceProvider)
+    {
+        var resultEither = await RunEither(input, serviceProvider);
+
+        if (resultEither.IsLeft)
+            resultEither.Swap().ValueUnsafe().Rethrow();
+
+        return resultEither.Unwrap();
+    }
+
     public Task<Either<Exception, TReturn>> RunEither(TInput input)
     {
         // Always allow input type of Unit for parameterless invocation
         Memory ??= new Dictionary<Type, object> { { typeof(Unit), Unit.Default } };
+
+        return RunInternal(input);
+    }
+
+    public Task<Either<Exception, TReturn>> RunEither(
+        TInput input,
+        IServiceProvider serviceProvider
+    )
+    {
+        // Always allow input type of Unit for parameterless invocation
+        Memory ??= new Dictionary<Type, object>
+        {
+            { typeof(Unit), Unit.Default },
+            { typeof(IServiceProvider), serviceProvider }
+        };
 
         return RunInternal(input);
     }

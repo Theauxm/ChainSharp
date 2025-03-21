@@ -339,10 +339,30 @@ public class WorkflowTests : TestSetup
         // Arrange
         var loggerProvider = LoggerFactory.Create(builder => builder.AddConsole());
 
-        var workflow = new ChainTestWithLoggerProvider(loggerProvider);
+        var testService = new TestService();
+
+        var workflow = new ChainTestWithLoggerProvider(loggerProvider, testService);
 
         // Act
         var result = await workflow.Run(Unit.Default);
+
+        // Assert
+        result.Should().Be(Unit.Default);
+    }
+
+    [Theory]
+    public async Task TestWithServiceProvider()
+    {
+        // Arrange
+        var serviceProvider = new ServiceCollection()
+            .AddLogging(x => x.AddConsole())
+            .AddScoped<ITestService, TestService>()
+            .BuildServiceProvider();
+
+        var workflow = new ChainTestWithServiceProvider();
+
+        // Act
+        var result = await workflow.Run(Unit.Default, serviceProvider);
 
         // Assert
         result.Should().Be(Unit.Default);
@@ -451,7 +471,12 @@ public class WorkflowTests : TestSetup
         }
     }
 
-    private class LoggerTest(ILogger<LoggerTest> logger) : Step<Unit, Unit>
+    private interface ITestService { }
+
+    private class TestService : ITestService { }
+
+    private class LoggerTest(ILogger<LoggerTest> logger, ITestService testService)
+        : Step<Unit, Unit>
     {
         public override async Task<Unit> Run(Unit input)
         {
@@ -668,9 +693,18 @@ public class WorkflowTests : TestSetup
             Activate(input).Chain<ThrowsStep>().Resolve();
     }
 
-    private class ChainTestWithLoggerProvider(ILoggerFactory loggerFactory) : Workflow<Unit, Unit>
+    private class ChainTestWithLoggerProvider(
+        ILoggerFactory loggerFactory,
+        ITestService testService
+    ) : Workflow<Unit, Unit>
     {
         protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
-            Activate(input).AddServices(loggerFactory).Chain<LoggerTest>().Resolve();
+            Activate(input).AddServices(loggerFactory, testService).Chain<LoggerTest>().Resolve();
+    }
+
+    private class ChainTestWithServiceProvider : Workflow<Unit, Unit>
+    {
+        protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
+            Activate(input).Chain<LoggerTest>().Resolve();
     }
 }

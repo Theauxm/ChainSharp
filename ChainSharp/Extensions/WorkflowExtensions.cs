@@ -3,6 +3,7 @@ using ChainSharp.Exceptions;
 using ChainSharp.Utils;
 using ChainSharp.Workflow;
 using LanguageExt;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace ChainSharp.Extensions;
@@ -98,6 +99,19 @@ public static class WorkflowExtensions
         return loggerFactory.CreateGenericLogger(generics.First());
     }
 
+    internal static dynamic? ExtractTypeFromServiceProvider<TInput, TReturn>(
+        this Workflow<TInput, TReturn> workflow,
+        Type tIn
+    )
+    {
+        var x = workflow.Memory.GetValueOrDefault(typeof(IServiceProvider))
+            is IServiceProvider serviceProvider
+            ? serviceProvider.GetService(tIn)
+            : null;
+
+        return x;
+    }
+
     internal static dynamic? ExtractTypeFromMemory<TInput, TReturn>(
         this Workflow<TInput, TReturn> workflow,
         Type tIn
@@ -107,8 +121,9 @@ public static class WorkflowExtensions
         {
             var input = tIn.IsTuple()
                 ? ExtractTuple(workflow, tIn)
-                : workflow.ExtractLoggerFromLoggerFactory(tIn)
-                    ?? workflow.Memory.GetValueOrDefault(tIn);
+                : workflow.Memory.GetValueOrDefault(tIn)
+                    ?? workflow.ExtractTypeFromServiceProvider(tIn)
+                    ?? workflow.ExtractLoggerFromLoggerFactory(tIn);
 
             if (input is null)
                 throw new WorkflowException($"Could not find type: ({tIn}).");

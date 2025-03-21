@@ -34,6 +34,9 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     [Inject]
     public ILogger<EffectWorkflow<TIn, TOut>>? EffectLogger { get; set; }
 
+    [Inject]
+    public IServiceProvider? ServiceProvider { get; set; }
+
     /// <summary>
     /// Gets base type name, typically the name of the class inheriting the LoggedWorkflow
     /// </summary>
@@ -52,6 +55,16 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
                 "EffectRunner is null. Ensure services.AddChainSharpEffects() is being added to your Dependency Injection Container."
             );
 
+        if (ServiceProvider == null)
+        {
+            EffectLogger?.LogCritical(
+                "Could not find injected IServiceProvider. Is it being injected into the ServiceCollection?"
+            );
+            throw new WorkflowException(
+                "Could not find injected IServiceProvider. Is it being injected into the ServiceCollection?"
+            );
+        }
+
         EffectLogger?.LogInformation($"Running Workflow: ({WorkflowName})");
 
         Metadata = await InitializeWorkflow();
@@ -59,7 +72,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
 
         try
         {
-            var result = await base.Run(input);
+            var result = await base.Run(input, ServiceProvider);
             EffectLogger?.LogInformation($"({WorkflowName}) completed successfully.");
 
             await FinishWorkflow(result);

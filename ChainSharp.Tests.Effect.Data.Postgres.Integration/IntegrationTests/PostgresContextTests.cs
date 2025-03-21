@@ -138,16 +138,12 @@ public class PostgresContextTests : TestSetup
             Activate(input).Resolve();
     }
 
-    private class TestWorkflowWithinWorkflow(
-        ITestWorkflow testWorkflow,
-        ILoggerFactory loggerFactory
-    ) : EffectWorkflow<Unit, ITestWorkflow>, ITestWorkflowWithinWorkflow
+    private class TestWorkflowWithinWorkflow()
+        : EffectWorkflow<Unit, ITestWorkflow>,
+            ITestWorkflowWithinWorkflow
     {
         protected override async Task<Either<Exception, ITestWorkflow>> RunInternal(Unit input) =>
-            Activate(input)
-                .AddServices(testWorkflow, loggerFactory)
-                .Chain<StepToRunTestWorkflow>()
-                .Resolve();
+            Activate(input).Chain<StepToRunTestWorkflow>().Resolve();
     }
 
     private class StepToRunTestWorkflow(

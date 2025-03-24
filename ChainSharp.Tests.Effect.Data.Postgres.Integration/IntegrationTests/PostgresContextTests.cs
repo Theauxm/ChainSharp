@@ -35,7 +35,9 @@ public class PostgresContextTests : TestSetup
 
         var context = (IDataContext)postgresContextFactory.Create();
 
-        var metadata = Metadata.Create(new CreateMetadata { Name = "TestMetadata", Input = Unit.Default });
+        var metadata = Metadata.Create(
+            new CreateMetadata { Name = "TestMetadata", Input = Unit.Default }
+        );
 
         await context.Track(metadata);
 

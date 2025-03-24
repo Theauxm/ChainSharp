@@ -87,7 +87,8 @@ public static class ServiceExtensions
 
     public static ChainSharpEffectConfigurationBuilder SaveWorkflowParameters(
         this ChainSharpEffectConfigurationBuilder builder,
-        JsonSerializerOptions? jsonSerializerOptions = null)
+        JsonSerializerOptions? jsonSerializerOptions = null
+    )
     {
         jsonSerializerOptions ??= new JsonSerializerOptions
         {
@@ -96,7 +97,7 @@ public static class ServiceExtensions
             DefaultIgnoreCondition = JsonIgnoreCondition.Never,
             Converters = { new JsonStringEnumConverter() }
         };
-        
+
         builder.WorkflowParameterJsonSerializerOptions = jsonSerializerOptions;
 
         return builder.AddEffect<IEffectProviderFactory, ParameterEffectProviderFactory>();

@@ -29,10 +29,10 @@ public interface IMetadata : IModel
 
     [Column("stack_trace")]
     public string? StackTrace { get; set; }
-    
+
     [Column("input")]
     public JsonDocument? Input { get; set; }
-    
+
     [Column("output")]
     public JsonDocument? Output { get; set; }
 

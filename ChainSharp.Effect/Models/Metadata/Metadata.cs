@@ -45,10 +45,10 @@ public class Metadata : IMetadata
 
     [Column("stack_trace")]
     public string? StackTrace { get; set; }
-    
+
     [Column("input")]
     public JsonDocument? Input { get; set; }
-    
+
     [Column("output")]
     public JsonDocument? Output { get; set; }
 
@@ -59,10 +59,10 @@ public class Metadata : IMetadata
     public DateTime? EndTime { get; set; }
 
     public bool IsChild => ParentId is not null;
-    
+
     [JsonIgnore]
     public dynamic? InputObject { get; set; }
-    
+
     [JsonIgnore]
     public dynamic? OutputObject { get; set; }
 

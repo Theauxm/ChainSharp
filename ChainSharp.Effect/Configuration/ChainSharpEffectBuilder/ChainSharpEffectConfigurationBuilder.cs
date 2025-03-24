@@ -8,11 +8,10 @@ public class ChainSharpEffectConfigurationBuilder(IServiceCollection serviceColl
     public IServiceCollection ServiceCollection => serviceCollection;
 
     public bool PostgresEffectsEnabled { get; set; } = false;
-    
-    public JsonSerializerOptions WorkflowParameterJsonSerializerOptions { get; set; } = JsonSerializerOptions.Default;
 
-    protected internal ChainSharpEffectConfiguration.ChainSharpEffectConfiguration Build() => new()
-    {
-        WorkflowParameterJsonSerializerOptions = WorkflowParameterJsonSerializerOptions
-    };
+    public JsonSerializerOptions WorkflowParameterJsonSerializerOptions { get; set; } =
+        JsonSerializerOptions.Default;
+
+    protected internal ChainSharpEffectConfiguration.ChainSharpEffectConfiguration Build() =>
+        new() { WorkflowParameterJsonSerializerOptions = WorkflowParameterJsonSerializerOptions };
 }

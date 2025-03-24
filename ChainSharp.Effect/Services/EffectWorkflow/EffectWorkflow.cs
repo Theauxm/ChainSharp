@@ -57,7 +57,8 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
             );
             throw new WorkflowException(
                 "EffectRunner is null. Ensure services.AddChainSharpEffects() is being added to your Dependency Injection Container."
-            );}
+            );
+        }
 
         if (ServiceProvider == null)
         {
@@ -116,7 +117,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
 
         EffectLogger?.LogTrace($"Initializing ({WorkflowName})");
 
-        var metadata = Metadata.Create(new CreateMetadata { Name = WorkflowName, Input = input});
+        var metadata = Metadata.Create(new CreateMetadata { Name = WorkflowName, Input = input });
         await EffectRunner.Track(metadata);
 
         EffectLogger?.LogTrace($"Setting ({WorkflowName}) to In Progress.");

@@ -40,6 +40,6 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
         {
             var serializedOutput = JsonSerializer.Serialize(metadata.OutputObject, options);
             metadata.Output = JsonDocument.Parse(serializedOutput);
-        } 
+        }
     }
 }

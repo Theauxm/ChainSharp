@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChainSharp.Effect.Data.Models.Metadata;
@@ -23,6 +24,21 @@ public class PersistentMetadata : Effect.Models.Metadata.Metadata
                 .WithMany(x => x.Children)
                 .HasForeignKey(e => e.ParentId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure the conversion from string to JsonDocument and vice versa
+            entity
+                .Property(e => e.Input)
+                .HasConversion(
+                    v => v != null ? v.ToString() : null,
+                    v => v != null ? JsonDocument.Parse(v, new JsonDocumentOptions()) : null
+                );
+
+            entity
+                .Property(e => e.Output)
+                .HasConversion(
+                    v => v != null ? v.ToString() : null,
+                    v => v != null ? JsonDocument.Parse(v, new JsonDocumentOptions()) : null
+                );
         });
     }
 }

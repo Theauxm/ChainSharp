@@ -13,6 +13,9 @@ public class PersistentMetadata : Effect.Models.Metadata.Metadata
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).ValueGeneratedOnAdd();
 
+            entity.Ignore(e => e.InputObject);
+            entity.Ignore(e => e.OutputObject);
+
             entity.HasIndex(e => e.ExternalId).IsUnique();
 
             entity

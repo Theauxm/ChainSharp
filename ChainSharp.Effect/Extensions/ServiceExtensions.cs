@@ -1,11 +1,13 @@
 using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using ChainSharp.Effect.Attributes;
 using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
+using ChainSharp.Effect.Effects.ParameterEffect;
 using ChainSharp.Effect.Services.EffectProviderFactory;
 using ChainSharp.Effect.Services.EffectRunner;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace ChainSharp.Effect.Extensions;
 
@@ -18,7 +20,9 @@ public static class ServiceExtensions
     {
         var configuration = BuildConfiguration(serviceCollection, options);
 
-        return serviceCollection.AddTransient<IEffectRunner, EffectRunner>();
+        return serviceCollection
+            .AddSingleton<IChainSharpEffectConfiguration>(configuration)
+            .AddTransient<IEffectRunner, EffectRunner>();
     }
 
     private static ChainSharpEffectConfiguration BuildConfiguration(
@@ -79,6 +83,23 @@ public static class ServiceExtensions
         var factory = new TEffectFactory();
 
         return builder.AddEffect(factory);
+    }
+
+    public static ChainSharpEffectConfigurationBuilder SaveWorkflowParameters(
+        this ChainSharpEffectConfigurationBuilder builder,
+        JsonSerializerOptions? jsonSerializerOptions = null)
+    {
+        jsonSerializerOptions ??= new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            IncludeFields = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+            Converters = { new JsonStringEnumConverter() }
+        };
+        
+        builder.WorkflowParameterJsonSerializerOptions = jsonSerializerOptions;
+
+        return builder.AddEffect<IEffectProviderFactory, ParameterEffectProviderFactory>();
     }
 
     public static void InjectProperties(this IServiceProvider serviceProvider, object instance)

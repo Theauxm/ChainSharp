@@ -2,9 +2,9 @@ using ChainSharp.Effect.Models.Log;
 using ChainSharp.Effect.Models.Log.DTOs;
 using Microsoft.Extensions.Logging;
 
-namespace ChainSharp.Effect.Services.ArrayLogger;
+namespace ChainSharp.Effect.Effects.ArrayLoggerEffect;
 
-public class ArrayLogger(string categoryName) : ILogger
+public class ArrayLoggerEffect(string categoryName) : ILogger
 {
     public List<Log> Logs { get; } = [];
 

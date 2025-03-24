@@ -1,16 +1,16 @@
 using Microsoft.Extensions.Logging;
 
-namespace ChainSharp.Effect.Services.ArrayLogger;
+namespace ChainSharp.Effect.Effects.ArrayLoggerEffect;
 
 public class ArrayLoggingProvider : IArrayLoggingProvider
 {
-    public List<ArrayLogger> Loggers { get; } = [];
+    public List<ArrayLoggerEffect> Loggers { get; } = [];
 
     public void Dispose() { }
 
     public ILogger CreateLogger(string categoryName)
     {
-        var logger = new ArrayLogger(categoryName);
+        var logger = new ArrayLoggerEffect(categoryName);
 
         Loggers.Add(logger);
 

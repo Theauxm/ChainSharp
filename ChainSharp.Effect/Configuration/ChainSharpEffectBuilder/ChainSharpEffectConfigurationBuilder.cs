@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
@@ -7,6 +8,11 @@ public class ChainSharpEffectConfigurationBuilder(IServiceCollection serviceColl
     public IServiceCollection ServiceCollection => serviceCollection;
 
     public bool PostgresEffectsEnabled { get; set; } = false;
+    
+    public JsonSerializerOptions WorkflowParameterJsonSerializerOptions { get; set; } = JsonSerializerOptions.Default;
 
-    protected internal ChainSharpEffectConfiguration.ChainSharpEffectConfiguration Build() => new();
+    protected internal ChainSharpEffectConfiguration.ChainSharpEffectConfiguration Build() => new()
+    {
+        WorkflowParameterJsonSerializerOptions = WorkflowParameterJsonSerializerOptions
+    };
 }

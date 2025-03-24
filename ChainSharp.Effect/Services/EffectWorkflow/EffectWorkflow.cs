@@ -51,9 +51,13 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     public new virtual async Task<TOut> Run(TIn input)
     {
         if (EffectRunner == null)
-            throw new WorkflowException(
+        {
+            EffectLogger?.LogCritical(
                 "EffectRunner is null. Ensure services.AddChainSharpEffects() is being added to your Dependency Injection Container."
             );
+            throw new WorkflowException(
+                "EffectRunner is null. Ensure services.AddChainSharpEffects() is being added to your Dependency Injection Container."
+            );}
 
         if (ServiceProvider == null)
         {
@@ -67,13 +71,14 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
 
         EffectLogger?.LogTrace($"Running Workflow: ({WorkflowName})");
 
-        Metadata = await InitializeWorkflow();
+        Metadata = await InitializeWorkflow(input);
         await EffectRunner.SaveChanges();
 
         try
         {
             var result = await base.Run(input, ServiceProvider);
             EffectLogger?.LogTrace($"({WorkflowName}) completed successfully.");
+            Metadata.OutputObject = result;
 
             await FinishWorkflow(result);
             await EffectRunner.SaveChanges();
@@ -100,8 +105,9 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// </summary>
     /// <param name="effectRunner"></param>
     /// <param name="workflowName"></param>
+    /// <param name="input"></param>
     /// <returns></returns>
-    private async Task<Metadata> InitializeWorkflow()
+    private async Task<Metadata> InitializeWorkflow(TIn input)
     {
         if (EffectRunner == null)
             throw new WorkflowException(
@@ -110,7 +116,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
 
         EffectLogger?.LogTrace($"Initializing ({WorkflowName})");
 
-        var metadata = Metadata.Create(new CreateMetadata { Name = WorkflowName });
+        var metadata = Metadata.Create(new CreateMetadata { Name = WorkflowName, Input = input});
         await EffectRunner.Track(metadata);
 
         EffectLogger?.LogTrace($"Setting ({WorkflowName}) to In Progress.");

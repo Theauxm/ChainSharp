@@ -1,6 +1,6 @@
+using ChainSharp.Effect.Effects.ArrayLoggerEffect;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
-using ChainSharp.Effect.Services.ArrayLogger;
 using ChainSharp.Effect.Services.EffectWorkflow;
 using FluentAssertions;
 using LanguageExt;

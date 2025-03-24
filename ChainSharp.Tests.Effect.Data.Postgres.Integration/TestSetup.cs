@@ -41,7 +41,7 @@ public abstract class TestSetup
                 options =>
                     options
                         .AddPostgresEffect(connectionString)
-                        .AddPostgresEffectLogging(EvaluationStrategy.Eager, LogLevel.Error)
+                        .AddPostgresEffectLogging(minimumLogLevel: LogLevel.Trace)
                         .AddJsonEffect()
             );
 

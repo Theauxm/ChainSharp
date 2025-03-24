@@ -32,8 +32,9 @@ public static class ServiceExtensions
 
     public static ChainSharpEffectConfigurationBuilder AddPostgresEffectLogging(
         this ChainSharpEffectConfigurationBuilder configurationBuilder,
-        EvaluationStrategy evaluationStrategy,
-        LogLevel? minimumLogLevel = null
+        EvaluationStrategy? evaluationStrategy = null,
+        LogLevel? minimumLogLevel = null,
+        List<string>? blacklist = null
     )
     {
         var logLevelEnvironment = Environment.GetEnvironmentVariable(
@@ -50,14 +51,15 @@ public static class ServiceExtensions
                 "Postgres effect is not enabled in ChainSharp. Call .AddChainSharpEffects(x => x.AddPostgresEffect(connectionString).AddPostgresEffectLogging())"
             );
 
-        var credentials = new DataContextLoggingProviderCredentials()
+        var credentials = new DataContextLoggingProviderConfiguration
         {
-            EvaluationStrategy = evaluationStrategy,
-            MinimumLogLevel = minimumLogLevel ?? LogLevel.Information
+            EvaluationStrategy = evaluationStrategy ?? EvaluationStrategy.Eager,
+            MinimumLogLevel = minimumLogLevel ?? LogLevel.Information,
+            Blacklist = blacklist ?? []
         };
 
         configurationBuilder
-            .ServiceCollection.AddSingleton<IDataContextLoggingProviderCredentials>(credentials)
+            .ServiceCollection.AddSingleton<IDataContextLoggingProviderConfiguration>(credentials)
             .AddSingleton<ILoggerProvider, DataContextLoggingProvider>();
 
         return configurationBuilder;

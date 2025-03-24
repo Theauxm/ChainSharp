@@ -65,7 +65,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
             );
         }
 
-        EffectLogger?.LogInformation($"Running Workflow: ({WorkflowName})");
+        EffectLogger?.LogTrace($"Running Workflow: ({WorkflowName})");
 
         Metadata = await InitializeWorkflow();
         await EffectRunner.SaveChanges();
@@ -73,7 +73,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
         try
         {
             var result = await base.Run(input, ServiceProvider);
-            EffectLogger?.LogInformation($"({WorkflowName}) completed successfully.");
+            EffectLogger?.LogTrace($"({WorkflowName}) completed successfully.");
 
             await FinishWorkflow(result);
             await EffectRunner.SaveChanges();
@@ -82,9 +82,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
         }
         catch (Exception e)
         {
-            EffectLogger?.LogInformation(
-                $"Caught Exception ({e.GetType()}) with Message ({e.Message})."
-            );
+            EffectLogger?.LogError($"Caught Exception ({e.GetType()}) with Message ({e.Message}).");
 
             await FinishWorkflow(e);
             await EffectRunner.SaveChanges();
@@ -110,12 +108,12 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
                 "EffectLogger is null. Something has gone horribly wrong. Ensure services.AddChainSharpEffects() is being added to your Dependency Injection Container."
             );
 
-        EffectLogger?.LogInformation($"Initializing ({WorkflowName})");
+        EffectLogger?.LogTrace($"Initializing ({WorkflowName})");
 
         var metadata = Metadata.Create(new CreateMetadata { Name = WorkflowName });
         await EffectRunner.Track(metadata);
 
-        EffectLogger?.LogInformation($"Setting ({WorkflowName}) to In Progress.");
+        EffectLogger?.LogTrace($"Setting ({WorkflowName}) to In Progress.");
         metadata.WorkflowState = WorkflowState.InProgress;
 
         return metadata;
@@ -139,7 +137,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
         var failureReason = result.IsRight ? null : result.Swap().ValueUnsafe();
 
         var resultState = result.IsRight ? WorkflowState.Completed : WorkflowState.Failed;
-        EffectLogger?.LogInformation($"Setting ({WorkflowName}) to ({resultState.ToString()}).");
+        EffectLogger?.LogTrace($"Setting ({WorkflowName}) to ({resultState.ToString()}).");
         Metadata.WorkflowState = resultState;
         Metadata.EndTime = DateTime.UtcNow;
 

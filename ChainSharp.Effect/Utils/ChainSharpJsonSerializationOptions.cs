@@ -10,7 +10,7 @@ public static class ChainSharpJsonSerializationOptions
         {
             WriteIndented = true,
             IncludeFields = true,
-            DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
             Converters = { new JsonStringEnumConverter(), new ValueTupleConverter() }
         };
 }

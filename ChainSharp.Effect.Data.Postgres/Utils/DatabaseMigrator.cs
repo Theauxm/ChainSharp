@@ -12,19 +12,24 @@ public class DatabaseMigrator
             .To.PostgresqlDatabase(connectionString)
             .JournalToPostgresqlTable("chain_sharp", "migrations")
             .WithScriptsEmbeddedInAssembly(typeof(AssemblyMarker).Assembly)
-            .LogToConsole()
+            .LogToTrace()
             .Build();
 
     public static async Task Migrate(string connectionString)
     {
         try
         {
-            var connection = new NpgsqlConnection(connectionString);
-            await connection.OpenAsync();
-            await connection.ReloadTypesAsync();
+            await using (var connection = new NpgsqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                await connection.ReloadTypesAsync();
 
-            var command = new NpgsqlCommand("create schema if not exists chain_sharp;", connection);
-            await command.ExecuteNonQueryAsync();
+                var command = new NpgsqlCommand(
+                    "create schema if not exists chain_sharp;",
+                    connection
+                );
+                await command.ExecuteNonQueryAsync();
+            }
 
             var result = CreateEngineWithEmbeddedScripts(connectionString).PerformUpgrade();
 

@@ -7,6 +7,7 @@ using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
 using ChainSharp.Effect.Effects.ParameterEffect;
 using ChainSharp.Effect.Services.EffectProviderFactory;
 using ChainSharp.Effect.Services.EffectRunner;
+using ChainSharp.Effect.Utils;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ChainSharp.Effect.Extensions;
@@ -90,13 +91,7 @@ public static class ServiceExtensions
         JsonSerializerOptions? jsonSerializerOptions = null
     )
     {
-        jsonSerializerOptions ??= new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            IncludeFields = true,
-            DefaultIgnoreCondition = JsonIgnoreCondition.Never,
-            Converters = { new JsonStringEnumConverter() }
-        };
+        jsonSerializerOptions ??= ChainSharpJsonSerializationOptions.Default;
 
         builder.WorkflowParameterJsonSerializerOptions = jsonSerializerOptions;
 

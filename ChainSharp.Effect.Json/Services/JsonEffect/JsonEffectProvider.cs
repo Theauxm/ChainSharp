@@ -1,11 +1,15 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
 using ChainSharp.Effect.Models;
 using Microsoft.Extensions.Logging;
 
 namespace ChainSharp.Effect.Json.Services.JsonEffect;
 
-public class JsonEffectProvider(ILogger<JsonEffectProvider> logger) : IJsonEffectProvider
+public class JsonEffectProvider(
+    ILogger<JsonEffectProvider> logger,
+    IChainSharpEffectConfiguration configuration
+) : IJsonEffectProvider
 {
     private readonly Dictionary<IModel, string> _previousStates = new();
     private readonly HashSet<IModel> _trackedModels = new();
@@ -14,13 +18,7 @@ public class JsonEffectProvider(ILogger<JsonEffectProvider> logger) : IJsonEffec
 
     public async Task SaveChanges()
     {
-        var options = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            IncludeFields = true,
-            DefaultIgnoreCondition = JsonIgnoreCondition.Never,
-            Converters = { new JsonStringEnumConverter() }
-        };
+        var options = configuration.WorkflowParameterJsonSerializerOptions;
 
         var changedModels = new List<IModel>();
 
@@ -51,11 +49,7 @@ public class JsonEffectProvider(ILogger<JsonEffectProvider> logger) : IJsonEffec
             _previousStates[model] = JsonSerializer.Serialize(
                 model,
                 model.GetType(),
-                new JsonSerializerOptions
-                {
-                    IncludeFields = true,
-                    DefaultIgnoreCondition = JsonIgnoreCondition.Never
-                }
+                configuration.WorkflowParameterJsonSerializerOptions
             );
         }
     }

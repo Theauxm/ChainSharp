@@ -25,20 +25,20 @@ public class PersistentMetadata : Effect.Models.Metadata.Metadata
                 .HasForeignKey(e => e.ParentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Configure the conversion from string to JsonDocument and vice versa
-            entity
-                .Property(e => e.Input)
-                .HasConversion(
-                    v => v != null ? v.ToString() : null,
-                    v => v != null ? JsonDocument.Parse(v, new JsonDocumentOptions()) : null
-                );
-
-            entity
-                .Property(e => e.Output)
-                .HasConversion(
-                    v => v != null ? v.ToString() : null,
-                    v => v != null ? JsonDocument.Parse(v, new JsonDocumentOptions()) : null
-                );
+            // // Configure the conversion from string to JsonDocument and vice versa
+            // entity
+            //     .Property(e => e.Input)
+            //     .HasConversion(
+            //         v => v != null ? v.ToString() : null,
+            //         v => v != null ? JsonDocument.Parse(v, new JsonDocumentOptions()) : null
+            //     );
+            //
+            // entity
+            //     .Property(e => e.Output)
+            //     .HasConversion(
+            //         v => v != null ? v.ToString() : null,
+            //         v => v != null ? JsonDocument.Parse(v, new JsonDocumentOptions()) : null
+            //     );
         });
     }
 }

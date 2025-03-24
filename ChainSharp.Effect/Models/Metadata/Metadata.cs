@@ -5,7 +5,6 @@ using System.Text.Json.Serialization;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Metadata.DTOs;
-using ChainSharp.Exceptions;
 using LanguageExt;
 
 namespace ChainSharp.Effect.Models.Metadata;
@@ -47,6 +46,12 @@ public class Metadata : IMetadata
     [Column("stack_trace")]
     public string? StackTrace { get; set; }
 
+    [Column("input")]
+    public JsonDocument? Input { get; set; }
+
+    [Column("output")]
+    public JsonDocument? Output { get; set; }
+
     [Column("start_time")]
     public DateTime StartTime { get; set; }
 
@@ -54,6 +59,12 @@ public class Metadata : IMetadata
     public DateTime? EndTime { get; set; }
 
     public bool IsChild => ParentId is not null;
+
+    [JsonIgnore]
+    public dynamic? InputObject { get; set; }
+
+    [JsonIgnore]
+    public dynamic? OutputObject { get; set; }
 
     #endregion
 
@@ -74,6 +85,7 @@ public class Metadata : IMetadata
         var newWorkflow = new Metadata
         {
             Name = metadata.Name,
+            InputObject = metadata.Input,
             ExternalId = Guid.NewGuid().ToString("N"),
             WorkflowState = WorkflowState.Pending,
             Executor = Assembly.GetEntryAssembly()?.GetAssemblyProject(),

@@ -1,8 +1,8 @@
 using ChainSharp.Effect.Data.Enums;
 using ChainSharp.Effect.Data.Postgres.Extensions;
+using ChainSharp.Effect.Effects.ArrayLoggerEffect;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Json.Extensions;
-using ChainSharp.Effect.Services.ArrayLogger;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -40,6 +40,7 @@ public abstract class TestSetup
             .AddChainSharpEffects(
                 options =>
                     options
+                        .SaveWorkflowParameters()
                         .AddPostgresEffect(connectionString)
                         .AddPostgresEffectLogging(minimumLogLevel: LogLevel.Trace)
                         .AddJsonEffect()

@@ -1,9 +1,9 @@
 using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
+using ChainSharp.Effect.Effects.ArrayLoggerEffect;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Metadata.DTOs;
-using ChainSharp.Effect.Services.ArrayLogger;
 using ChainSharp.Effect.Services.EffectWorkflow;
 using ChainSharp.Step;
 using FluentAssertions;
@@ -35,7 +35,9 @@ public class PostgresContextTests : TestSetup
 
         var context = (IDataContext)postgresContextFactory.Create();
 
-        var metadata = Metadata.Create(new CreateMetadata { Name = "TestMetadata" });
+        var metadata = Metadata.Create(
+            new CreateMetadata { Name = "TestMetadata", Input = Unit.Default }
+        );
 
         await context.Track(metadata);
 
@@ -120,10 +122,14 @@ public class PostgresContextTests : TestSetup
         parentWorkflowResult.Should().NotBeNull();
         parentWorkflowResult!.Id.Should().Be(workflow.Metadata.Id);
         parentWorkflowResult!.WorkflowState.Should().Be(WorkflowState.Completed);
+        parentWorkflowResult.Input.Should().NotBeNull();
+        parentWorkflowResult.Output.Should().NotBeNull();
 
         childWorkflowResult.Should().NotBeNull();
         childWorkflowResult!.Id.Should().Be(innerWorkflow.Metadata.Id);
         childWorkflowResult!.WorkflowState.Should().Be(WorkflowState.Completed);
+        childWorkflowResult.Input.Should().NotBeNull();
+        childWorkflowResult.Output.Should().NotBeNull();
 
         var logLevel = arrayLoggerProvider
             .Loggers.SelectMany(x => x.Logs)

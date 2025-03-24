@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 using ChainSharp.Effect.Enums;
 
 namespace ChainSharp.Effect.Models.Metadata;
@@ -28,6 +29,12 @@ public interface IMetadata : IModel
 
     [Column("stack_trace")]
     public string? StackTrace { get; set; }
+
+    [Column("input")]
+    public JsonDocument? Input { get; set; }
+
+    [Column("output")]
+    public JsonDocument? Output { get; set; }
 
     [Column("start_time")]
     public DateTime StartTime { get; set; }

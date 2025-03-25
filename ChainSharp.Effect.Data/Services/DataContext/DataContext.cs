@@ -23,10 +23,8 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
     #region Tables
 
     public DbSet<Metadata> Metadatas { get; set; }
-    IQueryable<Metadata> IDataContext.Metadatas => Metadatas;
 
     public DbSet<Log> Logs { get; set; }
-    IQueryable<Log> IDataContext.Logs => Logs;
 
     #endregion
 
@@ -52,9 +50,9 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
 
     public Task RollbackTransaction() => Database.RollbackTransactionAsync();
 
-    public async Task SaveChanges()
+    public async Task SaveChanges(CancellationToken stoppingToken)
     {
-        await base.SaveChangesAsync();
+        await base.SaveChangesAsync(stoppingToken);
     }
 
     public async Task Track(IModel model)

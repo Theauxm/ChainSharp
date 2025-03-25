@@ -9,8 +9,6 @@ public class EffectRunner : IEffectRunner
 {
     private List<IEffectProvider> ActiveEffectProviders { get; init; }
 
-    private bool HasActiveEffectProviders => ActiveEffectProviders.Count > 0;
-
     public EffectRunner(IEnumerable<IEffectProviderFactory> effectProviderFactories)
     {
         ActiveEffectProviders = [];
@@ -18,9 +16,11 @@ public class EffectRunner : IEffectRunner
         ActiveEffectProviders.AddRange(effectProviderFactories.RunAll(factory => factory.Create()));
     }
 
-    public async Task SaveChanges()
+    public async Task SaveChanges(CancellationToken cancellationToken)
     {
-        await ActiveEffectProviders.RunAllAsync(provider => provider.SaveChanges());
+        await ActiveEffectProviders.RunAllAsync(
+            provider => provider.SaveChanges(cancellationToken)
+        );
     }
 
     public async Task Track(IModel model)
@@ -32,9 +32,7 @@ public class EffectRunner : IEffectRunner
 
     private void DeactivateProviders()
     {
-        if (HasActiveEffectProviders)
-            ActiveEffectProviders.RunAll(provider => provider.Dispose());
-
+        ActiveEffectProviders.RunAll(provider => provider.Dispose());
         ActiveEffectProviders.Clear();
     }
 }

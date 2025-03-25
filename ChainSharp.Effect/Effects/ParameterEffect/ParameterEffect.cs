@@ -11,7 +11,7 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
 
     public void Dispose() { }
 
-    public async Task SaveChanges()
+    public async Task SaveChanges(CancellationToken cancellationToken)
     {
         foreach (var metadata in _trackedMetadatas)
         {

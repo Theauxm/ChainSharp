@@ -1,4 +1,4 @@
-using ChainSharp.Effect.Data.Enums;
+using ChainSharp.Effect.Data.Extensions;
 using ChainSharp.Effect.Data.Postgres.Extensions;
 using ChainSharp.Effect.Effects.ArrayLoggerEffect;
 using ChainSharp.Effect.Extensions;
@@ -16,13 +16,9 @@ public abstract class TestSetup
 
     public IServiceScope Scope { get; private set; }
 
-    private ServiceCollection ServiceCollection { get; set; }
-
     [OneTimeSetUp]
     public async Task RunBeforeAnyTests()
     {
-        ServiceCollection = [];
-
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -33,7 +29,7 @@ public abstract class TestSetup
 
         var arrayLoggingProvider = new ArrayLoggingProvider();
 
-        ServiceCollection
+        var serviceCollection = new ServiceCollection()
             .AddSingleton<ILoggerProvider>(arrayLoggingProvider)
             .AddSingleton<IArrayLoggingProvider>(arrayLoggingProvider)
             .AddLogging()
@@ -42,11 +38,11 @@ public abstract class TestSetup
                     options
                         .SaveWorkflowParameters()
                         .AddPostgresEffect(connectionString)
-                        .AddPostgresEffectLogging(minimumLogLevel: LogLevel.Trace)
+                        .AddEffectLogging(minimumLogLevel: LogLevel.Trace)
                         .AddJsonEffect()
             );
 
-        ServiceProvider = ConfigureServices(ServiceCollection);
+        ServiceProvider = ConfigureServices(serviceCollection).BuildServiceProvider();
     }
 
     [OneTimeTearDown]
@@ -55,7 +51,7 @@ public abstract class TestSetup
         await ServiceProvider.DisposeAsync();
     }
 
-    public abstract ServiceProvider ConfigureServices(IServiceCollection services);
+    public abstract IServiceCollection ConfigureServices(IServiceCollection services);
 
     [SetUp]
     public virtual async Task TestSetUp()

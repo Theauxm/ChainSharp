@@ -60,7 +60,9 @@ public static class ServiceExtensions
         where TIEffectFactory : class, IEffectProviderFactory
         where TEffectFactory : class, TIEffectFactory
     {
-        builder.ServiceCollection.AddSingleton<TIEffectFactory, TEffectFactory>();
+        builder
+            .ServiceCollection.AddSingleton<IEffectProviderFactory, TEffectFactory>()
+            .AddSingleton<TIEffectFactory, TEffectFactory>();
 
         return builder;
     }

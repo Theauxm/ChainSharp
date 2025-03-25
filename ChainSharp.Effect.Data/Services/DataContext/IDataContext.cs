@@ -18,9 +18,9 @@ public interface IDataContext : IEffectProvider
 {
     #region Tables
 
-    IQueryable<Metadata> Metadatas { get; }
+    DbSet<Metadata> Metadatas { get; }
 
-    IQueryable<Log> Logs { get; }
+    DbSet<Log> Logs { get; }
 
     #endregion
 

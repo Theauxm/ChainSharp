@@ -18,5 +18,10 @@ public class InMemoryContextProviderFactory : IDataContextProviderFactory
                 .Options
         );
 
+    public async Task<IDataContext> CreateDbContextAsync(CancellationToken cancellationToken)
+    {
+        return Create();
+    }
+
     IEffectProvider IEffectProviderFactory.Create() => Create();
 }

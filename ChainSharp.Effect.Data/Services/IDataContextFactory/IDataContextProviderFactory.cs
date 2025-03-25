@@ -7,4 +7,7 @@ namespace ChainSharp.Effect.Data.Services.IDataContextFactory;
 /// Factory for each LoggingProviderContext.
 /// Each provider will likely implement this on their own.
 /// </summary>
-public interface IDataContextProviderFactory : IEffectProviderFactory { }
+public interface IDataContextProviderFactory : IEffectProviderFactory
+{
+    public Task<IDataContext> CreateDbContextAsync(CancellationToken cancellationToken);
+}

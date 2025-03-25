@@ -5,8 +5,6 @@ namespace ChainSharp.Effect.Data.Services.DataContextLoggingProvider;
 
 public interface IDataContextLoggingProviderConfiguration
 {
-    public EvaluationStrategy EvaluationStrategy { get; }
-
     public LogLevel MinimumLogLevel { get; }
 
     public List<string> Blacklist { get; }

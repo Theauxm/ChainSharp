@@ -18,9 +18,7 @@ public abstract class TestSetup
     {
         ServiceCollection = new ServiceCollection();
 
-        ServiceCollection.AddChainSharpEffects(
-            options => options.SaveWorkflowParameters().AddInMemoryEffect()
-        );
+        ServiceCollection.AddChainSharpEffects(options => options.AddInMemoryEffect());
 
         ServiceProvider = ConfigureServices(ServiceCollection);
     }

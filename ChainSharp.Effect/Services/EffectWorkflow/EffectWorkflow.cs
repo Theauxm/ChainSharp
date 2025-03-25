@@ -1,5 +1,3 @@
-using System.Reflection;
-using System.Reflection.Emit;
 using ChainSharp.Effect.Attributes;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.Metadata;
@@ -73,7 +71,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
         EffectLogger?.LogTrace($"Running Workflow: ({WorkflowName})");
 
         Metadata = await InitializeWorkflow(input);
-        await EffectRunner.SaveChanges();
+        await EffectRunner.SaveChanges(CancellationToken.None);
 
         try
         {
@@ -82,7 +80,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
             Metadata.OutputObject = result;
 
             await FinishWorkflow(result);
-            await EffectRunner.SaveChanges();
+            await EffectRunner.SaveChanges(CancellationToken.None);
 
             return result;
         }
@@ -91,7 +89,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
             EffectLogger?.LogError($"Caught Exception ({e.GetType()}) with Message ({e.Message}).");
 
             await FinishWorkflow(e);
-            await EffectRunner.SaveChanges();
+            await EffectRunner.SaveChanges(CancellationToken.None);
 
             throw;
         }

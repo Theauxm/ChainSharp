@@ -12,11 +12,11 @@ public class JsonEffectProvider(
 ) : IJsonEffectProvider
 {
     private readonly Dictionary<IModel, string> _previousStates = new();
-    private readonly HashSet<IModel> _trackedModels = new();
+    private readonly HashSet<IModel> _trackedModels = [];
 
     public void Dispose() { }
 
-    public async Task SaveChanges()
+    public async Task SaveChanges(CancellationToken cancellationToken)
     {
         var options = configuration.WorkflowParameterJsonSerializerOptions;
 
@@ -38,7 +38,6 @@ public class JsonEffectProvider(
 
         foreach (var model in changedModels)
             logger.LogInformation(_previousStates[model]);
-        // Console.WriteLine(_previousStates[model]);
     }
 
     public async Task Track(IModel model)

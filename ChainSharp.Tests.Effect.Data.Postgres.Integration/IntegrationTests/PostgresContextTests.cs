@@ -17,14 +17,13 @@ namespace ChainSharp.Tests.Effect.Data.Postgres.Integration.IntegrationTests;
 
 public class PostgresContextTests : TestSetup
 {
-    public override ServiceProvider ConfigureServices(IServiceCollection services) =>
+    public override IServiceCollection ConfigureServices(IServiceCollection services) =>
         services
             .AddTransientChainSharpWorkflow<ITestWorkflow, TestWorkflow>()
             .AddTransientChainSharpWorkflow<
                 ITestWorkflowWithinWorkflow,
                 TestWorkflowWithinWorkflow
-            >()
-            .BuildServiceProvider();
+            >();
 
     [Theory]
     public async Task TestPostgresProviderCanCreateMetadata()
@@ -33,7 +32,7 @@ public class PostgresContextTests : TestSetup
         var postgresContextFactory =
             Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
 
-        var context = (IDataContext)postgresContextFactory.Create();
+        using var context = (IDataContext)postgresContextFactory.Create();
 
         var metadata = Metadata.Create(
             new CreateMetadata { Name = "TestMetadata", Input = Unit.Default }
@@ -41,7 +40,7 @@ public class PostgresContextTests : TestSetup
 
         await context.Track(metadata);
 
-        await context.SaveChanges();
+        await context.SaveChanges(CancellationToken.None);
         context.Reset();
 
         // Act
@@ -75,9 +74,11 @@ public class PostgresContextTests : TestSetup
     {
         // Arrange
         var workflow = Scope.ServiceProvider.GetRequiredService<ITestWorkflow>();
+        var workflowTwo = Scope.ServiceProvider.GetRequiredService<ITestWorkflow>();
 
         // Act
         await workflow.Run(Unit.Default);
+        await workflowTwo.Run(Unit.Default);
 
         // Assert
         workflow.Metadata.Name.Should().Be("TestWorkflow");
@@ -111,7 +112,7 @@ public class PostgresContextTests : TestSetup
         innerWorkflow.Metadata.FailureStep.Should().BeNullOrEmpty();
         innerWorkflow.Metadata.WorkflowState.Should().Be(WorkflowState.Completed);
 
-        var dataContext = (IDataContext)dataContextProvider.Create();
+        using var dataContext = (IDataContext)dataContextProvider.Create();
 
         var parentWorkflowResult = await dataContext.Metadatas.FirstOrDefaultAsync(
             x => x.Id == workflow.Metadata.Id

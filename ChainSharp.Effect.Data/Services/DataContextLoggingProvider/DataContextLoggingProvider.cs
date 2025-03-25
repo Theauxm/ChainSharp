@@ -6,21 +6,20 @@ namespace ChainSharp.Effect.Data.Services.DataContextLoggingProvider;
 
 public class DataContextLoggingProvider : IDataContextLoggingProvider
 {
-    private readonly IDataContextProviderFactory _dataContextProviderFactory;
+    private readonly IDataContextProviderFactory _dbContextFactory;
     private readonly IDataContextLoggingProviderConfiguration _configuration;
     private readonly HashSet<string> _exactBlacklist = [];
     private readonly List<Regex> _wildcardBlacklist = [];
 
     public DataContextLoggingProvider(
-        IDataContextProviderFactory dataContextProviderFactory,
+        IDataContextProviderFactory dbContextFactory,
         IDataContextLoggingProviderConfiguration configuration
     )
     {
-        _dataContextProviderFactory = dataContextProviderFactory;
+        _dbContextFactory = dbContextFactory;
         _configuration = configuration;
-        var blacklistPatterns = configuration.Blacklist;
 
-        foreach (var pattern in blacklistPatterns)
+        foreach (var pattern in configuration.Blacklist)
         {
             if (pattern.Contains('*'))
             {
@@ -33,17 +32,16 @@ public class DataContextLoggingProvider : IDataContextLoggingProvider
         }
     }
 
-    public void Dispose() { }
-
     public ILogger CreateLogger(string categoryName)
     {
         return new DataContextLogger(
-            _dataContextProviderFactory,
-            _configuration.EvaluationStrategy,
+            _dbContextFactory,
+            categoryName,
             _configuration.MinimumLogLevel,
             _exactBlacklist,
-            _wildcardBlacklist,
-            categoryName
+            _wildcardBlacklist
         );
     }
+
+    public void Dispose() { }
 }

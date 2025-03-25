@@ -45,7 +45,6 @@ public class InMemoryProviderTests : TestSetup
     }
 
     [Ignore("Serialization Failing for Input/Output Objects.")]
-
     public async Task TestInMemoryProviderCanRunWorkflow()
     {
         // Arrange

@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
 
 namespace ChainSharp.Effect.Data.Postgres.Extensions;
@@ -34,6 +35,7 @@ public static class ServiceExtensions
                     var dataSource = sp.GetRequiredService<NpgsqlDataSource>();
                     options
                         .UseNpgsql(dataSource)
+                        .UseLoggerFactory(new NullLoggerFactory())
                         .ConfigureWarnings(
                             x => x.Log(CoreEventId.ManyServiceProvidersCreatedWarning)
                         );

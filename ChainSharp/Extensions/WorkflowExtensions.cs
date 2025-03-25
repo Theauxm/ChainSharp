@@ -71,7 +71,12 @@ public static class WorkflowExtensions
 
     internal static T? ExtractTypeFromMemory<T, TInput, TReturn>(
         this Workflow<TInput, TReturn> workflow
-    ) => (T?)workflow.ExtractTypeFromMemory(typeof(T));
+    )
+    {
+        var type = workflow.ExtractTypeFromMemory(typeof(T));
+
+        return type is null ? default : (T)type;
+    }
 
     internal static dynamic? ExtractLoggerFromLoggerFactory<TInput, TReturn>(
         this Workflow<TInput, TReturn> workflow,

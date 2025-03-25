@@ -8,6 +8,7 @@ using ChainSharp.Effect.Data.Services.DataContextLoggingProvider;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Extensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Npgsql;
@@ -31,7 +32,11 @@ public static class ServiceExtensions
                 (sp, options) =>
                 {
                     var dataSource = sp.GetRequiredService<NpgsqlDataSource>();
-                    options.UseNpgsql(dataSource);
+                    options
+                        .UseNpgsql(dataSource)
+                        .ConfigureWarnings(
+                            x => x.Log(CoreEventId.ManyServiceProvidersCreatedWarning)
+                        );
                 }
             );
 

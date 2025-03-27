@@ -42,7 +42,7 @@ public static class ServiceExtensions
                 }
             );
 
-        configurationBuilder.LoggingEffectEnabled = true;
+        configurationBuilder.DataContextLoggingEffectEnabled = true;
 
         return configurationBuilder.AddEffect<
             IDataContextProviderFactory,

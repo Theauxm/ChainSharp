@@ -1,6 +1,6 @@
+using ChainSharp.ArrayLogger.Services.ArrayLoggingProvider;
 using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
-using ChainSharp.Effect.Effects.ArrayLoggerEffect;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Metadata.DTOs;

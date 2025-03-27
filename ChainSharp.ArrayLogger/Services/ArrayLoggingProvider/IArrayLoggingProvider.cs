@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace ChainSharp.Effect.Effects.ArrayLoggerEffect;
+namespace ChainSharp.ArrayLogger.Services.ArrayLoggingProvider;
 
 public interface IArrayLoggingProvider : ILoggerProvider
 {

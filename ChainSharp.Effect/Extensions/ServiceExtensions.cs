@@ -1,10 +1,8 @@
 using System.Reflection;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using ChainSharp.Effect.Attributes;
 using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
-using ChainSharp.Effect.Effects.ParameterEffect;
 using ChainSharp.Effect.Services.EffectProviderFactory;
 using ChainSharp.Effect.Services.EffectRunner;
 using ChainSharp.Effect.Utils;
@@ -86,18 +84,6 @@ public static class ServiceExtensions
         var factory = new TEffectFactory();
 
         return builder.AddEffect(factory);
-    }
-
-    public static ChainSharpEffectConfigurationBuilder SaveWorkflowParameters(
-        this ChainSharpEffectConfigurationBuilder builder,
-        JsonSerializerOptions? jsonSerializerOptions = null
-    )
-    {
-        jsonSerializerOptions ??= ChainSharpJsonSerializationOptions.Default;
-
-        builder.WorkflowParameterJsonSerializerOptions = jsonSerializerOptions;
-
-        return builder.AddEffect<IEffectProviderFactory, ParameterEffectProviderFactory>();
     }
 
     public static void InjectProperties(this IServiceProvider serviceProvider, object instance)

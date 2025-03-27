@@ -12,8 +12,6 @@ public interface IDataContextLoggingProviderConfiguration
 
 public class DataContextLoggingProviderConfiguration : IDataContextLoggingProviderConfiguration
 {
-    public EvaluationStrategy EvaluationStrategy { get; set; } = EvaluationStrategy.Lazy;
-
     public LogLevel MinimumLogLevel { get; set; } = LogLevel.Information;
 
     public List<string> Blacklist { get; set; } = [];

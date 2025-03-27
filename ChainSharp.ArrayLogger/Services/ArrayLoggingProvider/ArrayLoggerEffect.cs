@@ -2,7 +2,7 @@ using ChainSharp.Effect.Models.Log;
 using ChainSharp.Effect.Models.Log.DTOs;
 using Microsoft.Extensions.Logging;
 
-namespace ChainSharp.Effect.Effects.ArrayLoggerEffect;
+namespace ChainSharp.ArrayLogger.Services.ArrayLoggingProvider;
 
 public class ArrayLoggerEffect(string categoryName) : ILogger
 {
@@ -18,7 +18,7 @@ public class ArrayLoggerEffect(string categoryName) : ILogger
     {
         var message = formatter(state, exception);
 
-        var log = Models.Log.Log.Create(
+        var log = Effect.Models.Log.Log.Create(
             new CreateLog
             {
                 Level = logLevel,

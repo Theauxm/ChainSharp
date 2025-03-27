@@ -1,8 +1,9 @@
+using ChainSharp.ArrayLogger.Services.ArrayLoggingProvider;
 using ChainSharp.Effect.Data.Extensions;
 using ChainSharp.Effect.Data.Postgres.Extensions;
-using ChainSharp.Effect.Effects.ArrayLoggerEffect;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Json.Extensions;
+using ChainSharp.Effect.Parameter.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -38,7 +39,7 @@ public abstract class TestSetup
                     options
                         .SaveWorkflowParameters()
                         .AddPostgresEffect(connectionString)
-                        .AddEffectLogging(minimumLogLevel: LogLevel.Trace)
+                        .AddEffectDataContextLogging(minimumLogLevel: LogLevel.Trace)
                         .AddJsonEffect()
             );
 

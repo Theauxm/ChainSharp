@@ -109,12 +109,12 @@ public static class WorkflowExtensions
         Type tIn
     )
     {
-        var x = workflow.Memory.GetValueOrDefault(typeof(IServiceProvider))
+        var service = workflow.Memory.GetValueOrDefault(typeof(IServiceProvider))
             is IServiceProvider serviceProvider
             ? serviceProvider.GetService(tIn)
             : null;
 
-        return x;
+        return service;
     }
 
     internal static dynamic? ExtractTypeFromMemory<TInput, TReturn>(

@@ -3,6 +3,8 @@ using ChainSharp.Effect.Data.Extensions;
 using ChainSharp.Effect.Data.Postgres.Extensions;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Json.Extensions;
+using ChainSharp.Effect.Mediator.Extensions;
+using ChainSharp.Effect.Mediator.Services.WorkflowBus;
 using ChainSharp.Effect.Parameter.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +19,8 @@ public abstract class TestSetup
 
     public IServiceScope Scope { get; private set; }
 
+    public IWorkflowBus WorkflowBus { get; private set; }
+
     [OneTimeSetUp]
     public async Task RunBeforeAnyTests()
     {
@@ -30,20 +34,26 @@ public abstract class TestSetup
 
         var arrayLoggingProvider = new ArrayLoggingProvider();
 
-        var serviceCollection = new ServiceCollection()
+        ServiceProvider = new ServiceCollection()
             .AddSingleton<ILoggerProvider>(arrayLoggingProvider)
             .AddSingleton<IArrayLoggingProvider>(arrayLoggingProvider)
             .AddLogging()
             .AddChainSharpEffects(
                 options =>
                     options
+                        .AddEffectWorkflowBus(
+                            assemblies:
+                            [
+                                typeof(AssemblyMarker).Assembly,
+                                typeof(ChainSharp.Tests.Effect.Integration.AssemblyMarker).Assembly
+                            ]
+                        )
                         .SaveWorkflowParameters()
                         .AddPostgresEffect(connectionString)
                         .AddEffectDataContextLogging(minimumLogLevel: LogLevel.Trace)
                         .AddJsonEffect()
-            );
-
-        ServiceProvider = ConfigureServices(serviceCollection).BuildServiceProvider();
+            )
+            .BuildServiceProvider();
     }
 
     [OneTimeTearDown]
@@ -52,12 +62,11 @@ public abstract class TestSetup
         await ServiceProvider.DisposeAsync();
     }
 
-    public abstract IServiceCollection ConfigureServices(IServiceCollection services);
-
     [SetUp]
     public virtual async Task TestSetUp()
     {
         Scope = ServiceProvider.CreateScope();
+        WorkflowBus = Scope.ServiceProvider.GetRequiredService<IWorkflowBus>();
     }
 
     [TearDown]

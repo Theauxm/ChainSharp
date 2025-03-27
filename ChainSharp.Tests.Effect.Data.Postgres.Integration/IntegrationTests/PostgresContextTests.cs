@@ -2,7 +2,6 @@ using ChainSharp.ArrayLogger.Services.ArrayLoggingProvider;
 using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Enums;
-using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Metadata.DTOs;
 using ChainSharp.Effect.Services.EffectWorkflow;
 using ChainSharp.Step;
@@ -17,14 +16,6 @@ namespace ChainSharp.Tests.Effect.Data.Postgres.Integration.IntegrationTests;
 
 public class PostgresContextTests : TestSetup
 {
-    public override IServiceCollection ConfigureServices(IServiceCollection services) =>
-        services
-            .AddTransientChainSharpWorkflow<ITestWorkflow, TestWorkflow>()
-            .AddTransientChainSharpWorkflow<
-                ITestWorkflowWithinWorkflow,
-                TestWorkflowWithinWorkflow
-            >();
-
     [Theory]
     public async Task TestPostgresProviderCanCreateMetadata()
     {
@@ -56,10 +47,10 @@ public class PostgresContextTests : TestSetup
     public async Task TestPostgresProviderCanRunWorkflow()
     {
         // Arrange
-        var workflow = Scope.ServiceProvider.GetRequiredService<ITestWorkflow>();
-
         // Act
-        await workflow.Run(Unit.Default);
+        var workflow = await WorkflowBus.RunAsync<TestWorkflowInput, TestWorkflow>(
+            new TestWorkflowInput()
+        );
 
         // Assert
         workflow.Metadata.Name.Should().Be("TestWorkflow");
@@ -73,12 +64,13 @@ public class PostgresContextTests : TestSetup
     public async Task TestPostgresProviderCanRunWorkflowTwo()
     {
         // Arrange
-        var workflow = Scope.ServiceProvider.GetRequiredService<ITestWorkflow>();
-        var workflowTwo = Scope.ServiceProvider.GetRequiredService<ITestWorkflow>();
-
         // Act
-        await workflow.Run(Unit.Default);
-        await workflowTwo.Run(Unit.Default);
+        var workflow = await WorkflowBus.RunAsync<TestWorkflowInput, TestWorkflow>(
+            new TestWorkflowInput()
+        );
+        var workflowTwo = await WorkflowBus.RunAsync<TestWorkflowInput, TestWorkflow>(
+            new TestWorkflowInput()
+        );
 
         // Assert
         workflow.Metadata.Name.Should().Be("TestWorkflow");
@@ -94,11 +86,13 @@ public class PostgresContextTests : TestSetup
         // Arrange
         var dataContextProvider =
             Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
-        var workflow = Scope.ServiceProvider.GetRequiredService<ITestWorkflowWithinWorkflow>();
         var arrayLoggerProvider = Scope.ServiceProvider.GetRequiredService<IArrayLoggingProvider>();
 
         // Act
-        var innerWorkflow = await workflow.Run(Unit.Default);
+        var (innerWorkflow, workflow) = await WorkflowBus.RunAsync<
+            TestWorkflowWithinWorkflowInput,
+            (ITestWorkflow, ITestWorkflowWithinWorkflow)
+        >(new TestWorkflowWithinWorkflowInput());
 
         // Assert
         workflow.Metadata.Name.Should().Be("TestWorkflowWithinWorkflow");
@@ -139,28 +133,41 @@ public class PostgresContextTests : TestSetup
         logLevel.Should().Be(1);
     }
 
-    private class TestWorkflow : EffectWorkflow<Unit, Unit>, ITestWorkflow
+    internal class TestWorkflow : EffectWorkflow<TestWorkflowInput, TestWorkflow>, ITestWorkflow
     {
-        protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
-            Activate(input).Resolve();
+        protected override async Task<Either<Exception, TestWorkflow>> RunInternal(
+            TestWorkflowInput input
+        ) => Activate(input, this).Resolve();
     }
 
-    private class TestWorkflowWithinWorkflow()
-        : EffectWorkflow<Unit, ITestWorkflow>,
+    internal record TestWorkflowInput;
+
+    internal class TestWorkflowWithinWorkflow()
+        : EffectWorkflow<
+            TestWorkflowWithinWorkflowInput,
+            (ITestWorkflow, ITestWorkflowWithinWorkflow)
+        >,
             ITestWorkflowWithinWorkflow
     {
-        protected override async Task<Either<Exception, ITestWorkflow>> RunInternal(Unit input) =>
-            Activate(input).Chain<StepToRunTestWorkflow>().Resolve();
+        protected override async Task<
+            Either<Exception, (ITestWorkflow, ITestWorkflowWithinWorkflow)>
+        > RunInternal(TestWorkflowWithinWorkflowInput input) =>
+            Activate(input)
+                .AddServices<ITestWorkflowWithinWorkflow>(this)
+                .Chain<StepToRunTestWorkflow>()
+                .Resolve();
     }
 
-    private class StepToRunTestWorkflow(
+    internal record TestWorkflowWithinWorkflowInput;
+
+    internal class StepToRunTestWorkflow(
         ITestWorkflow testWorkflow,
         ILogger<StepToRunTestWorkflow> logger
     ) : Step<Unit, ITestWorkflow>
     {
         public override async Task<ITestWorkflow> Run(Unit input)
         {
-            await testWorkflow.Run(Unit.Default);
+            await testWorkflow.Run(new TestWorkflowInput());
 
             logger.LogCritical("Ran TestWorkflow");
 
@@ -168,9 +175,11 @@ public class PostgresContextTests : TestSetup
         }
     }
 
-    private interface ITestWorkflow : IEffectWorkflow<Unit, Unit> { }
+    internal interface ITestWorkflow : IEffectWorkflow<TestWorkflowInput, TestWorkflow> { }
 
-    private interface ITestWorkflowThree : IEffectWorkflow<Unit, Unit> { }
-
-    private interface ITestWorkflowWithinWorkflow : IEffectWorkflow<Unit, ITestWorkflow> { }
+    internal interface ITestWorkflowWithinWorkflow
+        : IEffectWorkflow<
+            TestWorkflowWithinWorkflowInput,
+            (ITestWorkflow, ITestWorkflowWithinWorkflow)
+        > { }
 }

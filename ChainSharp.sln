@@ -28,6 +28,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Effect.Parameter
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.ArrayLogger", "ChainSharp.ArrayLogger\ChainSharp.ArrayLogger.csproj", "{B3AA2B43-11FA-42D3-915F-95FAB1939AEA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests.Effect.Integration", "ChainSharp.Tests.Effect.Integration\ChainSharp.Tests.Effect.Integration.csproj", "{BBD98E9D-6697-441E-A773-54BE75AF62FC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -90,5 +92,9 @@ Global
 		{B3AA2B43-11FA-42D3-915F-95FAB1939AEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B3AA2B43-11FA-42D3-915F-95FAB1939AEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B3AA2B43-11FA-42D3-915F-95FAB1939AEA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBD98E9D-6697-441E-A773-54BE75AF62FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBD98E9D-6697-441E-A773-54BE75AF62FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBD98E9D-6697-441E-A773-54BE75AF62FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBD98E9D-6697-441E-A773-54BE75AF62FC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

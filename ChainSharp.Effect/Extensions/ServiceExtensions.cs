@@ -137,6 +137,26 @@ public static class ServiceExtensions
         return services;
     }
 
+    public static IServiceCollection AddScopedChainSharpWorkflow(
+        this IServiceCollection services,
+        Type serviceInterface,
+        Type serviceImplementation
+    )
+    {
+        services.AddScoped(serviceImplementation);
+        services.AddScoped(
+            serviceInterface,
+            sp =>
+            {
+                var instance = sp.GetRequiredService(serviceImplementation);
+                sp.InjectProperties(instance);
+                return instance;
+            }
+        );
+
+        return services;
+    }
+
     public static IServiceCollection AddTransientChainSharpWorkflow<TService, TImplementation>(
         this IServiceCollection services
     )
@@ -154,6 +174,26 @@ public static class ServiceExtensions
         return services;
     }
 
+    public static IServiceCollection AddTransientChainSharpWorkflow(
+        this IServiceCollection services,
+        Type serviceInterface,
+        Type serviceImplementation
+    )
+    {
+        services.AddTransient(serviceImplementation);
+        services.AddTransient(
+            serviceInterface,
+            sp =>
+            {
+                var instance = sp.GetRequiredService(serviceImplementation);
+                sp.InjectProperties(instance);
+                return instance;
+            }
+        );
+
+        return services;
+    }
+
     public static IServiceCollection AddSingletonChainSharpWorkflow<TService, TImplementation>(
         this IServiceCollection services
     )
@@ -167,6 +207,26 @@ public static class ServiceExtensions
             sp.InjectProperties(instance);
             return instance;
         });
+
+        return services;
+    }
+
+    public static IServiceCollection AddSingletonChainSharpWorkflow(
+        this IServiceCollection services,
+        Type serviceInterface,
+        Type serviceImplementation
+    )
+    {
+        services.AddSingleton(serviceImplementation);
+        services.AddSingleton(
+            serviceInterface,
+            sp =>
+            {
+                var instance = sp.GetRequiredService(serviceImplementation);
+                sp.InjectProperties(instance);
+                return instance;
+            }
+        );
 
         return services;
     }

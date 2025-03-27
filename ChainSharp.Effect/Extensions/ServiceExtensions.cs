@@ -1,10 +1,8 @@
 using System.Reflection;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using ChainSharp.Effect.Attributes;
 using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
-using ChainSharp.Effect.Effects.ParameterEffect;
 using ChainSharp.Effect.Services.EffectProviderFactory;
 using ChainSharp.Effect.Services.EffectRunner;
 using ChainSharp.Effect.Utils;
@@ -88,18 +86,6 @@ public static class ServiceExtensions
         return builder.AddEffect(factory);
     }
 
-    public static ChainSharpEffectConfigurationBuilder SaveWorkflowParameters(
-        this ChainSharpEffectConfigurationBuilder builder,
-        JsonSerializerOptions? jsonSerializerOptions = null
-    )
-    {
-        jsonSerializerOptions ??= ChainSharpJsonSerializationOptions.Default;
-
-        builder.WorkflowParameterJsonSerializerOptions = jsonSerializerOptions;
-
-        return builder.AddEffect<IEffectProviderFactory, ParameterEffectProviderFactory>();
-    }
-
     public static void InjectProperties(this IServiceProvider serviceProvider, object instance)
     {
         var properties = instance
@@ -151,6 +137,26 @@ public static class ServiceExtensions
         return services;
     }
 
+    public static IServiceCollection AddScopedChainSharpWorkflow(
+        this IServiceCollection services,
+        Type serviceInterface,
+        Type serviceImplementation
+    )
+    {
+        services.AddScoped(serviceImplementation);
+        services.AddScoped(
+            serviceInterface,
+            sp =>
+            {
+                var instance = sp.GetRequiredService(serviceImplementation);
+                sp.InjectProperties(instance);
+                return instance;
+            }
+        );
+
+        return services;
+    }
+
     public static IServiceCollection AddTransientChainSharpWorkflow<TService, TImplementation>(
         this IServiceCollection services
     )
@@ -168,6 +174,26 @@ public static class ServiceExtensions
         return services;
     }
 
+    public static IServiceCollection AddTransientChainSharpWorkflow(
+        this IServiceCollection services,
+        Type serviceInterface,
+        Type serviceImplementation
+    )
+    {
+        services.AddTransient(serviceImplementation);
+        services.AddTransient(
+            serviceInterface,
+            sp =>
+            {
+                var instance = sp.GetRequiredService(serviceImplementation);
+                sp.InjectProperties(instance);
+                return instance;
+            }
+        );
+
+        return services;
+    }
+
     public static IServiceCollection AddSingletonChainSharpWorkflow<TService, TImplementation>(
         this IServiceCollection services
     )
@@ -181,6 +207,26 @@ public static class ServiceExtensions
             sp.InjectProperties(instance);
             return instance;
         });
+
+        return services;
+    }
+
+    public static IServiceCollection AddSingletonChainSharpWorkflow(
+        this IServiceCollection services,
+        Type serviceInterface,
+        Type serviceImplementation
+    )
+    {
+        services.AddSingleton(serviceImplementation);
+        services.AddSingleton(
+            serviceInterface,
+            sp =>
+            {
+                var instance = sp.GetRequiredService(serviceImplementation);
+                sp.InjectProperties(instance);
+                return instance;
+            }
+        );
 
         return services;
     }

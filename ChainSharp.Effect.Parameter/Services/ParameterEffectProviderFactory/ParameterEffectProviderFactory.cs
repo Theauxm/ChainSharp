@@ -1,7 +1,7 @@
 using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
 using ChainSharp.Effect.Services.EffectProvider;
 
-namespace ChainSharp.Effect.Effects.ParameterEffect;
+namespace ChainSharp.Effect.Parameter.Services.ParameterEffectProviderFactory;
 
 public class ParameterEffectProviderFactory(IChainSharpEffectConfiguration configuration)
     : IParameterEffectProviderFactory

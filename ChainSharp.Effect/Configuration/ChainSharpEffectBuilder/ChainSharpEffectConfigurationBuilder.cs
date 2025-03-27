@@ -9,7 +9,7 @@ public class ChainSharpEffectConfigurationBuilder(IServiceCollection serviceColl
 {
     public IServiceCollection ServiceCollection => serviceCollection;
 
-    public bool LoggingEffectEnabled { get; set; } = false;
+    public bool DataContextLoggingEffectEnabled { get; set; } = false;
 
     public JsonSerializerOptions WorkflowParameterJsonSerializerOptions { get; set; } =
         ChainSharpJsonSerializationOptions.Default;

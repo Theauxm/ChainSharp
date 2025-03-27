@@ -9,9 +9,8 @@ namespace ChainSharp.Effect.Data.Extensions;
 
 public static class ServiceExtensions
 {
-    public static ChainSharpEffectConfigurationBuilder AddEffectLogging(
+    public static ChainSharpEffectConfigurationBuilder AddEffectDataContextLogging(
         this ChainSharpEffectConfigurationBuilder configurationBuilder,
-        EvaluationStrategy? evaluationStrategy = null,
         LogLevel? minimumLogLevel = null,
         List<string>? blacklist = null
     )
@@ -25,25 +24,19 @@ public static class ServiceExtensions
         if (parsed)
             minimumLogLevel ??= logLevel;
 
-        if (configurationBuilder.LoggingEffectEnabled == false)
+        if (configurationBuilder.DataContextLoggingEffectEnabled == false)
             throw new Exception(
-                "Logging effect is not enabled in ChainSharp. Call .AddChainSharpEffects(x => x.AddPostgresEffect(connectionString).AddEffectLogging())"
+                "Data Context Logging effect is not enabled in ChainSharp. Ensure a Data Effect has been added to ChainSharpEffects (before calling AddEffectDataContextLogging). e.g. .AddChainSharpEffects(x => x.AddPostgresEffect(connectionString).AddDataContextEffectLogging())"
             );
 
         var credentials = new DataContextLoggingProviderConfiguration
         {
-            EvaluationStrategy = evaluationStrategy ?? EvaluationStrategy.Eager,
             MinimumLogLevel = minimumLogLevel ?? LogLevel.Information,
             Blacklist = blacklist ?? []
         };
 
         configurationBuilder
             .ServiceCollection.AddSingleton<IDataContextLoggingProviderConfiguration>(credentials)
-            .AddSingleton(
-                new BlockingCollection<Effect.Models.Log.Log>(
-                    new ConcurrentQueue<Effect.Models.Log.Log>()
-                )
-            )
             .AddSingleton<ILoggerProvider, DataContextLoggingProvider>();
 
         return configurationBuilder;

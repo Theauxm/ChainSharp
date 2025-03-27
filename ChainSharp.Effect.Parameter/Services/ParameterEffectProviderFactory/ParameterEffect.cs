@@ -3,7 +3,7 @@ using ChainSharp.Effect.Models;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Services.EffectProvider;
 
-namespace ChainSharp.Effect.Effects.ParameterEffect;
+namespace ChainSharp.Effect.Parameter.Services.ParameterEffectProviderFactory;
 
 public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
 {

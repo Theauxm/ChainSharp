@@ -95,6 +95,9 @@ public static class ServiceExtensions
 
         foreach (var property in properties)
         {
+            if (property.GetValue(instance) != null)
+                continue;
+
             var propertyType = property.PropertyType;
             object? service = null;
 

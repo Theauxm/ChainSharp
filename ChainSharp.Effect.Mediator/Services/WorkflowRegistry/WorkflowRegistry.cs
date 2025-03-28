@@ -29,10 +29,8 @@ public class WorkflowRegistry : IWorkflowRegistry
                 )
                 .Select(
                     x =>
-                        x.GetInterfaces().FirstOrDefault(y => y.IsGenericType == false)
-                        ?? throw new WorkflowException(
-                            $"Could not find an interface with generic arguments on ({x.Name})."
-                        )
+                        // Prefer to inject via interface, but if it doesn't exist then inject by underlying type
+                        x.GetInterfaces().FirstOrDefault(y => y.IsGenericType == false) ?? x
                 );
 
             allWorkflowTypes.UnionWith(workflowTypes);
@@ -42,12 +40,14 @@ public class WorkflowRegistry : IWorkflowRegistry
             x =>
                 x.GetInterfaces()
                     .Where(interfaceType => interfaceType.IsGenericType)
-                    .First(
+                    .FirstOrDefault(
                         interfaceType => interfaceType.GetGenericTypeDefinition() == workflowType
                     )
-                    .GetGenericArguments()
+                    ?.GetGenericArguments()
                     .FirstOrDefault()
-                ?? throw new WorkflowException($"Could not find an interface on ({x.Name}).")
+                ?? throw new WorkflowException(
+                    $"Could not find an interface and/or an inherited interface of type ({workflowType.Name}) on target type ({x.Name}) with FullName ({x.FullName}) on Assembly ({x.AssemblyQualifiedName})."
+                )
         );
     }
 }

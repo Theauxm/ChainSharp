@@ -68,9 +68,10 @@ public class PostgresContextTests : TestSetup
         var workflow = await WorkflowBus.RunAsync<TestWorkflowInput, TestWorkflow>(
             new TestWorkflowInput()
         );
-        var workflowTwo = await WorkflowBus.RunAsync<TestWorkflowInput, TestWorkflow>(
-            new TestWorkflowInput()
-        );
+        var workflowTwo = await WorkflowBus.RunAsync<
+            TestWorkflowWithoutInterfaceInput,
+            TestWorkflowWithoutInterface
+        >(new TestWorkflowWithoutInterfaceInput());
 
         // Assert
         workflow.Metadata.Name.Should().Be("TestWorkflow");
@@ -139,6 +140,16 @@ public class PostgresContextTests : TestSetup
             TestWorkflowInput input
         ) => Activate(input, this).Resolve();
     }
+
+    internal class TestWorkflowWithoutInterface
+        : EffectWorkflow<TestWorkflowWithoutInterfaceInput, TestWorkflowWithoutInterface>
+    {
+        protected override async Task<Either<Exception, TestWorkflowWithoutInterface>> RunInternal(
+            TestWorkflowWithoutInterfaceInput input
+        ) => Activate(input, this).Resolve();
+    }
+
+    internal record TestWorkflowWithoutInterfaceInput;
 
     internal record TestWorkflowInput;
 

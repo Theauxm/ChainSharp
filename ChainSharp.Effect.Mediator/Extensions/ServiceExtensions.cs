@@ -38,7 +38,7 @@ public static class ServiceExtensions
                             type.GetInterfaces().FirstOrDefault(y => y.IsGenericType == false)
                                 ?? type.GetInterfaces().FirstOrDefault()
                                 ?? throw new WorkflowException(
-                                    $"Could not find an interface attached to ({type.Name}). At least one Interface is required."
+                                    $"Could not find an interface attached to ({type.Name}) with Full Name ({type.FullName}) on Assembly ({type.AssemblyQualifiedName}). At least one Interface is required."
                                 ),
                             type
                         )

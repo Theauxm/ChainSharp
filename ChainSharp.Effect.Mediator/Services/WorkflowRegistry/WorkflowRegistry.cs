@@ -1,5 +1,6 @@
 using System.Reflection;
 using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Exceptions;
 
 namespace ChainSharp.Effect.Mediator.Services.WorkflowRegistry;
 
@@ -26,7 +27,13 @@ public class WorkflowRegistry : IWorkflowRegistry
                             .Select(y => y.GetGenericTypeDefinition())
                             .Contains(workflowType)
                 )
-                .Select(x => x.GetInterfaces().First(y => y.IsGenericType == false));
+                .Select(
+                    x =>
+                        x.GetInterfaces().FirstOrDefault(y => y.IsGenericType == false)
+                        ?? throw new WorkflowException(
+                            $"Could not find an interface with generic arguments on ({x.Name})."
+                        )
+                );
 
             allWorkflowTypes.UnionWith(workflowTypes);
         }
@@ -39,7 +46,8 @@ public class WorkflowRegistry : IWorkflowRegistry
                         interfaceType => interfaceType.GetGenericTypeDefinition() == workflowType
                     )
                     .GetGenericArguments()
-                    .First()
+                    .FirstOrDefault()
+                ?? throw new WorkflowException($"Could not find an interface on ({x.Name}).")
         );
     }
 }

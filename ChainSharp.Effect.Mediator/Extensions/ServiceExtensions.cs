@@ -4,6 +4,7 @@ using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Mediator.Services.WorkflowBus;
 using ChainSharp.Effect.Mediator.Services.WorkflowRegistry;
 using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ChainSharp.Effect.Mediator.Extensions;
@@ -35,7 +36,10 @@ public static class ServiceExtensions
                     type =>
                         (
                             type.GetInterfaces().FirstOrDefault(y => y.IsGenericType == false)
-                                ?? type.GetInterfaces().First(),
+                                ?? type.GetInterfaces().FirstOrDefault()
+                                ?? throw new WorkflowException(
+                                    $"Could not find an interface attached to ({type.Name}). At least one Interface is required."
+                                ),
                             type
                         )
                 );

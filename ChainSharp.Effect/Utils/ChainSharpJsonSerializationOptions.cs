@@ -11,6 +11,11 @@ public static class ChainSharpJsonSerializationOptions
             WriteIndented = true,
             IncludeFields = true,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            Converters = { new JsonStringEnumConverter(), new ValueTupleConverter() }
+            Converters =
+            {
+                new JsonStringEnumConverter(),
+                new ValueTupleConverter(),
+                new SystemTypeConverter()
+            }
         };
 }

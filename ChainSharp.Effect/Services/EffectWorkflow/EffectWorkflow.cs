@@ -22,7 +22,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// Database Metadata row associated with the workflow
     /// </summary>
     public Metadata? Metadata { get; private set; }
-    
+
     /// <summary>
     /// ParentId for the workflow, used in the initializer where it is passed into the metadata
     /// </summary>
@@ -120,7 +120,14 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
 
         EffectLogger?.LogTrace($"Initializing ({WorkflowName})");
 
-        var metadata = Metadata.Create(new CreateMetadata { Name = WorkflowName, Input = input, ParentId = ParentId });
+        var metadata = Metadata.Create(
+            new CreateMetadata
+            {
+                Name = WorkflowName,
+                Input = input,
+                ParentId = ParentId
+            }
+        );
         await EffectRunner.Track(metadata);
 
         EffectLogger?.LogTrace($"Setting ({WorkflowName}) to In Progress.");

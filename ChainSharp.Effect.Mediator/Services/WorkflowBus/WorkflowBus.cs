@@ -42,9 +42,9 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
                 .GetType()
                 .GetProperties(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
                 .First(x => x.Name == "ParentId");
-            
+
             parentIdProperty.SetValue(workflowService, metadata.Id);
-        } 
+        }
 
         // Get the run methodInfo from the workflow type
         var runMethod = workflowService

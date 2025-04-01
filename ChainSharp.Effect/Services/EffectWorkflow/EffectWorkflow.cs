@@ -24,6 +24,11 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     public Metadata? Metadata { get; private set; }
 
     /// <summary>
+    /// ParentId for the workflow, used in the initializer where it is passed into the metadata
+    /// </summary>
+    internal int? ParentId { get; set; }
+
+    /// <summary>
     /// DataContextFactory for all connections required in the Workflow
     /// </summary>
     [Inject]
@@ -115,7 +120,14 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
 
         EffectLogger?.LogTrace($"Initializing ({WorkflowName})");
 
-        var metadata = Metadata.Create(new CreateMetadata { Name = WorkflowName, Input = input });
+        var metadata = Metadata.Create(
+            new CreateMetadata
+            {
+                Name = WorkflowName,
+                Input = input,
+                ParentId = ParentId
+            }
+        );
         await EffectRunner.Track(metadata);
 
         EffectLogger?.LogTrace($"Setting ({WorkflowName}) to In Progress.");

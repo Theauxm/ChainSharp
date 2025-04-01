@@ -2,6 +2,7 @@ using ChainSharp.ArrayLogger.Services.ArrayLoggingProvider;
 using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Enums;
+using ChainSharp.Effect.Mediator.Services.WorkflowBus;
 using ChainSharp.Effect.Models.Metadata.DTOs;
 using ChainSharp.Effect.Services.EffectWorkflow;
 using ChainSharp.Step;
@@ -48,9 +49,7 @@ public class PostgresContextTests : TestSetup
     {
         // Arrange
         // Act
-        var workflow = await WorkflowBus.RunAsync<TestWorkflowInput, TestWorkflow>(
-            new TestWorkflowInput()
-        );
+        var workflow = await WorkflowBus.RunAsync<TestWorkflow>(new TestWorkflowInput());
 
         // Assert
         workflow.Metadata.Name.Should().Be("TestWorkflow");
@@ -65,13 +64,10 @@ public class PostgresContextTests : TestSetup
     {
         // Arrange
         // Act
-        var workflow = await WorkflowBus.RunAsync<TestWorkflowInput, TestWorkflow>(
-            new TestWorkflowInput()
+        var workflow = await WorkflowBus.RunAsync<TestWorkflow>(new TestWorkflowInput());
+        var workflowTwo = await WorkflowBus.RunAsync<TestWorkflowWithoutInterface>(
+            new TestWorkflowWithoutInterfaceInput()
         );
-        var workflowTwo = await WorkflowBus.RunAsync<
-            TestWorkflowWithoutInterfaceInput,
-            TestWorkflowWithoutInterface
-        >(new TestWorkflowWithoutInterfaceInput());
 
         // Assert
         workflow.Metadata.Name.Should().Be("TestWorkflow");
@@ -90,10 +86,10 @@ public class PostgresContextTests : TestSetup
         var arrayLoggerProvider = Scope.ServiceProvider.GetRequiredService<IArrayLoggingProvider>();
 
         // Act
-        var (innerWorkflow, workflow) = await WorkflowBus.RunAsync<
-            TestWorkflowWithinWorkflowInput,
-            (ITestWorkflow, ITestWorkflowWithinWorkflow)
-        >(new TestWorkflowWithinWorkflowInput());
+        var (innerWorkflow, workflow) = await WorkflowBus.RunAsync<(
+            ITestWorkflow,
+            ITestWorkflowWithinWorkflow
+        )>(new TestWorkflowWithinWorkflowInput());
 
         // Assert
         workflow.Metadata.Name.Should().Be("TestWorkflowWithinWorkflow");
@@ -102,6 +98,7 @@ public class PostgresContextTests : TestSetup
         workflow.Metadata.FailureStep.Should().BeNullOrEmpty();
         workflow.Metadata.WorkflowState.Should().Be(WorkflowState.Completed);
         innerWorkflow.Metadata.Name.Should().Be("TestWorkflow");
+        innerWorkflow.Metadata.ParentId.Should().NotBeNull();
         innerWorkflow.Metadata.FailureException.Should().BeNullOrEmpty();
         innerWorkflow.Metadata.FailureReason.Should().BeNullOrEmpty();
         innerWorkflow.Metadata.FailureStep.Should().BeNullOrEmpty();
@@ -123,7 +120,8 @@ public class PostgresContextTests : TestSetup
 
         childWorkflowResult.Should().NotBeNull();
         childWorkflowResult!.Id.Should().Be(innerWorkflow.Metadata.Id);
-        childWorkflowResult!.WorkflowState.Should().Be(WorkflowState.Completed);
+        childWorkflowResult.ParentId.Should().Be(parentWorkflowResult.Id);
+        childWorkflowResult.WorkflowState.Should().Be(WorkflowState.Completed);
         childWorkflowResult.Input.Should().NotBeNull();
         childWorkflowResult.Output.Should().NotBeNull();
 
@@ -172,13 +170,17 @@ public class PostgresContextTests : TestSetup
     internal record TestWorkflowWithinWorkflowInput;
 
     internal class StepToRunTestWorkflow(
-        ITestWorkflow testWorkflow,
-        ILogger<StepToRunTestWorkflow> logger
+        IWorkflowBus workflowBus,
+        ILogger<StepToRunTestWorkflow> logger,
+        ITestWorkflowWithinWorkflow workflowWithinWorkflow
     ) : Step<Unit, ITestWorkflow>
     {
         public override async Task<ITestWorkflow> Run(Unit input)
         {
-            await testWorkflow.Run(new TestWorkflowInput());
+            var testWorkflow = await workflowBus.RunAsync<TestWorkflow>(
+                new TestWorkflowInput(),
+                workflowWithinWorkflow.Metadata
+            );
 
             logger.LogCritical("Ran TestWorkflow");
 

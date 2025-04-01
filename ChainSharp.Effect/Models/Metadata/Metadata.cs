@@ -89,7 +89,8 @@ public class Metadata : IMetadata
             ExternalId = Guid.NewGuid().ToString("N"),
             WorkflowState = WorkflowState.Pending,
             Executor = Assembly.GetEntryAssembly()?.GetAssemblyProject(),
-            StartTime = DateTime.UtcNow
+            StartTime = DateTime.UtcNow,
+            ParentId = metadata.ParentId
         };
 
         return newWorkflow;

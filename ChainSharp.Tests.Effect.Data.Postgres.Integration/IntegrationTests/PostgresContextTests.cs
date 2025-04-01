@@ -172,12 +172,13 @@ public class PostgresContextTests : TestSetup
     internal class StepToRunTestWorkflow(
         IWorkflowBus workflowBus,
         ILogger<StepToRunTestWorkflow> logger,
-        Metadata metadata
+        ITestWorkflowWithinWorkflow workflowWithinWorkflow
     ) : Step<Unit, ITestWorkflow>
     {
         public override async Task<ITestWorkflow> Run(Unit input)
         {
-            var testWorkflow = await workflowBus.RunAsync<TestWorkflow>(new TestWorkflowInput(), metadata);
+            var testWorkflow = await workflowBus.RunAsync<TestWorkflow>(new TestWorkflowInput(), 
+                workflowWithinWorkflow.Metadata);
 
             logger.LogCritical("Ran TestWorkflow");
 

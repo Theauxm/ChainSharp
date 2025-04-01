@@ -1,3 +1,4 @@
+using System.Reflection;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Mediator.Services.WorkflowRegistry;
 using ChainSharp.Effect.Models.Metadata;
@@ -37,19 +38,12 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
 
         if (metadata != null)
         {
-            var metadataProperty = workflowService
+            var parentIdProperty = workflowService
                 .GetType()
-                .GetProperties()
-                .First(x => x.Name == "Metadata");
-            
-            var metadataValue = metadataProperty.GetValue(workflowService);
-            
-            var parentIdProperty = metadataProperty
-                .GetType()
-                .GetProperties()
+                .GetProperties(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
                 .First(x => x.Name == "ParentId");
             
-            parentIdProperty.SetValue(metadataValue, metadata.Id);
+            parentIdProperty.SetValue(workflowService, metadata.Id);
         } 
 
         // Get the run methodInfo from the workflow type

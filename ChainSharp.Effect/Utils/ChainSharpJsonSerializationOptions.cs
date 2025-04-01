@@ -15,7 +15,7 @@ public static class ChainSharpJsonSerializationOptions
             {
                 new JsonStringEnumConverter(),
                 new ValueTupleConverter(),
-                new SystemTypeConverter()
+                new MockConverter()
             }
         };
 }

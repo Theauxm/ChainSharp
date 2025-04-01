@@ -1,6 +1,10 @@
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Mediator.Services.WorkflowRegistry;
+using ChainSharp.Effect.Models.Metadata;
+using ChainSharp.Effect.Services.EffectWorkflow;
 using ChainSharp.Exceptions;
+using ChainSharp.Workflow;
+using LanguageExt.ClassInstances;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ChainSharp.Effect.Mediator.Services.WorkflowBus;
@@ -8,7 +12,7 @@ namespace ChainSharp.Effect.Mediator.Services.WorkflowBus;
 public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry registryService)
     : IWorkflowBus
 {
-    public Task<TOut> RunAsync<TIn, TOut>(TIn workflowInput)
+    public Task<TOut> RunAsync<TOut>(object workflowInput, Metadata? metadata = null)
     {
         if (workflowInput == null)
             throw new WorkflowException(
@@ -30,6 +34,23 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
 
         var workflowService = serviceProvider.GetRequiredService(correctWorkflow);
         serviceProvider.InjectProperties(workflowService);
+
+        if (metadata != null)
+        {
+            var metadataProperty = workflowService
+                .GetType()
+                .GetProperties()
+                .First(x => x.Name == "Metadata");
+            
+            var metadataValue = metadataProperty.GetValue(workflowService);
+            
+            var parentIdProperty = metadataProperty
+                .GetType()
+                .GetProperties()
+                .First(x => x.Name == "ParentId");
+            
+            parentIdProperty.SetValue(metadataValue, metadata.Id);
+        } 
 
         // Get the run methodInfo from the workflow type
         var runMethod = workflowService

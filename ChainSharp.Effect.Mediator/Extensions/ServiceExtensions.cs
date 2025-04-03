@@ -97,7 +97,7 @@ public static class ServiceExtensions
 
         return serviceCollection
             .AddSingleton<IWorkflowRegistry>(workflowRegistry)
-            .AddSingleton<IWorkflowBus, WorkflowBus>()
+            .AddScoped<IWorkflowBus, WorkflowBus>()
             .RegisterEffectWorkflows(effectWorkflowServiceLifetime, assemblies);
     }
 }

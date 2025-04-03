@@ -20,6 +20,7 @@ public class WorkflowRegistry : IWorkflowRegistry
             var workflowTypes = assembly
                 .GetTypes()
                 .Where(x => x.IsClass)
+                .Where(x => x.IsAbstract == false)
                 .Where(
                     x =>
                         x.GetInterfaces()

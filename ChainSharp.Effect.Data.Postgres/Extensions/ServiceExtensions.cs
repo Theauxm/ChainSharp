@@ -25,22 +25,17 @@ public static class ServiceExtensions
     {
         DatabaseMigrator.Migrate(connectionString).Wait();
 
-        configurationBuilder
-            .ServiceCollection.AddSingleton(
-                _ => ModelBuilderExtensions.BuildDataSource(connectionString)
-            )
-            .AddDbContextFactory<PostgresContext>(
-                (sp, options) =>
-                {
-                    var dataSource = sp.GetRequiredService<NpgsqlDataSource>();
-                    options
-                        .UseNpgsql(dataSource)
-                        .UseLoggerFactory(new NullLoggerFactory())
-                        .ConfigureWarnings(
-                            x => x.Log(CoreEventId.ManyServiceProvidersCreatedWarning)
-                        );
-                }
-            );
+        var dataSource = ModelBuilderExtensions.BuildDataSource(connectionString);
+
+        configurationBuilder.ServiceCollection.AddDbContextFactory<PostgresContext>(
+            (_, options) =>
+            {
+                options
+                    .UseNpgsql(dataSource)
+                    .UseLoggerFactory(new NullLoggerFactory())
+                    .ConfigureWarnings(x => x.Log(CoreEventId.ManyServiceProvidersCreatedWarning));
+            }
+        );
 
         configurationBuilder.DataContextLoggingEffectEnabled = true;
 

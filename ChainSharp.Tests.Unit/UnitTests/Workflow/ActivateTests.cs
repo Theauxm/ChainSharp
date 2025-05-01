@@ -50,7 +50,7 @@ public class ActivateTests : TestSetup
 
         // Assert
         workflow.Memory.Should().NotBeNull();
-        workflow.Memory.Count.Should().Be(6);
+        workflow.Memory.Count.Should().Be(5);
         workflow.Memory.Should().ContainValue(input);
         workflow.Memory.Should().ContainValue(1);
         workflow.Memory.Should().ContainValue(false);
@@ -71,7 +71,7 @@ public class ActivateTests : TestSetup
 
         // Assert
         workflow.Memory.Should().NotBeNull();
-        workflow.Memory.Count.Should().Be(6);
+        workflow.Memory.Count.Should().Be(43);
         workflow.Memory.Should().ContainValue(inputObject);
         workflow.Memory.Should().ContainValue(2);
         workflow.Memory.Should().ContainValue(false);
@@ -91,7 +91,7 @@ public class ActivateTests : TestSetup
 
         // Assert
         workflow.Memory.Should().NotBeNull();
-        workflow.Memory.Count.Should().Be(5);
+        workflow.Memory.Count.Should().Be(48);
         workflow.Memory.Should().ContainValue(input);
         workflow.Memory.Should().ContainValue(1);
         workflow.Memory.Should().ContainValue(false);

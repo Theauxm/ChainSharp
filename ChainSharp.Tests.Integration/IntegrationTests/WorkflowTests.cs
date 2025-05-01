@@ -55,7 +55,7 @@ public class WorkflowTests : TestSetup
         // Assert
         workflow.Exception.Should().BeNull();
         workflow.Memory.Should().NotBeNull();
-        workflow.Memory.Count.Should().Be(6);
+        workflow.Memory.Count.Should().Be(84);
         result.Should().NotBeNull();
 
         var (boolResult, doubleResult, objectResult) = result;

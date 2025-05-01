@@ -12,13 +12,13 @@ public partial class Workflow<TInput, TReturn>
         // Always allow input type of Unit for parameterless invocation
         Memory ??= new Dictionary<Type, object>() { { typeof(Unit), Unit.Default } };
 
-        var inputType = typeof(TInput);
-
         if (input is null)
         {
-            Exception ??= new WorkflowException($"Input ({inputType}) is null.");
+            Exception ??= new WorkflowException($"Input ({typeof(TInput)}) is null.");
             return this;
         }
+
+        var inputType = input.GetType();
 
         if (inputType.IsTuple())
             this.AddTupleToMemory(input);
@@ -27,9 +27,7 @@ public partial class Workflow<TInput, TReturn>
             Memory[inputType] = input;
 
             var interfaces = inputType.GetInterfaces();
-            var foundInterface = interfaces.FirstOrDefault();
-
-            if (foundInterface != null)
+            foreach (var foundInterface in interfaces)
                 Memory[foundInterface] = input;
         }
 
@@ -43,11 +41,9 @@ public partial class Workflow<TInput, TReturn>
             {
                 Memory[otherType] = otherInput;
 
-                var interfaces = otherType.GetInterfaces();
-                var foundInterface = interfaces.FirstOrDefault();
-
-                if (foundInterface != null)
-                    Memory[foundInterface] = otherInput;
+                var interfaces = inputType.GetInterfaces();
+                foreach (var foundInterface in interfaces)
+                    Memory[foundInterface] = input;
             }
         }
 

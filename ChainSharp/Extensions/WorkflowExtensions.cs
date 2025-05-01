@@ -189,7 +189,15 @@ public static class WorkflowExtensions
         var tupleList = Enumerable.Range(0, inputTuple.Length).Select(i => inputTuple[i]!).ToList();
 
         foreach (var tupleValue in tupleList)
-            workflow.Memory[tupleValue.GetType()] = tupleValue;
+        {
+            var tupleValueType = tupleValue.GetType();
+
+            workflow.Memory[tupleValueType] = tupleValue;
+
+            var tupleValueTypeInterfaces = tupleValueType.GetInterfaces();
+            foreach (var tupleValueTypeInterface in tupleValueTypeInterfaces)
+                workflow.Memory[tupleValueTypeInterface] = tupleValue;
+        }
 
         return Unit.Default;
     }

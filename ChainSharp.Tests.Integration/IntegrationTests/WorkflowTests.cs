@@ -55,7 +55,7 @@ public class WorkflowTests : TestSetup
         // Assert
         workflow.Exception.Should().BeNull();
         workflow.Memory.Should().NotBeNull();
-        workflow.Memory.Count.Should().Be(6);
+        workflow.Memory.Count.Should().Be(84);
         result.Should().NotBeNull();
 
         var (boolResult, doubleResult, objectResult) = result;
@@ -368,6 +368,21 @@ public class WorkflowTests : TestSetup
         result.Should().Be(Unit.Default);
     }
 
+    [Theory]
+    public async Task TestWithMultipleInheritedInterface()
+    {
+        // Arrange
+        var inheritedObject = new InheritedObject();
+
+        var workflow = new MemoryInterfaceTest();
+
+        // Act
+        var result = await workflow.Run(inheritedObject);
+
+        // Assert
+        result.Should().Be(Unit.Default);
+    }
+
     private class ThrowsStep : Step<Unit, Unit>
     {
         public override Task<Unit> Run(Unit input) =>
@@ -471,6 +486,20 @@ public class WorkflowTests : TestSetup
         }
     }
 
+    private interface IFirstInheritedInterface { }
+
+    private interface ISecondInheritedInterface { }
+
+    private class InheritedObject : IFirstInheritedInterface, ISecondInheritedInterface { }
+
+    private class TestMemoryStep : Step<ISecondInheritedInterface, Unit>
+    {
+        public override async Task<Unit> Run(ISecondInheritedInterface input)
+        {
+            return Unit.Default;
+        }
+    }
+
     private interface ITestService { }
 
     private class TestService : ITestService { }
@@ -500,6 +529,13 @@ public class WorkflowTests : TestSetup
                 .Chain<IBrew, BrewingJug>(brew)
                 .Chain<IBottle, BrewingJug, List<GlassBottle>>(bottle)
                 .Resolve();
+    }
+
+    private class MemoryInterfaceTest : Workflow<IFirstInheritedInterface, Unit>
+    {
+        protected override async Task<Either<Exception, Unit>> RunInternal(
+            IFirstInheritedInterface input
+        ) => Activate(input).Chain<TestMemoryStep>().Resolve();
     }
 
     private class ChainTestWithNoInputs : Workflow<Ingredients, List<GlassBottle>>

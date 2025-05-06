@@ -1,24 +1,19 @@
 # ChainSharp Architecture
 
-ChainSharp is a .NET library that implements the Railway-oriented programming pattern, providing a robust way to handle errors and compose operations in a functional style.
+ChainSharp is a .NET library that provides a workflow engine for building and executing chains of operations. This document provides an overview of the project architecture and development environment setup.
 
 ## Development Environment
 
-This project includes a development container configuration that provides a consistent development environment for all contributors. The dev container includes:
+ChainSharp uses a development container (devcontainer) configuration to provide a consistent development environment across different machines. This ensures that all developers have the same tools and dependencies installed, reducing "it works on my machine" issues.
 
-- .NET SDK 8.0
-- PostgreSQL database
-- All necessary dependencies
+### Using the Dev Container
 
-## Getting Started with the Dev Container
+#### Prerequisites
 
-### Prerequisites
+- [Docker](https://www.docker.com/products/docker-desktop) installed on your machine
+- [Visual Studio Code](https://code.visualstudio.com/) with the [Remote - Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension installed
 
-- [Docker](https://www.docker.com/products/docker-desktop)
-- [Visual Studio Code](https://code.visualstudio.com/)
-- [Remote - Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
-
-### Opening the Project in the Dev Container
+#### Opening the Project in a Dev Container
 
 1. Clone the repository:
    ```bash
@@ -31,76 +26,89 @@ This project includes a development container configuration that provides a cons
    code .
    ```
 
-3. When prompted, click "Reopen in Container" or use the command palette (F1) and select "Remote-Containers: Reopen in Container".
+3. When prompted by VS Code, click "Reopen in Container" or use the command palette (F1) and select "Remote-Containers: Reopen in Container".
 
 4. VS Code will build the dev container and open the project inside it. This may take a few minutes the first time.
 
-### Project Structure
+#### What's Included in the Dev Container
 
-- `ChainSharp/`: Core library implementing the Railway-oriented programming pattern
-- `ChainSharp.Effect/`: Extensions for handling side effects
-- `ChainSharp.Effect.Data/`: Data access abstractions
-- `ChainSharp.Effect.Data.Postgres/`: PostgreSQL implementation
-- `ChainSharp.Effect.Data.InMemory/`: In-memory implementation for testing
-- `ChainSharp.Effect.Json/`: JSON serialization support
-- `ChainSharp.Effect.Mediator/`: Mediator pattern implementation
-- `ChainSharp.Effect.Parameter/`: Parameter handling
-- `ChainSharp.Tests/`: Test utilities
-- Various test projects for different components
+The dev container includes:
+
+- .NET SDK 8.0
+- PostgreSQL database for persistence
+- Required VS Code extensions for .NET development
+- Git and other common development tools
+
+The container is configured to:
+- Mount your local repository into the container
+- Forward ports for the database and web applications
+- Set up the correct environment variables for development
+
+## Project Structure
+
+ChainSharp is organized into several projects:
+
+- **ChainSharp**: Core library containing the workflow engine
+- **ChainSharp.Effect**: Extensions for tracking workflow execution
+- **ChainSharp.Effect.Data**: Database persistence for workflow metadata
+- **ChainSharp.Effect.Data.InMemory**: In-memory database implementation for testing
+- **ChainSharp.Effect.Data.Postgres**: PostgreSQL database implementation for production
+- **ChainSharp.Effect.Json**: JSON serialization support
+- **ChainSharp.Effect.Mediator**: Mediator pattern implementation for workflows
+- **ChainSharp.Effect.Parameter**: Parameter handling for workflows
+- **ChainSharp.Tests**: Test projects for the library
 
 ## Running Tests
 
-The project includes several test projects for different components. You can run all tests or specific test projects.
+ChainSharp includes several test projects for different components of the system. You can run the tests using the .NET CLI or the VS Code Test Explorer.
 
-### Running All Tests
+### Using the .NET CLI
+
+To run all tests:
 
 ```bash
 dotnet test
 ```
 
-### Running Specific Test Projects
+To run tests for a specific project:
 
 ```bash
-dotnet test ChainSharp.Tests.Unit/ChainSharp.Tests.Unit.csproj
-dotnet test ChainSharp.Tests.Integration/ChainSharp.Tests.Integration.csproj
+dotnet test ChainSharp.Tests/ChainSharp.Tests.csproj
 ```
 
-### Running Tests with PostgreSQL
+### Using VS Code Test Explorer
 
-Some integration tests require a PostgreSQL database. The dev container includes a PostgreSQL instance that is automatically configured for testing.
+1. Open the Test Explorer in VS Code (click the beaker icon in the sidebar)
+2. Click the "Run All Tests" button or run specific tests by clicking on them
 
-To run tests that require PostgreSQL:
+### Integration Tests with PostgreSQL
 
-```bash
-dotnet test ChainSharp.Tests.Effect.Data.Postgres.Integration/ChainSharp.Tests.Effect.Data.Postgres.Integration.csproj
+The integration tests for the PostgreSQL implementation require a running PostgreSQL database. When running inside the dev container, this is automatically set up for you.
+
+The tests use the connection string from the environment variable `ConnectionStrings__ChainSharpDb`, which is configured in the dev container.
+
+## Database Migrations
+
+The PostgreSQL implementation includes database migrations that are automatically applied when the application starts. The migrations are defined in SQL files in the `ChainSharp.Effect.Data.Postgres/Migrations` directory.
+
+To manually apply migrations:
+
+```csharp
+// In your application startup code
+using ChainSharp.Effect.Data.Postgres.Utils;
+
+// ...
+
+await DatabaseMigrator.Migrate(connectionString);
 ```
-
-## Core Concepts
-
-### Railway-Oriented Programming
-
-Railway-oriented programming is a functional approach to handling errors. Instead of using exceptions, operations return either a success value or an error value. This allows for composing operations in a way that automatically handles errors.
-
-In ChainSharp, this is implemented using the `Either<Exception, T>` type from the LanguageExt library.
-
-### Workflows
-
-A workflow is a sequence of steps that processes an input and produces a result. Workflows are defined by implementing the `IWorkflow<TInput, TReturn>` interface.
-
-### Steps
-
-Steps are the building blocks of workflows. Each step performs a single operation and returns either a result or an exception. Steps implement the `IStep<TIn, TOut>` interface.
-
-### Memory
-
-Workflows maintain a dictionary of objects called Memory. This allows steps to share data without passing it explicitly. Objects are stored by their type, allowing for type-based retrieval.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+When contributing to ChainSharp, please:
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. Create a new branch for your changes
+2. Write tests for your changes
+3. Ensure all tests pass
+4. Submit a pull request
+
+The dev container ensures that you have the correct development environment set up, making it easier to contribute to the project.

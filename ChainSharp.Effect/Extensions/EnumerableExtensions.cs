@@ -2,8 +2,33 @@ using LanguageExt;
 
 namespace ChainSharp.Effect.Extensions;
 
+/// <summary>
+/// Provides extension methods for working with IEnumerable collections in a functional style.
+/// These methods enable robust execution of actions and functions across collections,
+/// with special handling for error cases and asynchronous operations.
+/// </summary>
+/// <remarks>
+/// The extensions in this class follow functional programming principles,
+/// particularly using the Aggregate pattern to process collections sequentially
+/// while maintaining proper error handling and state management.
+/// </remarks>
 public static class EnumerableExtensions
 {
+    /// <summary>
+    /// Executes an action on each element in the collection, ensuring all elements are processed
+    /// even if exceptions occur for individual elements.
+    /// </summary>
+    /// <typeparam name="T">The type of elements in the collection</typeparam>
+    /// <param name="source">The source collection</param>
+    /// <param name="action">The action to execute on each element</param>
+    /// <remarks>
+    /// This method uses a functional approach to aggregate actions into a single action
+    /// that is executed at the end. This ensures that all elements are processed in sequence,
+    /// and any exceptions are contained to the individual element being processed.
+    ///
+    /// The implementation uses a clever technique where each iteration builds up a chain
+    /// of actions that are executed in sequence when the final action is invoked.
+    /// </remarks>
     public static void RunAll<T>(this IEnumerable<T> source, Action<T> action)
     {
         source.Aggregate(
@@ -16,6 +41,21 @@ public static class EnumerableExtensions
         )();
     }
 
+    /// <summary>
+    /// Applies a function to each element in the collection and returns a list of results,
+    /// ensuring all elements are processed even if exceptions occur for individual elements.
+    /// </summary>
+    /// <typeparam name="T">The type of elements in the collection</typeparam>
+    /// <typeparam name="TResult">The type of results produced by the function</typeparam>
+    /// <param name="source">The source collection</param>
+    /// <param name="func">The function to apply to each element</param>
+    /// <returns>A list containing the results of applying the function to each element</returns>
+    /// <remarks>
+    /// This method aggregates results into a list, applying the function to each element
+    /// in sequence. Any exceptions thrown by the function for a particular element will
+    /// prevent that element's result from being added to the list, but will not stop
+    /// processing of subsequent elements.
+    /// </remarks>
     public static List<TResult> RunAll<T, TResult>(
         this IEnumerable<T> source,
         Func<T, TResult> func
@@ -31,6 +71,23 @@ public static class EnumerableExtensions
         );
     }
 
+    /// <summary>
+    /// Applies an asynchronous function to each element in the collection and returns a list of results,
+    /// ensuring all elements are processed even if exceptions occur for individual elements.
+    /// </summary>
+    /// <typeparam name="T">The type of elements in the collection</typeparam>
+    /// <typeparam name="TResult">The type of results produced by the function</typeparam>
+    /// <param name="source">The source collection</param>
+    /// <param name="func">The asynchronous function to apply to each element</param>
+    /// <returns>A task that resolves to a list containing the results of applying the function to each element</returns>
+    /// <remarks>
+    /// This method handles asynchronous functions by awaiting each result before proceeding
+    /// to the next element. This ensures that elements are processed in sequence, which can
+    /// be important for operations that have side effects or dependencies on previous operations.
+    ///
+    /// The implementation uses a nested async lambda to properly await both the accumulated
+    /// results and the function application for each element.
+    /// </remarks>
     public static async Task<List<TResult>> RunAllAsync<T, TResult>(
         this IEnumerable<T> source,
         Func<T, Task<TResult>> func
@@ -48,6 +105,23 @@ public static class EnumerableExtensions
         );
     }
 
+    /// <summary>
+    /// Executes an asynchronous action on each element in the collection,
+    /// ensuring all elements are processed even if exceptions occur for individual elements.
+    /// </summary>
+    /// <typeparam name="T">The type of elements in the collection</typeparam>
+    /// <param name="source">The source collection</param>
+    /// <param name="func">The asynchronous action to execute on each element</param>
+    /// <returns>A task that completes when all elements have been processed</returns>
+    /// <remarks>
+    /// This method ensures that asynchronous actions are executed in sequence,
+    /// with each action waiting for the previous one to complete before starting.
+    /// This is important for maintaining order of execution when actions have
+    /// side effects or dependencies on previous actions.
+    ///
+    /// The implementation uses Task.CompletedTask as the initial accumulator,
+    /// and then chains each action to execute after the previous one completes.
+    /// </remarks>
     public static async Task RunAllAsync<T>(this IEnumerable<T> source, Func<T, Task> func)
     {
         await source.Aggregate(

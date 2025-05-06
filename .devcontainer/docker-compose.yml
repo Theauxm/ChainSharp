@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspace:cached
+    command: sleep infinity
+    networks:
+      - chainsharp-network
+    depends_on:
+      - database
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+      - ConnectionStrings__ChainSharpDb=Host=database;Database=chain_sharp;Username=chain_sharp;Password=chain_sharp123
+
+  database:
+    container_name: chain_sharp_database
+    image: postgres:latest
+    restart: always
+    shm_size: 512m
+    environment:
+      POSTGRES_USER: chain_sharp
+      POSTGRES_PASSWORD: chain_sharp123 
+      POSTGRES_DB: chain_sharp
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - chainsharp-network
+
+networks:
+  chainsharp-network:
+    driver: bridge
+
+volumes:
+  postgres-data:

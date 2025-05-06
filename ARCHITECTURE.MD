@@ -1,113 +1,299 @@
 # ChainSharp Architecture
 
-This document provides an overview of the ChainSharp project architecture, how to use the development container, and how to run tests.
+ChainSharp is a .NET library for Railway Oriented Programming, providing a structured way to build workflows with discrete steps. This document explains the core architecture and concepts of ChainSharp.
 
-## Development Container
+## Example: Building a Workflow
 
-ChainSharp includes a development container configuration that provides a consistent development environment with all necessary dependencies pre-configured. This makes it easy to get started with development and ensures that all developers are working with the same environment.
+Here's a simple example of a workflow that processes ingredients to make cider:
 
-### Prerequisites
+```csharp
+public class Cider : Workflow<Ingredients, List<GlassBottle>>, ICider
+{
+    protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(Ingredients input)
+        => Activate(input)
+            .Chain<Prepare>()
+            .Chain<Ferment>()
+            .Chain<Brew>()
+            .Chain<Bottle>()
+            .Resolve();
+}
+```
 
-To use the development container, you need:
+This workflow takes `Ingredients` as input, processes them through a series of steps (prepare, ferment, brew, bottle), and produces a list of `GlassBottle` objects as output.
 
-- [Visual Studio Code](https://code.visualstudio.com/)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop)
-- [VS Code Remote - Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+## Memory Management in Workflows
 
-### Getting Started with the Dev Container
+### How Memory Works
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Theauxm/ChainSharp.git
-   cd ChainSharp
+ChainSharp workflows maintain state through a `Memory` dictionary that stores objects by their type. This dictionary is the core mechanism for passing data between steps in a workflow.
+
+```csharp
+protected internal Dictionary<Type, object> Memory { get; private set; } = null!;
+```
+
+Key aspects of memory management:
+
+1. **Type-Based Storage**: Objects are stored with their Type as the key
+2. **Interface Registration**: When an object is added to memory, all its interfaces are also registered
+3. **Tuple Handling**: Tuple elements are extracted and stored individually
+4. **Automatic Output Storage**: Step outputs are automatically stored in memory
+
+### Memory Lifecycle
+
+1. **Initialization**: Memory is initialized when `Activate()` is called or during the first `Run()` call
+2. **Population**: Objects are added to memory through:
+   - The `Activate()` method (for initial inputs)
+   - Step outputs (from `Chain()` calls)
+   - The `AddServices()` method (for dependencies)
+3. **Retrieval**: Objects are retrieved from memory when:
+   - A step requires an input type
+   - The `Resolve()` method is called to get the final result
+
+### Type Resolution Order
+
+When a step requires an input of type `T`, ChainSharp looks for it in this order:
+
+1. Directly in the Memory dictionary
+2. From the IServiceProvider (if available)
+3. From ILoggerFactory (for ILogger<T> types)
+
+## Service Provider Integration
+
+### Injecting a Service Provider
+
+A service provider can be injected into a workflow in two ways:
+
+1. **Via Run Method**:
+   ```csharp
+   var result = await workflow.Run(input, serviceProvider);
    ```
 
-2. Open the project in VS Code:
-   ```bash
-   code .
+2. **Via Memory**:
+   ```csharp
+   workflow.Activate(input).AddServices(serviceProvider);
    ```
 
-3. When prompted by VS Code, click "Reopen in Container" or use the command palette (F1) and select "Remote-Containers: Reopen in Container".
+### Service Resolution
 
-4. VS Code will build the development container and open the project inside it. This may take a few minutes the first time.
+When a step requires a dependency, ChainSharp will:
 
-5. Once the container is running, you'll have access to:
-   - .NET 8 SDK
-   - PostgreSQL database (accessible at localhost:5432)
-   - All required VS Code extensions
+1. Check if the type exists in Memory
+2. If not, try to resolve it from the IServiceProvider
+3. For ILogger<T>, try to create it from an ILoggerFactory in Memory
 
-### Container Features
+### Adding Services Directly
 
-The development container includes:
+Services can be added directly to a workflow's memory:
 
-- .NET 8 SDK for building and running the project
-- PostgreSQL database for integration tests
-- Git and GitHub CLI for source control
-- VS Code extensions for .NET development
-
-## Project Structure
-
-ChainSharp is organized into several projects:
-
-- **ChainSharp**: Core library implementing Railway Oriented Programming concepts
-- **ChainSharp.Effect**: Extensions for handling effects in workflows
-- **ChainSharp.Effect.Data**: Data access abstractions
-- **ChainSharp.Effect.Data.Postgres**: PostgreSQL implementation
-- **ChainSharp.Effect.Data.InMemory**: In-memory implementation for testing
-- **ChainSharp.Effect.Json**: JSON serialization support
-- **ChainSharp.Effect.Mediator**: Mediator pattern implementation
-- **ChainSharp.Tests**: Test utilities and examples
-- **ChainSharp.Tests.***: Various test projects for different components
-
-## Running Tests
-
-ChainSharp includes several test projects for different components. You can run tests using the .NET CLI or the VS Code Test Explorer.
-
-### Using .NET CLI
-
-To run all tests:
-
-```bash
-dotnet test
+```csharp
+workflow.AddServices(service1, service2);
 ```
 
-To run a specific test project:
+This registers the services by their interface types, making them available to steps.
 
-```bash
-dotnet test ChainSharp.Tests.Unit/ChainSharp.Tests.Unit.csproj
+## Step-Workflow Interaction
+
+### Step Definition
+
+Steps are defined by implementing the `IStep<TIn, TOut>` interface:
+
+```csharp
+public interface IStep<TIn, TOut>
+{
+    Task<TOut> Run(TIn input);
+    Task<Either<Exception, TOut>> RailwayStep(Either<Exception, TIn> previousOutput);
+}
 ```
 
-### Using VS Code Test Explorer
+The base `Step<TIn, TOut>` class provides a default implementation of `RailwayStep` that handles error propagation.
 
-1. Open the Test Explorer in VS Code (Test icon in the sidebar)
-2. Click the "Run All Tests" button or run specific tests/test classes
+### Input/Output Flow
 
-### Integration Tests with PostgreSQL
+1. **Input Retrieval**: When a step is executed, its input is retrieved from Memory
+2. **Processing**: The step's `Run()` method processes the input
+3. **Output Storage**: The output is stored in Memory by its type
+4. **Error Handling**: Errors are captured and propagated through the Either monad
 
-The integration tests require a PostgreSQL database. When running inside the development container, this is automatically configured.
+### Railway Oriented Programming
 
-The database connection string is configured in `ChainSharp.Tests.Effect.Data.Postgres.Integration/appsettings.json`.
+ChainSharp implements the Railway Oriented Programming pattern:
 
-## Development Workflow
+1. **Two Tracks**: Success (Right) and Failure (Left)
+2. **Automatic Switching**: If a step fails, subsequent steps are skipped
+3. **Error Propagation**: Errors are passed along the chain
+4. **Final Resolution**: The `Resolve()` method returns the final result or error
 
-1. Make changes to the code
-2. Run tests to verify your changes
-3. Build the solution:
-   ```bash
-   dotnet build
-   ```
-4. Create a pull request with your changes
+## Extension Methods
 
-## Database Migrations
+### Activate
 
-Database migrations for PostgreSQL are located in:
-```
-ChainSharp.Effect.Data.Postgres/Migrations/
+```csharp
+workflow.Activate(input, otherInputs...);
 ```
 
-These migrations are automatically applied when running integration tests.
+- Initializes the workflow's Memory
+- Adds the input object(s) to Memory
+- Registers interfaces of the input objects
+- Handles tuple inputs by extracting and storing individual elements
 
-## Additional Resources
+### Chain
 
-- [ChainSharp Wiki](https://github.com/Theauxm/ChainSharp/wiki)
-- [Railway Oriented Programming](https://fsharpforfunandprofit.com/rop/)
+```csharp
+workflow.Chain<TStep>();
+```
+
+- Executes a step in the workflow
+- Retrieves the step's input from Memory
+- Stores the step's output in Memory
+- Propagates errors through the Either monad
+- Returns the workflow for method chaining
+
+### Resolve
+
+```csharp
+workflow.Resolve();
+```
+
+- Extracts the final result from Memory
+- Returns an Either<Exception, TReturn> containing the result or an error
+- Can accept a specific return value or extract it by type from Memory
+
+### Extract
+
+```csharp
+workflow.Extract<TIn, TOut>();
+workflow.Extract<TIn, TOut>(input);
+```
+
+- Extracts a property or field of type TOut from an object of type TIn
+- Stores the extracted value in Memory
+- Useful for accessing nested properties without creating dedicated steps
+
+### ShortCircuit
+
+```csharp
+workflow.ShortCircuit<TStep>();
+```
+
+- Similar to Chain, but sets a short-circuit value if successful
+- Subsequent steps are still executed, but the final result is the short-circuit value
+- Useful for early returns while still allowing cleanup steps to run
+
+### AddServices
+
+```csharp
+workflow.AddServices(service1, service2);
+```
+
+- Adds services to the workflow's Memory
+- Registers services by their interface types
+- Handles mocked services by extracting the mocked interface
+
+## Chain Method Overloads
+
+### Primary Method: Chain<TStep>()
+
+```csharp
+workflow.Chain<TStep>();
+```
+
+This is the main method that should be used in most cases. It:
+- Instantiates the step using dependency injection
+- Extracts the input type from Memory
+- Executes the step
+- Stores the output in Memory
+
+### Other Overloads
+
+1. **Chain<TStep, TIn, TOut>(step, input, out output)**:
+   - Explicitly provides the step instance and input
+   - Captures the output in an out parameter
+   - Useful for fine-grained control and output capture
+
+2. **Chain<TStep, TIn>()**:
+   - For steps that return Unit (void)
+   - Simplifies the syntax for steps without meaningful output
+
+3. **IChain<TStep>()**:
+   - For interface-based steps that are already in Memory
+   - Useful when steps are registered as services
+
+The main `Chain<TStep>()` method is preferred because it:
+- Requires less type information
+- Handles dependency injection automatically
+- Maintains a cleaner, more readable workflow definition
+
+## Testing Workflows
+
+### Test Setup
+
+Tests typically:
+1. Configure services using `ConfigureServices()`
+2. Create a workflow instance
+3. Provide input data
+4. Execute the workflow
+5. Assert on the results
+
+### Example Test
+
+```csharp
+[Theory]
+public async Task TestChain()
+{
+    // Arrange
+    var prepare = ServiceProvider.GetRequiredService<IPrepare>();
+    var bottle = ServiceProvider.GetRequiredService<IBottle>();
+    var workflow = new ChainTest(_brew, prepare, bottle);
+    var ingredients = new Ingredients() { /* ... */ };
+
+    // Act
+    var result = await workflow.Run(ingredients);
+
+    // Assert
+    workflow.Memory.Should().NotBeNull();
+    workflow.Exception.Should().BeNull();
+    result.Should().NotBeNull();
+}
+```
+
+Errors are propagated through the Either monad:
+- If a step throws an exception, it's captured in the Left track
+- Subsequent steps are skipped
+- The final result contains either the successful output or the exception
+
+### Short-Circuiting
+
+The `ShortCircuit` method allows early returns:
+- If the step succeeds, its output becomes the final result
+- Subsequent steps are still executed (for cleanup)
+- Useful for validation or early-exit scenarios
+
+### Tuple Handling
+
+ChainSharp has special handling for tuples:
+- Tuple elements are extracted and stored individually
+- Tuple types can be reconstructed from individual elements
+- Supports tuples up to 7 elements
+
+## Best Practices
+
+1. **Use Chain<TStep>() when possible**:
+   - Simpler syntax
+   - Automatic dependency injection
+   - Cleaner workflow definitions
+
+2. **Design steps with single responsibilities**:
+   - Each step should do one thing well
+   - Inputs and outputs should be clearly defined
+
+3. **Use interfaces for steps**:
+   - Enables dependency injection
+   - Facilitates testing with mocks
+
+4. **Leverage the Memory system**:
+   - Store common objects that multiple steps need
+   - Use Extract for accessing nested properties
+
+5. **Handle errors appropriately**:
+   - Let the Railway pattern handle most errors
+   - Use try/catch only when necessary within steps

@@ -14,12 +14,12 @@ namespace ChainSharp.Effect.Parameter.Services.ParameterEffectProviderFactory;
 /// <remarks>
 /// The ParameterEffect class provides an implementation of the IEffectProvider interface
 /// that serializes workflow input and output parameters to JSON format.
-/// 
+///
 /// This provider tracks metadata objects and serializes their input and output parameters
 /// to JSON format when changes are saved. The serialized parameters are stored in the
 /// metadata object's Input and Output properties, which can then be persisted to a database
 /// or other storage medium.
-/// 
+///
 /// This implementation is useful for capturing and storing the input and output parameters
 /// of workflow executions, which can be used for auditing, debugging, and analytics purposes.
 /// </remarks>
@@ -47,7 +47,7 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
     /// input and output parameters to JSON format. The serialized parameters are stored
     /// in the metadata object's Input and Output properties, which can then be persisted
     /// to a database or other storage medium.
-    /// 
+    ///
     /// This allows for capturing and storing the input and output parameters of workflow
     /// executions, which can be used for auditing, debugging, and analytics purposes.
     /// </remarks>
@@ -68,10 +68,10 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
     /// This method checks if the specified model is a Metadata object, and if so,
     /// adds it to the set of tracked metadata objects and serializes its input and
     /// output parameters.
-    /// 
+    ///
     /// Only Metadata objects are tracked by this provider, as they are the only objects
     /// that contain input and output parameters that need to be serialized.
-    /// 
+    ///
     /// When a metadata object is first tracked, its input and output parameters are
     /// immediately serialized to JSON format. This ensures that the parameters are
     /// captured even if the SaveChanges method is never called.
@@ -94,10 +94,10 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
     /// object to JSON format. The serialized parameters are stored in the metadata object's
     /// Input and Output properties, which can then be persisted to a database or other
     /// storage medium.
-    /// 
+    ///
     /// If the input or output parameter is null, it is not serialized. This prevents
     /// overwriting existing serialized parameters with null values.
-    /// 
+    ///
     /// The serialization is performed using the JSON serializer options provided to the
     /// constructor, which allows for customizing the serialization process.
     /// </remarks>

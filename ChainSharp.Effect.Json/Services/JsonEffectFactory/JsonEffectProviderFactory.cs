@@ -13,10 +13,10 @@ namespace ChainSharp.Effect.Json.Services.JsonEffectFactory;
 /// <remarks>
 /// The JsonEffectProviderFactory class provides an implementation of the IEffectProviderFactory
 /// interface that creates instances of JsonEffectProvider.
-/// 
+///
 /// This factory uses the service provider to resolve and create instances of IJsonEffectProvider,
 /// which allows for proper dependency injection and lifecycle management of the effect providers.
-/// 
+///
 /// The factory is registered with the dependency injection container as an IEffectProviderFactory,
 /// which allows the ChainSharp.Effect system to create and use JSON effect providers without
 /// directly depending on the concrete implementation.
@@ -31,15 +31,15 @@ public class JsonEffectProviderFactory(IServiceProvider serviceProvider) : IEffe
     /// <remarks>
     /// This method uses the service provider to resolve and create an instance of IJsonEffectProvider.
     /// This allows for proper dependency injection and lifecycle management of the effect provider.
-    /// 
+    ///
     /// The resolved provider is returned as an IEffectProvider, which allows the ChainSharp.Effect
     /// system to use it without directly depending on the concrete implementation.
-    /// 
+    ///
     /// Note: The commented-out code shows an alternative implementation that creates a new instance
     /// of JsonEffectProvider directly, which is not used in favor of the dependency injection approach.
     /// </remarks>
     public IEffectProvider Create() => serviceProvider.GetRequiredService<IJsonEffectProvider>();
-    
+
     // Alternative implementation (commented out):
     // public IEffectProvider Create() => new JsonEffectProvider(loggerFactory.CreateLogger<JsonEffectProvider>());
 }

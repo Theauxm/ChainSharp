@@ -11,12 +11,12 @@ namespace ChainSharp.Effect.Models;
 /// The WorkflowExceptionData class provides a standardized format for capturing
 /// exception details in the ChainSharp.Effect system. This information is stored
 /// in the workflow metadata and can be used for:
-/// 
+///
 /// 1. Debugging workflow failures
 /// 2. Analyzing patterns of failures across workflows
 /// 3. Generating reports on workflow reliability
 /// 4. Implementing retry or compensation logic based on specific failure types
-/// 
+///
 /// When a workflow fails, the exception information is extracted and stored in
 /// this format, making it easier to query and analyze than raw exception data.
 /// </remarks>
@@ -28,7 +28,7 @@ public class WorkflowExceptionData
     /// <remarks>
     /// This property typically contains the fully qualified name of the exception class,
     /// such as "System.ArgumentNullException" or "ChainSharp.Exceptions.WorkflowException".
-    /// 
+    ///
     /// This information is useful for categorizing exceptions and implementing
     /// specific handling logic for different exception types.
     /// </remarks>
@@ -41,7 +41,7 @@ public class WorkflowExceptionData
     /// <remarks>
     /// This property identifies the specific step in the workflow that failed,
     /// making it easier to locate the source of the error.
-    /// 
+    ///
     /// For example, if a workflow has steps like "ValidateInput", "ProcessData",
     /// and "SaveResults", this property would indicate which of these steps
     /// encountered the exception.
@@ -55,7 +55,7 @@ public class WorkflowExceptionData
     /// <remarks>
     /// This property contains the human-readable description of what went wrong,
     /// typically derived from the Exception.Message property.
-    /// 
+    ///
     /// The message should provide enough detail to understand the nature of the
     /// error without requiring access to the original exception object.
     /// </remarks>

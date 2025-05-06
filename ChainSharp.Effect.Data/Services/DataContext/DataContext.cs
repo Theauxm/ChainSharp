@@ -19,14 +19,14 @@ namespace ChainSharp.Effect.Data.Services.DataContext;
 /// The DataContext class is a key component in the ChainSharp.Effect.Data system.
 /// It implements the IDataContext interface and extends Entity Framework Core's DbContext,
 /// providing a bridge between the ChainSharp.Effect tracking system and database persistence.
-/// 
+///
 /// This class:
 /// 1. Implements IDataContext to integrate with the ChainSharp.Effect system
 /// 2. Extends DbContext to leverage Entity Framework Core's ORM capabilities
 /// 3. Provides DbSet properties for Metadata and Log entities
 /// 4. Implements transaction management
 /// 5. Implements the Track and SaveChanges methods required by IEffectProvider
-/// 
+///
 /// The generic type parameter TDbContext allows this class to be used with different
 /// DbContext implementations, making it adaptable to various database systems.
 /// </remarks>
@@ -43,7 +43,7 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
     /// <remarks>
     /// This property provides access to the Metadata table, which stores information about
     /// workflow executions, including inputs, outputs, state, and timing information.
-    /// 
+    ///
     /// The Metadatas DbSet is the primary storage mechanism for workflow tracking data
     /// and is used by the EffectRunner to persist workflow execution details.
     /// </remarks>
@@ -55,7 +55,7 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
     /// <remarks>
     /// This property provides access to the Log table, which stores detailed log entries
     /// generated during workflow execution.
-    /// 
+    ///
     /// The Logs DbSet allows for fine-grained tracking of workflow execution steps
     /// and is particularly useful for debugging and auditing.
     /// </remarks>
@@ -70,10 +70,10 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
     /// <remarks>
     /// This method is called when the model for a derived context has been initialized, but
     /// before the model has been locked down and used to initialize the context.
-    /// 
+    ///
     /// It applies entity configurations using the ApplyEntityOnModelCreating extension method,
     /// which scans for entity configuration methods and applies them to the model builder.
-    /// 
+    ///
     /// Derived contexts can override this method to further configure the model,
     /// such as adding database-specific configurations.
     /// </remarks>
@@ -102,7 +102,7 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
     /// This method starts a new database transaction with the ReadCommitted isolation level.
     /// The transaction must be explicitly committed or rolled back using the CommitTransaction
     /// or RollbackTransaction methods.
-    /// 
+    ///
     /// Transactions ensure that multiple database operations are treated as a single atomic unit,
     /// either all succeeding or all failing together.
     /// </remarks>
@@ -117,10 +117,10 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
     /// <remarks>
     /// This method starts a new database transaction with the specified isolation level.
     /// The isolation level determines how the transaction interacts with other concurrent transactions.
-    /// 
+    ///
     /// The method creates a new DataContextTransaction that wraps the underlying EF Core transaction,
     /// providing a consistent interface for transaction management across different database implementations.
-    /// 
+    ///
     /// The transaction must be explicitly committed or rolled back using the
     /// CommitTransaction or RollbackTransaction methods.
     /// </remarks>
@@ -137,7 +137,7 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
     /// <remarks>
     /// This method commits the current transaction, making all changes permanent.
     /// It should be called after all operations within the transaction have completed successfully.
-    /// 
+    ///
     /// If no transaction is active, this method may throw an exception or have no effect,
     /// depending on the database provider.
     /// </remarks>
@@ -151,7 +151,7 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
     /// This method rolls back the current transaction, discarding all changes made within it.
     /// It should be called when an error occurs within the transaction and the changes
     /// should not be persisted.
-    /// 
+    ///
     /// If no transaction is active, this method may throw an exception or have no effect,
     /// depending on the database provider.
     /// </remarks>
@@ -165,7 +165,7 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
     /// <remarks>
     /// This method persists all tracked changes to the database. It is called by the
     /// EffectRunner when SaveChanges is called on the runner.
-    /// 
+    ///
     /// This implementation delegates to the base SaveChangesAsync method, which handles
     /// the actual persistence of changes to the database.
     /// </remarks>
@@ -182,7 +182,7 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
     /// <remarks>
     /// This method adds the specified model to the context's change tracker in the Added state,
     /// indicating that it should be inserted into the database when SaveChanges is called.
-    /// 
+    ///
     /// This implementation is called by the EffectRunner when Track is called on the runner,
     /// allowing workflow metadata to be automatically persisted to the database.
     /// </remarks>
@@ -198,7 +198,7 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
     /// This method clears the change tracker, removing all entities that are being tracked
     /// by the context. This is useful when the context has been used for a long time
     /// and may be tracking many entities, which can impact performance.
-    /// 
+    ///
     /// After calling Reset, any entities that were previously tracked will need to be
     /// re-attached to the context if they need to be persisted.
     /// </remarks>

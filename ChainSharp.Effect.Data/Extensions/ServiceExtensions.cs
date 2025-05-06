@@ -13,12 +13,12 @@ namespace ChainSharp.Effect.Data.Extensions;
 /// <remarks>
 /// The ServiceExtensions class contains utility methods that simplify the registration
 /// of ChainSharp.Effect.Data services with the dependency injection system.
-/// 
+///
 /// These extensions enable:
 /// 1. Easy configuration of data context logging
 /// 2. Consistent service registration across different applications
 /// 3. Integration with the ChainSharp.Effect configuration system
-/// 
+///
 /// By using these extensions, applications can easily configure and use the
 /// ChainSharp.Effect.Data system with minimal boilerplate code.
 /// </remarks>
@@ -35,23 +35,23 @@ public static class ServiceExtensions
     /// <remarks>
     /// This method configures logging for database operations in the ChainSharp.Effect.Data system.
     /// It registers the necessary services for capturing and processing database logs.
-    /// 
+    ///
     /// The method:
     /// 1. Checks for a log level specified in the CHAIN_SHARP_POSTGRES_LOG_LEVEL environment variable
     /// 2. Verifies that data context logging is enabled in the configuration
     /// 3. Creates a logging configuration with the specified settings
     /// 4. Registers the logging provider and configuration with the dependency injection container
-    /// 
+    ///
     /// Data context logging provides visibility into:
     /// - SQL queries executed
     /// - Transaction boundaries
     /// - Errors and warnings
-    /// 
+    ///
     /// This is particularly useful for debugging and performance optimization.
-    /// 
+    ///
     /// Example usage:
     /// ```csharp
-    /// services.AddChainSharpEffects(options => 
+    /// services.AddChainSharpEffects(options =>
     ///     options
     ///         .AddPostgresEffect(connectionString)
     ///         .AddEffectDataContextLogging(

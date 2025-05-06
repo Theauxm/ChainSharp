@@ -102,7 +102,7 @@ public partial class Workflow<TInput, TReturn>
     {
         // Extract the input and output types from the step
         var (tIn, tOut) = ReflectionHelpers.ExtractStepTypeArguments<TStep>();
-        
+
         // Find the appropriate ShortCircuitChain method to call
         var chainMethod = ReflectionHelpers.FindGenericChainInternalMethod<TStep, TInput, TReturn>(
             this,
@@ -110,7 +110,7 @@ public partial class Workflow<TInput, TReturn>
             tOut,
             3
         );
-        
+
         // Extract the input from Memory
         var input = this.ExtractTypeFromMemory(tIn);
 

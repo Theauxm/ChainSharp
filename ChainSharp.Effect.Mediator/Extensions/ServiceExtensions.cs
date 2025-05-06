@@ -18,12 +18,12 @@ namespace ChainSharp.Effect.Mediator.Extensions;
 /// <remarks>
 /// The ServiceExtensions class contains utility methods that simplify the registration
 /// of ChainSharp.Effect.Mediator services with the dependency injection system.
-/// 
+///
 /// These extensions enable:
 /// 1. Automatic workflow discovery and registration
 /// 2. Configuration of the workflow bus and registry
 /// 3. Integration with the ChainSharp.Effect configuration system
-/// 
+///
 /// By using these extensions, applications can easily configure and use the
 /// ChainSharp.Effect.Mediator system with minimal boilerplate code.
 /// </remarks>
@@ -46,17 +46,17 @@ public static class ServiceExtensions
     /// This method scans the specified assemblies for classes that implement the
     /// IEffectWorkflow&lt;TIn, TOut&gt; interface and registers them with the
     /// dependency injection container.
-    /// 
+    ///
     /// The method performs the following steps:
     /// 1. Identifies the IEffectWorkflow&lt;TIn, TOut&gt; generic type definition
     /// 2. Scans each assembly for classes that implement this interface
     /// 3. Extracts the workflow types and their interfaces
     /// 4. Registers each workflow with the dependency injection container
-    /// 
+    ///
     /// Workflows are registered with the specified service lifetime, which defaults
     /// to transient. This means that a new instance of the workflow is created each
     /// time it is requested from the container.
-    /// 
+    ///
     /// Example usage:
     /// ```csharp
     /// services.RegisterEffectWorkflows(
@@ -138,13 +138,13 @@ public static class ServiceExtensions
     /// This method configures the ChainSharp.Effect system to use the workflow bus and registry
     /// for executing workflows. It adds the necessary services to the dependency injection
     /// container and configures them to scan the specified assemblies for workflow implementations.
-    /// 
+    ///
     /// This method is typically used in the ConfigureServices method of the Startup class
     /// when configuring the ChainSharp.Effect system.
-    /// 
+    ///
     /// Example usage:
     /// ```csharp
-    /// services.AddChainSharpEffects(options => 
+    /// services.AddChainSharpEffects(options =>
     ///     options.AddEffectWorkflowBus(
     ///         ServiceLifetime.Scoped,
     ///         typeof(MyWorkflow).Assembly
@@ -176,16 +176,16 @@ public static class ServiceExtensions
     /// <remarks>
     /// This method adds the workflow bus and registry to the dependency injection container
     /// and configures them to scan the specified assemblies for workflow implementations.
-    /// 
+    ///
     /// The method performs the following steps:
     /// 1. Creates a new workflow registry that scans the specified assemblies
     /// 2. Registers the registry as a singleton in the container
     /// 3. Registers the workflow bus as a scoped service in the container
     /// 4. Registers all workflows found in the assemblies with the container
-    /// 
+    ///
     /// This method is typically used in the ConfigureServices method of the Startup class
     /// when configuring the dependency injection container.
-    /// 
+    ///
     /// Example usage:
     /// ```csharp
     /// services.AddEffectWorkflowBus(

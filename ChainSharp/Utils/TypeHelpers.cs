@@ -25,7 +25,7 @@ internal static class TypeHelpers
     )
     {
         var dynamicList = new List<(Type, dynamic)>();
-        
+
         // Extract each generic argument from the tuple type
         foreach (var type in inputType.GenericTypeArguments)
         {

@@ -10,12 +10,12 @@ namespace ChainSharp.Effect.Data.Extensions;
 /// <remarks>
 /// The ModelBuilderExtensions class contains utility methods that simplify the configuration
 /// of Entity Framework Core models for the ChainSharp.Effect.Data system.
-/// 
+///
 /// These extensions enable:
 /// 1. Automatic discovery and application of entity configurations
 /// 2. Consistent model configuration across different database contexts
 /// 3. Separation of entity configuration from the DbContext implementation
-/// 
+///
 /// By using these extensions, the system can maintain a clean separation of concerns
 /// while ensuring consistent entity configuration across different database implementations.
 /// </remarks>
@@ -30,18 +30,18 @@ public static class ModelBuilderExtensions
     /// This method uses reflection to discover all entity types that implement IModel
     /// and have a static OnModelCreating method. It then invokes that method on each entity type,
     /// passing the model builder as a parameter.
-    /// 
+    ///
     /// This approach allows each entity to define its own configuration logic,
     /// which is then automatically applied when the model is being built.
     /// This promotes a clean separation of concerns, where each entity is responsible
     /// for its own configuration, rather than centralizing all configuration in the DbContext.
-    /// 
+    ///
     /// The method:
     /// 1. Finds all non-abstract classes that implement IModel
     /// 2. Looks for a static OnModelCreating method on each class
     /// 3. Verifies that the method has the correct signature
     /// 4. Invokes the method, passing the model builder
-    /// 
+    ///
     /// If an entity type doesn't have a valid OnModelCreating method,
     /// an exception is thrown to ensure that all entities are properly configured.
     /// </remarks>

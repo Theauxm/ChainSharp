@@ -13,11 +13,11 @@ namespace ChainSharp.Effect.Mediator.Services.WorkflowBus;
 /// to specific workflow implementations. This promotes loose coupling and enables a more
 /// flexible architecture where workflows can be added or modified without changing the code
 /// that executes them.
-/// 
+///
 /// The workflow bus uses a registry of workflows indexed by their input types to determine
 /// which workflow to execute for a given input. This enables a type-based dispatch mechanism
 /// where the appropriate workflow is selected automatically based on the type of the input.
-/// 
+///
 /// Example usage:
 /// ```csharp
 /// // Inject the workflow bus
@@ -45,12 +45,12 @@ public interface IWorkflowBus
     /// This method dynamically discovers and executes the appropriate workflow based on the
     /// type of the input object. The workflow must be registered with the workflow registry
     /// and must return the specified output type.
-    /// 
+    ///
     /// If metadata is provided, it will be associated with the workflow execution, which can
     /// be useful for tracking, logging, and debugging purposes. The metadata's ID will be set
     /// as the ParentId of the workflow, establishing a parent-child relationship between
     /// workflow executions.
-    /// 
+    ///
     /// If no workflow is found that can handle the specified input type, a WorkflowException
     /// will be thrown.
     /// </remarks>

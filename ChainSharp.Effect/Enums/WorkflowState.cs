@@ -7,7 +7,7 @@ namespace ChainSharp.Effect.Enums;
 /// The WorkflowState enum is used to track the current state of a workflow
 /// in the metadata tracking system. It provides a standardized way to
 /// represent the workflow's progress and outcome.
-/// 
+///
 /// This enum is particularly important for:
 /// 1. Filtering workflows by state in reporting and monitoring tools
 /// 2. Determining which workflows need attention (e.g., failed workflows)

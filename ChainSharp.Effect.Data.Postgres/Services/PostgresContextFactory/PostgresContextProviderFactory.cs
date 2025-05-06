@@ -14,21 +14,21 @@ namespace ChainSharp.Effect.Data.Postgres.Services.PostgresContextFactory;
 /// The PostgresContextProviderFactory class is a key component in the ChainSharp.Effect.Data.Postgres system.
 /// It implements the IDataContextProviderFactory interface to create PostgresContext instances
 /// that use Entity Framework Core's PostgreSQL database provider.
-/// 
+///
 /// This factory:
 /// 1. Uses Entity Framework Core's DbContextFactory for efficient context creation
 /// 2. Tracks the number of contexts created for monitoring purposes
 /// 3. Provides both synchronous and asynchronous context creation methods
-/// 
+///
 /// Unlike the in-memory implementation, this factory requires a properly configured DbContextFactory
 /// that is typically set up with a connection string and other PostgreSQL-specific options.
-/// 
+///
 /// The factory is registered with the dependency injection container using
 /// the AddPostgresEffect extension method in ServiceExtensions.
-/// 
+///
 /// Example usage:
 /// ```csharp
-/// services.AddChainSharpEffects(options => 
+/// services.AddChainSharpEffects(options =>
 ///     options.AddPostgresEffect("Host=localhost;Database=chainsharp;Username=postgres;Password=password")
 /// );
 /// ```
@@ -54,10 +54,10 @@ public class PostgresContextProviderFactory(
     /// <remarks>
     /// This method creates a new PostgresContext instance using the DbContextFactory.
     /// It increments the Count property to track the number of contexts created.
-    /// 
+    ///
     /// This method is called by the EffectRunner when it needs to create a new effect provider
     /// for tracking workflow metadata.
-    /// 
+    ///
     /// The context is created with the configuration provided to the DbContextFactory,
     /// which typically includes the connection string and other PostgreSQL-specific options.
     /// </remarks>
@@ -78,10 +78,10 @@ public class PostgresContextProviderFactory(
     /// <remarks>
     /// This method creates a new PostgresContext instance asynchronously using the DbContextFactory.
     /// It increments the Count property to track the number of contexts created.
-    /// 
+    ///
     /// This method is typically called when a new database context is needed for
     /// operations that require direct database access outside of the EffectRunner flow.
-    /// 
+    ///
     /// The asynchronous creation is particularly useful in web applications and other
     /// scenarios where non-blocking operations are important for scalability.
     /// </remarks>

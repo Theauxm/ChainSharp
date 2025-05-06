@@ -28,7 +28,7 @@ public static class WorkflowExtensions
     /// 2. Ensures it has exactly one constructor
     /// 3. Extracts the constructor parameters from Memory
     /// 4. Creates an instance of the step
-    /// 
+    ///
     /// It's used by the Chain method to create step instances dynamically.
     /// </remarks>
     public static TStep? InitializeStep<TStep, TInput, TReturn>(

@@ -11,16 +11,16 @@ namespace ChainSharp.Effect.Data.Postgres.Utils;
 /// <remarks>
 /// The DatabaseMigrator class is responsible for ensuring that the PostgreSQL database schema
 /// is up-to-date with the latest version of the ChainSharp.Effect.Data.Postgres system.
-/// 
+///
 /// This class:
 /// 1. Creates the necessary schema if it doesn't exist
 /// 2. Applies embedded SQL migration scripts in order
 /// 3. Tracks applied migrations in a migrations table
-/// 
+///
 /// The migration process is handled by the DbUp library, which provides a robust
 /// framework for database migrations with features like versioning, script ordering,
 /// and transaction support.
-/// 
+///
 /// This class is typically used when the application starts up to ensure that
 /// the database schema is compatible with the current version of the application.
 /// </remarks>
@@ -37,7 +37,7 @@ public class DatabaseMigrator
     /// 2. Track applied migrations in a "migrations" table in the "chain_sharp" schema
     /// 3. Use SQL scripts embedded in the assembly as migration sources
     /// 4. Log migration operations to the trace output
-    /// 
+    ///
     /// The upgrade engine is used by the Migrate method to apply pending migrations
     /// to the database.
     /// </remarks>
@@ -62,7 +62,7 @@ public class DatabaseMigrator
     /// 3. Creates a DbUp upgrade engine using the CreateEngineWithEmbeddedScripts method
     /// 4. Applies any pending migrations to the database
     /// 5. Throws an exception if the migration fails
-    /// 
+    ///
     /// This method is typically called when the application starts up, such as
     /// in the AddPostgresEffect extension method in ServiceExtensions.
     /// </remarks>

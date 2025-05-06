@@ -10,7 +10,7 @@ namespace ChainSharp.Effect.Utils;
 /// The ChainSharpJsonSerializationOptions class defines a set of default serialization
 /// options that are used throughout the ChainSharp.Effect system. These options ensure
 /// consistent serialization behavior across different components.
-/// 
+///
 /// The default options include:
 /// 1. Indented JSON output for better readability
 /// 2. Inclusion of fields (not just properties) in serialization
@@ -20,7 +20,7 @@ namespace ChainSharp.Effect.Utils;
 ///    - ValueTuples for proper serialization of tuple types
 ///    - Mock objects for handling Moq mocks in test scenarios
 ///    - System.Type objects for type information persistence
-/// 
+///
 /// These options can be used by any component that needs to serialize or deserialize
 /// JSON data in the ChainSharp.Effect system, ensuring consistent behavior.
 /// </remarks>
@@ -33,7 +33,7 @@ public static class ChainSharpJsonSerializationOptions
     /// These options are used by default throughout the system for JSON serialization
     /// and deserialization. They provide a consistent configuration that handles the
     /// special types and formatting requirements of the ChainSharp.Effect system.
-    /// 
+    ///
     /// The options include:
     /// - WriteIndented: true - Produces formatted, indented JSON for better readability
     /// - IncludeFields: true - Includes fields (not just properties) in serialization
@@ -43,7 +43,7 @@ public static class ChainSharpJsonSerializationOptions
     ///   - ValueTupleConverter - Handles serialization of ValueTuple types
     ///   - MockConverter - Handles serialization of Moq mock objects
     ///   - SystemTypeConverter - Handles serialization of System.Type objects
-    /// 
+    ///
     /// These options can be modified if needed, but changing them may affect the
     /// behavior of components that rely on the default configuration.
     /// </remarks>

@@ -24,14 +24,14 @@ internal static class ReflectionHelpers
     internal static (Type, Type) ExtractStepTypeArguments<TStep>()
     {
         var stepType = typeof(TStep);
-        
+
         // Find the IStep<,> interface
         var interfaceType = stepType
             .GetInterfaces()
             .FirstOrDefault(
                 i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IStep<,>)
             );
-            
+
         if (interfaceType is null)
         {
             throw new InvalidOperationException(
@@ -151,7 +151,7 @@ internal static class ReflectionHelpers
     internal static Option<dynamic> GetRightFromDynamicEither(dynamic eitherObject)
     {
         var eitherType = eitherObject.GetType();
-        
+
         // Check if the object is an Either
         if (eitherType.IsGenericType && eitherType.GetGenericTypeDefinition() == typeof(Either<,>))
         {
@@ -167,7 +167,7 @@ internal static class ReflectionHelpers
                 return rightValue;
             }
         }
-        
+
         return Option<dynamic>.None;
     }
 }

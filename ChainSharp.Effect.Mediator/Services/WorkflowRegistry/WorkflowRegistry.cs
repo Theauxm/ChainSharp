@@ -14,16 +14,16 @@ namespace ChainSharp.Effect.Mediator.Services.WorkflowRegistry;
 /// The WorkflowRegistry class provides the core implementation of the workflow registry.
 /// It scans the provided assemblies for workflow implementations and builds a dictionary
 /// that maps input types to workflow types.
-/// 
+///
 /// The registry uses reflection to discover workflow implementations in the provided assemblies.
 /// It looks for classes that implement the IEffectWorkflow&lt;TIn, TOut&gt; interface and
 /// extracts their input types to build the mapping.
-/// 
+///
 /// This implementation supports:
 /// - Automatic workflow discovery via assembly scanning
 /// - Interface-based workflow registration (preferring interfaces over concrete types)
 /// - Comprehensive error reporting for invalid workflow implementations
-/// 
+///
 /// The registry is typically created during application startup and registered as a singleton
 /// in the dependency injection container, allowing it to be injected into the workflow bus.
 /// </remarks>
@@ -46,14 +46,14 @@ public class WorkflowRegistry : IWorkflowRegistry
     /// This constructor scans the provided assemblies for classes that implement the
     /// IEffectWorkflow&lt;TIn, TOut&gt; interface and builds a dictionary that maps
     /// input types to workflow types.
-    /// 
+    ///
     /// The constructor performs the following steps:
     /// 1. Identifies the IEffectWorkflow&lt;TIn, TOut&gt; generic type definition
     /// 2. Scans each assembly for classes that implement this interface
     /// 3. Extracts the workflow types, preferring interfaces over concrete types
     /// 4. Extracts the input types from the workflow interfaces
     /// 5. Builds a dictionary that maps input types to workflow types
-    /// 
+    ///
     /// If a workflow implementation is found that does not properly implement the
     /// IEffectWorkflow&lt;TIn, TOut&gt; interface, a WorkflowException is thrown
     /// with detailed information about the invalid implementation.

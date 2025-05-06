@@ -14,12 +14,12 @@ namespace ChainSharp.Effect.Data.Postgres.Extensions;
 /// <remarks>
 /// The ModelBuilderExtensions class contains utility methods that simplify the configuration
 /// of Entity Framework Core models for PostgreSQL in the ChainSharp.Effect.Data.Postgres system.
-/// 
+///
 /// These extensions enable:
 /// 1. Mapping .NET enums to PostgreSQL enum types
 /// 2. Building properly configured data sources
 /// 3. Ensuring consistent UTC date/time handling
-/// 
+///
 /// By using these extensions, the system can leverage PostgreSQL-specific features
 /// while maintaining a clean separation of concerns.
 /// </remarks>
@@ -34,10 +34,10 @@ public static class ModelBuilderExtensions
     /// This method configures the model builder to map .NET enums to PostgreSQL enum types.
     /// It specifically maps the WorkflowState and LogLevel enums, which are used throughout
     /// the ChainSharp.Effect system.
-    /// 
+    ///
     /// PostgreSQL enum types provide type safety at the database level and can improve
     /// performance compared to storing enum values as strings or integers.
-    /// 
+    ///
     /// This method is typically called from the OnModelCreating method of the PostgresContext.
     /// </remarks>
     public static ModelBuilder AddPostgresEnums(this ModelBuilder modelBuilder)
@@ -56,10 +56,10 @@ public static class ModelBuilderExtensions
     /// <remarks>
     /// This method creates a new NpgsqlDataSource with the specified connection string
     /// and configures it with the necessary enum mappings for the ChainSharp.Effect system.
-    /// 
+    ///
     /// The data source is configured to map the WorkflowState and LogLevel enums,
     /// ensuring that they are properly handled when reading from and writing to the database.
-    /// 
+    ///
     /// This method is typically called when setting up the DbContextFactory in the
     /// AddPostgresEffect extension method.
     /// </remarks>
@@ -80,13 +80,13 @@ public static class ModelBuilderExtensions
     /// <remarks>
     /// This method configures the model builder to use the UtcValueConverter for all
     /// DateTime and nullable DateTime properties in the model.
-    /// 
+    ///
     /// The UtcValueConverter ensures that all DateTime values are stored and retrieved
     /// with the UTC kind, preventing timezone-related issues when working with dates and times.
-    /// 
+    ///
     /// This is particularly important for distributed systems and applications that
     /// need to handle dates and times consistently across different timezones.
-    /// 
+    ///
     /// This method is typically called from the OnModelCreating method of the PostgresContext.
     /// </remarks>
     public static void ApplyUtcDateTimeConverter(this ModelBuilder builder)

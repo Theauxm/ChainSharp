@@ -17,7 +17,7 @@ namespace ChainSharp.Effect.Services.EffectRunner;
 /// 2. Tracking models across all providers
 /// 3. Persisting changes to all providers
 /// 4. Properly disposing of providers when they're no longer needed
-/// 
+///
 /// This design follows the Composite pattern, allowing multiple effect providers
 /// to be treated as a single unit.
 /// </remarks>
@@ -41,7 +41,7 @@ public class EffectRunner : IEffectRunner
     /// 1. Creates an empty list of active providers
     /// 2. Calls Create() on each factory to instantiate the providers
     /// 3. Adds all created providers to the active providers list
-    /// 
+    ///
     /// This approach follows the Factory pattern, allowing for flexible provider creation
     /// and configuration through dependency injection.
     /// </remarks>
@@ -102,7 +102,7 @@ public class EffectRunner : IEffectRunner
     /// This method:
     /// 1. Calls Dispose on each active provider
     /// 2. Clears the collection of active providers
-    /// 
+    ///
     /// The RunAll extension method ensures all providers are disposed
     /// regardless of exceptions in individual providers.
     /// </remarks>

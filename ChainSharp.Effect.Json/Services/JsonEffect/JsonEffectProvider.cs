@@ -16,14 +16,14 @@ namespace ChainSharp.Effect.Json.Services.JsonEffect;
 /// <remarks>
 /// The JsonEffectProvider class provides an implementation of the IJsonEffectProvider interface
 /// that uses JSON serialization to track and record changes to models.
-/// 
+///
 /// This provider maintains a dictionary of tracked models and their previous serialized states.
 /// When changes are saved, it compares the current serialized state of each model with its
 /// previous state, and logs any changes that are detected.
-/// 
+///
 /// The provider uses the JSON serialization options configured in the ChainSharp effect
 /// configuration to serialize models to JSON format.
-/// 
+///
 /// This implementation is useful for debugging, auditing, and logging purposes, as it
 /// provides a way to track and record all changes made to models during workflow execution.
 /// </remarks>
@@ -59,7 +59,7 @@ public class JsonEffectProvider(
     /// 4. Compares the current serialized state with the previous state
     /// 5. If the state has changed, updates the previous state and adds the model to the changed models list
     /// 6. Logs the serialized state of each changed model
-    /// 
+    ///
     /// This allows for tracking and logging all changes made to models during workflow execution,
     /// which can be useful for debugging, auditing, and logging purposes.
     /// </remarks>
@@ -96,7 +96,7 @@ public class JsonEffectProvider(
     /// This method adds the specified model to the set of tracked models and stores its
     /// initial serialized state. The model will be tracked until the effect provider is
     /// disposed or the model is explicitly removed from tracking.
-    /// 
+    ///
     /// When a model is first tracked, its initial serialized state is stored as the
     /// baseline for future comparisons. This allows the SaveChanges method to detect
     /// and log any changes made to the model after it was first tracked.

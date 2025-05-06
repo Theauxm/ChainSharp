@@ -101,7 +101,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// 3. Execute the base workflow
     /// 4. Record the result (success or failure) in the database
     /// 5. Clean up resources
-    /// 
+    ///
     /// Any exceptions thrown during execution are caught, recorded in the database,
     /// and then re-thrown to maintain the original error behavior.
     /// </remarks>
@@ -169,7 +169,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// 1. Creates a new metadata record with the workflow name, input data, and parent ID (if any)
     /// 2. Tracks the metadata using the EffectRunner
     /// 3. Sets the workflow state to InProgress
-    /// 
+    ///
     /// The metadata record serves as the primary tracking mechanism for the workflow execution.
     /// </remarks>
     private async Task<Metadata> InitializeWorkflow(TIn input)
@@ -209,7 +209,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// 2. Updates the workflow state accordingly (Completed or Failed)
     /// 3. Records the end time of the workflow
     /// 4. If the workflow failed, adds the exception details to the metadata
-    /// 
+    ///
     /// The Railway-oriented programming pattern is used here, where the Either type
     /// represents either success (Right) or failure (Left).
     /// </remarks>
@@ -242,12 +242,12 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// <remarks>
     /// This method follows the Railway-oriented programming pattern, where the result
     /// is an Either type that can represent either success (Right) or failure (Left).
-    /// 
+    ///
     /// Implementations should:
     /// 1. Perform the core business logic of the workflow
     /// 2. Return a Right value with the result on success
     /// 3. Return a Left value with an exception on failure
-    /// 
+    ///
     /// The base Workflow class will handle the execution of this method and
     /// the EffectWorkflow class will handle tracking and logging.
     /// </remarks>

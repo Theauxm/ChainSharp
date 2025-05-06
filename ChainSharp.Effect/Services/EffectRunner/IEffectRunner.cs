@@ -10,7 +10,7 @@ namespace ChainSharp.Effect.Services.EffectRunner;
 /// The IEffectRunner interface is a key abstraction in the ChainSharp.Effect system.
 /// It serves as a facade over multiple effect providers, allowing workflows to interact
 /// with a single component rather than managing multiple providers directly.
-/// 
+///
 /// Implementations of this interface are responsible for:
 /// 1. Managing the lifecycle of effect providers
 /// 2. Delegating tracking operations to all registered providers
@@ -39,7 +39,7 @@ public interface IEffectRunner : IDisposable
     /// This method should distribute the model to all registered providers
     /// for tracking. The actual persistence of the model will occur when
     /// SaveChanges is called.
-    /// 
+    ///
     /// Models typically represent workflow metadata, such as execution details,
     /// inputs, outputs, and error information.
     /// </remarks>

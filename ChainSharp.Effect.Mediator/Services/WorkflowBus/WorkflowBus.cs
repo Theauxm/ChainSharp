@@ -17,17 +17,17 @@ namespace ChainSharp.Effect.Mediator.Services.WorkflowBus;
 /// The WorkflowBus class provides the core implementation of the mediator pattern for workflows.
 /// It uses reflection and dependency injection to dynamically discover, instantiate, and execute
 /// the appropriate workflow for a given input type.
-/// 
+///
 /// The workflow bus relies on the workflow registry to map input types to workflow types,
 /// and uses the service provider to resolve and instantiate the workflow instances.
-/// 
+///
 /// This implementation supports:
 /// - Dynamic workflow discovery based on input type
 /// - Automatic dependency injection for workflow instances
 /// - Property injection for workflows
 /// - Metadata association for tracking and logging
 /// - Type-safe execution with generic output types
-/// 
+///
 /// The workflow bus is typically registered as a scoped service in the dependency injection
 /// container, allowing it to be injected into controllers, services, or other components
 /// that need to execute workflows.
@@ -59,7 +59,7 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
     /// 7. Finds the appropriate Run method on the workflow using reflection
     /// 8. Invokes the Run method with the input
     /// 9. Returns the result cast to the expected output type
-    /// 
+    ///
     /// The method uses reflection to find and invoke the Run method because workflows
     /// can have multiple Run method implementations, and we need to select the correct one
     /// from ChainSharp.Effect rather than the base ChainSharp implementation.

@@ -10,17 +10,17 @@ namespace ChainSharp.Effect.Utils;
 /// The MockConverter is a custom JSON converter that enables Moq.Mock objects
 /// to be properly serialized to JSON. This is necessary because mock objects
 /// from the Moq library cannot be directly serialized by System.Text.Json.
-/// 
+///
 /// This converter handles serialization of mock objects by creating a simplified
 /// representation that includes the mock type and the type being mocked. It does
 /// not support deserialization, as recreating mock objects from JSON is not
 /// a typical use case and would be complex to implement correctly.
-/// 
+///
 /// This converter is particularly useful in the ChainSharp.Effect system because:
 /// 1. Mocks are often used in testing scenarios
 /// 2. These mocks might be part of workflow inputs or outputs that need to be serialized
 /// 3. Without this converter, serialization would fail when mock objects are encountered
-/// 
+///
 /// The converter is registered in the ChainSharpJsonSerializationOptions.Default
 /// options, making it available throughout the system.
 /// </remarks>
@@ -34,7 +34,7 @@ public class MockConverter : JsonConverter<object>
     /// <remarks>
     /// This method checks if the type's full name starts with "Moq.Mock",
     /// which identifies all mock objects created by the Moq library.
-    /// 
+    ///
     /// This includes both generic mocks (Mock&lt;T&gt;) and non-generic mocks,
     /// though the latter are less common in practice.
     /// </remarks>
@@ -56,7 +56,7 @@ public class MockConverter : JsonConverter<object>
     /// 1. It would require recreating the mock with all its setup and behavior
     /// 2. This information is not typically serialized in the first place
     /// 3. There's rarely a need to deserialize mock objects in practice
-    /// 
+    ///
     /// If deserialization is attempted, this method will throw a NotImplementedException.
     /// </remarks>
     public override object Read(
@@ -79,13 +79,13 @@ public class MockConverter : JsonConverter<object>
     /// 1. A "MockType" property containing the name of the mock class
     /// 2. A "MockedType" property containing the name of the mocked interface or class
     ///    (only included if the mock is generic)
-    /// 
+    ///
     /// For example, a Mock&lt;ILogger&gt; would be serialized as:
     /// {
     ///   "MockType": "Mock`1",
     ///   "MockedType": "ILogger"
     /// }
-    /// 
+    ///
     /// This simplified representation allows for identification of the mock
     /// in serialized data without attempting to capture its full state.
     /// </remarks>

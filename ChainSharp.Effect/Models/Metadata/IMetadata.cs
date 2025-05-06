@@ -12,14 +12,14 @@ namespace ChainSharp.Effect.Models.Metadata;
 /// <remarks>
 /// The IMetadata interface represents the core tracking entity for workflows in the system.
 /// It captures all relevant information about a workflow execution, including:
-/// 
+///
 /// 1. Basic identification (Id, ExternalId, Name)
 /// 2. Execution context (Executor)
 /// 3. State information (WorkflowState)
 /// 4. Error details (FailureStep, FailureException, FailureReason, StackTrace)
 /// 5. Input and output data (Input, Output)
 /// 6. Timing information (StartTime, EndTime)
-/// 
+///
 /// This comprehensive tracking enables detailed analysis, monitoring, and debugging
 /// of workflow executions across the system.
 /// </remarks>
@@ -149,7 +149,7 @@ public interface IMetadata : IModel
     /// </remarks>
     [Column("end_time")]
     DateTime? EndTime { get; set; }
-    
+
     /// <summary>
     /// Adds exception details to this metadata record.
     /// </summary>
@@ -161,13 +161,13 @@ public interface IMetadata : IModel
     /// the exception message as a WorkflowExceptionData object, which provides structured
     /// information about the failure. If deserialization fails, it falls back to extracting
     /// information directly from the exception.
-    /// 
+    ///
     /// The method sets:
     /// 1. FailureException - The type of the exception
     /// 2. FailureReason - The error message
     /// 3. FailureStep - The step where the failure occurred
     /// 4. StackTrace - The stack trace of the exception
-    /// 
+    ///
     /// This information is valuable for diagnosing and analyzing workflow failures.
     /// </remarks>
     Unit AddException(Exception workflowException);

@@ -11,16 +11,16 @@ namespace ChainSharp.Effect.Utils;
 /// The ValueTupleConverter is a custom JSON converter that enables System.ValueTuple types
 /// to be properly serialized to and deserialized from JSON. This is necessary because
 /// the default System.Text.Json serialization does not natively support ValueTuple types.
-/// 
+///
 /// This converter handles ValueTuple types with up to 7 elements (the maximum supported
 /// by the ValueTuple struct). It serializes ValueTuples as JSON arrays and deserializes
 /// JSON arrays back into ValueTuples.
-/// 
+///
 /// This converter is particularly useful in the ChainSharp.Effect system because:
 /// 1. ValueTuples are used extensively for returning multiple values from methods
 /// 2. These tuples often need to be serialized for persistence or transmission
 /// 3. The serialized form needs to be human-readable and compact
-/// 
+///
 /// The converter is registered in the ChainSharpJsonSerializationOptions.Default
 /// options, making it available throughout the system.
 /// </remarks>
@@ -36,7 +36,7 @@ public class ValueTupleConverter : JsonConverterFactory
     /// 1. Is a value type (struct)
     /// 2. Is a generic type
     /// 3. Has a full name that starts with "System.ValueTuple"
-    /// 
+    ///
     /// These conditions identify all ValueTuple types, such as:
     /// - ValueTuple&lt;T1, T2&gt;
     /// - ValueTuple&lt;T1, T2, T3&gt;
@@ -56,7 +56,7 @@ public class ValueTupleConverter : JsonConverterFactory
     /// This method creates an instance of ValueTupleConverterInner&lt;T&gt;
     /// for the specific ValueTuple type being converted. It uses reflection
     /// to create a generic type instance at runtime.
-    /// 
+    ///
     /// The inner converter class handles the actual serialization and
     /// deserialization logic for the specific ValueTuple type.
     /// </remarks>
@@ -75,7 +75,7 @@ public class ValueTupleConverter : JsonConverterFactory
     /// This inner class is generic over the specific ValueTuple type being converted.
     /// It uses reflection to access the fields of the ValueTuple and to create new
     /// instances during deserialization.
-    /// 
+    ///
     /// The converter serializes ValueTuples as JSON arrays and deserializes JSON arrays
     /// back into ValueTuples, ensuring that the field types are properly converted.
     /// </remarks>
@@ -106,7 +106,7 @@ public class ValueTupleConverter : JsonConverterFactory
         /// 2. Verifies that the array length matches the number of fields in the ValueTuple
         /// 3. Converts each array element to the appropriate field type
         /// 4. Creates a new ValueTuple instance with the converted values
-        /// 
+        ///
         /// The conversion ensures that the JSON values are properly typed for the
         /// ValueTuple fields, handling cases like numbers being deserialized as
         /// different numeric types than expected.
@@ -142,7 +142,7 @@ public class ValueTupleConverter : JsonConverterFactory
         /// This method:
         /// 1. Extracts the values from the ValueTuple fields
         /// 2. Serializes them as a JSON array
-        /// 
+        ///
         /// The resulting JSON is a simple array of values, which is a natural
         /// representation of a tuple in JSON format.
         /// </remarks>

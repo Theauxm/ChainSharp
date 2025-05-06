@@ -24,7 +24,7 @@ public static class AssemblyExtensions
     /// This method parses the assembly's full name to extract just the project name portion.
     /// The assembly full name typically follows the format "ProjectName, Version=x.x.x.x, Culture=neutral, PublicKeyToken=null".
     /// This method extracts just the "ProjectName" portion.
-    /// 
+    ///
     /// In the ChainSharp.Effect system, this is used to identify the source of workflows
     /// in the metadata tracking system, allowing for filtering and analysis by project.
     /// </remarks>

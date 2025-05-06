@@ -32,7 +32,7 @@ public abstract partial class Workflow<TInput, TReturn> : IWorkflow<TInput, TRet
     /// This is set by the ShortCircuit method.
     /// </summary>
     private TReturn ShortCircuitValue { get; set; } = default!;
-    
+
     /// <summary>
     /// Indicates whether a short-circuit value has been set.
     /// </summary>

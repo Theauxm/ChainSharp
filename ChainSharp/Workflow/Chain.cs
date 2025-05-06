@@ -194,7 +194,7 @@ public partial class Workflow<TInput, TReturn>
     {
         // Extract the input and output types from the step
         var (tIn, tOut) = ReflectionHelpers.ExtractStepTypeArguments<TStep>();
-        
+
         // Find the appropriate Chain method to call
         var chainMethod = ReflectionHelpers.FindGenericChainMethod<TStep, TInput, TReturn>(
             this,

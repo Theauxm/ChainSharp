@@ -25,7 +25,7 @@ public static class EnumerableExtensions
     /// This method uses a functional approach to aggregate actions into a single action
     /// that is executed at the end. This ensures that all elements are processed in sequence,
     /// and any exceptions are contained to the individual element being processed.
-    /// 
+    ///
     /// The implementation uses a clever technique where each iteration builds up a chain
     /// of actions that are executed in sequence when the final action is invoked.
     /// </remarks>
@@ -84,7 +84,7 @@ public static class EnumerableExtensions
     /// This method handles asynchronous functions by awaiting each result before proceeding
     /// to the next element. This ensures that elements are processed in sequence, which can
     /// be important for operations that have side effects or dependencies on previous operations.
-    /// 
+    ///
     /// The implementation uses a nested async lambda to properly await both the accumulated
     /// results and the function application for each element.
     /// </remarks>
@@ -118,7 +118,7 @@ public static class EnumerableExtensions
     /// with each action waiting for the previous one to complete before starting.
     /// This is important for maintaining order of execution when actions have
     /// side effects or dependencies on previous actions.
-    /// 
+    ///
     /// The implementation uses Task.CompletedTask as the initial accumulator,
     /// and then chains each action to execute after the previous one completes.
     /// </remarks>

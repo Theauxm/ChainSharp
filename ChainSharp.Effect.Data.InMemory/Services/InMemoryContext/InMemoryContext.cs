@@ -12,22 +12,22 @@ namespace ChainSharp.Effect.Data.InMemory.Services.InMemoryContext;
 /// The InMemoryContext class is a lightweight implementation of the DataContext that uses
 /// Entity Framework Core's in-memory database provider. It inherits all functionality from
 /// the base DataContext class and requires no additional configuration.
-/// 
+///
 /// This implementation is particularly useful for:
 /// 1. Unit and integration testing
 /// 2. Development and debugging
 /// 3. Scenarios where persistence beyond the application lifecycle is not required
-/// 
+///
 /// The in-memory database provides a fast, transient storage solution that behaves
 /// similarly to a real database but without the overhead of database setup or persistence.
 /// This makes it ideal for testing and development scenarios where you want to focus on
 /// business logic rather than database interactions.
-/// 
+///
 /// Example usage:
 /// ```csharp
 /// services.AddChainSharpEffects(options => options.AddInMemoryEffect());
 /// ```
-/// 
+///
 /// Note that data stored in the in-memory database is lost when the application stops,
 /// so this implementation is not suitable for production scenarios where data persistence
 /// is required.

@@ -17,14 +17,14 @@ namespace ChainSharp.Effect.Models.Metadata;
 /// <remarks>
 /// The Metadata class is the central entity for workflow tracking in the system.
 /// It stores comprehensive information about workflow executions, including:
-/// 
+///
 /// 1. Identification and relationships (Id, ParentId, ExternalId)
 /// 2. Basic workflow information (Name, Executor)
 /// 3. State and timing (WorkflowState, StartTime, EndTime)
 /// 4. Input and output data (Input, Output, InputObject, OutputObject)
 /// 5. Error information (FailureStep, FailureException, FailureReason, StackTrace)
 /// 6. Relationships to other entities (Parent, Children, Logs)
-/// 
+///
 /// This class is designed to be persisted to a database and serves as the
 /// primary record of workflow execution in the system.
 /// </remarks>
@@ -260,7 +260,7 @@ public class Metadata : IMetadata
     /// This factory method is the preferred way to create new Metadata instances.
     /// It initializes the metadata with default values and the specified properties,
     /// ensuring that all required fields are properly set.
-    /// 
+    ///
     /// The method:
     /// 1. Sets the Name and Input from the provided DTO
     /// 2. Generates a new ExternalId as a GUID
@@ -296,13 +296,13 @@ public class Metadata : IMetadata
     /// the exception message as a WorkflowExceptionData object, which provides structured
     /// information about the failure. If deserialization fails, it falls back to extracting
     /// information directly from the exception.
-    /// 
+    ///
     /// The method sets:
     /// 1. FailureException - The type of the exception
     /// 2. FailureReason - The error message
     /// 3. FailureStep - The step where the failure occurred
     /// 4. StackTrace - The stack trace of the exception
-    /// 
+    ///
     /// This information is valuable for diagnosing and analyzing workflow failures.
     /// </remarks>
     public Unit AddException(Exception workflowException)
@@ -350,7 +350,7 @@ public class Metadata : IMetadata
     /// This constructor is used by the JSON serializer when deserializing
     /// metadata from JSON. It is marked with the JsonConstructor attribute
     /// to indicate that it should be used for deserialization.
-    /// 
+    ///
     /// The constructor is parameterless because the serializer will set
     /// the properties after construction using property setters.
     /// </remarks>

@@ -20,13 +20,13 @@ ChainSharp is a .NET library for Railway Oriented Programming, building from fun
 You can install ChainSharp via NuGet. Run the following command in your package manager console:
 
 ```sh
-dotnet add package Theauxm.ChainSharp --version 4.0.0
+dotnet add package Theauxm.ChainSharp
 ```
 
 Or, you can add it directly to your `.csproj` file:
 
 ```csharp
-<PackageReference Include="Theauxm.ChainSharp" Version="4.0.0" />
+<PackageReference Include="Theauxm.ChainSharp" Version="..." />
 ```
 
 ## Available NuGet Packages
@@ -35,14 +35,14 @@ ChainSharp is distributed as several NuGet packages, each providing specific fun
 
 | Package | Description | Version |
 |---------|-------------|---------|
-| [Theauxm.ChainSharp](https://www.nuget.org/packages/Theauxm.ChainSharp/) | Core library for Railway Oriented Programming | 4.0.0 |
-| [Theauxm.ChainSharp.Effect](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect/) | Effects for ChainSharp Workflows | 4.0.0 |
-| [Theauxm.ChainSharp.Effect.Data](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Data/) | Data persistence abstractions for ChainSharp Effects | 4.0.0 |
-| [Theauxm.ChainSharp.Effect.Data.InMemory](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Data.InMemory/) | In-memory data persistence for ChainSharp Effects | 4.0.0 |
-| [Theauxm.ChainSharp.Effect.Data.Postgres](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Data.Postgres/) | PostgreSQL data persistence for ChainSharp Effects | 4.0.0 |
-| [Theauxm.ChainSharp.Effect.Json](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Json/) | JSON serialization for ChainSharp Effects | 4.0.0 |
-| [Theauxm.ChainSharp.Effect.Mediator](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Mediator/) | Mediator pattern implementation for ChainSharp Effects | 4.0.0 |
-| [Theauxm.ChainSharp.Effect.Parameter](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Parameter/) | Parameter serialization for ChainSharp Effects | 4.0.0 |
+| [Theauxm.ChainSharp](https://www.nuget.org/packages/Theauxm.ChainSharp/) | Core library for Railway Oriented Programming | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp) |
+| [Theauxm.ChainSharp.Effect](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect/) | Effects for ChainSharp Workflows | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect) |
+| [Theauxm.ChainSharp.Effect.Data](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Data/) | Data persistence abstractions for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Data) |
+| [Theauxm.ChainSharp.Effect.Data.InMemory](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Data.InMemory/) | In-memory data persistence for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Data.InMemory) |
+| [Theauxm.ChainSharp.Effect.Data.Postgres](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Data.Postgres/) | PostgreSQL data persistence for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Data.Postgres) |
+| [Theauxm.ChainSharp.Effect.Json](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Json/) | JSON serialization for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Json) |
+| [Theauxm.ChainSharp.Effect.Mediator](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Mediator/) | Mediator pattern implementation for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Mediator) |
+| [Theauxm.ChainSharp.Effect.Parameter](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Parameter/) | Parameter serialization for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Parameter) |
 
 ## Usage Examples
 

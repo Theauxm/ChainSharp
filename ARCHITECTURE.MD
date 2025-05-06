@@ -30,6 +30,29 @@ ChainSharp uses a development container (devcontainer) configuration to provide 
 
 4. VS Code will build the dev container and open the project inside it. This may take a few minutes the first time.
 
+#### Dev Container Configuration
+
+The dev container is configured using three main files:
+
+1. `.devcontainer/devcontainer.json` - The main configuration file that defines the dev container settings, including:
+   - The Docker Compose file to use
+   - The service to connect to
+   - VS Code settings and extensions to install
+   - Port forwarding configuration
+   - Post-creation commands
+
+2. `.devcontainer/Dockerfile` - Defines the container image for the development environment:
+   - Based on the .NET SDK 8.0 image
+   - Installs additional tools and utilities
+   - Sets up a non-root user for development
+
+3. `.devcontainer/docker-compose.yml` - Defines the services needed for development:
+   - `app` service: The main development container
+   - `database` service: PostgreSQL database for persistence
+   - Networks and volumes for data persistence
+
+The dev container uses Docker Compose to bring up both the development environment and the PostgreSQL database, allowing you to develop and test with a real database without needing to install PostgreSQL on your host machine.
+
 #### What's Included in the Dev Container
 
 The dev container includes:
@@ -43,6 +66,7 @@ The container is configured to:
 - Mount your local repository into the container
 - Forward ports for the database and web applications
 - Set up the correct environment variables for development
+- Provide a connection to the PostgreSQL database via the connection string: `Host=database;Database=chain_sharp;Username=chain_sharp;Password=chain_sharp123`
 
 ## Project Structure
 

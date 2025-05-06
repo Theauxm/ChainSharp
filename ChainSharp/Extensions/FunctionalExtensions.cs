@@ -62,7 +62,7 @@ public static class FunctionalExtensions
     /// This method checks for both ValueTuple and ITuple types.
     /// It's used throughout ChainSharp to handle tuple types specially in Memory.
     /// </remarks>
-    public static bool IsTuple(this Type type) =>
+    internal static bool IsTuple(this Type type) =>
         (type.IsGenericType && type.FullName.StartsWith("System.ValueTuple`"))
         || type.FullName.StartsWith("System.Runtime.CompilerServices.ITuple");
 }

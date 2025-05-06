@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  app:
+    image: mcr.microsoft.com/dotnet/sdk:8.0
+    volumes:
+      - ..:/workspace:cached
+    command: sleep infinity
+    network_mode: service:database
+    depends_on:
+      - database
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+
+  database:
+    container_name: chain_sharp_database
+    image: postgres
+    restart: always
+    shm_size: 512m
+    environment:
+      POSTGRES_USER: chain_sharp
+      POSTGRES_PASSWORD: chain_sharp123 
+      POSTGRES_DB: chain_sharp
+    tty: true
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - default
+
+volumes:
+  postgres-data:
+
+networks:
+  default:
+    driver: bridge

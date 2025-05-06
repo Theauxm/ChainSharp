@@ -8,7 +8,22 @@ namespace ChainSharp.Workflow;
 
 public partial class Workflow<TInput, TReturn>
 {
-    // ShortCircuitChain<TStep, TIn, TOut>(TStep, TIn, TOut)
+    /// <summary>
+    /// Executes a step with short-circuit behavior, meaning that Left (exception) results
+    /// are ignored and don't stop the workflow.
+    /// </summary>
+    /// <typeparam name="TStep">The type of step to execute</typeparam>
+    /// <typeparam name="TIn">The input type for the step</typeparam>
+    /// <typeparam name="TOut">The output type from the step</typeparam>
+    /// <param name="step">The step instance to execute</param>
+    /// <param name="previousStep">The input for the step</param>
+    /// <param name="outVar">The output from the step</param>
+    /// <returns>The workflow instance for method chaining</returns>
+    /// <remarks>
+    /// Unlike regular Chain methods, ShortCircuitChain only stores the result in Memory
+    /// if the step succeeds (returns Right). If it fails (returns Left), the workflow
+    /// continues without setting an exception.
+    /// </remarks>
     public Workflow<TInput, TReturn> ShortCircuitChain<TStep, TIn, TOut>(
         TStep step,
         TIn previousStep,
@@ -16,19 +31,22 @@ public partial class Workflow<TInput, TReturn>
     )
         where TStep : IStep<TIn, TOut>
     {
+        // If there's already an exception, short-circuit
         if (Exception is not null)
         {
             outVar = Exception;
             return this;
         }
 
+        // Execute the step
         outVar = Task.Run(() => step.RailwayStep(previousStep)).Result;
 
-        // We skip the Left for Short Circuiting
+        // We skip the Left for Short Circuiting - only process Right results
         if (outVar.IsRight)
         {
             var outValue = outVar.Unwrap()!;
 
+            // Store the result in Memory
             if (typeof(TOut).IsTuple())
                 this.AddTupleToMemory(outValue);
             else
@@ -38,10 +56,23 @@ public partial class Workflow<TInput, TReturn>
         return this;
     }
 
-    // ShortCircuit<TStep>()
+    /// <summary>
+    /// Executes a step with short-circuit behavior, potentially ending the workflow early
+    /// if the step returns a value of type TReturn.
+    /// </summary>
+    /// <typeparam name="TStep">The type of step to execute</typeparam>
+    /// <returns>The workflow instance for method chaining</returns>
+    /// <remarks>
+    /// This method:
+    /// 1. Creates an instance of the step
+    /// 2. Executes it with short-circuit behavior
+    /// 3. If the step returns a value of type TReturn, sets it as the ShortCircuitValue
+    /// 4. When Resolve() is called, the ShortCircuitValue will be returned, bypassing the rest of the workflow
+    /// </remarks>
     public Workflow<TInput, TReturn> ShortCircuit<TStep>()
         where TStep : class
     {
+        // Create an instance of the step
         var stepInstance = this.InitializeStep<TStep, TInput, TReturn>();
 
         if (stepInstance is null)
@@ -50,17 +81,37 @@ public partial class Workflow<TInput, TReturn>
         return ShortCircuit<TStep>(stepInstance);
     }
 
-    // ShortCircuit<TStep>(TStep)
+    /// <summary>
+    /// Executes a step with short-circuit behavior, potentially ending the workflow early
+    /// if the step returns a value of type TReturn.
+    /// </summary>
+    /// <typeparam name="TStep">The type of step to execute</typeparam>
+    /// <param name="stepInstance">The step instance to execute</param>
+    /// <returns>The workflow instance for method chaining</returns>
+    /// <remarks>
+    /// This method:
+    /// 1. Extracts the input and output types from the step
+    /// 2. Finds the appropriate ShortCircuitChain method to call
+    /// 3. Extracts the input from Memory
+    /// 4. Executes the step
+    /// 5. If the step returns a value of type TReturn, sets it as the ShortCircuitValue
+    /// 6. When Resolve() is called, the ShortCircuitValue will be returned, bypassing the rest of the workflow
+    /// </remarks>
     public Workflow<TInput, TReturn> ShortCircuit<TStep>(TStep stepInstance)
         where TStep : class
     {
+        // Extract the input and output types from the step
         var (tIn, tOut) = ReflectionHelpers.ExtractStepTypeArguments<TStep>();
+        
+        // Find the appropriate ShortCircuitChain method to call
         var chainMethod = ReflectionHelpers.FindGenericChainInternalMethod<TStep, TInput, TReturn>(
             this,
             tIn,
             tOut,
             3
         );
+        
+        // Extract the input from Memory
         var input = this.ExtractTypeFromMemory(tIn);
 
         if (input is null)
@@ -69,10 +120,12 @@ public partial class Workflow<TInput, TReturn>
             return this;
         }
 
+        // Execute the step
         object[] parameters = [stepInstance, input, null];
         var result = chainMethod.Invoke(this, parameters);
         var outParam = parameters[2];
 
+        // If the step returns a value of type TReturn, set it as the ShortCircuitValue
         var maybeRightValue = ReflectionHelpers.GetRightFromDynamicEither(outParam);
         maybeRightValue.Iter(rightValue =>
         {

@@ -1,16 +1,15 @@
-version: '3.8'
+version: '3'
 
 services:
   app:
-    image: mcr.microsoft.com/dotnet/sdk:8.0
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
     volumes:
       - ..:/workspace:cached
     command: sleep infinity
-    network_mode: service:database
-    depends_on:
-      - database
-    environment:
-      - DOTNET_ENVIRONMENT=Development
+    networks:
+      - default
 
   database:
     container_name: chain_sharp_database
@@ -24,13 +23,8 @@ services:
     tty: true
     ports:
       - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
     networks:
       - default
-
-volumes:
-  postgres-data:
 
 networks:
   default:

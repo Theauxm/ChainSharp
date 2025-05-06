@@ -1,47 +1,31 @@
 {
-	"name": "ChainSharp Development",
-	"dockerComposeFile": "docker-compose.yml",
-	"service": "app",
-	"workspaceFolder": "/workspace",
-	
-	// Features to add to the dev container
-	"features": {
-		"ghcr.io/devcontainers/features/dotnet:2": {
-			"version": "8.0"
-		},
-		"ghcr.io/devcontainers/features/git:1": {},
-		"ghcr.io/devcontainers/features/github-cli:1": {}
-	},
-	
-	// Configure tool-specific properties
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"ms-dotnettools.csharp",
-				"ms-dotnettools.csdevkit",
-				"formulahendry.dotnet-test-explorer",
-				"ms-mssql.mssql",
-				"ms-azuretools.vscode-docker",
-				"github.vscode-github-actions",
-				"streetsidesoftware.code-spell-checker",
-				"editorconfig.editorconfig"
-			],
-			"settings": {
-				"omnisharp.enableRoslynAnalyzers": true,
-				"omnisharp.enableEditorConfigSupport": true,
-				"dotnet.defaultSolution": "ChainSharp.sln"
-			}
-		}
-	},
-	
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	"forwardPorts": [5432],
-	
-	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "dotnet restore && dotnet build",
-	
-	// Set environment variables
-	"remoteEnv": {
-		"DOTNET_ENVIRONMENT": "Development"
-	}
+    "name": "ChainSharp Development",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "app",
+    "workspaceFolder": "/workspace",
+    
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-dotnettools.csharp",
+                "ms-dotnettools.vscode-dotnet-runtime",
+                "formulahendry.dotnet-test-explorer",
+                "editorconfig.editorconfig",
+                "streetsidesoftware.code-spell-checker",
+                "github.copilot",
+                "github.vscode-github-actions"
+            ],
+            "settings": {
+                "omnisharp.enableRoslynAnalyzers": true,
+                "omnisharp.enableEditorConfigSupport": true,
+                "dotnet.defaultSolution": "ChainSharp.sln"
+            }
+        }
+    },
+    
+    "forwardPorts": [5432],
+    
+    "postCreateCommand": "dotnet restore",
+    
+    "remoteUser": "root"
 }

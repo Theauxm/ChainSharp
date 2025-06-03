@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Reflection;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Mediator.Services.WorkflowRegistry;
@@ -37,6 +38,15 @@ namespace ChainSharp.Effect.Mediator.Services.WorkflowBus;
 public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry registryService)
     : IWorkflowBus
 {
+    /// <summary>
+    /// Thread-safe cache for storing reflection method lookups to improve performance.
+    /// </summary>
+    /// <remarks>
+    /// This cache stores MethodInfo objects keyed by workflow type to avoid repeated reflection operations.
+    /// Using ConcurrentDictionary ensures thread-safety for scoped service usage.
+    /// </remarks>
+    private static readonly ConcurrentDictionary<Type, MethodInfo> _runMethodCache = new();
+
     /// <summary>
     /// Executes a workflow that accepts the specified input type and returns the specified output type.
     /// </summary>
@@ -97,23 +107,29 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
             parentIdProperty.SetValue(workflowService, metadata.Id);
         }
 
-        // Get the run methodInfo from the workflow type
-        var runMethod = workflowService
-            .GetType()
-            .GetMethods()
-            // Run function on Workflow
-            .Where(x => x.Name == "Run")
-            // Run(input) and Run(input, serviceCollection) exist. We want the former.
-            .Where(x => x.GetParameters().Length == 1)
-            // Run(input) has an implementation in ChainSharp and ChainSharp.Effect (the latter with the "new" keyword).
-            // We want the one from ChainSharp.Effect
-            .First(x => x.Module.Name.Contains("Effect"));
+        // Get the run methodInfo from the workflow type using cache for performance
+        var workflowType = workflowService.GetType();
+        var runMethod = _runMethodCache.GetOrAdd(
+            workflowType,
+            type =>
+            {
+                var method = type.GetMethods()
+                    // Run function on Workflow
+                    .Where(x => x.Name == "Run")
+                    // Run(input) and Run(input, serviceCollection) exist. We want the former.
+                    .Where(x => x.GetParameters().Length == 1)
+                    // Run(input) has an implementation in ChainSharp and ChainSharp.Effect (the latter with the "new" keyword).
+                    // We want the one from ChainSharp.Effect
+                    .FirstOrDefault(x => x.Module.Name.Contains("Effect"));
 
-        // Make sure the Run MethodInfo was properly found
-        if (runMethod is null)
-            throw new WorkflowException(
-                $"Failed to find Run method for workflow type ({workflowService.GetType().Name})"
-            );
+                if (method == null)
+                    throw new WorkflowException(
+                        $"Failed to find Run method for workflow type ({type.Name})"
+                    );
+
+                return method;
+            }
+        );
 
         // And finally run the workflow, casting the return type to preserve type safety.
         var taskRunMethod = (Task<TOut>?)runMethod.Invoke(workflowService, [workflowInput]);

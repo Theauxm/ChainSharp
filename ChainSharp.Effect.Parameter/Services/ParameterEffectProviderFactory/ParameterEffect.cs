@@ -27,15 +27,37 @@ namespace ChainSharp.Effect.Parameter.Services.ParameterEffectProviderFactory;
 public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
 {
     private readonly HashSet<Metadata> _trackedMetadatas = [];
+    private readonly object _lock = new();
+    private bool _disposed = false;
 
     /// <summary>
     /// Disposes the effect provider and releases any resources.
     /// </summary>
     /// <remarks>
-    /// This implementation doesn't hold any unmanaged resources, so the Dispose method
-    /// is a no-op.
+    /// This implementation clears all tracked metadata objects and properly disposes
+    /// any JsonDocument instances to prevent memory leaks.
     /// </remarks>
-    public void Dispose() { }
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        lock (_lock)
+        {
+            if (_disposed)
+                return;
+
+            // Dispose existing JsonDocument instances to prevent memory leaks
+            foreach (var metadata in _trackedMetadatas)
+            {
+                DisposeJsonDocuments(metadata);
+            }
+
+            // Clear tracked metadata to release references and prevent memory leaks
+            _trackedMetadatas.Clear();
+            _disposed = true;
+        }
+    }
 
     /// <summary>
     /// Saves changes to tracked metadata objects by serializing their input and output parameters.
@@ -53,9 +75,18 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
     /// </remarks>
     public async Task SaveChanges(CancellationToken cancellationToken)
     {
-        foreach (var metadata in _trackedMetadatas)
+        if (_disposed)
+            return;
+
+        lock (_lock)
         {
-            SerializeParameters(metadata);
+            if (_disposed)
+                return;
+
+            foreach (var metadata in _trackedMetadatas)
+            {
+                SerializeParameters(metadata);
+            }
         }
     }
 
@@ -78,11 +109,30 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
     /// </remarks>
     public async Task Track(IModel model)
     {
+        if (_disposed)
+            return;
+
         if (model is Metadata metadata)
         {
-            _trackedMetadatas.Add(metadata);
-            SerializeParameters(metadata);
+            lock (_lock)
+            {
+                if (_disposed)
+                    return;
+
+                _trackedMetadatas.Add(metadata);
+                SerializeParameters(metadata);
+            }
         }
+    }
+
+    /// <summary>
+    /// Disposes JsonDocument instances in a metadata object to prevent memory leaks.
+    /// </summary>
+    /// <param name="metadata">The metadata object whose JsonDocuments to dispose</param>
+    private static void DisposeJsonDocuments(Metadata metadata)
+    {
+        metadata.Input?.Dispose();
+        metadata.Output?.Dispose();
     }
 
     /// <summary>
@@ -100,17 +150,26 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
     ///
     /// The serialization is performed using the JSON serializer options provided to the
     /// constructor, which allows for customizing the serialization process.
+    ///
+    /// IMPORTANT: This method properly disposes of existing JsonDocument instances before
+    /// creating new ones to prevent memory leaks.
     /// </remarks>
     private void SerializeParameters(Metadata metadata)
     {
         if (metadata.InputObject is not null)
         {
+            // Dispose existing JsonDocument before creating new one
+            metadata.Input?.Dispose();
+
             var serializedInput = JsonSerializer.Serialize(metadata.InputObject, options);
             metadata.Input = JsonDocument.Parse(serializedInput);
         }
 
         if (metadata.OutputObject is not null)
         {
+            // Dispose existing JsonDocument before creating new one
+            metadata.Output?.Dispose();
+
             var serializedOutput = JsonSerializer.Serialize(metadata.OutputObject, options);
             metadata.Output = JsonDocument.Parse(serializedOutput);
         }

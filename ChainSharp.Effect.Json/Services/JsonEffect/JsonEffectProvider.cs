@@ -36,15 +36,32 @@ public class JsonEffectProvider(
 {
     private readonly Dictionary<IModel, string> _previousStates = new();
     private readonly HashSet<IModel> _trackedModels = [];
+    private readonly object _lock = new();
+    private bool _disposed = false;
 
     /// <summary>
     /// Disposes the effect provider and releases any resources.
     /// </summary>
     /// <remarks>
-    /// This implementation doesn't hold any unmanaged resources, so the Dispose method
-    /// is a no-op.
+    /// This implementation clears all tracked models and their previous states
+    /// to prevent memory leaks.
     /// </remarks>
-    public void Dispose() { }
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        lock (_lock)
+        {
+            if (_disposed)
+                return;
+
+            // Clear all tracked models to release references and prevent memory leaks
+            _trackedModels.Clear();
+            _previousStates.Clear();
+            _disposed = true;
+        }
+    }
 
     /// <summary>
     /// Saves changes to tracked models by detecting and logging changes.
@@ -65,26 +82,45 @@ public class JsonEffectProvider(
     /// </remarks>
     public async Task SaveChanges(CancellationToken cancellationToken)
     {
-        var options = configuration.WorkflowParameterJsonSerializerOptions;
+        if (_disposed)
+            return;
 
+        var options = configuration.WorkflowParameterJsonSerializerOptions;
         var changedModels = new List<IModel>();
 
-        foreach (var model in _trackedModels)
+        lock (_lock)
         {
-            var currentState = JsonSerializer.Serialize(model, model.GetType(), options);
+            if (_disposed)
+                return;
 
-            if (
-                !_previousStates.TryGetValue(model, out var previousState)
-                || previousState != currentState
-            )
+            foreach (var model in _trackedModels)
             {
-                _previousStates[model] = currentState;
-                changedModels.Add(model);
+                var currentState = JsonSerializer.Serialize(model, model.GetType(), options);
+
+                if (
+                    !_previousStates.TryGetValue(model, out var previousState)
+                    || previousState != currentState
+                )
+                {
+                    _previousStates[model] = currentState;
+                    changedModels.Add(model);
+                }
             }
         }
 
+        // Log outside of lock to prevent holding lock during logging
         foreach (var model in changedModels)
-            logger.LogInformation(_previousStates[model]);
+        {
+            if (_disposed)
+                break;
+
+            lock (_lock)
+            {
+                if (_disposed || !_previousStates.TryGetValue(model, out var state))
+                    break;
+                logger.LogInformation(state);
+            }
+        }
     }
 
     /// <summary>
@@ -103,14 +139,23 @@ public class JsonEffectProvider(
     /// </remarks>
     public async Task Track(IModel model)
     {
-        if (_trackedModels.Add(model))
+        if (_disposed)
+            return;
+
+        lock (_lock)
         {
-            // Store initial serialized state when tracking starts
-            _previousStates[model] = JsonSerializer.Serialize(
-                model,
-                model.GetType(),
-                configuration.WorkflowParameterJsonSerializerOptions
-            );
+            if (_disposed)
+                return;
+
+            if (_trackedModels.Add(model))
+            {
+                // Store initial serialized state when tracking starts
+                _previousStates[model] = JsonSerializer.Serialize(
+                    model,
+                    model.GetType(),
+                    configuration.WorkflowParameterJsonSerializerOptions
+                );
+            }
         }
     }
 }

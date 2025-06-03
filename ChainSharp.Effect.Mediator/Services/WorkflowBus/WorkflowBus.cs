@@ -45,7 +45,7 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
     /// This cache stores MethodInfo objects keyed by workflow type to avoid repeated reflection operations.
     /// Using ConcurrentDictionary ensures thread-safety for scoped service usage.
     /// </remarks>
-    private static readonly ConcurrentDictionary<Type, MethodInfo> _runMethodCache = new();
+    private static readonly ConcurrentDictionary<Type, MethodInfo> RunMethodCache = new();
 
     /// <summary>
     /// Executes a workflow that accepts the specified input type and returns the specified output type.
@@ -109,7 +109,7 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
 
         // Get the run methodInfo from the workflow type using cache for performance
         var workflowType = workflowService.GetType();
-        var runMethod = _runMethodCache.GetOrAdd(
+        var runMethod = RunMethodCache.GetOrAdd(
             workflowType,
             type =>
             {

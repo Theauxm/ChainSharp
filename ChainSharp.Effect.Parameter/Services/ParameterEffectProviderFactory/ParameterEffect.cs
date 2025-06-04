@@ -27,6 +27,7 @@ namespace ChainSharp.Effect.Parameter.Services.ParameterEffectProviderFactory;
 public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
 {
     private readonly HashSet<Metadata> _trackedMetadatas = [];
+    private readonly List<JsonDocument> _jsonDocumentsToDispose = [];
     private readonly object _lock = new();
     private bool _disposed = false;
 
@@ -52,6 +53,9 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
             {
                 DisposeJsonDocuments(metadata);
             }
+
+            // Dispose any queued JsonDocuments
+            DisposeQueuedJsonDocuments();
 
             // Clear tracked metadata to release references and prevent memory leaks
             _trackedMetadatas.Clear();
@@ -87,6 +91,10 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
             {
                 SerializeParameters(metadata);
             }
+
+            // After serialization is complete, dispose queued JsonDocuments
+            // This is safe because database persistence should happen after this method returns
+            DisposeQueuedJsonDocuments();
         }
     }
 
@@ -136,6 +144,29 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
     }
 
     /// <summary>
+    /// Disposes all JsonDocument instances that are queued for disposal.
+    /// </summary>
+    /// <remarks>
+    /// This method is called after serialization is complete to safely dispose
+    /// old JsonDocument instances without interfering with database operations.
+    /// </remarks>
+    private void DisposeQueuedJsonDocuments()
+    {
+        foreach (var jsonDocument in _jsonDocumentsToDispose)
+        {
+            try
+            {
+                jsonDocument?.Dispose();
+            }
+            catch (ObjectDisposedException)
+            {
+                // JsonDocument was already disposed, safe to ignore
+            }
+        }
+        _jsonDocumentsToDispose.Clear();
+    }
+
+    /// <summary>
     /// Serializes the input and output parameters of a metadata object to JSON format.
     /// </summary>
     /// <param name="metadata">The metadata object whose parameters to serialize</param>
@@ -151,27 +182,61 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
     /// The serialization is performed using the JSON serializer options provided to the
     /// constructor, which allows for customizing the serialization process.
     ///
-    /// IMPORTANT: This method properly disposes of existing JsonDocument instances before
-    /// creating new ones to prevent memory leaks.
+    /// IMPORTANT: This method queues existing JsonDocument instances for disposal after
+    /// database operations complete, preventing memory leaks while avoiding disposed object issues.
     /// </remarks>
     private void SerializeParameters(Metadata metadata)
     {
         if (metadata.InputObject is not null)
         {
-            // Dispose existing JsonDocument before creating new one
-            metadata.Input?.Dispose();
+            try
+            {
+                // Queue existing JsonDocument for disposal if it exists
+                if (metadata.Input != null)
+                {
+                    _jsonDocumentsToDispose.Add(metadata.Input);
+                }
 
-            var serializedInput = JsonSerializer.Serialize(metadata.InputObject, options);
-            metadata.Input = JsonDocument.Parse(serializedInput);
+                var serializedInput = JsonSerializer.Serialize(metadata.InputObject, options);
+                metadata.Input = JsonDocument.Parse(serializedInput);
+            }
+            catch (ObjectDisposedException)
+            {
+                // Input object contains disposed JsonDocument, skip serialization
+                // This can happen when metadata contains disposed JsonDocument objects
+                if (metadata.Input == null)
+                {
+                    // Create a placeholder JsonDocument to indicate disposal occurred
+                    var placeholderJson = """{"_disposed": true, "_message": "Input object contained disposed JsonDocument objects"}""";
+                    metadata.Input = JsonDocument.Parse(placeholderJson);
+                }
+            }
         }
 
         if (metadata.OutputObject is not null)
         {
-            // Dispose existing JsonDocument before creating new one
-            metadata.Output?.Dispose();
+            try
+            {
+                // Queue existing JsonDocument for disposal if it exists
+                if (metadata.Output != null)
+                {
+                    _jsonDocumentsToDispose.Add(metadata.Output);
+                }
 
-            var serializedOutput = JsonSerializer.Serialize(metadata.OutputObject, options);
-            metadata.Output = JsonDocument.Parse(serializedOutput);
+                var serializedOutput = JsonSerializer.Serialize(metadata.OutputObject, options);
+                metadata.Output = JsonDocument.Parse(serializedOutput);
+            }
+            catch (ObjectDisposedException)
+            {
+                // Output object contains disposed JsonDocument, skip serialization
+                // This can happen when metadata contains disposed JsonDocument objects
+                if (metadata.Output == null)
+                {
+                    // Create a placeholder JsonDocument to indicate disposal occurred
+                    var placeholderJson = """{"_disposed": true, "_message": "Output object contained disposed JsonDocument objects"}""";
+                    metadata.Output = JsonDocument.Parse(placeholderJson);
+                }
+            }
         }
     }
 }

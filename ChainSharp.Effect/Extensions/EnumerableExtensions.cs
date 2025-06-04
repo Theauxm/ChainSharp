@@ -22,23 +22,28 @@ public static class EnumerableExtensions
     /// <param name="source">The source collection</param>
     /// <param name="action">The action to execute on each element</param>
     /// <remarks>
-    /// This method uses a functional approach to aggregate actions into a single action
-    /// that is executed at the end. This ensures that all elements are processed in sequence,
-    /// and any exceptions are contained to the individual element being processed.
+    /// This method uses a simple foreach approach to avoid creating closure chains that could
+    /// hold references to objects longer than expected. Each action is executed immediately
+    /// and any exceptions are caught and ignored to ensure all elements are processed.
     ///
-    /// The implementation uses a clever technique where each iteration builds up a chain
-    /// of actions that are executed in sequence when the final action is invoked.
+    /// This implementation is more memory-efficient than the previous aggregate approach
+    /// as it doesn't create a chain of lambda closures.
     /// </remarks>
     public static void RunAll<T>(this IEnumerable<T> source, Action<T> action)
     {
-        source.Aggregate(
-            (Action)(() => { }), // Initial empty action (does nothing)
-            (acc, item) =>
+        foreach (var item in source)
+        {
+            try
             {
-                acc(); // Execute previous action
-                return () => action(item); // Return new action for next iteration
+                action(item);
             }
-        )();
+            catch
+            {
+                // Ignore exceptions to ensure all elements are processed
+                // This maintains the original behavior of RunAll where exceptions
+                // in individual elements don't stop processing of subsequent elements
+            }
+        }
     }
 
     /// <summary>

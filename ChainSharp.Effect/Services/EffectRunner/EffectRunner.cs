@@ -2,6 +2,7 @@ using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models;
 using ChainSharp.Effect.Services.EffectProvider;
 using ChainSharp.Effect.Services.EffectProviderFactory;
+using Microsoft.Extensions.Logging;
 
 namespace ChainSharp.Effect.Services.EffectRunner;
 
@@ -33,9 +34,15 @@ public class EffectRunner : IEffectRunner
     private List<IEffectProvider> ActiveEffectProviders { get; init; }
 
     /// <summary>
+    /// Logger for tracking disposal operations and errors.
+    /// </summary>
+    private readonly ILogger<EffectRunner>? _logger;
+
+    /// <summary>
     /// Initializes a new instance of the EffectRunner with the specified effect provider factories.
     /// </summary>
     /// <param name="effectProviderFactories">Collection of factories that create effect providers</param>
+    /// <param name="logger">Optional logger for tracking operations and errors</param>
     /// <remarks>
     /// During initialization, the runner:
     /// 1. Creates an empty list of active providers
@@ -45,8 +52,12 @@ public class EffectRunner : IEffectRunner
     /// This approach follows the Factory pattern, allowing for flexible provider creation
     /// and configuration through dependency injection.
     /// </remarks>
-    public EffectRunner(IEnumerable<IEffectProviderFactory> effectProviderFactories)
+    public EffectRunner(
+        IEnumerable<IEffectProviderFactory> effectProviderFactories,
+        ILogger<EffectRunner>? logger = null
+    )
     {
+        _logger = logger;
         ActiveEffectProviders = [];
 
         ActiveEffectProviders.AddRange(effectProviderFactories.RunAll(factory => factory.Create()));
@@ -100,15 +111,51 @@ public class EffectRunner : IEffectRunner
     /// </summary>
     /// <remarks>
     /// This method:
-    /// 1. Calls Dispose on each active provider
-    /// 2. Clears the collection of active providers
+    /// 1. Attempts to dispose each active provider individually
+    /// 2. Logs any disposal failures but continues with remaining providers
+    /// 3. Clears the collection of active providers
     ///
-    /// The RunAll extension method ensures all providers are disposed
-    /// regardless of exceptions in individual providers.
+    /// This implementation ensures that all providers get a chance to dispose
+    /// even if some providers throw exceptions during disposal.
     /// </remarks>
     private void DeactivateProviders()
     {
-        ActiveEffectProviders.RunAll(provider => provider.Dispose());
+        var disposalExceptions = new List<Exception>();
+
+        foreach (var provider in ActiveEffectProviders)
+        {
+            try
+            {
+                provider?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                disposalExceptions.Add(ex);
+                _logger?.LogError(
+                    ex,
+                    "Failed to dispose effect provider of type ({ProviderType}). Provider disposal will continue for remaining providers.",
+                    provider?.GetType().Name ?? "Unknown"
+                );
+            }
+        }
+
         ActiveEffectProviders.Clear();
+
+        // If we had disposal exceptions, log the summary
+        if (disposalExceptions.Count > 0)
+        {
+            _logger?.LogWarning(
+                "Completed provider disposal with ({ExceptionCount}) provider(s) failing to dispose properly. "
+                    + "Memory leaks may have occurred in the failed providers.",
+                disposalExceptions.Count
+            );
+        }
+        else
+        {
+            _logger?.LogDebug(
+                "Successfully disposed all ({ProviderCount}) effect provider(s).",
+                ActiveEffectProviders.Count
+            );
+        }
     }
 }

@@ -447,47 +447,101 @@ public class ParameterEffectMemoryTests
     }
 
     [Test]
-    public async Task ParameterEffect_NonMetadataTracking_ShouldBeIgnored()
+    public async Task ParameterEffect_EmptyDisposal_ShouldUseMinimalMemory()
     {
-        // Test that non-Metadata objects are properly ignored
+        // Test that ParameterEffect disposal without tracking uses minimal memory
         var result = await MemoryProfiler.MonitorMemoryUsageAsync(
             async () =>
             {
-                using var parameterEffect = new ParameterEffect(_jsonOptions);
-
-                // Try to track various non-Metadata objects
-                for (int i = 0; i < 100; i++)
+                // Create multiple ParameterEffect instances without tracking anything
+                for (int i = 0; i < 50; i++)
                 {
-                    var testInput = MemoryTestModelFactory.CreateInput(
-                        id: $"NonMetadataTest_{i}",
-                        dataSizeBytes: 1000
-                    );
+                    using var parameterEffect = new ParameterEffect(_jsonOptions);
 
-                    var testOutput = new MemoryTestOutput
-                    {
-                        Id = $"NonMetadataOutput_{i}",
-                        Message = $"Non-metadata output {i}",
-                        ProcessedData = new string('N', 500),
-                        Success = true,
-                        ProcessedAt = DateTime.UtcNow
-                    };
+                    // Call SaveChanges without tracking anything
+                    await parameterEffect.SaveChanges(CancellationToken.None);
 
-                    // These would be ignored since they're not Metadata objects
-                    // (Can't actually call Track with non-IModel objects due to type constraints)
-                    // This test verifies that only Metadata objects are tracked
+                    // ParameterEffect should dispose cleanly with minimal memory impact
                 }
 
-                // Save changes (should have no effect since no Metadata was tracked)
-                await parameterEffect.SaveChanges(CancellationToken.None);
+                // Force garbage collection to clean up empty instances
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
             },
-            "ParameterEffect_NonMetadataTracking"
+            "ParameterEffect_EmptyDisposal"
         );
 
         Console.WriteLine(result.GetSummary());
 
-        // Should use minimal memory since non-Metadata objects are ignored
+        // Empty ParameterEffect instances should use minimal memory
         result
             .MemoryRetained.Should()
-            .BeLessThan(2 * 1024 * 1024, "Non-Metadata object tracking should use minimal memory");
+            .BeLessThan(
+                3 * 1024 * 1024,
+                "Empty ParameterEffect disposal should use minimal memory"
+            );
+    }
+
+    [Test]
+    public async Task ParameterEffect_PostDisposal_ShouldIgnoreOperations()
+    {
+        // Test that ParameterEffect properly ignores operations after disposal
+        var result = await MemoryProfiler.MonitorMemoryUsageAsync(
+            async () =>
+            {
+                var disposedEffects = new List<ParameterEffect>();
+
+                // Create and dispose multiple ParameterEffect instances
+                for (int i = 0; i < 25; i++)
+                {
+                    var parameterEffect = new ParameterEffect(_jsonOptions);
+
+                    // Track some metadata before disposal
+                    var metadata = new Metadata
+                    {
+                        Name = $"PreDisposalTest_{i}",
+                        InputObject = MemoryTestModelFactory.CreateInput(
+                            id: $"PreDisposal_{i}",
+                            dataSizeBytes: 1000
+                        )
+                    };
+
+                    await parameterEffect.Track(metadata);
+                    await parameterEffect.SaveChanges(CancellationToken.None);
+
+                    // Dispose the effect
+                    parameterEffect.Dispose();
+                    disposedEffects.Add(parameterEffect);
+                }
+
+                // Try to use disposed effects (should be safely ignored)
+                foreach (var disposedEffect in disposedEffects)
+                {
+                    var postDisposalMetadata = new Metadata
+                    {
+                        Name = "PostDisposal",
+                        InputObject = MemoryTestModelFactory.CreateInput("PostDisposal", 500)
+                    };
+
+                    // These operations should be safely ignored on disposed objects
+                    await disposedEffect.Track(postDisposalMetadata);
+                    await disposedEffect.SaveChanges(CancellationToken.None);
+                }
+
+                // Cleanup
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+            },
+            "ParameterEffect_PostDisposal"
+        );
+
+        Console.WriteLine(result.GetSummary());
+
+        // Post-disposal operations should not cause memory leaks
+        result
+            .MemoryRetained.Should()
+            .BeLessThan(4 * 1024 * 1024, "Post-disposal operations should not cause memory leaks");
     }
 }

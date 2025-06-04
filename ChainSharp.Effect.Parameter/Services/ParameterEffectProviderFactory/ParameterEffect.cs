@@ -207,7 +207,8 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
                 if (metadata.Input == null)
                 {
                     // Create a placeholder JsonDocument to indicate disposal occurred
-                    var placeholderJson = """{"_disposed": true, "_message": "Input object contained disposed JsonDocument objects"}""";
+                    var placeholderJson =
+                        """{"_disposed": true, "_message": "Input object contained disposed JsonDocument objects"}""";
                     metadata.Input = JsonDocument.Parse(placeholderJson);
                 }
             }
@@ -233,7 +234,8 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
                 if (metadata.Output == null)
                 {
                     // Create a placeholder JsonDocument to indicate disposal occurred
-                    var placeholderJson = """{"_disposed": true, "_message": "Output object contained disposed JsonDocument objects"}""";
+                    var placeholderJson =
+                        """{"_disposed": true, "_message": "Output object contained disposed JsonDocument objects"}""";
                     metadata.Output = JsonDocument.Parse(placeholderJson);
                 }
             }

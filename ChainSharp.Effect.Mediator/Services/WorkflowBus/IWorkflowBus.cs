@@ -55,4 +55,6 @@ public interface IWorkflowBus
     /// will be thrown.
     /// </remarks>
     public Task<TOut> RunAsync<TOut>(object workflowInput, Metadata? metadata = null);
+
+    public Task RunAsync(object workflowInput, Metadata? metadata = null);
 }

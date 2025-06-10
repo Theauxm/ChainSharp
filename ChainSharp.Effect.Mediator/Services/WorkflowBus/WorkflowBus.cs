@@ -6,6 +6,7 @@ using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Services.EffectWorkflow;
 using ChainSharp.Exceptions;
 using ChainSharp.Workflow;
+using LanguageExt;
 using LanguageExt.ClassInstances;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -140,5 +141,10 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
             );
 
         return taskRunMethod;
+    }
+
+    public async Task RunAsync(object workflowInput, Metadata? metadata = null)
+    {
+        await RunAsync<Unit>(workflowInput, metadata);
     }
 }

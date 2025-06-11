@@ -1,0 +1,1 @@
+drop index chain_sharp.workflow_external_id_uindex;

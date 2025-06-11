@@ -1,0 +1,4 @@
+drop index chain_sharp.log_pkey;
+
+alter table chain_sharp.log
+drop constraint log_pkey;

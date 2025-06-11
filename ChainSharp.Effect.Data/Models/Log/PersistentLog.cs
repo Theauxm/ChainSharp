@@ -12,10 +12,10 @@ public class PersistentLog : Effect.Models.Log.Log
             entity.Property(e => e.Id).ValueGeneratedOnAdd();
 
             // entity
-                // .HasOne(x => x.Metadata)
-                // .WithMany(x => x.Logs)
-                // .HasForeignKey(x => x.MetadataId)
-                // .OnDelete(DeleteBehavior.Cascade);
+            // .HasOne(x => x.Metadata)
+            // .WithMany(x => x.Logs)
+            // .HasForeignKey(x => x.MetadataId)
+            // .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

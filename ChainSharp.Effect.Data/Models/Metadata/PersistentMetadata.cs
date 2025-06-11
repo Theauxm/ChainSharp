@@ -17,8 +17,6 @@ public class PersistentMetadata : Effect.Models.Metadata.Metadata
             entity.Ignore(e => e.InputObject);
             entity.Ignore(e => e.OutputObject);
 
-            entity.HasIndex(e => e.ExternalId).IsUnique();
-
             entity
                 .HasOne(x => x.Parent)
                 .WithMany(x => x.Children)

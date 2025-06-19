@@ -113,7 +113,7 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
     /// </remarks>
     public Task<TOut> RunAsync<TOut>(object workflowInput, Metadata? metadata = null)
     {
-        var workflowService = InitializeWorkflow(workflowInput);
+        var workflowService = InitializeWorkflow(workflowInput, metadata);
 
         // Get the run methodInfo from the workflow type using cache for performance
         var workflowType = workflowService.GetType();

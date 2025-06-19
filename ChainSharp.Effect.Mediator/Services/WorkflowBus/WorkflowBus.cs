@@ -48,34 +48,7 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
     /// </remarks>
     private static readonly ConcurrentDictionary<Type, MethodInfo> RunMethodCache = new();
 
-    /// <summary>
-    /// Executes a workflow that accepts the specified input type and returns the specified output type.
-    /// </summary>
-    /// <typeparam name="TOut">The expected output type of the workflow</typeparam>
-    /// <param name="workflowInput">The input object for the workflow</param>
-    /// <param name="metadata">Optional metadata to associate with the workflow execution</param>
-    /// <returns>A task that resolves to the workflow's output</returns>
-    /// <exception cref="WorkflowException">
-    /// Thrown when the input is null, no workflow is found for the input type,
-    /// the Run method cannot be found on the workflow, or the Run method invocation fails.
-    /// </exception>
-    /// <remarks>
-    /// This method performs the following steps:
-    /// 1. Validates that the input is not null
-    /// 2. Gets the type of the input object
-    /// 3. Looks up the workflow type in the registry based on the input type
-    /// 4. Resolves the workflow instance from the service provider
-    /// 5. Injects properties into the workflow instance
-    /// 6. Sets the parent ID if metadata is provided
-    /// 7. Finds the appropriate Run method on the workflow using reflection
-    /// 8. Invokes the Run method with the input
-    /// 9. Returns the result cast to the expected output type
-    ///
-    /// The method uses reflection to find and invoke the Run method because workflows
-    /// can have multiple Run method implementations, and we need to select the correct one
-    /// from ChainSharp.Effect rather than the base ChainSharp implementation.
-    /// </remarks>
-    public Task<TOut> RunAsync<TOut>(object workflowInput, Metadata? metadata = null)
+    public object InitializeWorkflow(object workflowInput, Metadata? metadata = null)
     {
         if (workflowInput == null)
             throw new WorkflowException(
@@ -107,6 +80,40 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
 
             parentIdProperty.SetValue(workflowService, metadata.Id);
         }
+
+        return workflowService;
+    }
+
+    /// <summary>
+    /// Executes a workflow that accepts the specified input type and returns the specified output type.
+    /// </summary>
+    /// <typeparam name="TOut">The expected output type of the workflow</typeparam>
+    /// <param name="workflowInput">The input object for the workflow</param>
+    /// <param name="metadata">Optional metadata to associate with the workflow execution</param>
+    /// <returns>A task that resolves to the workflow's output</returns>
+    /// <exception cref="WorkflowException">
+    /// Thrown when the input is null, no workflow is found for the input type,
+    /// the Run method cannot be found on the workflow, or the Run method invocation fails.
+    /// </exception>
+    /// <remarks>
+    /// This method performs the following steps:
+    /// 1. Validates that the input is not null
+    /// 2. Gets the type of the input object
+    /// 3. Looks up the workflow type in the registry based on the input type
+    /// 4. Resolves the workflow instance from the service provider
+    /// 5. Injects properties into the workflow instance
+    /// 6. Sets the parent ID if metadata is provided
+    /// 7. Finds the appropriate Run method on the workflow using reflection
+    /// 8. Invokes the Run method with the input
+    /// 9. Returns the result cast to the expected output type
+    ///
+    /// The method uses reflection to find and invoke the Run method because workflows
+    /// can have multiple Run method implementations, and we need to select the correct one
+    /// from ChainSharp.Effect rather than the base ChainSharp implementation.
+    /// </remarks>
+    public Task<TOut> RunAsync<TOut>(object workflowInput, Metadata? metadata = null)
+    {
+        var workflowService = InitializeWorkflow(workflowInput, metadata);
 
         // Get the run methodInfo from the workflow type using cache for performance
         var workflowType = workflowService.GetType();

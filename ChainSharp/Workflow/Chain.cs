@@ -170,7 +170,7 @@ public partial class Workflow<TInput, TReturn>
     {
         if (Exception is not null)
             return this;
-        
+
         // Create an instance of the step
         var stepInstance = this.InitializeStep<TStep, TInput, TReturn>();
 

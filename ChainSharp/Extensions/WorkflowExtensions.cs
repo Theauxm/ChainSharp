@@ -65,7 +65,7 @@ public static class WorkflowExtensions
 
         var constructor = stepType.GetConstructor(constructorArguments);
 
-        if (constructor == null)
+        if (constructor is null)
         {
             workflow.Exception ??= new WorkflowException(
                 $"Could not find constructor for ({stepType})"
@@ -75,6 +75,9 @@ public static class WorkflowExtensions
 
         // Extract the constructor parameters from Memory
         var constructorParameters = ExtractTypesFromMemory(workflow, constructorArguments);
+
+        if (workflow.Exception is not null)
+            return null;
 
         // Create an instance of the step
         var initializedStep = (TStep?)constructor.Invoke(constructorParameters);

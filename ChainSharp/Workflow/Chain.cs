@@ -168,6 +168,9 @@ public partial class Workflow<TInput, TReturn>
     public Workflow<TInput, TReturn> Chain<TStep>()
         where TStep : class
     {
+        if (Exception is not null)
+            return this;
+        
         // Create an instance of the step
         var stepInstance = this.InitializeStep<TStep, TInput, TReturn>();
 

@@ -32,6 +32,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests.Effect.Int
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests.MemoryLeak.Integration", "ChainSharp.Tests.MemoryLeak.Integration\ChainSharp.Tests.MemoryLeak.Integration.csproj", "{2F8E7B94-1234-5678-9ABC-DEF012345678}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests", "ChainSharp.Tests\ChainSharp.Tests.csproj", "{683633D7-731F-4757-A850-46C08F190977}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Metadata.DTOs;
+using ChainSharp.Exceptions;
 using LanguageExt;
 
 namespace ChainSharp.Effect.Models.Metadata;

@@ -1,4 +1,6 @@
 using System.Reflection;
+using System.Text.Json;
+using ChainSharp.Exceptions;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
 
@@ -53,10 +55,17 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
             );
 
             if (messageField != null)
-                messageField.SetValue(
-                    e,
-                    $"{{ \"step\": \"{stepName}\", \"type\": \"{e.GetType().Name}\", \"message\": \"{e.Message}\" }}"
-                );
+            {
+                var exceptionData = new WorkflowExceptionData
+                {
+                    Step = stepName,
+                    Type = e.GetType().Name,
+                    Message = e.Message
+                };
+
+                var serializedMessage = JsonSerializer.Serialize(exceptionData);
+                messageField.SetValue(e, serializedMessage);
+            }
 
             // Return the exception as Left
             return e;

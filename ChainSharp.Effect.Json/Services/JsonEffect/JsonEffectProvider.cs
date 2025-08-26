@@ -118,7 +118,7 @@ public class JsonEffectProvider(
             {
                 if (_disposed || !_previousStates.TryGetValue(model, out var state))
                     break;
-                logger.LogInformation(state);
+                logger.LogInformation("Model state changed: {State}", state);
             }
         }
     }

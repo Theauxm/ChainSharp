@@ -509,7 +509,7 @@ public class WorkflowTests : TestSetup
     {
         public override async Task<Unit> Run(Unit input)
         {
-            logger.LogInformation("In LoggerTest");
+            logger.LogInformation("In {StepName}", "LoggerTest");
 
             return Unit.Default;
         }

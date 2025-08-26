@@ -182,7 +182,7 @@ public class PostgresContextTests : TestSetup
                 workflowWithinWorkflow.Metadata
             );
 
-            logger.LogCritical("Ran TestWorkflow");
+            logger.LogCritical("Ran {WorkflowName}", "TestWorkflow");
 
             return testWorkflow;
         }

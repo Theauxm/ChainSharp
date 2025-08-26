@@ -283,7 +283,7 @@ public class ArrayLoggerMemoryTests
         var logger = provider.CreateLogger("DisposedTest");
 
         // Log before disposal
-        logger.LogInformation("Before disposal");
+        logger.LogInformation("Before {Action}", "disposal");
 
         var arrayLogger = provider.Loggers.First();
         arrayLogger.Logs.Count.Should().Be(1);
@@ -292,7 +292,7 @@ public class ArrayLoggerMemoryTests
         arrayLogger.Dispose();
 
         // Log after disposal
-        logger.LogInformation("After disposal");
+        logger.LogInformation("After {Action}", "disposal");
 
         // Should still have only 1 log (disposal should prevent new logs)
         arrayLogger.Logs.Count.Should().Be(0, "Logs should be cleared on disposal");

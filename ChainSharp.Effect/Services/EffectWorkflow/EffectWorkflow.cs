@@ -110,7 +110,8 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
         if (EffectRunner == null)
         {
             EffectLogger?.LogCritical(
-                "EffectRunner is null. Ensure services.AddChainSharpEffects() is being added to your Dependency Injection Container."
+                "EffectRunner for {WorkflowName} is null. Ensure services.AddChainSharpEffects() is being added to your Dependency Injection Container.",
+                WorkflowName
             );
             throw new WorkflowException(
                 "EffectRunner is null. Ensure services.AddChainSharpEffects() is being added to your Dependency Injection Container."
@@ -120,14 +121,15 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
         if (ServiceProvider == null)
         {
             EffectLogger?.LogCritical(
-                "Could not find injected IServiceProvider. Is it being injected into the ServiceCollection?"
+                "Could not find injected IServiceProvider on {WorkflowName}. Is it being injected into the ServiceCollection?",
+                WorkflowName
             );
             throw new WorkflowException(
                 "Could not find injected IServiceProvider. Is it being injected into the ServiceCollection?"
             );
         }
 
-        EffectLogger?.LogTrace($"Running Workflow: ({WorkflowName})");
+        EffectLogger?.LogTrace("Running Workflow: ({WorkflowName})", WorkflowName);
 
         Metadata = await InitializeWorkflow(input);
         await EffectRunner.SaveChanges(CancellationToken.None);
@@ -135,7 +137,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
         try
         {
             var result = await base.Run(input, ServiceProvider);
-            EffectLogger?.LogTrace($"({WorkflowName}) completed successfully.");
+            EffectLogger?.LogTrace("({WorkflowName}) completed successfully.", WorkflowName);
             Metadata.OutputObject = result;
 
             await FinishWorkflow(result);
@@ -145,7 +147,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
         }
         catch (Exception e)
         {
-            EffectLogger?.LogError($"Caught Exception ({e.GetType()}) with Message ({e.Message}).");
+            EffectLogger?.LogError("Caught Exception ({Type}) with Message ({Message}).", e.GetType(), e.Message);
 
             await FinishWorkflow(e);
             await EffectRunner.SaveChanges(CancellationToken.None);
@@ -179,7 +181,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
                 "EffectLogger is null. Something has gone horribly wrong. Ensure services.AddChainSharpEffects() is being added to your Dependency Injection Container."
             );
 
-        EffectLogger?.LogTrace($"Initializing ({WorkflowName})");
+        EffectLogger?.LogTrace("Initializing ({WorkflowName})", WorkflowName);
 
         var metadata = Metadata.Create(
             new CreateMetadata
@@ -191,7 +193,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
         );
         await EffectRunner.Track(metadata);
 
-        EffectLogger?.LogTrace($"Setting ({WorkflowName}) to In Progress.");
+        EffectLogger?.LogTrace("Setting ({WorkflowName}) to In Progress.", WorkflowName);
         metadata.WorkflowState = WorkflowState.InProgress;
 
         return metadata;
@@ -223,7 +225,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
         var failureReason = result.IsRight ? null : result.Swap().ValueUnsafe();
 
         var resultState = result.IsRight ? WorkflowState.Completed : WorkflowState.Failed;
-        EffectLogger?.LogTrace($"Setting ({WorkflowName}) to ({resultState.ToString()}).");
+        EffectLogger?.LogTrace("Setting ({WorkflowName}) to ({ResultState}).", WorkflowName, resultState.ToString());
         Metadata.WorkflowState = resultState;
         Metadata.EndTime = DateTime.UtcNow;
 

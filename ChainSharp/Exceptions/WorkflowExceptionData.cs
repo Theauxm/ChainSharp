@@ -8,6 +8,12 @@ namespace ChainSharp.Exceptions;
 /// </summary>
 public class WorkflowExceptionData
 {
+    [JsonPropertyName("workflowName")]
+    public required string WorkflowName { get; set; }
+
+    [JsonPropertyName("workflowExternalId")]
+    public required string WorkflowExternalId { get; set; }
+
     /// <summary>
     /// The type of exception that occurred (e.g., "InvalidOperationException").
     /// </summary>

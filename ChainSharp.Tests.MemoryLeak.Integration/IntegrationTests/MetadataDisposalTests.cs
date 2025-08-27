@@ -37,7 +37,12 @@ public class MetadataDisposalTests
     {
         // Arrange & Act
         var metadata = Metadata.Create(
-            new CreateMetadata { Name = "TestWorkflow", Input = new { TestData = "Test" } }
+            new CreateMetadata
+            {
+                Name = "TestWorkflow",
+                Input = new { TestData = "Test" },
+                ExternalId = Guid.NewGuid().ToString("N")
+            }
         );
 
         // Assert
@@ -52,7 +57,8 @@ public class MetadataDisposalTests
             new CreateMetadata
             {
                 Name = "TestWorkflow",
-                Input = new { LargeData = new string('X', 10000) }
+                Input = new { LargeData = new string('X', 10000) },
+                ExternalId = Guid.NewGuid().ToString("N")
             }
         );
 
@@ -84,7 +90,8 @@ public class MetadataDisposalTests
                 new CreateMetadata
                 {
                     Name = "TestWorkflow",
-                    Input = new { LargeData = new string('X', 50000) } // 50KB of data
+                    Input = new { LargeData = new string('X', 50000) }, // 50KB of data
+                    ExternalId = Guid.NewGuid().ToString("N")
                 }
             );
 
@@ -237,7 +244,12 @@ public class MetadataDisposalTests
     {
         // Arrange
         var metadata = Metadata.Create(
-            new CreateMetadata { Name = "TestWorkflow", Input = new { TestData = "Test" } }
+            new CreateMetadata
+            {
+                Name = "TestWorkflow",
+                Input = new { TestData = "Test" },
+                ExternalId = Guid.NewGuid().ToString("N")
+            }
         );
 
         // Ensure JsonDocument properties are null

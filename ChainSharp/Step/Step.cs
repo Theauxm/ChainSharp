@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
 using ChainSharp.Exceptions;
+using ChainSharp.Workflow;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
 
@@ -15,6 +16,8 @@ namespace ChainSharp.Step;
 /// <typeparam name="TOut">The output type produced by this step</typeparam>
 public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
 {
+    public WorkflowExceptionData? ExceptionData { get; private set; }
+
     /// <summary>
     /// The core implementation method that performs the step's operation.
     /// This must be implemented by derived classes.
@@ -32,8 +35,12 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
     /// 4. Enriches exceptions with step context information
     /// </summary>
     /// <param name="previousOutput">Either a result from the previous step or an exception</param>
+    /// <param name="workflow">Workflow calling the Step</param>
     /// <returns>Either the result of this step or an exception</returns>
-    public async Task<Either<Exception, TOut>> RailwayStep(Either<Exception, TIn> previousOutput)
+    public async Task<Either<Exception, TOut>> RailwayStep<TWorkflowIn, TWorkflowOut>(
+        Either<Exception, TIn> previousOutput,
+        Workflow<TWorkflowIn, TWorkflowOut> workflow
+    )
     {
         // If the previous step failed, short-circuit and return its exception
         if (previousOutput.IsLeft)
@@ -58,10 +65,14 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
             {
                 var exceptionData = new WorkflowExceptionData
                 {
+                    WorkflowName = workflow.GetType().Name,
+                    WorkflowExternalId = workflow.ExternalId,
                     Step = stepName,
                     Type = e.GetType().Name,
                     Message = e.Message
                 };
+
+                ExceptionData = exceptionData;
 
                 var serializedMessage = JsonSerializer.Serialize(exceptionData);
                 messageField.SetValue(e, serializedMessage);

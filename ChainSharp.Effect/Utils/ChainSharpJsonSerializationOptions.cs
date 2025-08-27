@@ -53,12 +53,14 @@ public static class ChainSharpJsonSerializationOptions
             WriteIndented = true,
             IncludeFields = true,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            MaxDepth = 3,
             Converters =
             {
                 new JsonStringEnumConverter(),
                 new ValueTupleConverter(),
                 new MockConverter(),
-                new SystemTypeConverter()
+                new SystemTypeConverter(),
+                new SkipDisposedConverter()
             }
         };
 }

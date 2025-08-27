@@ -33,6 +33,8 @@ public abstract partial class Workflow<TInput, TReturn> : IWorkflow<TInput, TRet
     /// </summary>
     private TReturn ShortCircuitValue { get; set; } = default!;
 
+    public string ExternalId { get; set; } = Guid.NewGuid().ToString("N");
+
     /// <summary>
     /// Indicates whether a short-circuit value has been set.
     /// </summary>

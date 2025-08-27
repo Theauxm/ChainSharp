@@ -32,7 +32,7 @@ public class JsonEffectProviderTests : TestSetup
         workflow.Metadata.FailureStep.Should().BeNullOrEmpty();
         workflow.Metadata.WorkflowState.Should().Be(WorkflowState.Completed);
         arrayProvider.Loggers.Should().NotBeNullOrEmpty();
-        arrayProvider.Loggers.Should().HaveCount(3);
+        arrayProvider.Loggers.Should().HaveCount(4);
 
         // Verify that we have the expected logger types:
         // 1. Two workflow loggers (ILogger<EffectWorkflow<Unit, Unit>>) - may have empty logs

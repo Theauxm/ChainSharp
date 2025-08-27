@@ -1,3 +1,4 @@
+using ChainSharp.Workflow;
 using LanguageExt;
 
 namespace ChainSharp.Step;
@@ -26,5 +27,8 @@ public interface IStep<TIn, TOut>
     /// </summary>
     /// <param name="previousOutput">Either a result from the previous step or an exception</param>
     /// <returns>Either the result of this step or an exception</returns>
-    public Task<Either<Exception, TOut>> RailwayStep(Either<Exception, TIn> previousOutput);
+    public Task<Either<Exception, TOut>> RailwayStep<TWorkflowIn, TWorkflowOut>(
+        Either<Exception, TIn> previousOutput,
+        Workflow<TWorkflowIn, TWorkflowOut> workflow
+    );
 }

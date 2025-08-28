@@ -7,7 +7,7 @@
         <Authors>Theauxm,mark-keaton</Authors>
         <PackageDescription>Effect Data for ChainSharp Workflows</PackageDescription>
         <RepositoryUrl>https://github.com/Theauxm/ChainSharp</RepositoryUrl>
-        <AssemblyName>Theauxm.ChainSharp.Effect.Data</AssemblyName>
+        <AssemblyName>ChainSharp.Effect.Data</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>

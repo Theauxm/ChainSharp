@@ -17,6 +17,9 @@ namespace ChainSharp.Step;
 public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
 {
     public WorkflowExceptionData? ExceptionData { get; private set; }
+    
+    public Either<Exception, TIn> PreviousResult { get; private set; }
+    public Either<Exception, TOut> Result { get; private set; }
 
     /// <summary>
     /// The core implementation method that performs the step's operation.
@@ -37,11 +40,13 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
     /// <param name="previousOutput">Either a result from the previous step or an exception</param>
     /// <param name="workflow">Workflow calling the Step</param>
     /// <returns>Either the result of this step or an exception</returns>
-    public async Task<Either<Exception, TOut>> RailwayStep<TWorkflowIn, TWorkflowOut>(
+    public virtual async Task<Either<Exception, TOut>> RailwayStep<TWorkflowIn, TWorkflowOut>(
         Either<Exception, TIn> previousOutput,
         Workflow<TWorkflowIn, TWorkflowOut> workflow
     )
     {
+        PreviousResult = previousOutput;
+        
         // If the previous step failed, short-circuit and return its exception
         if (previousOutput.IsLeft)
             return previousOutput.Swap().ValueUnsafe();
@@ -51,7 +56,9 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
         try
         {
             // Execute the step and return its result as Right
-            return await Run(previousOutput.ValueUnsafe());
+            Result = await Run(previousOutput.ValueUnsafe());
+
+            return Result;
         }
         catch (Exception e)
         {
@@ -61,22 +68,22 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
                 BindingFlags.Instance | BindingFlags.NonPublic
             );
 
-            if (messageField != null)
+            if (messageField is null) 
+                return e;
+            
+            var exceptionData = new WorkflowExceptionData
             {
-                var exceptionData = new WorkflowExceptionData
-                {
-                    WorkflowName = workflow.GetType().Name,
-                    WorkflowExternalId = workflow.ExternalId,
-                    Step = stepName,
-                    Type = e.GetType().Name,
-                    Message = e.Message
-                };
+                WorkflowName = workflow.GetType().Name,
+                WorkflowExternalId = workflow.ExternalId,
+                Step = stepName,
+                Type = e.GetType().Name,
+                Message = e.Message
+            };
 
-                ExceptionData = exceptionData;
+            ExceptionData = exceptionData;
 
-                var serializedMessage = JsonSerializer.Serialize(exceptionData);
-                messageField.SetValue(e, serializedMessage);
-            }
+            var serializedMessage = JsonSerializer.Serialize(exceptionData);
+            messageField.SetValue(e, serializedMessage);
 
             // Return the exception as Left
             return e;

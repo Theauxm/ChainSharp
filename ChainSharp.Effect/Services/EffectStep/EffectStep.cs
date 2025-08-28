@@ -9,9 +9,6 @@ namespace ChainSharp.Effect.Services.EffectStep;
 
 public abstract class EffectStep<TIn, TOut> : Step<TIn, TOut>, IEffectStep<TIn, TOut>
 {
-    public Either<Exception, TIn> PreviousResult { get; private set; }
-    public Either<Exception, TOut> Result { get; private set; }
-
     /// <summary>
     /// The core implementation method that performs the step's operation.
     /// This must be implemented by derived classes.
@@ -20,7 +17,7 @@ public abstract class EffectStep<TIn, TOut> : Step<TIn, TOut>, IEffectStep<TIn, 
     /// <returns>The output produced by this step</returns>
     public abstract override Task<TOut> Run(TIn input);
 
-    public Task<Either<Exception, TOut>> RailwayStep<TWorkflowIn, TWorkflowOut>(
+    public override Task<Either<Exception, TOut>> RailwayStep<TWorkflowIn, TWorkflowOut>(
         Either<Exception, TIn> previousOutput,
         Workflow<TWorkflowIn, TWorkflowOut> workflow
     )
@@ -38,8 +35,6 @@ public abstract class EffectStep<TIn, TOut> : Step<TIn, TOut>, IEffectStep<TIn, 
         EffectWorkflow<TWorkflowIn, TWorkflowOut> effectWorkflow
     )
     {
-        PreviousResult = previousOutput;
-
         if (effectWorkflow.StepEffectRunner is not null)
             await effectWorkflow.StepEffectRunner.BeforeStepExecution(
                 this,
@@ -47,7 +42,7 @@ public abstract class EffectStep<TIn, TOut> : Step<TIn, TOut>, IEffectStep<TIn, 
                 CancellationToken.None
             );
 
-        Result = await base.RailwayStep(previousOutput, effectWorkflow);
+        var result = await base.RailwayStep(previousOutput, effectWorkflow);
 
         if (effectWorkflow.StepEffectRunner is not null)
             await effectWorkflow.StepEffectRunner.AfterStepExecution(
@@ -56,6 +51,6 @@ public abstract class EffectStep<TIn, TOut> : Step<TIn, TOut>, IEffectStep<TIn, 
                 CancellationToken.None
             );
 
-        return Result;
+        return result;
     }
 }

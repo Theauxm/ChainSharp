@@ -36,6 +36,7 @@ public class JsonEffectProvider(
 {
     private readonly Dictionary<IModel, string> _previousStates = new();
     private readonly HashSet<IModel> _trackedModels = [];
+    private readonly object _lock = new();
 
     /// <summary>
     /// Disposes the effect provider and releases any resources.
@@ -73,27 +74,33 @@ public class JsonEffectProvider(
         var options = configuration.WorkflowParameterJsonSerializerOptions;
         var changedModels = new List<IModel>();
 
-        foreach (var model in _trackedModels)
+        lock (_lock)
         {
-            var currentState = JsonSerializer.Serialize(model, model.GetType(), options);
-
-            if (
-                !_previousStates.TryGetValue(model, out var previousState)
-                || previousState != currentState
-            )
+            foreach (var model in _trackedModels)
             {
-                logger.LogDebug("{CurrentState}", currentState);
-                _previousStates[model] = currentState;
-                changedModels.Add(model);
+                var currentState = JsonSerializer.Serialize(model, model.GetType(), options);
+
+                if (
+                    !_previousStates.TryGetValue(model, out var previousState)
+                    || previousState != currentState
+                )
+                {
+                    _previousStates[model] = currentState;
+                    changedModels.Add(model);
+                }
             }
         }
 
         // Log outside of lock to prevent holding lock during logging
         foreach (var model in changedModels)
         {
-            if (!_previousStates.TryGetValue(model, out var state))
-                break;
-            logger.LogDebug("Model state changed: {State}", state);
+            lock (_lock)
+            {
+                if (!_previousStates.TryGetValue(model, out var state))
+                    break;
+
+                logger.LogDebug("{State}", state);
+            }
         }
     }
 
@@ -113,14 +120,17 @@ public class JsonEffectProvider(
     /// </remarks>
     public async Task Track(IModel model)
     {
-        if (_trackedModels.Add(model))
+        lock (_lock)
         {
-            // Store initial serialized state when tracking starts
-            _previousStates[model] = JsonSerializer.Serialize(
-                model,
-                model.GetType(),
-                configuration.WorkflowParameterJsonSerializerOptions
-            );
+            if (_trackedModels.Add(model))
+            {
+                // Store initial serialized state when tracking starts
+                _previousStates[model] = JsonSerializer.Serialize(
+                    model,
+                    model.GetType(),
+                    configuration.WorkflowParameterJsonSerializerOptions
+                );
+            }
         }
     }
 }

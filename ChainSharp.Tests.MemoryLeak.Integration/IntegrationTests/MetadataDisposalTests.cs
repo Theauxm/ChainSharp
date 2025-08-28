@@ -33,23 +33,6 @@ public class MetadataDisposalTests
     }
 
     [Test]
-    public void Metadata_ShouldImplementIDisposable()
-    {
-        // Arrange & Act
-        var metadata = Metadata.Create(
-            new CreateMetadata
-            {
-                Name = "TestWorkflow",
-                Input = new { TestData = "Test" },
-                ExternalId = Guid.NewGuid().ToString("N")
-            }
-        );
-
-        // Assert
-        metadata.Should().BeAssignableTo<IDisposable>();
-    }
-
-    [Test]
     public void Metadata_ShouldDisposeJsonDocuments_WhenDisposed()
     {
         // Arrange

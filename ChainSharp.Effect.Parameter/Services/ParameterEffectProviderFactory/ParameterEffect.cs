@@ -27,6 +27,7 @@ namespace ChainSharp.Effect.Parameter.Services.ParameterEffectProviderFactory;
 public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
 {
     private readonly HashSet<Metadata> _trackedMetadatas = [];
+    private readonly object _lock = new();
 
     /// <summary>
     /// Saves changes to tracked metadata objects by serializing their input and output parameters.
@@ -44,8 +45,11 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
     /// </remarks>
     public async Task SaveChanges(CancellationToken cancellationToken)
     {
-        foreach (var metadata in _trackedMetadatas)
-            SerializeParameters(metadata);
+        lock (_lock)
+        {
+            foreach (var metadata in _trackedMetadatas)
+                SerializeParameters(metadata);
+        }
     }
 
     /// <summary>
@@ -69,8 +73,11 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
     {
         if (model is Metadata metadata)
         {
-            _trackedMetadatas.Add(metadata);
-            SerializeParameters(metadata);
+            lock (_lock)
+            {
+                _trackedMetadatas.Add(metadata);
+                SerializeParameters(metadata);
+            }
         }
     }
 
@@ -128,10 +135,13 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
 
     public void Dispose()
     {
-        foreach (var metadata in _trackedMetadatas)
+        lock (_lock)
         {
-            metadata.InputObject = null;
-            metadata.OutputObject = null;
+            foreach (var metadata in _trackedMetadatas)
+            {
+                metadata.InputObject = null;
+                metadata.OutputObject = null;
+            }
         }
 
         _trackedMetadatas.Clear();

@@ -116,7 +116,7 @@ public interface IMetadata : IModel
     /// and understanding the context of the workflow execution.
     /// </remarks>
     [Column("input")]
-    JsonDocument? Input { get; set; }
+    string? Input { get; set; }
 
     /// <summary>
     /// Gets or sets the serialized output data from the workflow.
@@ -127,7 +127,7 @@ public interface IMetadata : IModel
     /// workflow results and verification of expected outcomes.
     /// </remarks>
     [Column("output")]
-    JsonDocument? Output { get; set; }
+    string? Output { get; set; }
 
     /// <summary>
     /// Gets or sets the time when the workflow execution started.

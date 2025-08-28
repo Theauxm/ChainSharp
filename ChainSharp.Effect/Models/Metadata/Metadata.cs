@@ -32,7 +32,7 @@ namespace ChainSharp.Effect.Models.Metadata;
 /// IMPORTANT: This class implements IDisposable to properly dispose of JsonDocument objects
 /// that hold unmanaged memory resources.
 /// </remarks>
-public class Metadata : IMetadata, IDisposable
+public class Metadata : IMetadata
 {
     #region Columns
 
@@ -151,7 +151,8 @@ public class Metadata : IMetadata, IDisposable
     /// and understanding the context of the workflow execution.
     /// </remarks>
     [Column("input")]
-    public JsonDocument? Input { get; set; }
+    [JsonIgnore]
+    public string? Input { get; set; }
 
     /// <summary>
     /// Gets or sets the serialized output data from the workflow.
@@ -162,7 +163,7 @@ public class Metadata : IMetadata, IDisposable
     /// workflow results and verification of expected outcomes.
     /// </remarks>
     [Column("output")]
-    public JsonDocument? Output { get; set; }
+    public string? Output { get; set; }
 
     /// <summary>
     /// Gets or sets the time when the workflow execution started.
@@ -348,11 +349,6 @@ public class Metadata : IMetadata, IDisposable
     #endregion
 
     /// <summary>
-    /// Indicates whether this instance has been disposed.
-    /// </summary>
-    private bool _disposed = false;
-
-    /// <summary>
     /// Initializes a new instance of the Metadata class.
     /// </summary>
     /// <remarks>
@@ -365,50 +361,4 @@ public class Metadata : IMetadata, IDisposable
     /// </remarks>
     [JsonConstructor]
     public Metadata() { }
-
-    /// <summary>
-    /// Releases all resources used by the Metadata instance.
-    /// </summary>
-    /// <remarks>
-    /// This method properly disposes of JsonDocument objects that hold unmanaged memory.
-    /// It implements the standard dispose pattern to prevent memory leaks.
-    /// </remarks>
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    /// <summary>
-    /// Releases the unmanaged resources used by the Metadata and optionally releases the managed resources.
-    /// </summary>
-    /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources</param>
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposed)
-        {
-            if (disposing)
-            {
-                // Dispose managed resources (JsonDocument objects)
-                Input?.Dispose();
-                Output?.Dispose();
-            }
-
-            // No unmanaged resources to dispose in this class
-
-            _disposed = true;
-        }
-    }
-
-    /// <summary>
-    /// Finalizer for the Metadata class.
-    /// </summary>
-    /// <remarks>
-    /// This finalizer ensures that JsonDocument objects are disposed even if Dispose() is not called explicitly.
-    /// However, explicit disposal via Dispose() is strongly recommended for better performance.
-    /// </remarks>
-    ~Metadata()
-    {
-        Dispose(false);
-    }
 }

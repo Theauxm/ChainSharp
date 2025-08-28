@@ -70,15 +70,10 @@ public class MetadataDisposalTests
         var beforeDisposal = metadata.Input;
         var outputBeforeDisposal = metadata.Output;
 
-        metadata.Dispose();
 
         // Assert - JsonDocument objects should be disposed
         // We can't directly check if JsonDocument is disposed, but we can verify the disposal pattern works
         metadata.Should().NotBeNull();
-
-        // Calling Dispose again should not throw (idempotent)
-        Action secondDispose = () => metadata.Dispose();
-        secondDispose.Should().NotThrow();
     }
 
     [Test]
@@ -237,27 +232,5 @@ public class MetadataDisposalTests
                 result.MemoryAllocated / 3,
                 "Failed workflows should still clean up most allocated memory"
             );
-    }
-
-    [Test]
-    public void MetadataWithNullJsonDocuments_ShouldNotThrowOnDispose()
-    {
-        // Arrange
-        var metadata = Metadata.Create(
-            new CreateMetadata
-            {
-                Name = "TestWorkflow",
-                Input = new { TestData = "Test" },
-                ExternalId = Guid.NewGuid().ToString("N")
-            }
-        );
-
-        // Ensure JsonDocument properties are null
-        metadata.Input.Should().BeNull();
-        metadata.Output.Should().BeNull();
-
-        // Act & Assert
-        Action dispose = () => metadata.Dispose();
-        dispose.Should().NotThrow("Disposing metadata with null JsonDocuments should be safe");
     }
 }

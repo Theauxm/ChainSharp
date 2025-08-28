@@ -49,7 +49,8 @@ public class StepLoggerProvider(IChainSharpEffectConfiguration configuration) : 
                     indentedJson
                 );
             },
-            Left: _ => { }
+            Left: _ => { },
+            Bottom: () => { }
         );
     }
 
@@ -103,7 +104,8 @@ public class StepLoggerProvider(IChainSharpEffectConfiguration configuration) : 
                         effectStep.ExceptionData.Step,
                         effectStep.ExceptionData.Message
                     );
-            }
+            },
+            Bottom: () => { }
         );
     }
 

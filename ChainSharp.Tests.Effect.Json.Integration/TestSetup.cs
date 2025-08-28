@@ -1,6 +1,7 @@
 using ChainSharp.ArrayLogger.Services.ArrayLoggingProvider;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Json.Extensions;
+using ChainSharp.Effect.Step.Logging.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -23,8 +24,8 @@ public abstract class TestSetup
 
         ServiceCollection
             .AddSingleton<IArrayLoggingProvider>(arrayProvider)
-            .AddLogging(x => x.AddProvider(arrayProvider))
-            .AddChainSharpEffects(options => options.AddJsonEffect());
+            .AddLogging(x => x.AddConsole().AddProvider(arrayProvider))
+            .AddChainSharpEffects(options => options.AddJsonEffect().AddStepLogger());
 
         ServiceProvider = ConfigureServices(ServiceCollection);
     }

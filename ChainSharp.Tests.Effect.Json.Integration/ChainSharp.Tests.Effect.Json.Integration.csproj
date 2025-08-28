@@ -29,6 +29,8 @@
       <ProjectReference Include="..\ChainSharp.ArrayLogger\ChainSharp.ArrayLogger.csproj" />
       <ProjectReference Include="..\ChainSharp.Effect.Json\ChainSharp.Effect.Json.csproj" />
       <ProjectReference Include="..\ChainSharp.Effect\ChainSharp.Effect.csproj" />
+        <ProjectReference Include="..\ChainSharp.Effect.Step.Logging\ChainSharp.Effect.Step.Logging.csproj" />
+
     </ItemGroup>
 
 </Project>

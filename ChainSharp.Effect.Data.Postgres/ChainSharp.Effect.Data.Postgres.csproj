@@ -7,7 +7,7 @@
         <Authors>Theauxm,mark-keaton</Authors>
         <PackageDescription>Postgres Provider for ChainSharp.Effect.Data Library</PackageDescription>
         <RepositoryUrl>https://github.com/Theauxm/ChainSharp</RepositoryUrl>
-        <AssemblyName>ChainSharp.Effect.Data.Postgres</AssemblyName>
+        <AssemblyName>Theauxm.ChainSharp.Effect.Data.Postgres</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>

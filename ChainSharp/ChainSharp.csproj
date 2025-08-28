@@ -7,7 +7,7 @@
         <Authors>Theauxm,mark-keaton</Authors>
         <PackageDescription>Railway Oriented .NET Programming</PackageDescription>
         <RepositoryUrl>https://github.com/Theauxm/ChainSharp</RepositoryUrl>
-        <AssemblyName>ChainSharp</AssemblyName>
+        <AssemblyName>Theauxm.ChainSharp</AssemblyName>
     </PropertyGroup>
 
     <PropertyGroup>

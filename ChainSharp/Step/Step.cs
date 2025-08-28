@@ -17,7 +17,7 @@ namespace ChainSharp.Step;
 public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
 {
     public WorkflowExceptionData? ExceptionData { get; private set; }
-    
+
     public Either<Exception, TIn> PreviousResult { get; private set; }
     public Either<Exception, TOut> Result { get; private set; }
 
@@ -46,7 +46,7 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
     )
     {
         PreviousResult = previousOutput;
-        
+
         // If the previous step failed, short-circuit and return its exception
         if (previousOutput.IsLeft)
             return previousOutput.Swap().ValueUnsafe();
@@ -68,9 +68,9 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
                 BindingFlags.Instance | BindingFlags.NonPublic
             );
 
-            if (messageField is null) 
+            if (messageField is null)
                 return e;
-            
+
             var exceptionData = new WorkflowExceptionData
             {
                 WorkflowName = workflow.GetType().Name,

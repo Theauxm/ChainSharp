@@ -24,7 +24,9 @@ public abstract class TestSetup
 
         ServiceCollection
             .AddSingleton<IArrayLoggingProvider>(arrayProvider)
-            .AddLogging(x => x.AddConsole().AddProvider(arrayProvider).SetMinimumLevel(LogLevel.Debug))
+            .AddLogging(
+                x => x.AddConsole().AddProvider(arrayProvider).SetMinimumLevel(LogLevel.Debug)
+            )
             .AddChainSharpEffects(options => options.AddJsonEffect().AddStepLogger());
 
         ServiceProvider = ConfigureServices(ServiceCollection);

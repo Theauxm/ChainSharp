@@ -105,7 +105,8 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
             {
                 // Input object contains disposed JsonDocument, skip serialization
                 // This can happen when metadata contains disposed JsonDocument objects
-                metadata.Input ??= """{"_disposed": true, "_message": "Input object contained disposed JsonDocument objects"}""";
+                metadata.Input ??=
+                    """{"_disposed": true, "_message": "Input object contained disposed JsonDocument objects"}""";
             }
         }
 
@@ -119,7 +120,8 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
             {
                 // Output object contains disposed JsonDocument, skip serialization
                 // This can happen when metadata contains disposed JsonDocument objects
-                metadata.Output ??= """{"_disposed": true, "_message": "Output object contained disposed JsonDocument objects"}""";
+                metadata.Output ??=
+                    """{"_disposed": true, "_message": "Output object contained disposed JsonDocument objects"}""";
             }
         }
     }
@@ -131,7 +133,7 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
             metadata.InputObject = null;
             metadata.OutputObject = null;
         }
-        
+
         _trackedMetadatas.Clear();
     }
 }

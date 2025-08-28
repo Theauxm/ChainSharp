@@ -73,27 +73,27 @@ public class JsonEffectProvider(
         var options = configuration.WorkflowParameterJsonSerializerOptions;
         var changedModels = new List<IModel>();
 
-            foreach (var model in _trackedModels)
-            {
-                var currentState = JsonSerializer.Serialize(model, model.GetType(), options);
+        foreach (var model in _trackedModels)
+        {
+            var currentState = JsonSerializer.Serialize(model, model.GetType(), options);
 
-                if (
-                    !_previousStates.TryGetValue(model, out var previousState)
-                    || previousState != currentState
-                )
-                {
-                    logger.LogDebug("{CurrentState}", currentState);
-                    _previousStates[model] = currentState;
-                    changedModels.Add(model);
-                }
+            if (
+                !_previousStates.TryGetValue(model, out var previousState)
+                || previousState != currentState
+            )
+            {
+                logger.LogDebug("{CurrentState}", currentState);
+                _previousStates[model] = currentState;
+                changedModels.Add(model);
             }
+        }
 
         // Log outside of lock to prevent holding lock during logging
         foreach (var model in changedModels)
         {
-                if (!_previousStates.TryGetValue(model, out var state))
-                    break;
-                logger.LogDebug("Model state changed: {State}", state);
+            if (!_previousStates.TryGetValue(model, out var state))
+                break;
+            logger.LogDebug("Model state changed: {State}", state);
         }
     }
 
@@ -113,14 +113,14 @@ public class JsonEffectProvider(
     /// </remarks>
     public async Task Track(IModel model)
     {
-            if (_trackedModels.Add(model))
-            {
-                // Store initial serialized state when tracking starts
-                _previousStates[model] = JsonSerializer.Serialize(
-                    model,
-                    model.GetType(),
-                    configuration.WorkflowParameterJsonSerializerOptions
-                );
-            }
+        if (_trackedModels.Add(model))
+        {
+            // Store initial serialized state when tracking starts
+            _previousStates[model] = JsonSerializer.Serialize(
+                model,
+                model.GetType(),
+                configuration.WorkflowParameterJsonSerializerOptions
+            );
+        }
     }
 }

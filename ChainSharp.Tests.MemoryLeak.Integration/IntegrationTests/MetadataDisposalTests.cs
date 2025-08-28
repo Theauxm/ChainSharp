@@ -70,7 +70,6 @@ public class MetadataDisposalTests
         var beforeDisposal = metadata.Input;
         var outputBeforeDisposal = metadata.Output;
 
-
         // Assert - JsonDocument objects should be disposed
         // We can't directly check if JsonDocument is disposed, but we can verify the disposal pattern works
         metadata.Should().NotBeNull();

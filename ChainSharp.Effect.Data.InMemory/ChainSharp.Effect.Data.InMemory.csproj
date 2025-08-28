@@ -7,7 +7,7 @@
         <Authors>Theauxm,mark-keaton</Authors>
         <PackageDescription>In Memory Provider for ChainSharp.Effect.Data Library</PackageDescription>
         <RepositoryUrl>https://github.com/Theauxm/ChainSharp</RepositoryUrl>
-        <AssemblyName>ChainSharp.Effect.Data.InMemory</AssemblyName>
+        <AssemblyName>Theauxm.ChainSharp.Effect.Data.InMemory</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>

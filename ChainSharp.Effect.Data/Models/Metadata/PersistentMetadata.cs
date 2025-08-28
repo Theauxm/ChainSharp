@@ -23,20 +23,27 @@ public class PersistentMetadata : Effect.Models.Metadata.Metadata
                 .HasForeignKey(e => e.ParentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // // Configure the conversion from string to JsonDocument and vice versa
-            // entity
-            //     .Property(e => e.Input)
-            //     .HasConversion(
-            //         v => v != null ? v.ToString() : null,
-            //         v => v != null ? JsonDocument.Parse(v, new JsonDocumentOptions()) : null
-            //     );
-            //
-            // entity
-            //     .Property(e => e.Output)
-            //     .HasConversion(
-            //         v => v != null ? v.ToString() : null,
-            //         v => v != null ? JsonDocument.Parse(v, new JsonDocumentOptions()) : null
-            //     );
+            // Configure the conversion from string to jsonb for PostgreSQL
+            // This handles the conversion between C# string properties and PostgreSQL jsonb columns
+            entity
+                .Property(e => e.Input)
+                .HasConversion(
+                    // Convert string to jsonb format for database storage
+                    v => v,
+                    // Convert jsonb back to string when reading from database
+                    v => v
+                )
+                .HasColumnType("jsonb");
+
+            entity
+                .Property(e => e.Output)
+                .HasConversion(
+                    // Convert string to jsonb format for database storage
+                    v => v,
+                    // Convert jsonb back to string when reading from database
+                    v => v
+                )
+                .HasColumnType("jsonb");
         });
     }
 }

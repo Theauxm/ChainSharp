@@ -99,8 +99,7 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
         {
             try
             {
-                var serializedInput = JsonSerializer.Serialize(metadata.InputObject, options);
-                metadata.Input = JsonDocument.Parse(serializedInput).ToString();
+                metadata.Input = JsonSerializer.Serialize(metadata.InputObject, options);
             }
             catch (ObjectDisposedException)
             {
@@ -114,8 +113,7 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
         {
             try
             {
-                var serializedOutput = JsonSerializer.Serialize(metadata.OutputObject, options);
-                metadata.Output = JsonDocument.Parse(serializedOutput).ToString();
+                metadata.Output = JsonSerializer.Serialize(metadata.OutputObject, options);
             }
             catch (ObjectDisposedException)
             {

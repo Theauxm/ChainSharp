@@ -54,7 +54,7 @@ public static class ChainSharpJsonSerializationOptions
             IncludeFields = true,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             ReferenceHandler = ReferenceHandler.Preserve,
-            MaxDepth = 10,
+            MaxDepth = 8,
             Converters =
             {
                 new JsonStringEnumConverter(),

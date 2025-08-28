@@ -55,6 +55,6 @@ public static class ServiceExtensions
             JsonEffectProvider
         >();
 
-        return configurationBuilder.AddEffect<IEffectProviderFactory, JsonEffectProviderFactory>();
+        return configurationBuilder.AddEffect<JsonEffectProviderFactory>();
     }
 }

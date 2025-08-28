@@ -1,4 +1,5 @@
 using ChainSharp.Step;
+using ChainSharp.Tests.Unit.Utils;
 using FluentAssertions;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
@@ -40,7 +41,7 @@ public class StepTests : TestSetup
         var step = new TestStep();
 
         // Act
-        var result = await step.RailwayStep(input);
+        var result = await step.RailwayStep(input, UnitWorkflow.Create());
 
         // Assert
         result.IsRight.Should().BeTrue();
@@ -55,7 +56,7 @@ public class StepTests : TestSetup
         var step = new TestStep();
 
         // Act
-        var result = await step.RailwayStep(testException);
+        var result = await step.RailwayStep(testException, UnitWorkflow.Create());
 
         // Assert
         result.IsLeft.Should().BeTrue();

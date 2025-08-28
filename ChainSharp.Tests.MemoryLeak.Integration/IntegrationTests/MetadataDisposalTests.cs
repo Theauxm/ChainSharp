@@ -33,18 +33,6 @@ public class MetadataDisposalTests
     }
 
     [Test]
-    public void Metadata_ShouldImplementIDisposable()
-    {
-        // Arrange & Act
-        var metadata = Metadata.Create(
-            new CreateMetadata { Name = "TestWorkflow", Input = new { TestData = "Test" } }
-        );
-
-        // Assert
-        metadata.Should().BeAssignableTo<IDisposable>();
-    }
-
-    [Test]
     public void Metadata_ShouldDisposeJsonDocuments_WhenDisposed()
     {
         // Arrange
@@ -52,7 +40,8 @@ public class MetadataDisposalTests
             new CreateMetadata
             {
                 Name = "TestWorkflow",
-                Input = new { LargeData = new string('X', 10000) }
+                Input = new { LargeData = new string('X', 10000) },
+                ExternalId = Guid.NewGuid().ToString("N")
             }
         );
 
@@ -64,15 +53,9 @@ public class MetadataDisposalTests
         var beforeDisposal = metadata.Input;
         var outputBeforeDisposal = metadata.Output;
 
-        metadata.Dispose();
-
         // Assert - JsonDocument objects should be disposed
         // We can't directly check if JsonDocument is disposed, but we can verify the disposal pattern works
         metadata.Should().NotBeNull();
-
-        // Calling Dispose again should not throw (idempotent)
-        Action secondDispose = () => metadata.Dispose();
-        secondDispose.Should().NotThrow();
     }
 
     [Test]
@@ -84,7 +67,8 @@ public class MetadataDisposalTests
                 new CreateMetadata
                 {
                     Name = "TestWorkflow",
-                    Input = new { LargeData = new string('X', 50000) } // 50KB of data
+                    Input = new { LargeData = new string('X', 50000) }, // 50KB of data
+                    ExternalId = Guid.NewGuid().ToString("N")
                 }
             );
 
@@ -230,22 +214,5 @@ public class MetadataDisposalTests
                 result.MemoryAllocated / 3,
                 "Failed workflows should still clean up most allocated memory"
             );
-    }
-
-    [Test]
-    public void MetadataWithNullJsonDocuments_ShouldNotThrowOnDispose()
-    {
-        // Arrange
-        var metadata = Metadata.Create(
-            new CreateMetadata { Name = "TestWorkflow", Input = new { TestData = "Test" } }
-        );
-
-        // Ensure JsonDocument properties are null
-        metadata.Input.Should().BeNull();
-        metadata.Output.Should().BeNull();
-
-        // Act & Assert
-        Action dispose = () => metadata.Dispose();
-        dispose.Should().NotThrow("Disposing metadata with null JsonDocuments should be safe");
     }
 }

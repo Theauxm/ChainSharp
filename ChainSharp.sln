@@ -34,6 +34,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests.MemoryLeak
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Tests", "ChainSharp.Tests\ChainSharp.Tests.csproj", "{683633D7-731F-4757-A850-46C08F190977}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChainSharp.Effect.Step.Logging", "ChainSharp.Effect.Step.Logging\ChainSharp.Effect.Step.Logging.csproj", "{B6A558A8-DB82-461E-9330-B40DF7DBAC25}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -104,5 +106,9 @@ Global
 		{2F8E7B94-1234-5678-9ABC-DEF012345678}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2F8E7B94-1234-5678-9ABC-DEF012345678}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2F8E7B94-1234-5678-9ABC-DEF012345678}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B6A558A8-DB82-461E-9330-B40DF7DBAC25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B6A558A8-DB82-461E-9330-B40DF7DBAC25}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B6A558A8-DB82-461E-9330-B40DF7DBAC25}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B6A558A8-DB82-461E-9330-B40DF7DBAC25}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

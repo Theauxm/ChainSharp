@@ -37,7 +37,6 @@ public class JsonEffectProvider(
     private readonly Dictionary<IModel, string> _previousStates = new();
     private readonly HashSet<IModel> _trackedModels = [];
     private readonly object _lock = new();
-    private bool _disposed = false;
 
     /// <summary>
     /// Disposes the effect provider and releases any resources.
@@ -48,19 +47,9 @@ public class JsonEffectProvider(
     /// </remarks>
     public void Dispose()
     {
-        if (_disposed)
-            return;
-
-        lock (_lock)
-        {
-            if (_disposed)
-                return;
-
-            // Clear all tracked models to release references and prevent memory leaks
-            _trackedModels.Clear();
-            _previousStates.Clear();
-            _disposed = true;
-        }
+        // Clear all tracked models to release references and prevent memory leaks
+        _trackedModels.Clear();
+        _previousStates.Clear();
     }
 
     /// <summary>
@@ -82,17 +71,11 @@ public class JsonEffectProvider(
     /// </remarks>
     public async Task SaveChanges(CancellationToken cancellationToken)
     {
-        if (_disposed)
-            return;
-
         var options = configuration.WorkflowParameterJsonSerializerOptions;
         var changedModels = new List<IModel>();
 
         lock (_lock)
         {
-            if (_disposed)
-                return;
-
             foreach (var model in _trackedModels)
             {
                 var currentState = JsonSerializer.Serialize(model, model.GetType(), options);
@@ -111,14 +94,12 @@ public class JsonEffectProvider(
         // Log outside of lock to prevent holding lock during logging
         foreach (var model in changedModels)
         {
-            if (_disposed)
-                break;
-
             lock (_lock)
             {
-                if (_disposed || !_previousStates.TryGetValue(model, out var state))
+                if (!_previousStates.TryGetValue(model, out var state))
                     break;
-                logger.LogInformation(state);
+
+                logger.LogDebug("{State}", state);
             }
         }
     }
@@ -139,14 +120,8 @@ public class JsonEffectProvider(
     /// </remarks>
     public async Task Track(IModel model)
     {
-        if (_disposed)
-            return;
-
         lock (_lock)
         {
-            if (_disposed)
-                return;
-
             if (_trackedModels.Add(model))
             {
                 // Store initial serialized state when tracking starts

@@ -27,7 +27,12 @@ public class InMemoryProviderTests : TestSetup
         var context = (IDataContext)inMemoryContextFactory.Create();
 
         var metadata = Metadata.Create(
-            new CreateMetadata() { Name = "TestMetadata", Input = Unit.Default }
+            new CreateMetadata()
+            {
+                Name = "TestMetadata",
+                Input = Unit.Default,
+                ExternalId = Guid.NewGuid().ToString("N")
+            }
         );
 
         await context.Track(metadata);

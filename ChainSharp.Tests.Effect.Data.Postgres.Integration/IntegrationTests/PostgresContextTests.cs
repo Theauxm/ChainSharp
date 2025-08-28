@@ -4,6 +4,7 @@ using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Mediator.Services.WorkflowBus;
 using ChainSharp.Effect.Models.Metadata.DTOs;
+using ChainSharp.Effect.Services.EffectStep;
 using ChainSharp.Effect.Services.EffectWorkflow;
 using ChainSharp.Step;
 using FluentAssertions;
@@ -27,7 +28,12 @@ public class PostgresContextTests : TestSetup
         using var context = (IDataContext)postgresContextFactory.Create();
 
         var metadata = Metadata.Create(
-            new CreateMetadata { Name = "TestMetadata", Input = Unit.Default }
+            new CreateMetadata
+            {
+                Name = "TestMetadata",
+                Input = Unit.Default,
+                ExternalId = Guid.NewGuid().ToString("N")
+            }
         );
 
         await context.Track(metadata);
@@ -173,7 +179,7 @@ public class PostgresContextTests : TestSetup
         IWorkflowBus workflowBus,
         ILogger<StepToRunTestWorkflow> logger,
         ITestWorkflowWithinWorkflow workflowWithinWorkflow
-    ) : Step<Unit, ITestWorkflow>
+    ) : EffectStep<Unit, ITestWorkflow>
     {
         public override async Task<ITestWorkflow> Run(Unit input)
         {
@@ -182,7 +188,7 @@ public class PostgresContextTests : TestSetup
                 workflowWithinWorkflow.Metadata
             );
 
-            logger.LogCritical("Ran TestWorkflow");
+            logger.LogCritical("Ran {WorkflowName}", "TestWorkflow");
 
             return testWorkflow;
         }

@@ -6,6 +6,7 @@ using ChainSharp.Effect.Json.Extensions;
 using ChainSharp.Effect.Mediator.Extensions;
 using ChainSharp.Effect.Mediator.Services.WorkflowBus;
 using ChainSharp.Effect.Parameter.Extensions;
+using ChainSharp.Effect.Step.Logging.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -37,7 +38,7 @@ public abstract class TestSetup
         ServiceProvider = new ServiceCollection()
             .AddSingleton<ILoggerProvider>(arrayLoggingProvider)
             .AddSingleton<IArrayLoggingProvider>(arrayLoggingProvider)
-            .AddLogging()
+            .AddLogging(x => x.AddConsole().SetMinimumLevel(LogLevel.Debug))
             .AddChainSharpEffects(
                 options =>
                     options
@@ -52,6 +53,7 @@ public abstract class TestSetup
                         .AddPostgresEffect(connectionString)
                         .AddEffectDataContextLogging(minimumLogLevel: LogLevel.Trace)
                         .AddJsonEffect()
+                        .AddStepLogger()
             )
             .BuildServiceProvider();
     }

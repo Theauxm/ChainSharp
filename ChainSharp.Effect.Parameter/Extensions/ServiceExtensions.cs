@@ -70,6 +70,6 @@ public static class ServiceExtensions
 
         builder.WorkflowParameterJsonSerializerOptions = jsonSerializerOptions;
 
-        return builder.AddEffect<IEffectProviderFactory, ParameterEffectProviderFactory>();
+        return builder.AddEffect<ParameterEffectProviderFactory>();
     }
 }

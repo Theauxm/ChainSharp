@@ -152,7 +152,7 @@ public class EffectRunner : IEffectRunner
         }
         else
         {
-            _logger?.LogDebug(
+            _logger?.LogTrace(
                 "Successfully disposed all ({ProviderCount}) effect provider(s).",
                 ActiveEffectProviders.Count
             );

@@ -7,7 +7,7 @@
         <Authors>Theauxm,mark-keaton</Authors>
         <PackageDescription>Effects for ChainSharp Workflows</PackageDescription>
         <RepositoryUrl>https://github.com/Theauxm/ChainSharp</RepositoryUrl>
-        <AssemblyName>Theauxm.ChainSharp.Effect</AssemblyName>
+        <AssemblyName>ChainSharp.Effect</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>

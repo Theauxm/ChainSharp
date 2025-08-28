@@ -4,7 +4,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <AssemblyName>Theauxm.ChainSharp.ArrayLogger</AssemblyName>
+        <AssemblyName>ChainSharp.ArrayLogger</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>

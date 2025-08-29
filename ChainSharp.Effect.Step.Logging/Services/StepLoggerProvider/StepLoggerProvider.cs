@@ -1,12 +1,15 @@
-using System.Text.Json;
 using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
 using ChainSharp.Effect.Services.EffectStep;
 using ChainSharp.Effect.Services.EffectWorkflow;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace ChainSharp.Effect.Step.Logging.Services.StepLoggerProvider;
 
-public class StepLoggerProvider(IChainSharpEffectConfiguration configuration) : IStepLoggerProvider
+public class StepLoggerProvider(
+    IChainSharpEffectConfiguration configuration,
+    ILogger<StepLoggerProvider> logger
+) : IStepLoggerProvider
 {
     public async Task BeforeStepExecution<TIn, TOut, TWorkflowIn, TWorkflowOut>(
         EffectStep<TIn, TOut> effectStep,
@@ -18,7 +21,7 @@ public class StepLoggerProvider(IChainSharpEffectConfiguration configuration) : 
 
         var workflowType = effectWorkflow.GetType().Name;
 
-        effectWorkflow.EffectLogger?.LogTrace(
+        logger.LogTrace(
             "BEFORE STEP EXECUTION Success: ({Success}) Step Type: ({StepType}) Input Type: ({TypeIn}) Output Type: ({TypeOut}) Workflow: ({Workflow}) ExternalId ({ExternalId})",
             effectStep.PreviousResult.IsRight,
             stepType,
@@ -34,19 +37,18 @@ public class StepLoggerProvider(IChainSharpEffectConfiguration configuration) : 
                 if (resultIn is null)
                     return;
 
-                var indentedJson = JsonSerializer.Serialize(
+                var json = JsonConvert.SerializeObject(
                     resultIn,
-                    resultIn.GetType(),
-                    configuration.WorkflowParameterJsonSerializerOptions
+                    configuration.NewtonsoftJsonSerializerSettings
                 );
 
-                effectWorkflow.EffectLogger?.LogDebug(
+                logger.LogDebug(
                     "BEFORE STEP EXECUTION Workflow: ({WorkflowName}) ExternalId: ({ExternalId}) Step: ({StepName}) Input Type: ({InputType}) Input: ({Input})",
                     workflowType,
                     effectWorkflow.ExternalId,
                     stepType,
                     effectStep.PreviousResult.GetUnderlyingRightType(),
-                    indentedJson
+                    json
                 );
             },
             Left: _ => { },
@@ -64,7 +66,7 @@ public class StepLoggerProvider(IChainSharpEffectConfiguration configuration) : 
 
         var workflowType = effectWorkflow.GetType().Name;
 
-        effectWorkflow.EffectLogger?.LogTrace(
+        logger.LogTrace(
             "AFTER STEP EXECUTION Success ({Success}) Step Type: ({StepType}) Workflow: ({Workflow}) ExternalId ({ExternalId})",
             effectStep.Result.IsRight,
             stepType,
@@ -78,13 +80,12 @@ public class StepLoggerProvider(IChainSharpEffectConfiguration configuration) : 
                 if (resultOut is null)
                     return;
 
-                var json = JsonSerializer.Serialize(
+                var json = JsonConvert.SerializeObject(
                     resultOut,
-                    resultOut.GetType(),
-                    configuration.WorkflowParameterJsonSerializerOptions
+                    configuration.NewtonsoftJsonSerializerSettings
                 );
 
-                effectWorkflow.EffectLogger?.LogDebug(
+                logger.LogDebug(
                     "AFTER STEP EXECUTION Workflow: ({WorkflowName}) ExternalId: ({ExternalId}) Step: ({StepName}) Result Type: ({ResultType}) Result: ({Result})",
                     workflowType,
                     effectWorkflow.ExternalId,
@@ -96,7 +97,7 @@ public class StepLoggerProvider(IChainSharpEffectConfiguration configuration) : 
             Left: _ =>
             {
                 if (effectStep.ExceptionData is not null)
-                    effectWorkflow.EffectLogger?.LogError(
+                    logger.LogError(
                         "AFTER STEP EXECUTION Exception: ({ExceptionType}) Workflow: ({WorkflowName}) ExternalId: ({ExternalId}) Step: ({StepName}) Message: ({Message}).",
                         effectStep.ExceptionData.Type,
                         effectStep.ExceptionData.WorkflowName,

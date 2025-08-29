@@ -15,5 +15,5 @@ public class ChainSharpEffectConfigurationBuilder(IServiceCollection serviceColl
         ChainSharpJsonSerializationOptions.Default;
 
     protected internal ChainSharpEffectConfiguration.ChainSharpEffectConfiguration Build() =>
-        new() { WorkflowParameterJsonSerializerOptions = WorkflowParameterJsonSerializerOptions };
+        new() { SystemJsonJsonSerializerOptions = WorkflowParameterJsonSerializerOptions };
 }

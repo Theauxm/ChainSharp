@@ -1,5 +1,7 @@
+using System.Linq.Expressions;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace ChainSharp.Effect.Utils;
 
@@ -63,4 +65,7 @@ public static class ChainSharpJsonSerializationOptions
                 new SystemTypeConverter(),
             }
         };
+
+    public static JsonSerializerSettings NewtonsoftDefault { get; set; } =
+        new() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
 }

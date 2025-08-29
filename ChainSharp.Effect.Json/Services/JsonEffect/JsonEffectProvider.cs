@@ -71,7 +71,7 @@ public class JsonEffectProvider(
     /// </remarks>
     public async Task SaveChanges(CancellationToken cancellationToken)
     {
-        var options = configuration.WorkflowParameterJsonSerializerOptions;
+        var options = configuration.SystemJsonJsonSerializerOptions;
         var changedModels = new List<IModel>();
 
         lock (_lock)
@@ -128,7 +128,7 @@ public class JsonEffectProvider(
                 _previousStates[model] = JsonSerializer.Serialize(
                     model,
                     model.GetType(),
-                    configuration.WorkflowParameterJsonSerializerOptions
+                    configuration.SystemJsonJsonSerializerOptions
                 );
             }
         }

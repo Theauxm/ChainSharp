@@ -10,6 +10,7 @@ using ChainSharp.Tests.MemoryLeak.Integration.Utils;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace ChainSharp.Tests.MemoryLeak.Integration.IntegrationTests;
 
@@ -399,48 +400,34 @@ public class CrossComponentMemoryTests
 }
 
 // Mock configuration for testing
-public class MockChainSharpEffectConfiguration : IChainSharpEffectConfiguration
+public class MockChainSharpEffectConfiguration(JsonSerializerOptions options)
+    : IChainSharpEffectConfiguration
 {
-    public JsonSerializerOptions WorkflowParameterJsonSerializerOptions { get; }
+    public JsonSerializerOptions SystemJsonJsonSerializerOptions { get; } = options;
 
-    public MockChainSharpEffectConfiguration(JsonSerializerOptions options)
-    {
-        WorkflowParameterJsonSerializerOptions = options;
-    }
+    public JsonSerializerSettings NewtonsoftJsonSerializerSettings { get; } =
+        new() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
 }
 
 // Helper factory classes for testing
-public class TestParameterEffectProviderFactory : IEffectProviderFactory
+public class TestParameterEffectProviderFactory(JsonSerializerOptions options)
+    : IEffectProviderFactory
 {
-    private readonly JsonSerializerOptions _options;
-
-    public TestParameterEffectProviderFactory(JsonSerializerOptions options)
-    {
-        _options = options;
-    }
-
     public ChainSharp.Effect.Services.EffectProvider.IEffectProvider Create()
     {
-        return new ParameterEffect(_options);
+        return new ParameterEffect(options);
     }
 }
 
-public class TestJsonEffectProviderFactory : IEffectProviderFactory
+public class TestJsonEffectProviderFactory(
+    JsonSerializerOptions options,
+    IChainSharpEffectConfiguration configuration
+) : IEffectProviderFactory
 {
-    private readonly JsonSerializerOptions _options;
-    private readonly IChainSharpEffectConfiguration _configuration;
-
-    public TestJsonEffectProviderFactory(
-        JsonSerializerOptions options,
-        IChainSharpEffectConfiguration configuration
-    )
-    {
-        _options = options;
-        _configuration = configuration;
-    }
+    private readonly JsonSerializerOptions _options = options;
 
     public ChainSharp.Effect.Services.EffectProvider.IEffectProvider Create()
     {
-        return new JsonEffectProvider(null, _configuration);
+        return new JsonEffectProvider(null, configuration);
     }
 }

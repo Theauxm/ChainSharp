@@ -26,7 +26,7 @@ public class StepLoggerProvider(
             );
 
         logger.LogDebug(
-            "{StepMetadata}",
+            "{@StepMetadata}",
             JsonSerializer.Serialize(
                 effectStep.Metadata,
                 configuration.SystemJsonJsonSerializerOptions
@@ -63,7 +63,7 @@ public class StepLoggerProvider(
         );
 
         logger.LogDebug(
-            "{StepMetadata}",
+            "{@StepMetadata}",
             JsonSerializer.Serialize(
                 effectStep.Metadata,
                 configuration.SystemJsonJsonSerializerOptions

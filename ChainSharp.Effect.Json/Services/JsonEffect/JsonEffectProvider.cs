@@ -99,7 +99,7 @@ public class JsonEffectProvider(
                 if (!_previousStates.TryGetValue(model, out var state))
                     break;
 
-                logger.LogDebug("{State}", state);
+                logger.LogDebug("{@State}", state);
             }
         }
     }

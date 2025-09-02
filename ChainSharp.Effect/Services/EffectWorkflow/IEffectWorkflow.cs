@@ -13,7 +13,7 @@ namespace ChainSharp.Effect.Services.EffectWorkflow;
 /// IEffectWorkflow is the interface representation of the EffectWorkflow class.
 /// It allows for dependency injection and testing of workflows with database tracking.
 /// </remarks>
-public interface IEffectWorkflow<in TIn, TOut> : IWorkflow<TIn, TOut>
+public interface IEffectWorkflow<in TIn, TOut> : IWorkflow<TIn, TOut>, IDisposable
 {
     /// <summary>
     /// Executes the workflow with the given input and records execution details in the database.

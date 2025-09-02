@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using ChainSharp.Effect.Utils;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
 
 namespace ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 
@@ -16,6 +17,14 @@ public class ChainSharpEffectConfigurationBuilder(IServiceCollection serviceColl
     public JsonSerializerOptions WorkflowParameterJsonSerializerOptions { get; set; } =
         ChainSharpJsonSerializationOptions.Default;
 
+    public JsonSerializerSettings NewtonsoftJsonSerializerSettings { get; set; } =
+        ChainSharpJsonSerializationOptions.NewtonsoftDefault;
+
     protected internal ChainSharpEffectConfiguration.ChainSharpEffectConfiguration Build() =>
-        new() { SystemJsonJsonSerializerOptions = WorkflowParameterJsonSerializerOptions };
+        new()
+        {
+            SystemJsonJsonSerializerOptions = WorkflowParameterJsonSerializerOptions,
+            NewtonsoftJsonSerializerSettings = NewtonsoftJsonSerializerSettings,
+            SerializeStepData = SerializeStepData
+        };
 }

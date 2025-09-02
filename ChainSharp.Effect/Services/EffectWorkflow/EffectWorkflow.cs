@@ -3,6 +3,7 @@ using ChainSharp.Effect.Attributes;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.Metadata.DTOs;
+using ChainSharp.Effect.Models.StepMetadata;
 using ChainSharp.Effect.Services.EffectRunner;
 using ChainSharp.Effect.Services.StepEffectRunner;
 using ChainSharp.Exceptions;
@@ -37,6 +38,8 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// throughout the workflow lifecycle to record execution details.
     /// </remarks>
     public Metadata? Metadata { get; private set; }
+
+    public LinkedList<StepMetadata> Steps { get; private set; } = [];
 
     /// <summary>
     /// ParentId for the workflow, used to establish parent-child relationships between workflows.
@@ -283,4 +286,9 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// the EffectWorkflow class will handle tracking and logging.
     /// </remarks>
     protected abstract override Task<Either<Exception, TOut>> RunInternal(TIn input);
+
+    public void Dispose()
+    {
+        Steps.Clear();
+    }
 }

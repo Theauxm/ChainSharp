@@ -81,7 +81,10 @@ public class WorkflowRegistry : IWorkflowRegistry
                 .Select(
                     x =>
                         // Prefer to inject via interface, but if it doesn't exist then inject by underlying type
-                        x.GetInterfaces().FirstOrDefault(y => y.IsGenericType == false) ?? x
+                        x.GetInterfaces()
+                            .FirstOrDefault(
+                                y => y.IsGenericType == false && y == typeof(IEffectWorkflow<,>)
+                            ) ?? x
                 );
 
             allWorkflowTypes.UnionWith(workflowTypes);

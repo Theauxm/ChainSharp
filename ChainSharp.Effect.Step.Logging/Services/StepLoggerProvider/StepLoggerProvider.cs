@@ -25,13 +25,7 @@ public class StepLoggerProvider(
                 "Effect Step's Metadata should be null. Something has gone horribly wrong."
             );
 
-        logger.LogDebug(
-            "{@StepMetadata}",
-            JsonSerializer.Serialize(
-                effectStep.Metadata,
-                configuration.SystemJsonJsonSerializerOptions
-            )
-        );
+        logger.LogDebug("{@StepMetadata}", effectStep.Metadata);
     }
 
     public async Task AfterStepExecution<TIn, TOut, TWorkflowIn, TWorkflowOut>(
@@ -62,13 +56,7 @@ public class StepLoggerProvider(
             Bottom: () => { }
         );
 
-        logger.LogDebug(
-            "{@StepMetadata}",
-            JsonSerializer.Serialize(
-                effectStep.Metadata,
-                configuration.SystemJsonJsonSerializerOptions
-            )
-        );
+        logger.LogDebug("{@StepMetadata}", effectStep.Metadata);
     }
 
     public void Dispose() { }

@@ -20,11 +20,19 @@ public class ChainSharpEffectConfigurationBuilder(IServiceCollection serviceColl
     public JsonSerializerSettings NewtonsoftJsonSerializerSettings { get; set; } =
         ChainSharpJsonSerializationOptions.NewtonsoftDefault;
 
-    protected internal ChainSharpEffectConfiguration.ChainSharpEffectConfiguration Build() =>
-        new()
+    protected internal ChainSharpEffectConfiguration.ChainSharpEffectConfiguration Build()
+    {
+        var configuration = new ChainSharpEffectConfiguration.ChainSharpEffectConfiguration
         {
-            SystemJsonJsonSerializerOptions = WorkflowParameterJsonSerializerOptions,
+            SystemJsonSerializerOptions = WorkflowParameterJsonSerializerOptions,
             NewtonsoftJsonSerializerSettings = NewtonsoftJsonSerializerSettings,
             SerializeStepData = SerializeStepData
         };
+
+        ChainSharpEffectConfiguration
+            .ChainSharpEffectConfiguration
+            .StaticSystemJsonSerializerOptions = WorkflowParameterJsonSerializerOptions;
+
+        return configuration;
+    }
 }

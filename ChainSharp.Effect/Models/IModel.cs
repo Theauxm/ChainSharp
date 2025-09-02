@@ -37,4 +37,6 @@ public interface IModel
     /// </remarks>
     [Column("id")]
     int Id { get; }
+
+    string ToString();
 }

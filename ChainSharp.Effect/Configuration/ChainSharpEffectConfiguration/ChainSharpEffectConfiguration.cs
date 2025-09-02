@@ -6,11 +6,14 @@ namespace ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
 
 public class ChainSharpEffectConfiguration : IChainSharpEffectConfiguration
 {
-    public JsonSerializerOptions SystemJsonJsonSerializerOptions { get; set; } =
+    public JsonSerializerOptions SystemJsonSerializerOptions { get; set; } =
         ChainSharpJsonSerializationOptions.Default;
 
     public JsonSerializerSettings NewtonsoftJsonSerializerSettings { get; set; } =
         ChainSharpJsonSerializationOptions.NewtonsoftDefault;
+
+    public static JsonSerializerOptions StaticSystemJsonSerializerOptions { get; set; } =
+        JsonSerializerOptions.Default;
 
     public bool SerializeStepData { get; set; } = false;
 }

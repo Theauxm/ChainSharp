@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
 using ChainSharp.Effect.Models.StepMetadata.DTOs;
 using LanguageExt;
 
@@ -71,6 +73,12 @@ public class StepMetadata : IStepMetadata
 
         return newStepMetadata;
     }
+
+    public override string ToString() =>
+        JsonSerializer.Serialize(
+            this,
+            ChainSharpEffectConfiguration.StaticSystemJsonSerializerOptions
+        );
 
     #endregion
 

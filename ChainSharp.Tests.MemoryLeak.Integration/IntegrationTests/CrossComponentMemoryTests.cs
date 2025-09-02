@@ -403,7 +403,7 @@ public class CrossComponentMemoryTests
 public class MockChainSharpEffectConfiguration(JsonSerializerOptions options)
     : IChainSharpEffectConfiguration
 {
-    public JsonSerializerOptions SystemJsonJsonSerializerOptions { get; } = options;
+    public JsonSerializerOptions SystemJsonSerializerOptions { get; } = options;
 
     public JsonSerializerSettings NewtonsoftJsonSerializerSettings { get; } =
         new() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };

@@ -17,7 +17,7 @@ public interface IChainSharpEffectConfiguration
     /// <summary>
     /// System.Text.Json Serialization Options
     /// </summary>
-    public JsonSerializerOptions SystemJsonJsonSerializerOptions { get; }
+    public JsonSerializerOptions SystemJsonSerializerOptions { get; }
 
     /// <summary>
     /// Newtonsoft.Json Serialization Options

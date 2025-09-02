@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
 using ChainSharp.Effect.Models.Log.DTOs;
 using Microsoft.Extensions.Logging;
 
@@ -66,6 +68,12 @@ public class Log : ILog
 
         return newLog;
     }
+
+    public override string ToString() =>
+        JsonSerializer.Serialize(
+            this,
+            ChainSharpEffectConfiguration.StaticSystemJsonSerializerOptions
+        );
 
     #endregion
 

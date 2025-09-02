@@ -19,7 +19,7 @@ public abstract class EffectStep<TIn, TOut> : Step<TIn, TOut>, IEffectStep<TIn, 
     /// <returns>The output produced by this step</returns>
     public abstract override Task<TOut> Run(TIn input);
 
-    private StepMetadata? Metadata { get; set; }
+    public StepMetadata? Metadata { get; private set; }
 
     public override Task<Either<Exception, TOut>> RailwayStep<TWorkflowIn, TWorkflowOut>(
         Either<Exception, TIn> previousOutput,
@@ -39,6 +39,11 @@ public abstract class EffectStep<TIn, TOut> : Step<TIn, TOut>, IEffectStep<TIn, 
         EffectWorkflow<TWorkflowIn, TWorkflowOut> effectWorkflow
     )
     {
+        if (effectWorkflow.Metadata is null)
+            throw new WorkflowException(
+                "Effect Workflow Metadata cannot be null. Something has gone horribly wrong."
+            );
+
         Metadata = StepMetadata.Create(
             new CreateStepMetadata
             {
@@ -47,8 +52,8 @@ public abstract class EffectStep<TIn, TOut> : Step<TIn, TOut>, IEffectStep<TIn, 
                 InputType = typeof(TIn),
                 OutputType = typeof(TOut),
                 State = previousOutput.State,
-                WorkflowExternalId = effectWorkflow.ExternalId
-            }
+            },
+            effectWorkflow.Metadata
         );
 
         effectWorkflow.Steps.AddLast(Metadata);
@@ -66,6 +71,7 @@ public abstract class EffectStep<TIn, TOut> : Step<TIn, TOut>, IEffectStep<TIn, 
 
         Metadata.EndTimeUtc = DateTime.UtcNow;
         Metadata.State = result.State;
+        Metadata.HasRan = true;
 
         if (effectWorkflow.StepEffectRunner is not null)
             await effectWorkflow.StepEffectRunner.AfterStepExecution(

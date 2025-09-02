@@ -16,10 +16,10 @@ public interface IStepMetadata : IModel
     string WorkflowExternalId { get; }
 
     [Column("start_time_utc")]
-    DateTime StartTimeUtc { get; }
+    DateTime? StartTimeUtc { get; }
 
     [Column("end_time_utc")]
-    DateTime EndTimeUtc { get; }
+    DateTime? EndTimeUtc { get; }
 
     [Column("input_type")]
     Type InputType { get; }
@@ -29,4 +29,10 @@ public interface IStepMetadata : IModel
 
     [Column("state")]
     EitherStatus State { get; }
+
+    [Column("has_ran")]
+    bool HasRan { get; }
+
+    [Column("output_json")]
+    string? OutputJson { get; }
 }

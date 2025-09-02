@@ -19,6 +19,8 @@ public class WorkflowBusReflectionCacheTests
     [SetUp]
     public void Setup()
     {
+        // Clear the static cache before each test to prevent memory leaks
+        WorkflowBus.ClearMethodCache();
         _serviceProvider = TestSetup.CreateMemoryOnlyTestServiceProvider();
     }
 
@@ -29,6 +31,14 @@ public class WorkflowBusReflectionCacheTests
         {
             disposable.Dispose();
         }
+
+        // Clear the static cache after each test to prevent memory leaks
+        WorkflowBus.ClearMethodCache();
+
+        // Force garbage collection to ensure cleanup
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
     }
 
     [Test]

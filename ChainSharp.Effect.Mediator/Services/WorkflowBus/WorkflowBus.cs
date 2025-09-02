@@ -48,6 +48,29 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
     /// </remarks>
     private static readonly ConcurrentDictionary<Type, MethodInfo> RunMethodCache = new();
 
+    /// <summary>
+    /// Clears the static reflection method cache. This should be called during testing
+    /// or when memory cleanup is needed to prevent memory leaks from cached MethodInfo objects.
+    /// </summary>
+    /// <remarks>
+    /// This method is primarily intended for testing scenarios where multiple workflow types
+    /// are created and discarded, potentially causing memory leaks through the static cache.
+    /// In production, the cache should generally be left intact for performance benefits.
+    /// </remarks>
+    public static void ClearMethodCache()
+    {
+        RunMethodCache.Clear();
+    }
+
+    /// <summary>
+    /// Gets the current size of the method cache for monitoring purposes.
+    /// </summary>
+    /// <returns>The number of cached method entries</returns>
+    public static int GetMethodCacheSize()
+    {
+        return RunMethodCache.Count;
+    }
+
     public object InitializeWorkflow(object workflowInput, Metadata? metadata = null)
     {
         if (workflowInput == null)

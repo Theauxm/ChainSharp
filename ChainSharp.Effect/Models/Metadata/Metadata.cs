@@ -32,7 +32,7 @@ namespace ChainSharp.Effect.Models.Metadata;
 /// IMPORTANT: This class implements IDisposable to properly dispose of JsonDocument objects
 /// that hold unmanaged memory resources.
 /// </remarks>
-public class Metadata : IMetadata
+public class Metadata : IMetadata, IDisposable
 {
     #region Columns
 
@@ -361,4 +361,12 @@ public class Metadata : IMetadata
     /// </remarks>
     [JsonConstructor]
     public Metadata() { }
+
+    public void Dispose()
+    {
+        InputObject = null;
+        OutputObject = null;
+        Input = null;
+        Output = null;
+    }
 }

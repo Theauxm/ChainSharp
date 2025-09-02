@@ -2,6 +2,7 @@ using ChainSharp.Effect.Data.InMemory.Extensions;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Json.Extensions;
 using ChainSharp.Effect.Mediator.Extensions;
+using ChainSharp.Effect.Mediator.Services.WorkflowBus;
 using ChainSharp.Effect.Parameter.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -115,5 +116,34 @@ public static class TestSetup
         });
 
         return services;
+    }
+
+    /// <summary>
+    /// Performs cleanup operations to prevent memory leaks between tests.
+    /// This method should be called in test teardown methods.
+    /// </summary>
+    /// <remarks>
+    /// This method:
+    /// 1. Clears the static WorkflowBus method cache
+    /// 2. Forces garbage collection to ensure cleanup
+    /// 3. Provides a centralized cleanup point for all memory leak tests
+    /// </remarks>
+    public static void CleanupMemoryLeakTests()
+    {
+        try
+        {
+            // Clear the static cache that can cause memory leaks
+            WorkflowBus.ClearMethodCache();
+
+            // Force garbage collection to ensure cleanup
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+        }
+        catch (Exception ex)
+        {
+            // Log cleanup failures but don't throw - we're in cleanup
+            Console.WriteLine($"Warning: Failed to cleanup memory leak tests: {ex.Message}");
+        }
     }
 }

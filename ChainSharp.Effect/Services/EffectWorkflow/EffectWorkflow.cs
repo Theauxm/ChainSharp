@@ -39,7 +39,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// </remarks>
     public Metadata? Metadata { get; private set; }
 
-    public LinkedList<StepMetadata> Steps { get; private set; } = [];
+    // public LinkedList<StepMetadata> Steps { get; private set; } = [];
 
     /// <summary>
     /// ParentId for the workflow, used to establish parent-child relationships between workflows.
@@ -289,6 +289,10 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
 
     public void Dispose()
     {
-        Steps.Clear();
+        // Steps.Clear();
+        EffectLogger = null;
+        EffectRunner = null;
+        ServiceProvider = null;
+        Metadata = null;
     }
 }

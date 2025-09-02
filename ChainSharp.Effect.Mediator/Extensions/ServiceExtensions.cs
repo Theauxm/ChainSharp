@@ -90,7 +90,8 @@ public static class ServiceExtensions
                 .Select(
                     type =>
                         (
-                            type.GetInterfaces().FirstOrDefault(y => y.IsGenericType == false)
+                            type.GetInterfaces()
+                                .FirstOrDefault(y => !y.IsGenericType && y != typeof(IDisposable))
                                 ?? type.GetInterfaces().FirstOrDefault()
                                 ?? throw new WorkflowException(
                                     $"Could not find an interface attached to ({type.Name}) with Full Name ({type.FullName}) on Assembly ({type.AssemblyQualifiedName}). At least one Interface is required."

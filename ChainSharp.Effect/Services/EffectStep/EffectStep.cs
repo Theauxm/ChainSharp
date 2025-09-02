@@ -56,7 +56,7 @@ public abstract class EffectStep<TIn, TOut> : Step<TIn, TOut>, IEffectStep<TIn, 
             effectWorkflow.Metadata
         );
 
-        effectWorkflow.Steps.AddLast(Metadata);
+        // effectWorkflow.Steps.AddLast(Metadata);
 
         if (effectWorkflow.StepEffectRunner is not null)
             await effectWorkflow.StepEffectRunner.BeforeStepExecution(

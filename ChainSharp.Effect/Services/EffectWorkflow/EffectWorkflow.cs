@@ -3,6 +3,7 @@ using ChainSharp.Effect.Attributes;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.Metadata.DTOs;
+using ChainSharp.Effect.Models.StepMetadata;
 using ChainSharp.Effect.Services.EffectRunner;
 using ChainSharp.Effect.Services.StepEffectRunner;
 using ChainSharp.Exceptions;
@@ -37,6 +38,8 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// throughout the workflow lifecycle to record execution details.
     /// </remarks>
     public Metadata? Metadata { get; private set; }
+
+    // public LinkedList<StepMetadata> Steps { get; private set; } = [];
 
     /// <summary>
     /// ParentId for the workflow, used to establish parent-child relationships between workflows.
@@ -181,6 +184,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
         finally
         {
             EffectRunner.Dispose();
+            CleanupWorkflowReferences();
         }
     }
 
@@ -283,4 +287,34 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// the EffectWorkflow class will handle tracking and logging.
     /// </remarks>
     protected abstract override Task<Either<Exception, TOut>> RunInternal(TIn input);
+
+    /// <summary>
+    /// Cleans up workflow references to prevent memory leaks.
+    /// This method clears large objects and references that might prevent garbage collection.
+    /// </summary>
+    /// <remarks>
+    /// This method is called during workflow cleanup to ensure that large objects
+    /// and references are properly released, preventing memory leaks in scenarios
+    /// where workflows are executed repeatedly or concurrently.
+    /// </remarks>
+    private void CleanupWorkflowReferences()
+    {
+        // Clear large objects from metadata to prevent memory retention
+        if (Metadata != null)
+        {
+            // Clear input/output objects which might be large
+            Metadata.InputObject = null;
+            Metadata.OutputObject = null;
+        }
+
+        // Clear all injected service references
+        EffectLogger = null;
+        StepEffectRunner = null;
+        ServiceProvider = null;
+    }
+
+    public void Dispose()
+    {
+        CleanupWorkflowReferences();
+    }
 }

@@ -57,6 +57,8 @@ public static class ChainSharpJsonSerializationOptions
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             ReferenceHandler = ReferenceHandler.Preserve,
             MaxDepth = 8,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
             Converters =
             {
                 new JsonStringEnumConverter(),
@@ -67,5 +69,9 @@ public static class ChainSharpJsonSerializationOptions
         };
 
     public static JsonSerializerSettings NewtonsoftDefault { get; set; } =
-        new() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
+        new()
+        {
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+            Converters = [new Newtonsoft.Json.Converters.StringEnumConverter()]
+        };
 }

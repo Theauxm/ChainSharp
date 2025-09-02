@@ -1,8 +1,11 @@
 using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
 using ChainSharp.Effect.Services.EffectStep;
 using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Exceptions;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using JsonConverter = System.Text.Json.Serialization.JsonConverter;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace ChainSharp.Effect.Step.Logging.Services.StepLoggerProvider;
 
@@ -17,42 +20,17 @@ public class StepLoggerProvider(
         CancellationToken cancellationToken
     )
     {
-        var stepType = effectStep.GetType().Name;
+        if (effectStep.Metadata is null)
+            throw new WorkflowException(
+                "Effect Step's Metadata should be null. Something has gone horribly wrong."
+            );
 
-        var workflowType = effectWorkflow.GetType().Name;
-
-        logger.LogTrace(
-            "BEFORE STEP EXECUTION Success: ({Success}) Step Type: ({StepType}) Input Type: ({TypeIn}) Output Type: ({TypeOut}) Workflow: ({Workflow}) ExternalId ({ExternalId})",
-            effectStep.PreviousResult.IsRight,
-            stepType,
-            typeof(TIn),
-            typeof(TIn),
-            workflowType,
-            effectWorkflow.ExternalId
-        );
-
-        effectStep.PreviousResult.Match(
-            Right: resultIn =>
-            {
-                if (resultIn is null)
-                    return;
-
-                var json = JsonConvert.SerializeObject(
-                    resultIn,
-                    configuration.NewtonsoftJsonSerializerSettings
-                );
-
-                logger.LogDebug(
-                    "BEFORE STEP EXECUTION Workflow: ({WorkflowName}) ExternalId: ({ExternalId}) Step: ({StepName}) Input Type: ({InputType}) Input: ({Input})",
-                    workflowType,
-                    effectWorkflow.ExternalId,
-                    stepType,
-                    effectStep.PreviousResult.GetUnderlyingRightType(),
-                    json
-                );
-            },
-            Left: _ => { },
-            Bottom: () => { }
+        logger.LogDebug(
+            "{StepMetadata}",
+            JsonSerializer.Serialize(
+                effectStep.Metadata,
+                configuration.SystemJsonJsonSerializerOptions
+            )
         );
     }
 
@@ -62,17 +40,10 @@ public class StepLoggerProvider(
         CancellationToken cancellationToken
     )
     {
-        var stepType = effectStep.GetType().Name;
-
-        var workflowType = effectWorkflow.GetType().Name;
-
-        logger.LogTrace(
-            "AFTER STEP EXECUTION Success ({Success}) Step Type: ({StepType}) Workflow: ({Workflow}) ExternalId ({ExternalId})",
-            effectStep.Result.IsRight,
-            stepType,
-            workflowType,
-            effectWorkflow.ExternalId
-        );
+        if (effectStep.Metadata is null)
+            throw new WorkflowException(
+                "Effect Step's Metadata should be null. Something has gone horribly wrong."
+            );
 
         effectStep.Result.Match(
             Right: resultOut =>
@@ -80,33 +51,23 @@ public class StepLoggerProvider(
                 if (resultOut is null)
                     return;
 
-                var json = JsonConvert.SerializeObject(
-                    resultOut,
-                    configuration.NewtonsoftJsonSerializerSettings
-                );
-
-                logger.LogDebug(
-                    "AFTER STEP EXECUTION Workflow: ({WorkflowName}) ExternalId: ({ExternalId}) Step: ({StepName}) Result Type: ({ResultType}) Result: ({Result})",
-                    workflowType,
-                    effectWorkflow.ExternalId,
-                    stepType,
-                    resultOut.GetType(),
-                    json
-                );
+                effectStep.Metadata.OutputJson = configuration.SerializeStepData
+                    ? JsonConvert.SerializeObject(
+                        resultOut,
+                        configuration.NewtonsoftJsonSerializerSettings
+                    )
+                    : null;
             },
-            Left: _ =>
-            {
-                if (effectStep.ExceptionData is not null)
-                    logger.LogError(
-                        "AFTER STEP EXECUTION Exception: ({ExceptionType}) Workflow: ({WorkflowName}) ExternalId: ({ExternalId}) Step: ({StepName}) Message: ({Message}).",
-                        effectStep.ExceptionData.Type,
-                        effectStep.ExceptionData.WorkflowName,
-                        effectStep.ExceptionData.WorkflowExternalId,
-                        effectStep.ExceptionData.Step,
-                        effectStep.ExceptionData.Message
-                    );
-            },
+            Left: _ => { },
             Bottom: () => { }
+        );
+
+        logger.LogDebug(
+            "{StepMetadata}",
+            JsonSerializer.Serialize(
+                effectStep.Metadata,
+                configuration.SystemJsonJsonSerializerOptions
+            )
         );
     }
 

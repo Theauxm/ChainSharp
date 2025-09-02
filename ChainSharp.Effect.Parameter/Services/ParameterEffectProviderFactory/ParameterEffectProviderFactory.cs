@@ -55,7 +55,7 @@ public class ParameterEffectProviderFactory(IChainSharpEffectConfiguration confi
     /// </remarks>
     public IEffectProvider Create()
     {
-        var parameterEffect = new ParameterEffect(configuration.SystemJsonJsonSerializerOptions);
+        var parameterEffect = new ParameterEffect(configuration.SystemJsonSerializerOptions);
 
         Providers.Add(parameterEffect);
 

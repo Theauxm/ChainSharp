@@ -71,7 +71,7 @@ public class JsonEffectProvider(
     /// </remarks>
     public async Task SaveChanges(CancellationToken cancellationToken)
     {
-        var options = configuration.SystemJsonJsonSerializerOptions;
+        var options = configuration.SystemJsonSerializerOptions;
         var changedModels = new List<IModel>();
 
         lock (_lock)
@@ -99,7 +99,7 @@ public class JsonEffectProvider(
                 if (!_previousStates.TryGetValue(model, out var state))
                     break;
 
-                logger.LogDebug("{@State}", state);
+                logger.LogDebug("{@State}", model);
             }
         }
     }
@@ -128,7 +128,7 @@ public class JsonEffectProvider(
                 _previousStates[model] = JsonSerializer.Serialize(
                     model,
                     model.GetType(),
-                    configuration.SystemJsonJsonSerializerOptions
+                    configuration.SystemJsonSerializerOptions
                 );
             }
         }

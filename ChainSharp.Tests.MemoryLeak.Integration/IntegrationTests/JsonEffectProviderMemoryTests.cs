@@ -28,7 +28,7 @@ public class JsonEffectProviderMemoryTests
 
         // Setup default JSON serializer options
         _mockConfiguration
-            .Setup(x => x.SystemJsonJsonSerializerOptions)
+            .Setup(x => x.SystemJsonSerializerOptions)
             .Returns(new System.Text.Json.JsonSerializerOptions());
     }
 

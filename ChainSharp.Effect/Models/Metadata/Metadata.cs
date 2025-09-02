@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Metadata.DTOs;
@@ -346,6 +347,20 @@ public class Metadata : IMetadata, IDisposable
         return Unit.Default;
     }
 
+    public void Dispose()
+    {
+        InputObject = null;
+        OutputObject = null;
+        Input = null;
+        Output = null;
+    }
+
+    public override string ToString() =>
+        JsonSerializer.Serialize(
+            this,
+            ChainSharpEffectConfiguration.StaticSystemJsonSerializerOptions
+        );
+
     #endregion
 
     /// <summary>
@@ -361,12 +376,4 @@ public class Metadata : IMetadata, IDisposable
     /// </remarks>
     [JsonConstructor]
     public Metadata() { }
-
-    public void Dispose()
-    {
-        InputObject = null;
-        OutputObject = null;
-        Input = null;
-        Output = null;
-    }
 }

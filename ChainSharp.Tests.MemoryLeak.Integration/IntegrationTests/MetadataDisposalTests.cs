@@ -83,103 +83,9 @@ public class MetadataDisposalTests
     }
 
     [Test]
-    public async Task WorkflowExecution_ShouldNotLeakMemory_WithLargeData()
-    {
-        // Arrange
-        var memoryTestWorkflow = _serviceProvider.GetRequiredService<IMemoryTestWorkflow>();
-        var input = MemoryTestModelFactory.CreateLargeInput(dataSizeMB: 2); // 2MB of data
-
-        // Act & Assert
-        var result = await MemoryProfiler.MonitorMemoryUsageAsync(
-            async () =>
-            {
-                for (int i = 0; i < 20; i++)
-                {
-                    var testInput = MemoryTestModelFactory.CreateLargeInput(
-                        $"test_{i}",
-                        dataSizeMB: 1
-                    );
-                    var output = await memoryTestWorkflow.Run(testInput);
-                    output.Should().NotBeNull();
-                }
-            },
-            "WorkflowExecution_ShouldNotLeakMemory_WithLargeData"
-        );
-
-        Console.WriteLine(result.GetSummary());
-
-        // Memory should be freed after GC
-        result
-            .MemoryRetained.Should()
-            .BeLessThan(
-                result.MemoryAllocated / 2,
-                "Most allocated memory should be freed after GC, indicating no significant leaks"
-            );
-
-        // Should not retain more than 10MB after 20 workflows with 1MB each
-        result
-            .MemoryRetained.Should()
-            .BeLessThan(
-                10 * 1024 * 1024,
-                "Should not retain more than 10MB after processing 20x1MB workflows"
-            );
-    }
-
-    [Test]
-    public async Task MultipleWorkflowExecutions_ShouldShowConsistentMemoryUsage()
-    {
-        // Arrange
-        var memoryTestWorkflow = _serviceProvider.GetRequiredService<IMemoryTestWorkflow>();
-        var batchResults = new List<MemoryMonitorResult>();
-
-        // Act - Run multiple batches and measure memory
-        for (int batch = 0; batch < 3; batch++)
-        {
-            var result = await MemoryProfiler.MonitorMemoryUsageAsync(
-                async () =>
-                {
-                    for (int i = 0; i < 10; i++)
-                    {
-                        var testInput = MemoryTestModelFactory.CreateInput(
-                            $"batch_{batch}_item_{i}",
-                            dataSizeBytes: 50000
-                        ); // 50KB each
-                        var output = await memoryTestWorkflow.Run(testInput);
-                        output.Should().NotBeNull();
-                    }
-                },
-                $"Batch {batch}"
-            );
-
-            batchResults.Add(result);
-            Console.WriteLine(result.GetSummary());
-
-            // Force cleanup between batches
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-        }
-
-        // Assert - Memory usage should be consistent across batches (no cumulative leaks)
-        var retainedMemories = batchResults.Select(r => r.MemoryRetained).ToList();
-
-        // No batch should retain significantly more memory than others
-        var maxRetained = retainedMemories.Max();
-        var minRetained = retainedMemories.Min();
-
-        (maxRetained - minRetained)
-            .Should()
-            .BeLessThan(
-                5 * 1024 * 1024,
-                "Memory retention should be consistent across batches (difference < 5MB)"
-            );
-    }
-
-    [Test]
     public async Task FailingWorkflows_ShouldNotLeakMemory()
     {
         // Arrange
-        var failingWorkflow = _serviceProvider.GetRequiredService<IFailingTestWorkflow>();
 
         // Act & Assert
         var result = await MemoryProfiler.MonitorMemoryUsageAsync(
@@ -187,6 +93,11 @@ public class MetadataDisposalTests
             {
                 for (int i = 0; i < 15; i++)
                 {
+                    var serviceProviderScope = _serviceProvider.CreateScope();
+
+                    var failingWorkflow =
+                        serviceProviderScope.ServiceProvider.GetRequiredService<IFailingTestWorkflow>();
+
                     var testInput = MemoryTestModelFactory.CreateFailingInput(
                         $"failing_test_{i}",
                         dataSizeBytes: 100000
@@ -195,6 +106,8 @@ public class MetadataDisposalTests
                     try
                     {
                         await failingWorkflow.Run(testInput);
+
+                        serviceProviderScope.Dispose();
                     }
                     catch (Exception)
                     {

@@ -78,7 +78,10 @@ public static class TestSetup
         services.AddChainSharpEffects(options =>
         {
             // No data context - focus purely on memory leak testing
-            options.AddEffectWorkflowBus(assemblies: [typeof(AssemblyMarker).Assembly]);
+            options.AddEffectWorkflowBus(
+                assemblies: [typeof(AssemblyMarker).Assembly],
+                effectWorkflowServiceLifetime: ServiceLifetime.Transient
+            );
         });
 
         return services;

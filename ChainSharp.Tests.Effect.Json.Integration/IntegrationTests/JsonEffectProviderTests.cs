@@ -11,7 +11,9 @@ namespace ChainSharp.Tests.Effect.Json.Integration.IntegrationTests;
 public class JsonEffectProviderTests : TestSetup
 {
     public override ServiceProvider ConfigureServices(IServiceCollection services) =>
-        services.AddScopedChainSharpWorkflow<ITestWorkflow, TestWorkflow>().BuildServiceProvider();
+        services
+            .AddTransientChainSharpWorkflow<ITestWorkflow, TestWorkflow>()
+            .BuildServiceProvider();
 
     [Theory]
     public async Task TestJsonEffect()

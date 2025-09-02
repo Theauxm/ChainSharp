@@ -407,6 +407,8 @@ public class MockChainSharpEffectConfiguration(JsonSerializerOptions options)
 
     public JsonSerializerSettings NewtonsoftJsonSerializerSettings { get; } =
         new() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
+
+    public bool SerializeStepData { get; } = true;
 }
 
 // Helper factory classes for testing

@@ -11,6 +11,8 @@ public class ChainSharpEffectConfigurationBuilder(IServiceCollection serviceColl
 
     public bool DataContextLoggingEffectEnabled { get; set; } = false;
 
+    public bool SerializeStepData { get; set; } = false;
+
     public JsonSerializerOptions WorkflowParameterJsonSerializerOptions { get; set; } =
         ChainSharpJsonSerializationOptions.Default;
 

@@ -53,7 +53,7 @@ public abstract class TestSetup
                         .AddPostgresEffect(connectionString)
                         .AddEffectDataContextLogging(minimumLogLevel: LogLevel.Trace)
                         .AddJsonEffect()
-                        .AddStepLogger()
+                        .AddStepLogger(serializeStepData: false)
             )
             .BuildServiceProvider();
     }

@@ -23,4 +23,6 @@ public interface IChainSharpEffectConfiguration
     /// Newtonsoft.Json Serialization Options
     /// </summary>
     public JsonSerializerSettings NewtonsoftJsonSerializerSettings { get; }
+
+    public bool SerializeStepData { get; }
 }

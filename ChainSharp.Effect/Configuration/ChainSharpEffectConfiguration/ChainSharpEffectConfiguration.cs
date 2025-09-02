@@ -11,4 +11,6 @@ public class ChainSharpEffectConfiguration : IChainSharpEffectConfiguration
 
     public JsonSerializerSettings NewtonsoftJsonSerializerSettings { get; } =
         ChainSharpJsonSerializationOptions.NewtonsoftDefault;
+
+    public bool SerializeStepData { get; } = false;
 }

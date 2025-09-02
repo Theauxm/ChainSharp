@@ -11,9 +11,11 @@ namespace ChainSharp.Effect.Step.Logging.Extensions;
 public static class ServiceExtensions
 {
     public static ChainSharpEffectConfigurationBuilder AddStepLogger(
-        this ChainSharpEffectConfigurationBuilder configurationBuilder
+        this ChainSharpEffectConfigurationBuilder configurationBuilder,
+        bool serializeStepData = false
     )
     {
+        configurationBuilder.SerializeStepData = serializeStepData;
         configurationBuilder.ServiceCollection.AddTransient<
             IStepLoggerProvider,
             StepLoggerProvider

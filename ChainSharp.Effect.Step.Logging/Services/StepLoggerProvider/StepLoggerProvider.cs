@@ -37,10 +37,12 @@ public class StepLoggerProvider(
                 if (resultIn is null)
                     return;
 
-                var json = JsonConvert.SerializeObject(
-                    resultIn,
-                    configuration.NewtonsoftJsonSerializerSettings
-                );
+                var json = configuration.SerializeStepData
+                    ? JsonConvert.SerializeObject(
+                        resultIn,
+                        configuration.NewtonsoftJsonSerializerSettings
+                    )
+                    : null;
 
                 logger.LogDebug(
                     "BEFORE STEP EXECUTION Workflow: ({WorkflowName}) ExternalId: ({ExternalId}) Step: ({StepName}) Input Type: ({InputType}) Input: ({Input})",
@@ -80,10 +82,12 @@ public class StepLoggerProvider(
                 if (resultOut is null)
                     return;
 
-                var json = JsonConvert.SerializeObject(
-                    resultOut,
-                    configuration.NewtonsoftJsonSerializerSettings
-                );
+                var json = configuration.SerializeStepData
+                    ? JsonConvert.SerializeObject(
+                        resultOut,
+                        configuration.NewtonsoftJsonSerializerSettings
+                    )
+                    : null;
 
                 logger.LogDebug(
                     "AFTER STEP EXECUTION Workflow: ({WorkflowName}) ExternalId: ({ExternalId}) Step: ({StepName}) Result Type: ({ResultType}) Result: ({Result})",

@@ -37,9 +37,8 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// This property is populated during the InitializeWorkflow method and is used
     /// throughout the workflow lifecycle to record execution details.
     /// </remarks>
+    [JsonIgnore]
     public Metadata? Metadata { get; private set; }
-
-    // public LinkedList<StepMetadata> Steps { get; private set; } = [];
 
     /// <summary>
     /// ParentId for the workflow, used to establish parent-child relationships between workflows.
@@ -161,7 +160,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
         {
             var result = await base.Run(input, ServiceProvider);
             EffectLogger?.LogTrace("({WorkflowName}) completed successfully.", WorkflowName);
-            Metadata.OutputObject = result;
+            Metadata.SetOutputObject(result);
 
             await FinishWorkflow(result);
             await EffectRunner.SaveChanges(CancellationToken.None);
@@ -289,8 +288,8 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
         if (Metadata != null)
         {
             // Clear input/output objects which might be large
-            Metadata.InputObject = null;
-            Metadata.OutputObject = null;
+            Metadata.SetInputObject(null);
+            Metadata.SetOutputObject(null);
         }
 
         EffectRunner?.Dispose();

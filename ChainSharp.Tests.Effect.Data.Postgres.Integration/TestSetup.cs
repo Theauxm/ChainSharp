@@ -49,6 +49,7 @@ public abstract class TestSetup
                                 typeof(ChainSharp.Tests.Effect.Integration.AssemblyMarker).Assembly
                             ]
                         )
+                        .SetEffectLogLevel(LogLevel.Information)
                         .SaveWorkflowParameters()
                         .AddPostgresEffect(connectionString)
                         .AddEffectDataContextLogging(minimumLogLevel: LogLevel.Trace)

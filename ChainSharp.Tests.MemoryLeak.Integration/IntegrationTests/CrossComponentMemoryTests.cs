@@ -409,6 +409,7 @@ public class MockChainSharpEffectConfiguration(JsonSerializerOptions options)
         new() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
 
     public bool SerializeStepData { get; } = true;
+    public LogLevel LogLevel { get; } = LogLevel.Debug;
 }
 
 // Helper factory classes for testing

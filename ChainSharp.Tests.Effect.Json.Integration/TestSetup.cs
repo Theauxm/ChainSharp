@@ -28,7 +28,11 @@ public abstract class TestSetup
                 x => x.AddConsole().AddProvider(arrayProvider).SetMinimumLevel(LogLevel.Debug)
             )
             .AddChainSharpEffects(
-                options => options.AddJsonEffect().AddStepLogger(serializeStepData: true)
+                options =>
+                    options
+                        .SetEffectLogLevel(LogLevel.Information)
+                        .AddJsonEffect()
+                        .AddStepLogger(serializeStepData: true)
             );
 
         ServiceProvider = ConfigureServices(ServiceCollection);

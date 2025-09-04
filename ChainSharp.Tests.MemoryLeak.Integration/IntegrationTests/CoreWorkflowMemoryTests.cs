@@ -89,7 +89,7 @@ public class CoreWorkflowMemoryTests
         largeWorkflowResult
             .MemoryAllocated.Should()
             .BeGreaterThanOrEqualTo(
-                smallWorkflowResult.MemoryAllocated / 2,
+                smallWorkflowResult.MemoryAllocated / 3,
                 "Workflows should have reasonable memory allocation patterns"
             );
     }

@@ -18,7 +18,12 @@ public abstract class TestSetup
     {
         ServiceCollection = new ServiceCollection();
 
-        ServiceCollection.AddChainSharpEffects(options => options.AddInMemoryEffect());
+        ServiceCollection.AddChainSharpEffects(
+            options =>
+                options
+                    .SetEffectLogLevel(logLevel: Microsoft.Extensions.Logging.LogLevel.Debug)
+                    .AddInMemoryEffect()
+        );
 
         ServiceProvider = ConfigureServices(ServiceCollection);
     }

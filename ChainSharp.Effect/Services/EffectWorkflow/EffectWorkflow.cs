@@ -181,11 +181,6 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
 
             throw;
         }
-        finally
-        {
-            EffectRunner.Dispose();
-            CleanupWorkflowReferences();
-        }
     }
 
     /// <summary>
@@ -288,16 +283,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// </remarks>
     protected abstract override Task<Either<Exception, TOut>> RunInternal(TIn input);
 
-    /// <summary>
-    /// Cleans up workflow references to prevent memory leaks.
-    /// This method clears large objects and references that might prevent garbage collection.
-    /// </summary>
-    /// <remarks>
-    /// This method is called during workflow cleanup to ensure that large objects
-    /// and references are properly released, preventing memory leaks in scenarios
-    /// where workflows are executed repeatedly or concurrently.
-    /// </remarks>
-    private void CleanupWorkflowReferences()
+    public void Dispose()
     {
         // Clear large objects from metadata to prevent memory retention
         if (Metadata != null)
@@ -306,15 +292,12 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
             Metadata.InputObject = null;
             Metadata.OutputObject = null;
         }
+        
+        EffectRunner?.Dispose();
+        StepEffectRunner?.Dispose();
+        Metadata?.Dispose();
 
-        // Clear all injected service references
         EffectLogger = null;
-        StepEffectRunner = null;
         ServiceProvider = null;
-    }
-
-    public void Dispose()
-    {
-        CleanupWorkflowReferences();
     }
 }

@@ -292,7 +292,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
             Metadata.InputObject = null;
             Metadata.OutputObject = null;
         }
-        
+
         EffectRunner?.Dispose();
         StepEffectRunner?.Dispose();
         Metadata?.Dispose();

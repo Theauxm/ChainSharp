@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
@@ -25,4 +26,6 @@ public interface IChainSharpEffectConfiguration
     public JsonSerializerSettings NewtonsoftJsonSerializerSettings { get; }
 
     public bool SerializeStepData { get; }
+
+    public LogLevel LogLevel { get; }
 }

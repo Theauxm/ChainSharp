@@ -25,7 +25,7 @@ public class StepLoggerProvider(
                 "Effect Step's Metadata should be null. Something has gone horribly wrong."
             );
 
-        logger.LogDebug("{@StepMetadata}", effectStep.Metadata);
+        logger.Log(configuration.LogLevel, "{@StepMetadata}", effectStep.Metadata);
     }
 
     public async Task AfterStepExecution<TIn, TOut, TWorkflowIn, TWorkflowOut>(
@@ -56,7 +56,7 @@ public class StepLoggerProvider(
             Bottom: () => { }
         );
 
-        logger.LogDebug("{@StepMetadata}", effectStep.Metadata);
+        logger.Log(configuration.LogLevel, "{@Metadata}", effectStep.Metadata);
     }
 
     public void Dispose() { }

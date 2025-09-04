@@ -1,7 +1,7 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using ChainSharp.Effect.Utils;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
@@ -13,6 +13,8 @@ public class ChainSharpEffectConfigurationBuilder(IServiceCollection serviceColl
     public bool DataContextLoggingEffectEnabled { get; set; } = false;
 
     public bool SerializeStepData { get; set; } = false;
+
+    public LogLevel LogLevel { get; set; } = LogLevel.Debug;
 
     public JsonSerializerOptions WorkflowParameterJsonSerializerOptions { get; set; } =
         ChainSharpJsonSerializationOptions.Default;
@@ -26,7 +28,8 @@ public class ChainSharpEffectConfigurationBuilder(IServiceCollection serviceColl
         {
             SystemJsonSerializerOptions = WorkflowParameterJsonSerializerOptions,
             NewtonsoftJsonSerializerSettings = NewtonsoftJsonSerializerSettings,
-            SerializeStepData = SerializeStepData
+            SerializeStepData = SerializeStepData,
+            LogLevel = LogLevel,
         };
 
         ChainSharpEffectConfiguration

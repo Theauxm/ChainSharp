@@ -197,26 +197,68 @@ public class Metadata : IMetadata, IDisposable
     public bool IsChild => ParentId is not null;
 
     /// <summary>
-    /// Gets or sets the deserialized input object for the workflow.
+    /// Private field to store the deserialized input object for the workflow.
     /// </summary>
     /// <remarks>
-    /// This property holds the actual input object that was provided to the workflow.
+    /// This field holds the actual input object that was provided to the workflow.
     /// It is not persisted to the database directly, but is used during workflow execution
     /// and is serialized to the Input property for persistence.
     /// </remarks>
-    [JsonIgnore]
-    public dynamic? InputObject { get; set; }
+    private dynamic? _inputObject;
 
     /// <summary>
-    /// Gets or sets the deserialized output object from the workflow.
+    /// Private field to store the deserialized output object from the workflow.
     /// </summary>
     /// <remarks>
-    /// This property holds the actual output object that was produced by the workflow.
+    /// This field holds the actual output object that was produced by the workflow.
     /// It is not persisted to the database directly, but is used during workflow execution
     /// and is serialized to the Output property for persistence.
     /// </remarks>
-    [JsonIgnore]
-    public dynamic? OutputObject { get; set; }
+    private dynamic? _outputObject;
+
+    /// <summary>
+    /// Sets the deserialized input object for the workflow.
+    /// </summary>
+    /// <param name="value">The input object to set</param>
+    /// <remarks>
+    /// This method provides controlled access to set the input object.
+    /// Using methods instead of properties prevents the object from being
+    /// included in logging serialization by frameworks like Serilog.
+    /// </remarks>
+    public void SetInputObject(dynamic? value) => _inputObject = value;
+
+    /// <summary>
+    /// Gets the deserialized input object for the workflow.
+    /// </summary>
+    /// <returns>The input object, or null if not set</returns>
+    /// <remarks>
+    /// This method provides controlled access to retrieve the input object.
+    /// Using methods instead of properties prevents the object from being
+    /// included in logging serialization by frameworks like Serilog.
+    /// </remarks>
+    public dynamic? GetInputObject() => _inputObject;
+
+    /// <summary>
+    /// Sets the deserialized output object from the workflow.
+    /// </summary>
+    /// <param name="value">The output object to set</param>
+    /// <remarks>
+    /// This method provides controlled access to set the output object.
+    /// Using methods instead of properties prevents the object from being
+    /// included in logging serialization by frameworks like Serilog.
+    /// </remarks>
+    public void SetOutputObject(dynamic? value) => _outputObject = value;
+
+    /// <summary>
+    /// Gets the deserialized output object from the workflow.
+    /// </summary>
+    /// <returns>The output object, or null if not set</returns>
+    /// <remarks>
+    /// This method provides controlled access to retrieve the output object.
+    /// Using methods instead of properties prevents the object from being
+    /// included in logging serialization by frameworks like Serilog.
+    /// </remarks>
+    public dynamic? GetOutputObject() => _outputObject;
 
     #endregion
 
@@ -280,13 +322,14 @@ public class Metadata : IMetadata, IDisposable
         var newWorkflow = new Metadata
         {
             Name = metadata.Name,
-            InputObject = metadata.Input,
             ExternalId = Guid.NewGuid().ToString("N"),
             WorkflowState = WorkflowState.Pending,
             Executor = Assembly.GetEntryAssembly()?.GetAssemblyProject(),
             StartTime = DateTime.UtcNow,
             ParentId = metadata.ParentId
         };
+
+        newWorkflow.SetInputObject(metadata.Input);
 
         return newWorkflow;
     }
@@ -349,8 +392,8 @@ public class Metadata : IMetadata, IDisposable
 
     public void Dispose()
     {
-        InputObject = null;
-        OutputObject = null;
+        _inputObject = null;
+        _outputObject = null;
         Input = null;
         Output = null;
     }
@@ -358,6 +401,7 @@ public class Metadata : IMetadata, IDisposable
     public override string ToString() =>
         JsonSerializer.Serialize(
             this,
+            GetType(),
             ChainSharpEffectConfiguration.StaticSystemJsonSerializerOptions
         );
 

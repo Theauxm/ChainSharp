@@ -86,10 +86,10 @@ public class CrossComponentMemoryTests
 
                         var metadata = new Metadata
                         {
-                            Name = $"CrossComponentMetadata_{iteration}_{metadataIndex}",
-                            InputObject = input,
-                            OutputObject = output
+                            Name = $"CrossComponentMetadata_{iteration}_{metadataIndex}"
                         };
+                        metadata.SetInputObject(input);
+                        metadata.SetOutputObject(output);
 
                         // Track with both providers
                         await parameterEffect.Track(metadata);
@@ -182,10 +182,10 @@ public class CrossComponentMemoryTests
 
                         var metadata = new Metadata
                         {
-                            Name = $"EffectRunnerMetadata_{iteration}_{metadataIndex}",
-                            InputObject = input,
-                            OutputObject = output
+                            Name = $"EffectRunnerMetadata_{iteration}_{metadataIndex}"
                         };
+                        metadata.SetInputObject(input);
+                        metadata.SetOutputObject(output);
 
                         await effectRunner.Track(metadata);
                     }
@@ -259,12 +259,9 @@ public class CrossComponentMemoryTests
                             Message = $"Exception test output {iteration}"
                         };
 
-                        var metadata = new Metadata
-                        {
-                            Name = $"ExceptionMetadata_{iteration}",
-                            InputObject = input,
-                            OutputObject = output
-                        };
+                        var metadata = new Metadata { Name = $"ExceptionMetadata_{iteration}" };
+                        metadata.SetInputObject(input);
+                        metadata.SetOutputObject(output);
 
                         await parameterEffect.Track(metadata);
                         await jsonEffect.Track(metadata);
@@ -353,10 +350,10 @@ public class CrossComponentMemoryTests
 
                             var metadata = new Metadata
                             {
-                                Name = $"ConcurrentMetadata_{taskId}_{iteration}",
-                                InputObject = input,
-                                OutputObject = output
+                                Name = $"ConcurrentMetadata_{taskId}_{iteration}"
                             };
+                            metadata.SetInputObject(input);
+                            metadata.SetOutputObject(output);
 
                             await parameterEffect.Track(metadata);
                             await jsonEffect.Track(metadata);

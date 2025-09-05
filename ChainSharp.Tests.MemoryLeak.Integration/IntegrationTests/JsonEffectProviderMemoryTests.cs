@@ -49,15 +49,16 @@ public class JsonEffectProviderMemoryTests
                     // Track multiple models
                     for (int j = 0; j < 20; j++)
                     {
-                        var metadata = new Metadata
-                        {
-                            Name = $"TestMetadata_{i}_{j}",
-                            InputObject = MemoryTestModelFactory.CreateInput(
+                        var metadata = new Metadata { Name = $"TestMetadata_{i}_{j}" };
+                        metadata.SetInputObject(
+                            MemoryTestModelFactory.CreateInput(
                                 id: $"Input_{i}_{j}",
                                 dataSizeBytes: 1000,
                                 description: $"Test input {i}_{j}"
-                            ),
-                            OutputObject = new MemoryTestOutput
+                            )
+                        );
+                        metadata.SetOutputObject(
+                            new MemoryTestOutput
                             {
                                 Id = $"Output_{i}_{j}",
                                 Message = $"Test output {i}_{j}",
@@ -65,7 +66,7 @@ public class JsonEffectProviderMemoryTests
                                 Success = true,
                                 ProcessedAt = DateTime.UtcNow
                             }
-                        };
+                        );
 
                         await provider.Track(metadata);
                     }
@@ -117,15 +118,16 @@ public class JsonEffectProviderMemoryTests
                 // Track many models with large JSON serialization
                 for (int i = 0; i < 100; i++)
                 {
-                    var metadata = new Metadata
-                    {
-                        Name = $"AccumulationTest_{i}",
-                        InputObject = MemoryTestModelFactory.CreateInput(
+                    var metadata = new Metadata { Name = $"AccumulationTest_{i}" };
+                    metadata.SetInputObject(
+                        MemoryTestModelFactory.CreateInput(
                             id: $"LargeInput_{i}",
                             dataSizeBytes: 5000,
                             description: $"Large input {i}"
-                        ),
-                        OutputObject = new MemoryTestOutput
+                        )
+                    );
+                    metadata.SetOutputObject(
+                        new MemoryTestOutput
                         {
                             Id = $"LargeOutput_{i}",
                             Message = $"Large output {i}",
@@ -133,7 +135,7 @@ public class JsonEffectProviderMemoryTests
                             Success = true,
                             ProcessedAt = DateTime.UtcNow
                         }
-                    };
+                    );
 
                     modelReferences.Add(new WeakReference(metadata));
                     await provider.Track(metadata);
@@ -196,29 +198,30 @@ public class JsonEffectProviderMemoryTests
                     {
                         for (int i = 0; i < 25; i++)
                         {
-                            var metadata = new Metadata
-                            {
-                                Name = $"ConcurrentTest_{taskId}_{i}",
-                                InputObject = MemoryTestModelFactory.CreateInput(
+                            var metadata = new Metadata { Name = $"ConcurrentTest_{taskId}_{i}" };
+                            metadata.SetInputObject(
+                                MemoryTestModelFactory.CreateInput(
                                     id: $"ConcurrentInput_{taskId}_{i}",
                                     dataSizeBytes: 2000,
                                     description: $"Concurrent input {taskId}_{i}"
                                 )
-                            };
+                            );
 
                             await provider.Track(metadata);
 
                             // Simulate concurrent state changes
                             await Task.Delay(1); // Small delay to simulate work
 
-                            metadata.OutputObject = new MemoryTestOutput
-                            {
-                                Id = $"ConcurrentOutput_{taskId}_{i}",
-                                Message = $"Concurrent output {taskId}_{i}",
-                                ProcessedData = new string('Z', 1000), // 1KB string
-                                Success = true,
-                                ProcessedAt = DateTime.UtcNow
-                            };
+                            metadata.SetOutputObject(
+                                new MemoryTestOutput
+                                {
+                                    Id = $"ConcurrentOutput_{taskId}_{i}",
+                                    Message = $"Concurrent output {taskId}_{i}",
+                                    ProcessedData = new string('Z', 1000), // 1KB string
+                                    Success = true,
+                                    ProcessedAt = DateTime.UtcNow
+                                }
+                            );
 
                             if (i % 5 == 0)
                             {
@@ -262,15 +265,14 @@ public class JsonEffectProviderMemoryTests
                 var metadataList = new List<Metadata>();
                 for (int i = 0; i < 10; i++)
                 {
-                    var metadata = new Metadata
-                    {
-                        Name = $"RepeatedTest_{i}",
-                        InputObject = MemoryTestModelFactory.CreateInput(
+                    var metadata = new Metadata { Name = $"RepeatedTest_{i}" };
+                    metadata.SetInputObject(
+                        MemoryTestModelFactory.CreateInput(
                             id: $"Input_{i}",
                             dataSizeBytes: 3000,
                             description: $"Repeated input {i}"
                         )
-                    };
+                    );
 
                     metadataList.Add(metadata);
                     await provider.Track(metadata);
@@ -283,14 +285,16 @@ public class JsonEffectProviderMemoryTests
                     foreach (var metadata in metadataList)
                     {
                         char iterationChar = (char)('A' + (iteration % 26));
-                        metadata.OutputObject = new MemoryTestOutput
-                        {
-                            Id = $"Iteration_{iteration}_Output",
-                            Message = $"Iteration {iteration} output",
-                            ProcessedData = new string(iterationChar, 1500), // 1.5KB string
-                            Success = true,
-                            ProcessedAt = DateTime.UtcNow
-                        };
+                        metadata.SetOutputObject(
+                            new MemoryTestOutput
+                            {
+                                Id = $"Iteration_{iteration}_Output",
+                                Message = $"Iteration {iteration} output",
+                                ProcessedData = new string(iterationChar, 1500), // 1.5KB string
+                                Success = true,
+                                ProcessedAt = DateTime.UtcNow
+                            }
+                        );
                     }
 
                     // This should replace old JSON strings, not accumulate them
@@ -318,11 +322,8 @@ public class JsonEffectProviderMemoryTests
         var provider = new JsonEffectProvider(_mockLogger.Object, _mockConfiguration.Object);
 
         // Track a model before disposal
-        var metadata1 = new Metadata
-        {
-            Name = "BeforeDisposal",
-            InputObject = MemoryTestModelFactory.CreateInput("Test", 100)
-        };
+        var metadata1 = new Metadata { Name = "BeforeDisposal" };
+        metadata1.SetInputObject(MemoryTestModelFactory.CreateInput("Test", 100));
 
         provider.Track(metadata1).Wait();
 
@@ -330,11 +331,8 @@ public class JsonEffectProviderMemoryTests
         provider.Dispose();
 
         // Try to track a model after disposal (should be ignored)
-        var metadata2 = new Metadata
-        {
-            Name = "AfterDisposal",
-            InputObject = MemoryTestModelFactory.CreateInput("Test2", 100)
-        };
+        var metadata2 = new Metadata { Name = "AfterDisposal" };
+        metadata2.SetInputObject(MemoryTestModelFactory.CreateInput("Test2", 100));
 
         provider.Track(metadata2).Wait();
 
@@ -361,15 +359,16 @@ public class JsonEffectProviderMemoryTests
                 // Track models with very large serializable data
                 for (int i = 0; i < 20; i++)
                 {
-                    var metadata = new Metadata
-                    {
-                        Name = $"LargeObjectTest_{i}",
-                        InputObject = MemoryTestModelFactory.CreateInput(
+                    var metadata = new Metadata { Name = $"LargeObjectTest_{i}" };
+                    metadata.SetInputObject(
+                        MemoryTestModelFactory.CreateInput(
                             id: $"LargeInput_{i}",
                             dataSizeBytes: 50_000,
                             description: $"Large input {i}"
-                        ),
-                        OutputObject = new MemoryTestOutput
+                        )
+                    );
+                    metadata.SetOutputObject(
+                        new MemoryTestOutput
                         {
                             Id = $"LargeOutput_{i}",
                             Message = $"Large output {i}",
@@ -377,7 +376,7 @@ public class JsonEffectProviderMemoryTests
                             Success = true,
                             ProcessedAt = DateTime.UtcNow
                         }
-                    };
+                    );
 
                     await provider.Track(metadata);
 
@@ -417,15 +416,14 @@ public class JsonEffectProviderMemoryTests
                     _mockConfiguration.Object
                 );
 
-                var metadata = new Metadata
-                {
-                    Name = "DuplicateTrackingTest",
-                    InputObject = MemoryTestModelFactory.CreateInput(
+                var metadata = new Metadata { Name = "DuplicateTrackingTest" };
+                metadata.SetInputObject(
+                    MemoryTestModelFactory.CreateInput(
                         id: "DuplicateInput",
                         dataSizeBytes: 10_000,
                         description: "Duplicate tracking test input"
                     )
-                };
+                );
 
                 // Track the same model multiple times
                 for (int i = 0; i < 100; i++)
@@ -433,14 +431,16 @@ public class JsonEffectProviderMemoryTests
                     await provider.Track(metadata);
 
                     // Modify the model slightly
-                    metadata.OutputObject = new MemoryTestOutput
-                    {
-                        Id = $"DuplicateOutput_{i}",
-                        Message = $"Duplicate output {i}",
-                        ProcessedData = new string('D', 5000), // 5KB string
-                        Success = true,
-                        ProcessedAt = DateTime.UtcNow
-                    };
+                    metadata.SetOutputObject(
+                        new MemoryTestOutput
+                        {
+                            Id = $"DuplicateOutput_{i}",
+                            Message = $"Duplicate output {i}",
+                            ProcessedData = new string('D', 5000), // 5KB string
+                            Success = true,
+                            ProcessedAt = DateTime.UtcNow
+                        }
+                    );
 
                     if (i % 10 == 0)
                     {

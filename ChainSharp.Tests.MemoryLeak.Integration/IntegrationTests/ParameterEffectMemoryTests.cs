@@ -41,15 +41,18 @@ public class ParameterEffectMemoryTests
                     // Track multiple metadata objects
                     for (int j = 0; j < 20; j++)
                     {
-                        var metadata = new Metadata
-                        {
-                            Name = $"ParameterTest_{i}_{j}",
-                            InputObject = MemoryTestModelFactory.CreateInput(
+                        var metadata = new Metadata { Name = $"ParameterTest_{i}_{j}" };
+
+                        metadata.SetInputObject(
+                            MemoryTestModelFactory.CreateInput(
                                 id: $"ParamInput_{i}_{j}",
                                 dataSizeBytes: 2000,
                                 description: $"Parameter test input {i}_{j}"
-                            ),
-                            OutputObject = new MemoryTestOutput
+                            )
+                        );
+
+                        metadata.SetOutputObject(
+                            new MemoryTestOutput
                             {
                                 Id = $"ParamOutput_{i}_{j}",
                                 Message = $"Parameter test output {i}_{j}",
@@ -57,7 +60,7 @@ public class ParameterEffectMemoryTests
                                 Success = true,
                                 ProcessedAt = DateTime.UtcNow
                             }
-                        };
+                        );
 
                         await parameterEffect.Track(metadata);
                     }
@@ -109,15 +112,18 @@ public class ParameterEffectMemoryTests
                 // Track many metadata objects with large parameter serialization
                 for (int i = 0; i < 100; i++)
                 {
-                    var metadata = new Metadata
-                    {
-                        Name = $"AccumulationTest_{i}",
-                        InputObject = MemoryTestModelFactory.CreateInput(
+                    var metadata = new Metadata { Name = $"AccumulationTest_{i}" };
+
+                    metadata.SetInputObject(
+                        MemoryTestModelFactory.CreateInput(
                             id: $"AccumInput_{i}",
                             dataSizeBytes: 5000,
                             description: $"Accumulation test input {i}"
-                        ),
-                        OutputObject = new MemoryTestOutput
+                        )
+                    );
+
+                    metadata.SetOutputObject(
+                        new MemoryTestOutput
                         {
                             Id = $"AccumOutput_{i}",
                             Message = $"Accumulation test output {i}",
@@ -125,7 +131,7 @@ public class ParameterEffectMemoryTests
                             Success = true,
                             ProcessedAt = DateTime.UtcNow
                         }
-                    };
+                    );
 
                     metadataReferences.Add(new WeakReference(metadata));
                     await parameterEffect.Track(metadata);
@@ -185,15 +191,15 @@ public class ParameterEffectMemoryTests
                 using var parameterEffect = new ParameterEffect(_jsonOptions);
 
                 // Track metadata and repeatedly update to create new JsonDocuments
-                var metadata = new Metadata
-                {
-                    Name = "JsonDocumentTest",
-                    InputObject = MemoryTestModelFactory.CreateInput(
+                var metadata = new Metadata { Name = "JsonDocumentTest" };
+
+                metadata.SetInputObject(
+                    MemoryTestModelFactory.CreateInput(
                         id: "JsonDocInput",
                         dataSizeBytes: 10_000,
                         description: "JsonDocument disposal test"
                     )
-                };
+                );
 
                 await parameterEffect.Track(metadata);
 
@@ -201,14 +207,16 @@ public class ParameterEffectMemoryTests
                 for (int i = 0; i < 100; i++)
                 {
                     // Update the output to trigger JsonDocument re-creation
-                    metadata.OutputObject = new MemoryTestOutput
-                    {
-                        Id = $"JsonDocOutput_{i}",
-                        Message = $"JsonDocument test output {i}",
-                        ProcessedData = new string('J', 5000), // 5KB string
-                        Success = true,
-                        ProcessedAt = DateTime.UtcNow
-                    };
+                    metadata.SetOutputObject(
+                        new MemoryTestOutput
+                        {
+                            Id = $"JsonDocOutput_{i}",
+                            Message = $"JsonDocument test output {i}",
+                            ProcessedData = new string('J', 5000), // 5KB string
+                            Success = true,
+                            ProcessedAt = DateTime.UtcNow
+                        }
+                    );
 
                     // Each SaveChanges should dispose old JsonDocuments and create new ones
                     await parameterEffect.SaveChanges(CancellationToken.None);
@@ -243,29 +251,31 @@ public class ParameterEffectMemoryTests
                     {
                         for (int i = 0; i < 25; i++)
                         {
-                            var metadata = new Metadata
-                            {
-                                Name = $"ConcurrentTest_{taskId}_{i}",
-                                InputObject = MemoryTestModelFactory.CreateInput(
+                            var metadata = new Metadata { Name = $"ConcurrentTest_{taskId}_{i}" };
+
+                            metadata.SetInputObject(
+                                MemoryTestModelFactory.CreateInput(
                                     id: $"ConcurrentInput_{taskId}_{i}",
                                     dataSizeBytes: 3000,
                                     description: $"Concurrent input {taskId}_{i}"
                                 )
-                            };
+                            );
 
                             await parameterEffect.Track(metadata);
 
                             // Simulate concurrent parameter updates
                             await Task.Delay(1); // Small delay to simulate work
 
-                            metadata.OutputObject = new MemoryTestOutput
-                            {
-                                Id = $"ConcurrentOutput_{taskId}_{i}",
-                                Message = $"Concurrent output {taskId}_{i}",
-                                ProcessedData = new string('C', 2000), // 2KB string
-                                Success = true,
-                                ProcessedAt = DateTime.UtcNow
-                            };
+                            metadata.SetOutputObject(
+                                new MemoryTestOutput
+                                {
+                                    Id = $"ConcurrentOutput_{taskId}_{i}",
+                                    Message = $"Concurrent output {taskId}_{i}",
+                                    ProcessedData = new string('C', 2000), // 2KB string
+                                    Success = true,
+                                    ProcessedAt = DateTime.UtcNow
+                                }
+                            );
 
                             if (i % 5 == 0)
                             {
@@ -306,15 +316,15 @@ public class ParameterEffectMemoryTests
                 var metadataList = new List<Metadata>();
                 for (int i = 0; i < 10; i++)
                 {
-                    var metadata = new Metadata
-                    {
-                        Name = $"RepeatedTest_{i}",
-                        InputObject = MemoryTestModelFactory.CreateInput(
+                    var metadata = new Metadata { Name = $"RepeatedTest_{i}" };
+
+                    metadata.SetInputObject(
+                        MemoryTestModelFactory.CreateInput(
                             id: $"RepeatedInput_{i}",
                             dataSizeBytes: 4000,
                             description: $"Repeated serialization input {i}"
                         )
-                    };
+                    );
 
                     metadataList.Add(metadata);
                     await parameterEffect.Track(metadata);
@@ -327,14 +337,16 @@ public class ParameterEffectMemoryTests
                     foreach (var metadata in metadataList)
                     {
                         char iterationChar = (char)('A' + (iteration % 26));
-                        metadata.OutputObject = new MemoryTestOutput
-                        {
-                            Id = $"RepeatedOutput_{iteration}",
-                            Message = $"Repeated output iteration {iteration}",
-                            ProcessedData = new string(iterationChar, 2500), // 2.5KB string
-                            Success = true,
-                            ProcessedAt = DateTime.UtcNow
-                        };
+                        metadata.SetOutputObject(
+                            new MemoryTestOutput
+                            {
+                                Id = $"RepeatedOutput_{iteration}",
+                                Message = $"Repeated output iteration {iteration}",
+                                ProcessedData = new string(iterationChar, 2500), // 2.5KB string
+                                Success = true,
+                                ProcessedAt = DateTime.UtcNow
+                            }
+                        );
                     }
 
                     // This should replace old JsonDocument instances, not accumulate them
@@ -362,11 +374,9 @@ public class ParameterEffectMemoryTests
         var parameterEffect = new ParameterEffect(_jsonOptions);
 
         // Track a metadata object before disposal
-        var metadata1 = new Metadata
-        {
-            Name = "BeforeDisposal",
-            InputObject = MemoryTestModelFactory.CreateInput("Test", 100)
-        };
+        var metadata1 = new Metadata { Name = "BeforeDisposal" };
+
+        metadata1.SetInputObject(MemoryTestModelFactory.CreateInput("Test", 100));
 
         parameterEffect.Track(metadata1).Wait();
 
@@ -374,11 +384,9 @@ public class ParameterEffectMemoryTests
         parameterEffect.Dispose();
 
         // Try to track a metadata object after disposal (should be ignored)
-        var metadata2 = new Metadata
-        {
-            Name = "AfterDisposal",
-            InputObject = MemoryTestModelFactory.CreateInput("Test2", 100)
-        };
+        var metadata2 = new Metadata { Name = "AfterDisposal" };
+
+        metadata2.SetInputObject(MemoryTestModelFactory.CreateInput("Test2", 100));
 
         parameterEffect.Track(metadata2).Wait();
 
@@ -402,15 +410,18 @@ public class ParameterEffectMemoryTests
                 // Track metadata with very large parameter data
                 for (int i = 0; i < 20; i++)
                 {
-                    var metadata = new Metadata
-                    {
-                        Name = $"LargeParameterTest_{i}",
-                        InputObject = MemoryTestModelFactory.CreateInput(
+                    var metadata = new Metadata { Name = $"LargeParameterTest_{i}" };
+
+                    metadata.SetInputObject(
+                        MemoryTestModelFactory.CreateInput(
                             id: $"LargeInput_{i}",
                             dataSizeBytes: 50_000, // 50KB input
                             description: $"Large parameter input {i}"
-                        ),
-                        OutputObject = new MemoryTestOutput
+                        )
+                    );
+
+                    metadata.SetOutputObject(
+                        new MemoryTestOutput
                         {
                             Id = $"LargeOutput_{i}",
                             Message = $"Large parameter output {i}",
@@ -418,7 +429,7 @@ public class ParameterEffectMemoryTests
                             Success = true,
                             ProcessedAt = DateTime.UtcNow
                         }
-                    };
+                    );
 
                     await parameterEffect.Track(metadata);
 
@@ -498,14 +509,14 @@ public class ParameterEffectMemoryTests
                     var parameterEffect = new ParameterEffect(_jsonOptions);
 
                     // Track some metadata before disposal
-                    var metadata = new Metadata
-                    {
-                        Name = $"PreDisposalTest_{i}",
-                        InputObject = MemoryTestModelFactory.CreateInput(
+                    var metadata = new Metadata { Name = $"PreDisposalTest_{i}" };
+
+                    metadata.SetInputObject(
+                        MemoryTestModelFactory.CreateInput(
                             id: $"PreDisposal_{i}",
                             dataSizeBytes: 1000
                         )
-                    };
+                    );
 
                     await parameterEffect.Track(metadata);
                     await parameterEffect.SaveChanges(CancellationToken.None);
@@ -518,11 +529,11 @@ public class ParameterEffectMemoryTests
                 // Try to use disposed effects (should be safely ignored)
                 foreach (var disposedEffect in disposedEffects)
                 {
-                    var postDisposalMetadata = new Metadata
-                    {
-                        Name = "PostDisposal",
-                        InputObject = MemoryTestModelFactory.CreateInput("PostDisposal", 500)
-                    };
+                    var postDisposalMetadata = new Metadata { Name = "PostDisposal" };
+
+                    postDisposalMetadata.SetInputObject(
+                        MemoryTestModelFactory.CreateInput("PostDisposal", 500)
+                    );
 
                     // These operations should be safely ignored on disposed objects
                     await disposedEffect.Track(postDisposalMetadata);

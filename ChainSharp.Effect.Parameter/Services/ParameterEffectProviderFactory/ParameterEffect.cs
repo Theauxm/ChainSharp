@@ -102,11 +102,12 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
     /// </remarks>
     private void SerializeParameters(Metadata metadata)
     {
-        if (metadata.InputObject is not null)
+        var inputObject = metadata.GetInputObject();
+        if (inputObject is not null)
         {
             try
             {
-                metadata.Input = JsonSerializer.Serialize(metadata.InputObject, options);
+                metadata.Input = JsonSerializer.Serialize(inputObject, options);
             }
             catch (ObjectDisposedException)
             {
@@ -117,11 +118,12 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
             }
         }
 
-        if (metadata.OutputObject is not null)
+        var outputObject = metadata.GetOutputObject();
+        if (outputObject is not null)
         {
             try
             {
-                metadata.Output = JsonSerializer.Serialize(metadata.OutputObject, options);
+                metadata.Output = JsonSerializer.Serialize(outputObject, options);
             }
             catch (ObjectDisposedException)
             {
@@ -139,8 +141,8 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
         {
             foreach (var metadata in _trackedMetadatas)
             {
-                metadata.InputObject = null;
-                metadata.OutputObject = null;
+                metadata.SetInputObject(null);
+                metadata.SetOutputObject(null);
             }
         }
 

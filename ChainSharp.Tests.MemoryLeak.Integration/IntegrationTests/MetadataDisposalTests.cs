@@ -58,7 +58,7 @@ public class MetadataDisposalTests
 
         // Simulate setting Output JsonDocument (this would normally happen during workflow execution)
         var outputData = new { Result = new string('Y', 10000) };
-        metadata.OutputObject = outputData;
+        metadata.SetOutputObject(outputData);
 
         // Act - Dispose the metadata
         var beforeDisposal = metadata.Input;

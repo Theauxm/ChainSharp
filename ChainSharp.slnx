@@ -1,0 +1,24 @@
+<Solution>
+  <Project Path="ChainSharp.ArrayLogger/ChainSharp.ArrayLogger.csproj" />
+  <Project Path="ChainSharp.Effect.Data.InMemory/ChainSharp.Effect.Data.InMemory.csproj" />
+  <Project Path="ChainSharp.Effect.Data.Postgres/ChainSharp.Effect.Data.Postgres.csproj" />
+  <Project Path="ChainSharp.Effect.Data/ChainSharp.Effect.Data.csproj" />
+  <Project Path="ChainSharp.Effect.Json/ChainSharp.Effect.Json.csproj" />
+  <Project Path="ChainSharp.Effect.Mediator/ChainSharp.Effect.Mediator.csproj" />
+  <Project Path="ChainSharp.Effect.Parameter/ChainSharp.Effect.Parameter.csproj" />
+  <Project Path="ChainSharp.Effect.Step.Logging/ChainSharp.Effect.Step.Logging.csproj" />
+  <Project Path="ChainSharp.Effect/ChainSharp.Effect.csproj" />
+  <Project Path="ChainSharp.Tests.Effect.Data.InMemory.Integration/ChainSharp.Tests.Effect.Data.InMemory.Integration.csproj" />
+  <Project Path="ChainSharp.Tests.Effect.Data.Postgres.Integration/ChainSharp.Tests.Effect.Data.Postgres.Integration.csproj" />
+  <Project Path="ChainSharp.Tests.Effect.Integration/ChainSharp.Tests.Effect.Integration.csproj" />
+  <Project Path="ChainSharp.Tests.Effect.Json.Integration/ChainSharp.Tests.Effect.Json.Integration.csproj" />
+  <Project Path="ChainSharp.Tests.Integration/ChainSharp.Tests.Integration.csproj" />
+  <Project Path="ChainSharp.Tests.MemoryLeak.Integration/ChainSharp.Tests.MemoryLeak.Integration.csproj" />
+  <Project Path="ChainSharp.Tests.Unit/ChainSharp.Tests.Unit.csproj" />
+  <Project Path="ChainSharp.Tests/ChainSharp.Tests.csproj">
+    <BuildType Project="?" />
+    <Platform Project="?" />
+    <Build Project="false" />
+  </Project>
+  <Project Path="ChainSharp/ChainSharp.csproj" />
+</Solution>

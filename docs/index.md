@@ -84,21 +84,6 @@ public class UserController(IWorkflowBus workflowBus) : ControllerBase
 | [Theauxm.ChainSharp.Effect.Mediator](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Mediator/) | Mediator pattern implementation for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Mediator) |
 | [Theauxm.ChainSharp.Effect.Provider.Parameter](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Provider.Parameter/) | Parameter serialization for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Provider.Parameter) |
 
-## When to Choose ChainSharp
-
-### ✅ Ideal For:
-- **Complex Business Processes**: Multi-step operations with branching logic
-- **Error-Prone Operations**: External API calls, database operations, file processing
-- **Audit Requirements**: Need to track what happened, when, and why
-- **Microservices**: Coordinating operations across service boundaries
-- **Event-Driven Architecture**: Processing events with multiple side effects
-
-### ❌ Consider Alternatives For:
-- **Simple CRUD Operations**: Basic database read/write operations
-- **High-Frequency, Low-Latency**: Real-time systems where every millisecond counts
-- **Stateless Functions**: Pure computational tasks without side effects
-- **Legacy Integration**: Systems that can't adopt modern .NET patterns
-
 ## Documentation
 
 - [Getting Started](getting-started) - Quick setup guide
@@ -114,4 +99,4 @@ ChainSharp is licensed under the MIT License.
 
 ## Acknowledgements
 
-Without the help and guidance of Mark Keaton this project would not have been possible.
+Without the help and guidance of Mark Keaton and Douglas Seely this project would not have been possible.

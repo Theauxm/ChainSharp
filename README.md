@@ -63,4 +63,4 @@ ChainSharp is licensed under the MIT License.
 
 ## Acknowledgements
 
-Without the help and guidance of Mark Keaton this project would not have been possible.
+Without the help and guidance of Mark Keaton and Douglas Seely this project would not have been possible.

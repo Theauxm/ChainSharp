@@ -1,4 +1,4 @@
-using ChainSharp.ArrayLogger.Services.ArrayLoggingProvider;
+using ChainSharp.Tests.ArrayLogger.Services.ArrayLoggingProvider;
 using ChainSharp.Tests.MemoryLeak.Integration.Utils;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace ChainSharp.ArrayLogger.Services.ArrayLoggingProvider;
+namespace ChainSharp.Tests.ArrayLogger.Services.ArrayLoggingProvider;
 
 public interface IArrayLoggingProvider : ILoggerProvider
 {

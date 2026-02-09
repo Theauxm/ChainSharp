@@ -2,7 +2,7 @@ using ChainSharp.Effect.Models.Log;
 using ChainSharp.Effect.Models.Log.DTOs;
 using Microsoft.Extensions.Logging;
 
-namespace ChainSharp.ArrayLogger.Services.ArrayLoggingProvider;
+namespace ChainSharp.Tests.ArrayLogger.Services.ArrayLoggingProvider;
 
 public class ArrayLoggerEffect(string categoryName) : ILogger, IDisposable
 {

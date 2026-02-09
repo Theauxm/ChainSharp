@@ -1,4 +1,4 @@
-using ChainSharp.ArrayLogger.Services.ArrayLoggingProvider;
+using ChainSharp.Tests.ArrayLogger.Services.ArrayLoggingProvider;
 using ChainSharp.Effect.Data.Extensions;
 using ChainSharp.Effect.Data.Postgres.Extensions;
 using ChainSharp.Effect.Extensions;

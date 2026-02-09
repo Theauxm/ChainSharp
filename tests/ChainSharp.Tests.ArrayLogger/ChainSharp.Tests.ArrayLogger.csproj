@@ -4,7 +4,7 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <AssemblyName>Theauxm.ChainSharp.ArrayLogger</AssemblyName>
+        <AssemblyName>Theauxm.ChainSharp.Tests.ArrayLogger</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>
@@ -12,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ChainSharp.Effect\ChainSharp.Effect.csproj" />
+      <ProjectReference Include="..\..\ChainSharp.Effect\ChainSharp.Effect.csproj" />
     </ItemGroup>
 
 </Project>

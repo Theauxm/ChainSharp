@@ -23,7 +23,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ChainSharp.Effect\ChainSharp.Effect.csproj" />
+      <ProjectReference Include="..\..\ChainSharp.Effect\ChainSharp.Effect.csproj" />
     </ItemGroup>
 
 </Project>

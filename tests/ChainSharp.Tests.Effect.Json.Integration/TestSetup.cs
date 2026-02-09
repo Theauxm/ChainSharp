@@ -1,4 +1,4 @@
-using ChainSharp.ArrayLogger.Services.ArrayLoggingProvider;
+using ChainSharp.Tests.ArrayLogger.Services.ArrayLoggingProvider;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Provider.Json.Extensions;
 using ChainSharp.Effect.StepProvider.Logging.Extensions;

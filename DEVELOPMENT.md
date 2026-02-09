@@ -109,13 +109,13 @@ ChainSharp/
 ├── ChainSharp.Effect.Data/               # Database persistence interfaces
 ├── ChainSharp.Effect.Data.InMemory/      # In-memory database implementation
 ├── ChainSharp.Effect.Data.Postgres/      # PostgreSQL implementation
-├── ChainSharp.Effect.Provider.Json/               # JSON logging effect
+├── ChainSharp.Effect.Provider.Json/      # JSON logging effect
 ├── ChainSharp.Effect.Mediator/           # Workflow discovery and routing
-├── ChainSharp.Effect.Provider.Parameter/          # Parameter serialization
-├── ChainSharp.ArrayLogger/               # Array-based logging effect
-├── ChainSharp.Blazor/                    # Blazor integration (future)
-└── Tests/
+├── ChainSharp.Effect.Provider.Parameter/ # Parameter serialization
+├── ChainSharp.Effect.StepProvider.Logging/ # Step-level logging
+└── tests/
     ├── ChainSharp.Tests/                 # Core unit tests
+    ├── ChainSharp.Tests.ArrayLogger/     # Array-based logging for tests
     ├── ChainSharp.Tests.Integration/     # Integration tests
     ├── ChainSharp.Tests.Unit/            # Additional unit tests
     ├── ChainSharp.Tests.Effect.*/        # Effect-specific tests
@@ -175,16 +175,16 @@ dotnet test --collect:"XPlat Code Coverage"
 #### Specific Test Projects
 ```bash
 # Unit tests only
-dotnet test ChainSharp.Tests.Unit/
+dotnet test tests/ChainSharp.Tests.Unit/
 
 # Integration tests
-dotnet test ChainSharp.Tests.Integration/
+dotnet test tests/ChainSharp.Tests.Integration/
 
 # Memory leak tests
-dotnet test ChainSharp.Tests.MemoryLeak.Integration/
+dotnet test tests/ChainSharp.Tests.MemoryLeak.Integration/
 
 # Effect-specific tests
-dotnet test ChainSharp.Tests.Effect.Data.Postgres.Integration/
+dotnet test tests/ChainSharp.Tests.Effect.Data.Postgres.Integration/
 ```
 
 #### Test Categories
@@ -251,10 +251,10 @@ public async Task Workflow_DoesNotLeak_Memory()
 cd ChainSharp.Effect.Data.Postgres/
 
 # Create new migration
-dotnet ef migrations add AddNewFeature --startup-project ../ChainSharp.Tests.Effect.Data.Postgres.Integration/
+dotnet ef migrations add AddNewFeature --startup-project ../tests/ChainSharp.Tests.Effect.Data.Postgres.Integration/
 
 # Update database
-dotnet ef database update --startup-project ../ChainSharp.Tests.Effect.Data.Postgres.Integration/
+dotnet ef database update --startup-project ../tests/ChainSharp.Tests.Effect.Data.Postgres.Integration/
 ```
 
 #### Manual SQL Migrations
@@ -566,7 +566,7 @@ public async Task DebugWorkflowExecution()
    dotnet test
    
    # Run memory leak tests
-   dotnet test ChainSharp.Tests.MemoryLeak.Integration/
+   dotnet test tests/ChainSharp.Tests.MemoryLeak.Integration/
    
    # Check test coverage
    dotnet test --collect:"XPlat Code Coverage"

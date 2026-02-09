@@ -153,7 +153,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
 
         EffectLogger?.LogTrace("Running Workflow: ({WorkflowName})", WorkflowName);
 
-        Metadata = await InitializeWorkflow(input);
+        Metadata ??= await InitializeWorkflow(input);
         await EffectRunner.SaveChanges(CancellationToken.None);
 
         try
@@ -180,6 +180,17 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
 
             throw;
         }
+    }
+
+    public virtual async Task<TOut> Run(TIn input, Metadata metadata)
+    {
+        if (metadata.WorkflowState != WorkflowState.Pending)
+            throw new WorkflowException(
+                $"Cannot start a workflow with state ({metadata.WorkflowState}), must be Pending."
+            );
+
+        Metadata = metadata;
+        return await Run(input);
     }
 
     /// <summary>

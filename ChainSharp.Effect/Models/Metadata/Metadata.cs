@@ -216,53 +216,31 @@ public class Metadata : IMetadata, IDisposable
     /// </remarks>
     private dynamic? _outputObject;
 
-    /// <summary>
-    /// Sets the deserialized input object for the workflow.
-    /// </summary>
-    /// <param name="value">The input object to set</param>
-    /// <remarks>
-    /// This method provides controlled access to set the input object.
-    /// Using methods instead of properties prevents the object from being
-    /// included in logging serialization by frameworks like Serilog.
-    /// </remarks>
-    public void SetInputObject(dynamic? value) => _inputObject = value;
-
-    /// <summary>
-    /// Gets the deserialized input object for the workflow.
-    /// </summary>
-    /// <returns>The input object, or null if not set</returns>
-    /// <remarks>
-    /// This method provides controlled access to retrieve the input object.
-    /// Using methods instead of properties prevents the object from being
-    /// included in logging serialization by frameworks like Serilog.
-    /// </remarks>
-    public dynamic? GetInputObject() => _inputObject;
-
-    /// <summary>
-    /// Sets the deserialized output object from the workflow.
-    /// </summary>
-    /// <param name="value">The output object to set</param>
-    /// <remarks>
-    /// This method provides controlled access to set the output object.
-    /// Using methods instead of properties prevents the object from being
-    /// included in logging serialization by frameworks like Serilog.
-    /// </remarks>
-    public void SetOutputObject(dynamic? value) => _outputObject = value;
-
-    /// <summary>
-    /// Gets the deserialized output object from the workflow.
-    /// </summary>
-    /// <returns>The output object, or null if not set</returns>
-    /// <remarks>
-    /// This method provides controlled access to retrieve the output object.
-    /// Using methods instead of properties prevents the object from being
-    /// included in logging serialization by frameworks like Serilog.
-    /// </remarks>
-    public dynamic? GetOutputObject() => _outputObject;
-
     #endregion
 
     #region ForeignKeys
+
+    /// <summary>
+    /// Gets or sets the identifier of the manifest that defines this workflow execution.
+    /// </summary>
+    /// <remarks>
+    /// This property establishes the relationship between a workflow execution (Metadata)
+    /// and its job definition (Manifest). A single Manifest can have many Metadata records.
+    /// </remarks>
+    [Column("manifest_id")]
+    [JsonPropertyName("manifest_id")]
+    [JsonInclude]
+    public int? ManifestId { get; set; }
+
+    /// <summary>
+    /// Gets the manifest that defines this workflow execution.
+    /// </summary>
+    /// <remarks>
+    /// This navigation property allows for accessing the job definition (Manifest)
+    /// from a workflow execution record. It is populated by the ORM when the metadata is
+    /// loaded from the database.
+    /// </remarks>
+    public Manifest.Manifest? Manifest { get; private set; }
 
     /// <summary>
     /// Gets the parent workflow metadata, if this workflow is a child workflow.
@@ -326,7 +304,8 @@ public class Metadata : IMetadata, IDisposable
             WorkflowState = WorkflowState.Pending,
             Executor = Assembly.GetEntryAssembly()?.GetAssemblyProject(),
             StartTime = DateTime.UtcNow,
-            ParentId = metadata.ParentId
+            ParentId = metadata.ParentId,
+            ManifestId = metadata.ManifestId
         };
 
         newWorkflow.SetInputObject(metadata.Input);
@@ -404,6 +383,50 @@ public class Metadata : IMetadata, IDisposable
             GetType(),
             ChainSharpEffectConfiguration.StaticSystemJsonSerializerOptions
         );
+
+    /// <summary>
+    /// Sets the deserialized input object for the workflow.
+    /// </summary>
+    /// <param name="value">The input object to set</param>
+    /// <remarks>
+    /// This method provides controlled access to set the input object.
+    /// Using methods instead of properties prevents the object from being
+    /// included in logging serialization by frameworks like Serilog.
+    /// </remarks>
+    public void SetInputObject(dynamic? value) => _inputObject = value;
+
+    /// <summary>
+    /// Gets the deserialized input object for the workflow.
+    /// </summary>
+    /// <returns>The input object, or null if not set</returns>
+    /// <remarks>
+    /// This method provides controlled access to retrieve the input object.
+    /// Using methods instead of properties prevents the object from being
+    /// included in logging serialization by frameworks like Serilog.
+    /// </remarks>
+    public dynamic? GetInputObject() => _inputObject;
+
+    /// <summary>
+    /// Sets the deserialized output object from the workflow.
+    /// </summary>
+    /// <param name="value">The output object to set</param>
+    /// <remarks>
+    /// This method provides controlled access to set the output object.
+    /// Using methods instead of properties prevents the object from being
+    /// included in logging serialization by frameworks like Serilog.
+    /// </remarks>
+    public void SetOutputObject(dynamic? value) => _outputObject = value;
+
+    /// <summary>
+    /// Gets the deserialized output object from the workflow.
+    /// </summary>
+    /// <returns>The output object, or null if not set</returns>
+    /// <remarks>
+    /// This method provides controlled access to retrieve the output object.
+    /// Using methods instead of properties prevents the object from being
+    /// included in logging serialization by frameworks like Serilog.
+    /// </remarks>
+    public dynamic? GetOutputObject() => _outputObject;
 
     #endregion
 

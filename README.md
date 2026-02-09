@@ -7,28 +7,6 @@
 
 ChainSharp is a .NET library for Railway Oriented Programming, building from functional concepts and attempting to create an encapsulated way of running a piece of code with discrete steps. It aims to simplify complex workflows by providing a clear, linear flow of operations while handling errors and maintaining code readability.
 
-## Features
-
-- **Railway Oriented Programming**: Implements the Railway Oriented Programming paradigm for clear, linear, and maintainable workflows.
-- **Functional Concepts**: Leverages functional programming concepts to enhance code clarity and robustness.
-- **Encapsulated Steps**: Encapsulates each step of a process, making the code easy to read, write, and maintain.
-- **Error Handling**: Built-in mechanisms for handling errors at each step without disrupting the overall flow.
-- **Open Source**: Fully open source under the MIT license.
-
-## Installation
-
-You can install ChainSharp via NuGet. Run the following command in your package manager console:
-
-```sh
-dotnet add package Theauxm.ChainSharp
-```
-
-Or, you can add it directly to your `.csproj` file:
-
-```csharp
-<PackageReference Include="Theauxm.ChainSharp" Version="..." />
-```
-
 ## Available NuGet Packages
 
 ChainSharp is distributed as several NuGet packages, each providing specific functionality:
@@ -40,9 +18,92 @@ ChainSharp is distributed as several NuGet packages, each providing specific fun
 | [Theauxm.ChainSharp.Effect.Data](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Data/) | Data persistence abstractions for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Data) |
 | [Theauxm.ChainSharp.Effect.Data.InMemory](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Data.InMemory/) | In-memory data persistence for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Data.InMemory) |
 | [Theauxm.ChainSharp.Effect.Data.Postgres](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Data.Postgres/) | PostgreSQL data persistence for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Data.Postgres) |
-| [Theauxm.ChainSharp.Effect.Json](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Json/) | JSON serialization for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Json) |
+| [Theauxm.ChainSharp.Effect.Provider.Json](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Provider.Json/) | JSON serialization for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Provider.Json) |
 | [Theauxm.ChainSharp.Effect.Mediator](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Mediator/) | Mediator pattern implementation for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Mediator) |
-| [Theauxm.ChainSharp.Effect.Parameter](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Parameter/) | Parameter serialization for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Parameter) |
+| [Theauxm.ChainSharp.Effect.Provider.Parameter](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Provider.Parameter/) | Parameter serialization for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Provider.Parameter) |
+
+## Architecture Overview
+
+ChainSharp follows a modular architecture where the core library can be extended with optional packages for effects, persistence, and workflow orchestration.
+
+### Dependency Graph
+
+```
+ChainSharp (Core)
+    │
+    └─── ChainSharp.Effect (Enhanced Workflows)
+              │
+              ├─── ChainSharp.Effect.Mediator (WorkflowBus)
+              │
+              ├─── ChainSharp.Effect.Data (Abstract Persistence)
+              │         │
+              │         ├─── ChainSharp.Effect.Data.Postgres
+              │         └─── ChainSharp.Effect.Data.InMemory
+              │
+              ├─── ChainSharp.Effect.Provider.Json
+              ├─── ChainSharp.Effect.Provider.Parameter
+              └─── ChainSharp.Effect.StepProvider.Logging
+```
+
+### Package Domains
+
+#### Core (`ChainSharp`)
+
+The foundation library providing Railway Oriented Programming patterns. Contains:
+- **Workflow<TIn, TOut>**: Base class for defining a sequence of steps that process input to output
+- **Step<TIn, TOut>**: Base class for individual units of work within a workflow
+- **Chain**: Fluent API for composing steps together (`Activate(input).Chain<Step1>().Chain<Step2>().Resolve()`)
+
+Error handling is built-in using `Either<Exception, T>` monads from LanguageExt—if any step fails, subsequent steps are automatically short-circuited.
+
+#### Effect (`ChainSharp.Effect`)
+
+Extends the core workflow with "effects" (side effects like logging, persistence, and metadata tracking). Contains:
+- **EffectWorkflow<TIn, TOut>**: Enhanced workflow with automatic metadata tracking, dependency injection via `[Inject]` attributes, and effect coordination
+- **EffectRunner**: Coordinates multiple effect providers and manages their lifecycle
+- **IEffectProvider**: Interface for pluggable providers that react to workflow events (track models, save changes)
+
+#### Mediator (`ChainSharp.Effect.Mediator`)
+
+Implements the mediator pattern for workflow discovery and execution. Contains:
+- **WorkflowBus**: Discovers and executes workflows based on input type. Allows running workflows from controllers, services, or other workflows
+- **WorkflowRegistry**: Scans assemblies at startup to build a mapping of input types → workflow types
+
+> **Note**: Each input type can only map to ONE workflow. Use distinct input types (e.g., `CreateUserRequest`, `UpdateUserRequest`) rather than sharing types across workflows.
+
+#### Data (`ChainSharp.Effect.Data`)
+
+Abstract data persistence layer for storing workflow metadata (execution state, timing, inputs/outputs, errors). Contains:
+- **DataContext<T>**: Base EF Core DbContext with `Metadata`, `Log`, and `Manifest` entities
+- **IDataContext**: Interface for database operations and transaction management
+
+##### Data.Postgres (`ChainSharp.Effect.Data.Postgres`)
+
+PostgreSQL Data implementation
+
+##### Data.InMemory (`ChainSharp.Effect.Data.InMemory`)
+
+InMemory Data Implementation
+
+#### Provider (`ChainSharp.Effect.Provider.*`)
+
+Effect providers are pluggable components that react to workflow lifecycle events. They implement `IEffectProvider` and are registered via dependency injection.
+
+##### Provider.Json
+
+Debug logging provider that serializes tracked models to JSON and logs state changes. Useful for development and debugging workflow state.
+
+##### Provider.Parameter
+
+Serializes workflow input/output parameters to JSON for database storage. Enables querying workflow history by parameter values and provides an audit trail.
+
+#### StepProvider (`ChainSharp.Effect.StepProvider.*`)
+
+Step-level effect providers that operate on individual steps within a workflow.
+
+##### StepProvider.Logging
+
+Provides structured logging for individual steps, capturing step inputs, outputs, and timing information.
 
 ## Usage Examples
 

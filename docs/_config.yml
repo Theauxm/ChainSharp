@@ -1,0 +1,34 @@
+title: ChainSharp
+description: A .NET library for Railway Oriented Programming with Effects
+theme: jekyll-theme-minimal
+remote_theme: pages-themes/minimal@v0.2.0
+
+# GitHub Pages settings
+baseurl: "/ChainSharp"
+url: "https://theauxm.github.io"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Navigation
+nav:
+  - title: Home
+    url: /
+  - title: Getting Started
+    url: /getting-started
+  - title: Concepts
+    url: /concepts
+  - title: Architecture
+    url: /architecture
+  - title: Usage Guide
+    url: /usage-guide
+  - title: Troubleshooting
+    url: /troubleshooting
+  - title: Development
+    url: /development
+
+# Plugins
+plugins:
+  - jekyll-remote-theme
+  - jekyll-seo-tag

@@ -1,6 +1,10 @@
-# ChainSharp Core Concepts
+---
+layout: default
+title: Core Concepts
+nav_order: 3
+---
 
-## Essential Knowledge for Understanding ChainSharp
+# Core Concepts
 
 This document explains the fundamental concepts that power ChainSharp. Understanding these concepts is crucial for working with any part of the system.
 
@@ -14,16 +18,10 @@ Railway Oriented Programming is a functional programming pattern that treats ope
 - **Failure Track**: Operations jump to the failure track when errors occur
 - **No Manual Error Checking**: The "railway" automatically routes success/failure
 
-```mermaid
-graph LR
-    A[Input] --> B{Step 1}
-    B -->|Success| C{Step 2}
-    B -->|Failure| F[Error Track]
-    C -->|Success| D{Step 3}
-    C -->|Failure| F
-    D -->|Success| E[Output]
-    D -->|Failure| F
-    F --> G[Final Error]
+```
+Input → [Step 1] → [Step 2] → [Step 3] → Output
+            ↓          ↓          ↓
+         [Error] → [Error] → [Error] → Final Error
 ```
 
 ### Railway Pattern in C#
@@ -66,6 +64,7 @@ The Effect Pattern separates **describing what to do** from **actually doing it*
 - **Execute Phase**: Run all tracked effects atomically
 
 This is similar to how Entity Framework's DbContext works:
+
 ```csharp
 // Track changes (doesn't hit database yet)
 context.Users.Add(user);
@@ -108,26 +107,26 @@ public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>
 
 ### Workflows vs Steps vs Effects
 
-```mermaid
-graph TB
-    subgraph "Workflow Level"
-        A[EffectWorkflow] --> B[Orchestrates Steps]
-        B --> C[Manages Effects]
-    end
-    
-    subgraph "Step Level"
-        D[Step 1: Validate] --> E[Step 2: Process]
-        E --> F[Step 3: Notify]
-    end
-    
-    subgraph "Effect Level"
-        G[Database Effect] 
-        H[JSON Log Effect]
-        I[Parameter Effect]
-        C --> G
-        C --> H
-        C --> I
-    end
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Workflow Level                       │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │ EffectWorkflow → Orchestrates Steps             │   │
+│  │              → Manages Effects                  │   │
+│  └─────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│                     Step Level                          │
+│  [Step 1: Validate] → [Step 2: Process] → [Step 3]     │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│                    Effect Level                         │
+│  [Database Effect] [JSON Log Effect] [Parameter Effect] │
+└─────────────────────────────────────────────────────────┘
 ```
 
 #### Workflows
@@ -177,6 +176,7 @@ public class EffectRunner : IEffectRunner
 ## 4. Dependency Injection with [Inject]
 
 ### Traditional Constructor Injection
+
 ```csharp
 // Traditional approach - verbose constructors
 public class CreateUserWorkflow(
@@ -191,6 +191,7 @@ public class CreateUserWorkflow(
 ```
 
 ### ChainSharp Attribute Injection
+
 ```csharp
 // ChainSharp approach - clean and focused
 public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>
@@ -223,6 +224,7 @@ public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>
 ### Automatic Injection for Built-in Services
 
 EffectWorkflow automatically injects these services:
+
 ```csharp
 [Inject]
 public IEffectRunner? EffectRunner { get; set; }
@@ -256,24 +258,6 @@ public class Metadata : IMetadata
 }
 ```
 
-### Metadata Lifecycle
-
-```mermaid
-sequenceDiagram
-    participant W as Workflow
-    participant E as EffectRunner
-    participant D as DataContext
-    
-    W->>E: 1. Track(metadata)
-    E->>D: Store in change tracker
-    
-    Note over W: Execute business logic
-    
-    W->>W: 2. Update metadata state
-    W->>E: 3. SaveChanges()
-    E->>D: Persist to database
-```
-
 ### Metadata States
 
 | State | Meaning | When Set |
@@ -286,6 +270,7 @@ sequenceDiagram
 ### Parent-Child Relationships
 
 Workflows can spawn child workflows:
+
 ```csharp
 public class ParentWorkflow : EffectWorkflow<ParentRequest, ParentResult>
 {
@@ -349,20 +334,42 @@ public class ParentWorkflow : EffectWorkflow<ParentRequest, ParentResult>
 
 ## Understanding ChainSharp Flow
 
-```mermaid
-graph TD
-    A[Client Request] --> B[WorkflowBus.RunAsync]
-    B --> C[Find Workflow by Input Type]
-    C --> D[Create Workflow Instance]
-    D --> E[Inject Dependencies]
-    E --> F[Initialize Metadata]
-    F --> G[Execute Workflow Chain]
-    G --> H{Success?}
-    H -->|Yes| I[Update Metadata: Completed]
-    H -->|No| J[Update Metadata: Failed]
-    I --> K[SaveChanges - Execute Effects]
-    J --> K
-    K --> L[Return Result]
+```
+[Client Request]
+       │
+       ▼
+[WorkflowBus.RunAsync]
+       │
+       ▼
+[Find Workflow by Input Type]
+       │
+       ▼
+[Create Workflow Instance]
+       │
+       ▼
+[Inject Dependencies]
+       │
+       ▼
+[Initialize Metadata]
+       │
+       ▼
+[Execute Workflow Chain]
+       │
+       ▼
+   Success? ──No──► [Update Metadata: Failed]
+       │                      │
+      Yes                     │
+       │                      │
+       ▼                      ▼
+[Update Metadata: Completed]  │
+       │                      │
+       └──────────┬───────────┘
+                  │
+                  ▼
+       [SaveChanges - Execute Effects]
+                  │
+                  ▼
+           [Return Result]
 ```
 
 This flow shows how all the concepts work together:

@@ -13,25 +13,25 @@ public class Manifest : IModel
 
   [Column("id")] public int Id { get; }
 
-  [Column("external_id")] string ExternalId { get; set; }
+  [Column("external_id")] public string ExternalId { get; set; }
 
-  [Column("name")] string Name { get; set; }
+  [Column("name")] public string Name { get; set; }
 
-  [Column("property_type")] string? PropertyTypeName { get; set; }
+  [Column("property_type")] public string? PropertyTypeName { get; set; }
 
-  [Column("properties")] private string? Properties { get; set; }
+  [Column("properties")] public string? Properties { get; set; }
 
   [NotMapped]
-  public Type SerializerType
-    => PropertyTypeName is null
+  public Type PropertyType
+    => PropertyTypeName == null
       ? typeof(Unit)
-      : Type.GetType(PropertyTypeName)!;
+      : ResolveType(PropertyTypeName);
 
   [NotMapped]
   public Type NameType
-    => Name is null
+    => Name == null
       ? typeof(Unit)
-      : Type.GetType(Name)!;
+      : ResolveType(Name);
 
   #endregion
 
@@ -39,51 +39,47 @@ public class Manifest : IModel
 
   public static Manifest Create(CreateManifest manifest)
   {
-    if (manifest.NameType.FullName is null)
-      throw new Exception($"Could not get a full name from ({manifest.NameType})");
+    if (manifest.Name.FullName is null)
+      throw new Exception($"Could not get a full name from ({manifest.Name})");
 
     var newManifest = new Manifest()
     {
-      Name = manifest.NameType.FullName,
+      Name = manifest.Name.FullName,
       ExternalId = Guid.NewGuid().ToString("N"),
     };
 
-    if (manifest.PropertyType != null && manifest.Properties != null)
-      newManifest.SetProperties(manifest.PropertyType, manifest.Properties);
+    if (manifest.Properties != null)
+      newManifest.SetProperties(manifest.Properties);
 
     return newManifest;
   }
 
-  public Unit SetProperties<TProperty>(TProperty config)
-    => SetProperties((typeof(TProperty), config));
-
-  public Unit SetProperties(Type configType, dynamic config)
+  public Unit SetProperties(IManifestProperties properties)
   {
-    if (config.GetType() != configType)
-      throw new Exception(
-        $"Actual Config Type ({config.GetType().FullName}) does not match passed Passed Config Type ({configType.FullName})");
+    var propertiesType = properties.GetType();
 
-    PropertyTypeName = configType.FullName;
-    Properties = JsonSerializer.Serialize(config);
+    PropertyTypeName = propertiesType.FullName;
+    Properties = JsonSerializer.Serialize(properties, propertiesType, ChainSharpJsonSerializationOptions.Default);
 
     return Unit.Default;
   }
 
   public TProperty GetProperties<TProperty>()
+    where TProperty : IManifestProperties
     => (TProperty)GetProperties(typeof(TProperty));
 
   public object GetProperties(Type propertyType)
   {
-    if (propertyType != SerializerType)
-      throw new Exception($"{propertyType.FullName} is not ({SerializerType.FullName})");
+    if (propertyType != PropertyType)
+      throw new Exception($"Passed type ({propertyType}) is not saved type ({PropertyType})");
 
     if (string.IsNullOrEmpty(Properties))
-      throw new Exception($"Cannot deserialize null property object with type ({SerializerType.FullName})");
+      throw new Exception($"Cannot deserialize null property object with type ({PropertyType})");
 
     var deserializedObject =
       JsonSerializer.Deserialize(Properties, propertyType, ChainSharpJsonSerializationOptions.Default) ??
       throw new Exception(
-        $"Could not deserialize property object ({Properties}) with type ({SerializerType.FullName})");
+        $"Could not deserialize property object ({Properties}) with type ({PropertyType})");
 
     return deserializedObject;
   }
@@ -93,5 +89,26 @@ public class Manifest : IModel
   [JsonConstructor]
   public Manifest()
   {
+  }
+
+  /// <summary>
+  /// Resolves a type by its full name, searching all loaded assemblies.
+  /// </summary>
+  private static Type ResolveType(string typeName)
+  {
+    // First try the standard Type.GetType which works for types in the current assembly and mscorlib
+    var type = Type.GetType(typeName);
+    if (type != null)
+      return type;
+
+    // Search through all loaded assemblies
+    foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+    {
+      type = assembly.GetType(typeName);
+      if (type != null)
+        return type;
+    }
+
+    throw new TypeLoadException($"Unable to find type: {typeName}");
   }
 }

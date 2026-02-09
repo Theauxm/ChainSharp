@@ -4,6 +4,7 @@ using ChainSharp.Effect.Data.Models.Metadata;
 using ChainSharp.Effect.Data.Services.DataContextTransaction;
 using ChainSharp.Effect.Models;
 using ChainSharp.Effect.Models.Log;
+using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.Metadata;
 using Microsoft.EntityFrameworkCore;
 
@@ -60,6 +61,18 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
     /// and is particularly useful for debugging and auditing.
     /// </remarks>
     public DbSet<Log> Logs { get; set; }
+
+    /// <summary>
+    /// Gets or sets the DbSet for workflow manifest records.
+    /// </summary>
+    /// <remarks>
+    /// This property provides access to the Manifest table, which stores configuration
+    /// and property information for workflows.
+    ///
+    /// The Manifests DbSet allows for storing workflow configurations and properties
+    /// that can be serialized/deserialized as JSONB.
+    /// </remarks>
+    public DbSet<Manifest> Manifests { get; set; }
 
     #endregion
 

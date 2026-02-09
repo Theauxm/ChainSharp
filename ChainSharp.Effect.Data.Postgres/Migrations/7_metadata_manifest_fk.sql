@@ -1,0 +1,18 @@
+-- Add manifest_id foreign key column to metadata table
+-- This establishes the relationship between workflow executions (metadata) and job definitions (manifest)
+-- A single manifest (job definition) can have many metadata records (workflow executions)
+
+-- Add the manifest_id column to the metadata table
+alter table chain_sharp.metadata
+    add column if not exists manifest_id integer;
+
+-- Add the foreign key constraint
+alter table chain_sharp.metadata
+    add constraint metadata_manifest_id_fkey
+        foreign key (manifest_id)
+            references chain_sharp.manifest (id)
+            on delete restrict;
+
+-- Create index on manifest_id for faster lookups
+create index if not exists metadata_manifest_id_idx 
+    on chain_sharp.metadata (manifest_id);

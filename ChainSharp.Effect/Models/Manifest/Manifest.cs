@@ -35,6 +35,20 @@ public class Manifest : IModel
 
   #endregion
 
+  #region ForeignKeys
+
+  /// <summary>
+  /// Gets the collection of metadata records (workflow executions) associated with this manifest.
+  /// </summary>
+  /// <remarks>
+  /// This navigation property allows for traversal from a job definition (Manifest)
+  /// to all its execution records (Metadata). It is populated by the ORM when loaded
+  /// from the database.
+  /// </remarks>
+  public ICollection<Metadata.Metadata> Metadatas { get; private set; } = [];
+
+  #endregion
+
   #region Functions
 
   public static Manifest Create(CreateManifest manifest)

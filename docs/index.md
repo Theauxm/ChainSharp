@@ -9,26 +9,37 @@ nav_order: 1
 [![Build Status](https://github.com/Theauxm/ChainSharp/workflows/Release%20NuGet%20Package/badge.svg)](https://github.com/Theauxm/ChainSharp/actions)
 [![Test Status](https://github.com/Theauxm/ChainSharp/workflows/ChainSharp:%20Run%20CI/CD%20Test%20Suite/badge.svg)](https://github.com/Theauxm/ChainSharp/actions)
 
-ChainSharp is a .NET library for Railway Oriented Programming, building from functional concepts and attempting to create an encapsulated way of running a piece of code with discrete steps. It aims to simplify complex workflows by providing a clear, linear flow of operations while handling errors and maintaining code readability.
+ChainSharp is a .NET library for building workflows as a chain of discrete steps.
 
-## Core Value Propositions
+## The Problem
 
-### Railway Oriented Programming
-- **Fail-Fast Design**: Operations either succeed or fail, with automatic error propagation
-- **Composable Steps**: Chain operations together with automatic error handling
-- **Type Safety**: Strongly typed inputs and outputs with compile-time guarantees
+Multi-step operations tend to accumulate error handling noise:
 
-### Effect Pattern
-- **Deferred Execution**: Track operations without immediate execution
-- **Unit of Work**: Batch operations and execute them atomically
-- **Extensible Providers**: Pluggable effects for different concerns (database, logging, etc.)
+```csharp
+public async Task<User> CreateUser(CreateUserRequest request)
+{
+    var validated = await _validator.ValidateAsync(request);
+    if (!validated.IsValid)
+        return Error("Validation failed");
 
-### Automatic Dependency Injection
-- **Workflow Discovery**: Automatically find and register workflows based on input types
+    var user = await _userService.CreateAsync(validated);
+    if (user == null)
+        return Error("User creation failed");
 
-## Quick Start Example
+    var emailSent = await _emailService.SendWelcomeAsync(user);
+    if (!emailSent)
+        _logger.LogWarning("Welcome email failed for {UserId}", user.Id);
 
-### 1. Basic Workflow
+    return user;
+}
+```
+
+Each step needs its own error check. The actual business logic gets buried.
+
+## With ChainSharp
+
+The same flow, without the noise:
+
 ```csharp
 public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>
 {
@@ -41,7 +52,20 @@ public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>
 }
 ```
 
-### 2. Service Registration
+If `ValidateUserStep` throws, `CreateUserStep` never runs. The exception propagates automatically. Each step is a separate class with its own dependencies, easy to test in isolation.
+
+For more on how this works, see [Core Concepts](concepts.md).
+
+## Quick Start
+
+### Installation
+
+```bash
+dotnet add package Theauxm.ChainSharp.Effect
+dotnet add package Theauxm.ChainSharp.Effect.Mediator
+```
+
+### Service Registration
 ```csharp
 // Program.cs
 services.AddChainSharpEffects(
@@ -49,7 +73,7 @@ services.AddChainSharpEffects(
 );
 ```
 
-### 3. Workflow Execution
+### Running a Workflow
 ```csharp
 // Controller or service
 public class UserController(IWorkflowBus workflowBus) : ControllerBase

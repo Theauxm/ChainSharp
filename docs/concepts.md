@@ -6,17 +6,9 @@ nav_order: 3
 
 # Core Concepts
 
-This document explains the fundamental concepts that power ChainSharp. Understanding these concepts is crucial for working with any part of the system.
+## Railway Oriented Programming
 
-## 1. Railway Oriented Programming (ROP)
-
-### What is Railway Oriented Programming?
-
-Railway Oriented Programming is a functional programming pattern that treats operations like a train on railway tracks:
-
-- **Success Track**: Operations continue flowing forward when successful
-- **Failure Track**: Operations jump to the failure track when errors occur
-- **No Manual Error Checking**: The "railway" automatically routes success/failure
+Railway Oriented Programming comes from functional programming. The idea: your code has two tracks, success and failure. Each operation either continues down the success track or switches to the failure track
 
 ```
 Input → [Step 1] → [Step 2] → [Step 3] → Output
@@ -24,19 +16,9 @@ Input → [Step 1] → [Step 2] → [Step 3] → Output
          [Error] → [Error] → [Error] → Final Error
 ```
 
-### Railway Pattern in C#
-
-ChainSharp uses the `Either<Exception, T>` type to represent railway tracks:
+ChainSharp uses `Either<Exception, T>` from LanguageExt to represent this. A value is either `Left` (an exception) or `Right` (the success value):
 
 ```csharp
-public class Either<TLeft, TRight>
-{
-    // Contains either an error (TLeft) or success value (TRight)
-    public bool IsLeft { get; }     // Error occurred
-    public bool IsRight { get; }    // Success occurred
-}
-
-// Usage in workflows:
 public async Task<Either<Exception, User>> CreateUser(CreateUserRequest input)
 {
     return Activate(input)
@@ -47,23 +29,11 @@ public async Task<Either<Exception, User>> CreateUser(CreateUserRequest input)
 }
 ```
 
-### Benefits of Railway Pattern
+If `ValidateUserStep` throws, the workflow immediately returns `Left(exception)`. `CreateUserStep` and `SendEmailStep` never execute. You don't write any error-checking code—the chain handles it.
 
-1. **No Forgotten Error Handling**: Errors automatically propagate
-2. **Clean Success Path**: Focus on happy path without try/catch blocks
-3. **Composable Operations**: Chain operations without nested error checking
-4. **Type Safety**: Compiler ensures you handle both success and failure cases
+## The Effect Pattern
 
-## 2. Effect Pattern
-
-### What is the Effect Pattern?
-
-The Effect Pattern separates **describing what to do** from **actually doing it**:
-
-- **Track Phase**: Record what effects need to happen
-- **Execute Phase**: Run all tracked effects atomically
-
-This is similar to how Entity Framework's DbContext works:
+The Effect Pattern separates *describing* what should happen from *doing* it. If you've used Entity Framework, you already know this pattern:
 
 ```csharp
 // Track changes (doesn't hit database yet)
@@ -74,101 +44,40 @@ context.Orders.Update(order);
 await context.SaveChanges();
 ```
 
-### Effect Pattern in ChainSharp
+ChainSharp's `EffectWorkflow` does the same thing. Steps can track models, log entries, and other effects. Nothing actually persists until the workflow completes successfully and calls `SaveChanges`. If any step fails, nothing is saved.
 
-```csharp
-public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>
-{
-    protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
-        => Activate(input)
-            .Chain<ValidateUserStep>()
-            .Chain<CreateUserStep>()
-            .Resolve();
-}
-```
+This gives you atomic workflows—either everything succeeds and all effects are applied, or something fails and nothing is applied.
 
-### Why Use the Effect Pattern?
-
-1. **Consistency**: All effects succeed or fail together
-2. **Performance**: Batch operations instead of individual database calls
-3. **Testability**: Can verify what effects would happen without executing them
-4. **Debugging**: See exactly what will happen before it happens
-
-## 3. Core Components Explained
-
-### Workflows vs Steps vs Effects
+## Workflows, Steps, and Effects
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    Workflow Level                       │
-│  ┌─────────────────────────────────────────────────┐   │
-│  │ EffectWorkflow → Orchestrates Steps             │   │
-│  │              → Manages Effects                  │   │
-│  └─────────────────────────────────────────────────┘   │
+│                       Workflow                          │
+│         Orchestrates steps, manages effects             │
 └─────────────────────────────────────────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────┐
-│                     Step Level                          │
-│  [Step 1: Validate] → [Step 2: Process] → [Step 3]     │
+│                        Steps                            │
+│  [Validate] ────► [Create] ────► [Notify]              │
 └─────────────────────────────────────────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────┐
-│                    Effect Level                         │
-│  [Database Effect] [JSON Log Effect] [Parameter Effect] │
+│                       Effects                           │
+│     Database    │    JSON Log    │    Parameters        │
 └─────────────────────────────────────────────────────────┘
 ```
 
-#### Workflows
-- **Purpose**: Orchestrate business processes
-- **Responsibility**: Chain steps together, handle dependencies
-- **Example**: CreateUserWorkflow, ProcessOrderWorkflow
+A **workflow** is a sequence of steps that accomplish a business operation. `CreateUserWorkflow` chains together validation, database insertion, and email notification.
 
-#### Steps  
-- **Purpose**: Perform specific operations
-- **Responsibility**: Single, focused task
-- **Example**: ValidateEmailStep, SendNotificationStep
+A **step** does one thing. `ValidateEmailStep` checks if an email is valid. `CreateUserInDatabaseStep` inserts a record. Steps are easy to test in isolation because they have a single responsibility.
 
-#### Effects
-- **Purpose**: Handle cross-cutting concerns
-- **Responsibility**: Persistence, logging, notifications
-- **Example**: Database persistence, JSON logging, parameter serialization
+**Effects** are cross-cutting concerns that happen as a result of steps running—database writes, log entries, serialized parameters. Effect providers collect these during workflow execution and apply them atomically at the end.
 
-### The EffectRunner
+## Metadata
 
-The EffectRunner coordinates all effects in a workflow:
-
-```csharp
-public class EffectRunner : IEffectRunner
-{
-    private List<IEffectProvider> ActiveEffectProviders { get; }
-
-    public async Task Track(IModel model)
-    {
-        // Send model to all effect providers
-        foreach (var provider in ActiveEffectProviders)
-        {
-            await provider.Track(model);
-        }
-    }
-
-    public async Task SaveChanges(CancellationToken cancellationToken)
-    {
-        // Execute all tracked effects atomically
-        foreach (var provider in ActiveEffectProviders)
-        {
-            await provider.SaveChanges(cancellationToken);
-        }
-    }
-}
-```
-
-## 4. Metadata Tracking and Lifecycle
-
-### What is Metadata?
-
-Metadata is a record of workflow execution containing:
+Every workflow execution creates a metadata record:
 
 ```csharp
 public class Metadata : IMetadata
@@ -186,28 +95,20 @@ public class Metadata : IMetadata
 }
 ```
 
-### Metadata States
+The `WorkflowState` tracks progress: `Pending` → `InProgress` → `Completed` (or `Failed`). If a workflow fails, the metadata captures the exception, stack trace, and which step failed.
 
-| State | Meaning | When Set |
-|-------|---------|----------|
-| **Pending** | Workflow created but not started | Metadata.Create() |
-| **InProgress** | Workflow is executing | Workflow.Run() starts |
-| **Completed** | Workflow finished successfully | Workflow.Run() succeeds |
-| **Failed** | Workflow encountered an error | Workflow.Run() fails |
+### Nested Workflows
 
-### Parent-Child Relationships
-
-Workflows can spawn child workflows:
+Workflows can run other workflows. Pass the current `Metadata` to establish a parent-child relationship:
 
 ```csharp
 public class ParentWorkflow(IWorkflowBus WorkflowBus) : EffectWorkflow<ParentRequest, ParentResult>
 {
     protected override async Task<Either<Exception, ParentResult>> RunInternal(ParentRequest input)
     {
-        // Pass current metadata as parent for child workflow
         var childResult = await WorkflowBus.RunAsync<ChildResult>(
             new ChildRequest(), 
-            Metadata  // This creates parent-child relationship
+            Metadata  // Child's ParentId will point to this workflow
         );
         
         return new ParentResult { ChildData = childResult };
@@ -215,7 +116,9 @@ public class ParentWorkflow(IWorkflowBus WorkflowBus) : EffectWorkflow<ParentReq
 }
 ```
 
-## Understanding ChainSharp Flow
+This creates a tree of metadata records you can query to trace execution across workflows.
+
+## Execution Flow
 
 ```
 [Client Request]

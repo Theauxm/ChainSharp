@@ -36,12 +36,7 @@ dotnet add package Theauxm.ChainSharp.Effect.Mediator
 var builder = WebApplication.CreateBuilder(args);
 
 // Add ChainSharp services
-builder.Services.AddChainSharpEffects(options => 
-    options
-        .AddPostgresEffect(builder.Configuration.GetConnectionString("PostgreSQL"))
-        .SaveWorkflowParameters()
-        .AddEffectWorkflowBus(typeof(Program).Assembly)
-);
+builder.Services.AddChainSharpEffects(o => o.AddEffectWorkflowBus(typeof(Program).Assembly));
 
 // Add your application services
 builder.Services.AddScoped<IUserRepository, UserRepository>();

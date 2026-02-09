@@ -1,12 +1,12 @@
 ---
 layout: default
 title: Architecture
-nav_order: 4
+nav_order: 5
 ---
 
-# System Architecture
+# Architecture
 
-This document provides comprehensive technical information about ChainSharp's components, their relationships, and how they work together to form a cohesive workflow engine.
+How ChainSharp's components fit together.
 
 ## System Architecture Overview
 
@@ -77,11 +77,7 @@ public class Chain<T>
 }
 ```
 
-#### Responsibilities
-- Define the Railway Oriented Programming pattern
-- Provide step chaining mechanisms
-- Handle error propagation through chains
-- Core workflow lifecycle management
+This layer handles chaining, error propagation, and the core workflow lifecycle.
 
 ### 2. ChainSharp.Effect (Enhanced Workflows)
 
@@ -89,12 +85,10 @@ Extends core workflows with dependency injection, metadata tracking, and effect 
 
 #### EffectWorkflow<TIn, TOut>
 
-> **Note:** The `[Inject]` attributes shown below are used **internally** by the EffectWorkflow base class only. **You do NOT need to use `[Inject]` anywhere in your workflow or step code.** Steps should use standard constructor injection for their dependencies.
-
 ```csharp
 public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWorkflow<TIn, TOut>
 {
-    // Internal framework properties - users don't need to use [Inject]
+    // Internal framework properties (injected automatically)
     [Inject] public IEffectRunner? EffectRunner { get; set; }
     [Inject] public ILogger<EffectWorkflow<TIn, TOut>>? EffectLogger { get; set; }
     [Inject] public IServiceProvider? ServiceProvider { get; set; }
@@ -163,12 +157,7 @@ public class EffectRunner : IEffectRunner
 }
 ```
 
-#### Responsibilities
-- Extend base workflows with effect tracking
-- Manage internal dependency injection through `[Inject]` attributes (users don't need to use this)
-- Handle metadata lifecycle (creation, tracking, persistence)
-- Coordinate effect providers through EffectRunner
-- Provide error handling and logging integration
+This layer adds metadata tracking, effect coordination, and handles the workflow lifecycle (create metadata → run steps → save effects).
 
 ### 3. Effect Providers Architecture
 

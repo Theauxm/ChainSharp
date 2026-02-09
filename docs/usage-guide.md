@@ -1,99 +1,47 @@
 ---
 layout: default
 title: Usage Guide
-nav_order: 5
+nav_order: 4
 ---
 
 # Usage Guide
 
-This guide provides step-by-step examples for implementing workflows using ChainSharp, covering common scenarios from basic setups to advanced patterns.
+Practical examples and patterns for building workflows.
 
-## Basic Workflow Example
+## Steps
 
-A workflow in ChainSharp represents a sequence of steps that process data in a linear fashion:
-
-```csharp
-using ChainSharp.Exceptions;
-using ChainSharp.Workflow;
-using LanguageExt;
-
-// Define a workflow that takes Ingredients as input and produces a List<GlassBottle> as output
-public class Cider
-    : Workflow<Ingredients, List<GlassBottle>>,
-        ICider
-{
-    // Implement the RunInternal method to define the workflow steps
-    protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(
-        Ingredients input
-    ) => Activate(input) 
-            .Chain<Prepare>() // Chain steps together
-            .Chain<Ferment>()
-            .Chain<Brew>()
-            .Chain<Bottle>()
-            .Resolve(); // Resolve the final result
-}
-```
-
-## Step Anatomy
-
-Steps are the building blocks of workflows. Each step performs a specific operation:
+Steps are the building blocks of workflows. Each step does one thing:
 
 ```csharp
-using ChainSharp.Exceptions;
-using ChainSharp.Step;
-using LanguageExt;
-
-// Define a step that takes Ingredients as input and produces a BrewingJug as output
-public class Prepare : Step<Ingredients, BrewingJug>, IPrepare
+public class ValidateEmailStep(IUserRepository UserRepository) : Step<CreateUserRequest, Unit>
 {
-    // Implement the Run method to define the step's operation
-    public override async Task<BrewingJug> Run(Ingredients input)
+    public override async Task<Unit> Run(CreateUserRequest input)
     {
-        const int gallonWater = 1;
-
-        // Perform the step's operation
-        var gallonAppleJuice = Boil(gallonWater, input.Apples, input.BrownSugar);
-
-        // Handle errors
-        if (gallonAppleJuice < 0)
-            throw new Exception("Couldn't make a Gallon of Apple Juice!");
-
-        // Return the result
-        return new BrewingJug() { Gallons = gallonAppleJuice, Ingredients = input };
+        var existingUser = await UserRepository.GetByEmailAsync(input.Email);
+        if (existingUser != null)
+            throw new ValidationException($"Email {input.Email} already exists");
+        
+        return Unit.Default;
     }
-
-    // Helper method for the step
-    private int Boil(int gallonWater, int numApples, int ozBrownSugar) 
-        => gallonWater + (numApples / 8) + (ozBrownSugar / 128);
 }
-```
 
-## EffectWorkflow Example
-
-EffectWorkflows extend the basic workflow concept with effects for logging, data persistence, and more:
-
-```csharp
-using ChainSharp.Effect.Services.EffectWorkflow;
-using LanguageExt;
-
-// Define an EffectWorkflow
-public class ExampleEffectWorkflow
-    : EffectWorkflow<WorkflowInput, WorkflowOutput>,
-        IExampleEffectWorkflow
+public class CreateUserStep(IUserRepository UserRepository) : Step<CreateUserRequest, User>
 {
-    protected override async Task<Either<Exception, WorkflowOutput>> RunInternal(
-        WorkflowInput input
-    ) => Activate(input)
-        .Chain<StepOne>()
-        .Chain<StepTwo>()
-        .Chain<StepThree>()
-        .Resolve();
+    public override async Task<User> Run(CreateUserRequest input)
+    {
+        var user = new User
+        {
+            Email = input.Email,
+            FullName = $"{input.FirstName} {input.LastName}",
+            CreatedAt = DateTime.UtcNow
+        };
+        
+        return await UserRepository.CreateAsync(user);
+    }
 }
-
-// Define the interface for the workflow
-public interface IExampleEffectWorkflow
-    : IEffectWorkflow<WorkflowInput, WorkflowOutput> { }
 ```
+
+Steps use constructor injection for dependencies. When a step throws, the workflow stops and returns the exception.
 
 ## Common Patterns
 
@@ -382,27 +330,22 @@ public class GetUserEmailWorkflow : EffectWorkflow<UserId, string>
 
 `Extract<TSource, TTarget>()` looks for a property or field of type `TTarget` on the `TSource` object in Memory. If found, it stores the value in Memory under the `TTarget` type.
 
-### AddServices and IChain
+### AddServices
 
-You can add service instances to Memory and later chain them by interface:
+You can add service instances to Memory and later use them in steps:
 
 ```csharp
-protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(Ingredients input)
+protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
 {
-    var ferment = new Ferment();
-    var prepare = new Prepare(ferment);
+    var validator = new CustomValidator();
+    var notifier = new SlackNotifier();
     
     return Activate(input)
-        .AddServices<IPrepare, IFerment>(prepare, ferment)  // Store in Memory by interface
-        .IChain<IPrepare>()    // Find IPrepare in Memory and execute it
-        .IChain<IFerment>()    // Find IFerment in Memory and execute it
-        .Chain<Bottle>()
+        .AddServices<IValidator, INotifier>(validator, notifier)
+        .Chain<CreateUserStep>()
         .Resolve();
 }
 ```
-
-`IChain<TInterface>()` requires the type parameter to be an interface. It finds the implementation in Memory (added via `AddServices`) and executes it. This is useful when you need to control which implementation runs, or when testing with fakes.
-
 ## Testing
 
 ### Unit Testing Steps
@@ -528,37 +471,41 @@ public async Task Workflow_PersistsMetadata()
 }
 ```
 
-### Testing with Fake Steps
+### Testing with AddServices and IChain
 
-You can use `AddServices` to inject fake step implementations:
+You can use `AddServices` to inject fake step implementations and `IChain` to run them by interface:
 
 ```csharp
-// A fake step that returns a predictable result
-public class FakeFerment : IFerment
+public class FakeEmailService : IEmailService
 {
-    public Task<BrewingJug> Run(BrewingJug input) 
-        => Task.FromResult(new BrewingJug { Gallons = 100 });
+    public List<string> SentEmails { get; } = [];
+    
+    public Task SendWelcomeEmailAsync(string email, string name)
+    {
+        SentEmails.Add(email);
+        return Task.CompletedTask;
+    }
 }
 
 [Test]
 public async Task Workflow_UsesFakeStep()
 {
-    var fakeFerment = new FakeFerment();
+    var fakeEmail = new FakeEmailService();
+    var workflow = new TestWorkflow(fakeEmail);
     
-    var workflow = new TestWorkflow(fakeFerment);
-    var result = await workflow.Run(new Ingredients());
+    var result = await workflow.Run(new CreateUserRequest { Email = "test@example.com" });
     
     Assert.True(result.IsRight);
-    Assert.Equal(100, result.Match(_ => 0, jug => jug.Gallons));
+    Assert.Contains("test@example.com", fakeEmail.SentEmails);
 }
 
-public class TestWorkflow(IFerment ferment) : Workflow<Ingredients, BrewingJug>
+public class TestWorkflow(IEmailService emailService) : Workflow<CreateUserRequest, User>
 {
-    protected override async Task<Either<Exception, BrewingJug>> RunInternal(Ingredients input)
+    protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
         => Activate(input)
-            .AddServices(ferment)
-            .Chain<Prepare>()
-            .IChain<IFerment>()
+            .AddServices(emailService)
+            .Chain<CreateUserStep>()
+            .IChain<IEmailService>()  // Runs the fake
             .Resolve();
 }
 ```

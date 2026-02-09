@@ -6,8 +6,6 @@ nav_order: 2
 
 # Getting Started
 
-This guide will walk you through setting up ChainSharp in your project and creating your first workflow.
-
 ## Installation
 
 ### Install NuGet Packages

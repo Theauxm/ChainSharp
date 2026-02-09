@@ -58,36 +58,15 @@ ChainSharp has two base classes for workflows:
 - Testing or prototyping
 
 ```csharp
-public class SimpleCider : Workflow<Ingredients, List<GlassBottle>>
+public class SimpleUserCreation : Workflow<CreateUserRequest, User>
 {
-    protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(
-        Ingredients input
-    ) => Activate(input)
-            .Chain<Prepare>()
-            .Chain<Ferment>()
-            .Chain<Bottle>()
+    protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
+        => Activate(input)
+            .Chain<ValidateUserStep>()
+            .Chain<CreateUserStep>()
             .Resolve();
 }
 ```
-
-You can still inject services into a base `Workflow`—you just have to add them to Memory yourself via `AddServices()`:
-
-```csharp
-public class CiderWithServices(IFerment ferment, IBottle bottle) 
-    : Workflow<Ingredients, List<GlassBottle>>
-{
-    protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(
-        Ingredients input
-    ) => Activate(input)
-            .AddServices(ferment, bottle)  // Add injected services to Memory
-            .Chain<Prepare>()
-            .IChain<IFerment>()            // Find IFerment in Memory
-            .IChain<IBottle>()             // Find IBottle in Memory
-            .Resolve();
-}
-```
-
-`AddServices` accepts a params array, so you can pass as many services as you need.
 
 **`EffectWorkflow<TIn, TOut>`** — Extends `Workflow` with:
 - Automatic metadata tracking (start time, end time, success/failure, inputs/outputs)
@@ -314,95 +293,8 @@ public class EnrichUserStep(IEnrichmentService Enricher) : Step<User, Unit>
 }
 ```
 
-### Tuple Handling in Memory
-
-ChainSharp's Memory system has built-in support for **tuples**. Tuples are automatically constructed and deconstructed, allowing steps to work with multiple types seamlessly.
-
-#### Tuple Inputs: Automatic Construction
-
-When a step requires a tuple input like `Step<(User, Admin), Unit>`, the Memory system will:
-1. Find the `User` **individually** in Memory
-2. Find the `Admin` **individually** in Memory  
-3. Construct the tuple `(User, Admin)` and pass it to the step
-
-```csharp
-// Step that requires both User and Admin from Memory
-public class GrantPermissionsStep(IPermissionService PermissionService) : Step<(User, Admin), Unit>
-{
-    public override async Task<Unit> Run((User User, Admin Admin) input)
-    {
-        // Both User and Admin are found individually in Memory and combined into the tuple
-        await PermissionService.GrantAsync(input.User, input.Admin);
-        return Unit.Default;
-    }
-}
-
-// Workflow demonstrating tuple input construction
-public class PermissionWorkflow : EffectWorkflow<PermissionRequest, Unit>
-{
-    protected override async Task<Either<Exception, Unit>> RunInternal(PermissionRequest input)
-        => Activate(input)
-            .Chain<LoadUserStep>()         // Returns User, stored in Memory
-            .Chain<LoadAdminStep>()        // Returns Admin, stored in Memory
-            .Chain<GrantPermissionsStep>() // Takes (User, Admin) - constructed from Memory!
-            .Resolve();
-}
-```
-
-#### Tuple Outputs: Automatic Deconstruction
-
-When a step returns a tuple like `Step<Unit, (User, Admin)>`, the Memory system will:
-1. Deconstruct the tuple into its components
-2. Store `User` **individually** in Memory
-3. Store `Admin` **individually** in Memory
-
-```csharp
-// Step that returns multiple objects at once
-public class LoadUserAndAdminStep(IRepository Repository) : Step<LoadRequest, (User, Admin)>
-{
-    public override async Task<(User, Admin)> Run(LoadRequest input)
-    {
-        var user = await Repository.GetUserAsync(input.UserId);
-        var admin = await Repository.GetAdminAsync(input.AdminId);
-        
-        // Return tuple - Memory will deconstruct and store User and Admin separately
-        return (user, admin);
-    }
-}
-
-// Workflow demonstrating tuple output deconstruction
-public class ProcessWorkflow : EffectWorkflow<ProcessRequest, Result>
-{
-    protected override async Task<Either<Exception, Result>> RunInternal(ProcessRequest input)
-        => Activate(input)
-            .Chain<LoadUserAndAdminStep>() // Returns (User, Admin) - deconstructed into Memory!
-            .Chain<ValidateUserStep>()     // Takes User - available from Memory
-            .Chain<ValidateAdminStep>()    // Takes Admin - available from Memory
-            .Chain<ProcessStep>()          // Takes (User, Admin) - reconstructed from Memory!
-            .Resolve();
-}
-```
-
-#### Tuple Limitations
-
-- **Maximum 7 elements**: Tuples can have at most 7 elements
-- **Unique types**: Each type in the tuple must be unique (you cannot have `(User, User)`)
-- **Non-null**: All tuple elements must be non-null
-
-```csharp
-// ✅ Valid - all unique types
-public class MyStep : Step<(User, Admin, Order), Unit> { }
-
-// ❌ Invalid - duplicate types
-public class MyStep : Step<(User, User), Unit> { }  // Won't work - can't distinguish between Users
-
-// ❌ Invalid - too many elements
-public class MyStep : Step<(A, B, C, D, E, F, G, H), Unit> { }  // Max 7 elements
-```
-
 ### Key Takeaways
 
 1. **Constructor injection for steps** - Use primary constructors or standard constructor DI, not `[Inject]` attributes
 2. **Memory handles references** - Objects in workflow Memory are references; modifications are automatically reflected
 3. **Return meaningful types** - Only return a type from a step if it's a NEW type being added to Memory, not the same type you received
-4. **Tuples are auto-constructed/deconstructed** - Use tuples to work with multiple types; Memory handles the construction and deconstruction automatically

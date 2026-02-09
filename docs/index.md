@@ -84,15 +84,6 @@ public class UserController(IWorkflowBus workflowBus) : ControllerBase
 | [Theauxm.ChainSharp.Effect.Mediator](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Mediator/) | Mediator pattern implementation for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Mediator) |
 | [Theauxm.ChainSharp.Effect.Provider.Parameter](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Provider.Parameter/) | Parameter serialization for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Provider.Parameter) |
 
-## Documentation
-
-- [Getting Started](getting-started) - Quick setup guide
-- [Core Concepts](concepts) - Essential knowledge for understanding ChainSharp
-- [Architecture](architecture) - Detailed system architecture and component relationships
-- [Usage Guide](usage-guide) - Practical implementation examples
-- [Troubleshooting](troubleshooting) - Common issues and solutions
-- [Development](development) - Contributing guidelines and development setup
-
 ## License
 
 ChainSharp is licensed under the MIT License.

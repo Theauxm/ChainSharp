@@ -11,7 +11,7 @@ markdown: kramdown
 highlighter: rouge
 
 # Just the Docs settings
-color_scheme: light
+color_scheme: dark
 
 # Enable search
 search_enabled: true

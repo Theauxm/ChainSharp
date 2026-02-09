@@ -46,6 +46,25 @@ How ChainSharp's components fit together.
 └─────────────────────────┘                └─────────────────────────┘
 ```
 
+### Package Hierarchy
+
+```
+ChainSharp (Core)
+    │
+    └─── ChainSharp.Effect (Enhanced Workflows)
+              │
+              ├─── ChainSharp.Effect.Mediator (WorkflowBus)
+              │
+              ├─── ChainSharp.Effect.Data (Abstract Persistence)
+              │         │
+              │         ├─── ChainSharp.Effect.Data.Postgres
+              │         └─── ChainSharp.Effect.Data.InMemory
+              │
+              ├─── ChainSharp.Effect.Provider.Json
+              ├─── ChainSharp.Effect.Provider.Parameter
+              └─── ChainSharp.Effect.StepProvider.Logging
+```
+
 ## Core Component Hierarchy
 
 ### 1. ChainSharp (Core Engine)
@@ -361,55 +380,3 @@ public class UpdateUserWorkflow : EffectWorkflow<UpdateUserRequest, User> { }
 2. **Must implement IEffectWorkflow<,>**
 3. **Must have parameterless constructor or be registered in DI**
 4. **Should implement a non-generic interface** for better DI integration
-
-## 6. Package Domains
-
-### Core (`ChainSharp`)
-
-The foundation library providing Railway Oriented Programming patterns. Contains:
-- **Workflow<TIn, TOut>**: Base class for defining a sequence of steps that process input to output
-- **Step<TIn, TOut>**: Base class for individual units of work within a workflow
-- **Chain**: Fluent API for composing steps together (`Activate(input).Chain<Step1>().Chain<Step2>().Resolve()`)
-
-Error handling is built-in using `Either<Exception, T>` monads from LanguageExt—if any step fails, subsequent steps are automatically short-circuited.
-
-### Effect (`ChainSharp.Effect`)
-
-Extends the core workflow with "effects" (side effects like logging, persistence, and metadata tracking). Contains:
-- **EffectWorkflow<TIn, TOut>**: Enhanced workflow with automatic metadata tracking, internal dependency injection via `[Inject]` attributes (users should use constructor injection for their steps), and effect coordination
-- **EffectRunner**: Coordinates multiple effect providers and manages their lifecycle
-- **IEffectProvider**: Interface for pluggable providers that react to workflow events (track models, save changes)
-
-### Mediator (`ChainSharp.Effect.Mediator`)
-
-Implements the mediator pattern for workflow discovery and execution. Contains:
-- **WorkflowBus**: Discovers and executes workflows based on input type. Allows running workflows from controllers, services, or other workflows
-- **WorkflowRegistry**: Scans assemblies at startup to build a mapping of input types → workflow types
-
-> **Note**: Each input type can only map to ONE workflow. Use distinct input types (e.g., `CreateUserRequest`, `UpdateUserRequest`) rather than sharing types across workflows.
-
-### Data (`ChainSharp.Effect.Data`)
-
-Abstract data persistence layer for storing workflow metadata (execution state, timing, inputs/outputs, errors). Contains:
-- **DataContext<T>**: Base EF Core DbContext with `Metadata`, `Log`, and `Manifest` entities
-- **IDataContext**: Interface for database operations and transaction management
-
-### Provider (`ChainSharp.Effect.Provider.*`)
-
-Effect providers are pluggable components that react to workflow lifecycle events. They implement `IEffectProvider` and are registered via dependency injection.
-
-#### Provider.Json
-
-Debug logging provider that serializes tracked models to JSON and logs state changes. Useful for development and debugging workflow state.
-
-#### Provider.Parameter
-
-Serializes workflow input/output parameters to JSON for database storage. Enables querying workflow history by parameter values and provides an audit trail.
-
-### StepProvider (`ChainSharp.Effect.StepProvider.*`)
-
-Step-level effect providers that operate on individual steps within a workflow.
-
-#### StepProvider.Logging
-
-Provides structured logging for individual steps, capturing step inputs, outputs, and timing information.

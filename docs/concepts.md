@@ -8,12 +8,12 @@ nav_order: 3
 
 ## Railway Oriented Programming
 
-Railway Oriented Programming comes from functional programming. The idea: your code has two tracks, success and failure. Each operation either continues down the success track or switches to the failure track
+Railway Oriented Programming comes from functional programming. The idea: your code has two tracks, success and failure. Each operation either continues down the success track or switches to the failure track.
 
 ```
-Input → [Step 1] → [Step 2] → [Step 3] → Output
-            ↓          ↓          ↓
-         [Error] → [Error] → [Error] → Final Error
+Success Track:  Input → [Step 1] → [Step 2] → [Step 3] → Output
+                            ↓
+Failure Track:          Exception → [Skip] → [Skip] → Exception
 ```
 
 ChainSharp uses `Either<Exception, T>` from LanguageExt to represent this. A value is either `Left` (an exception) or `Right` (the success value):
@@ -116,90 +116,9 @@ A **step** does one thing. `ValidateEmailStep` checks if an email is valid. `Cre
 
 **Effects** are cross-cutting concerns that happen as a result of steps running—database writes, log entries, serialized parameters. Effect providers collect these during workflow execution and apply them atomically at the end.
 
-## Metadata
-
-Every workflow execution creates a metadata record:
-
-```csharp
-public class Metadata : IMetadata
-{
-    public int Id { get; }                          // Unique identifier
-    public string Name { get; set; }                // Workflow name
-    public WorkflowState WorkflowState { get; set; } // Pending/InProgress/Completed/Failed
-    public DateTime StartTime { get; set; }         // When workflow started
-    public DateTime? EndTime { get; set; }          // When workflow finished
-    public JsonDocument? Input { get; set; }        // Serialized input
-    public JsonDocument? Output { get; set; }       // Serialized output
-    public string? FailureException { get; }        // Error details if failed
-    public string? FailureReason { get; }           // Human-readable error
-    public int? ParentId { get; set; }              // For nested workflows
-}
-```
-
-The `WorkflowState` tracks progress: `Pending` → `InProgress` → `Completed` (or `Failed`). If a workflow fails, the metadata captures the exception, stack trace, and which step failed.
-
-### Nested Workflows
-
-Workflows can run other workflows. Pass the current `Metadata` to establish a parent-child relationship:
-
-```csharp
-public class ParentWorkflow(IWorkflowBus WorkflowBus) : EffectWorkflow<ParentRequest, ParentResult>
-{
-    protected override async Task<Either<Exception, ParentResult>> RunInternal(ParentRequest input)
-    {
-        var childResult = await WorkflowBus.RunAsync<ChildResult>(
-            new ChildRequest(), 
-            Metadata  // Child's ParentId will point to this workflow
-        );
-        
-        return new ParentResult { ChildData = childResult };
-    }
-}
-```
-
-This creates a tree of metadata records you can query to trace execution across workflows.
-
-## Execution Flow
-
-```
-[Client Request]
-       │
-       ▼
-[WorkflowBus.RunAsync]
-       │
-       ▼
-[Find Workflow by Input Type]
-       │
-       ▼
-[Create Workflow Instance]
-       │
-       ▼
-[Inject Dependencies]
-       │
-       ▼
-[Initialize Metadata]
-       │
-       ▼
-[Execute Workflow Chain]
-       │
-       ▼
-   Success? ──No──► [Update Metadata: Failed]
-       │                      │
-      Yes                     │
-       │                      │
-       ▼                      ▼
-[Update Metadata: Completed]  │
-       │                      │
-       └──────────┬───────────┘
-                  │
-                  ▼
-       [SaveChanges - Execute Effects]
-                  │
-                  ▼
-           [Return Result]
-```
-
 ## Common Misconceptions
+
+These are things developers hit immediately when starting with ChainSharp.
 
 ### ❌ Misconception 1: Steps need the `[Inject]` attribute for dependency injection
 
@@ -298,3 +217,71 @@ public class EnrichUserStep(IEnrichmentService Enricher) : Step<User, Unit>
 1. **Constructor injection for steps** - Use primary constructors or standard constructor DI, not `[Inject]` attributes
 2. **Memory handles references** - Objects in workflow Memory are references; modifications are automatically reflected
 3. **Return meaningful types** - Only return a type from a step if it's a NEW type being added to Memory, not the same type you received
+
+## Metadata
+
+Every workflow execution creates a metadata record:
+
+```csharp
+public class Metadata : IMetadata
+{
+    public int Id { get; }                          // Unique identifier
+    public string Name { get; set; }                // Workflow name
+    public WorkflowState WorkflowState { get; set; } // Pending/InProgress/Completed/Failed
+    public DateTime StartTime { get; set; }         // When workflow started
+    public DateTime? EndTime { get; set; }          // When workflow finished
+    public JsonDocument? Input { get; set; }        // Serialized input
+    public JsonDocument? Output { get; set; }       // Serialized output
+    public string? FailureException { get; }        // Error details if failed
+    public string? FailureReason { get; }           // Human-readable error
+    public int? ParentId { get; set; }              // For nested workflows
+}
+```
+
+The `WorkflowState` tracks progress: `Pending` → `InProgress` → `Completed` (or `Failed`). If a workflow fails, the metadata captures the exception, stack trace, and which step failed.
+
+### Nested Workflows
+
+Workflows can run other workflows by injecting `IWorkflowBus`. Pass the current `Metadata` to the child workflow to establish a parent-child relationship—this creates a tree of metadata records you can query to trace execution across workflows.
+
+See [Nested Workflows in the Usage Guide](usage-guide.md#nested-workflows) for implementation details.
+
+## Execution Flow (EffectWorkflow)
+
+```
+[Client Request]
+       │
+       ▼
+[WorkflowBus.RunAsync]
+       │
+       ▼
+[Find Workflow by Input Type]
+       │
+       ▼
+[Create Workflow Instance]
+       │
+       ▼
+[Inject Dependencies]
+       │
+       ▼
+[Initialize Metadata]
+       │
+       ▼
+[Execute Workflow Chain]
+       │
+       ▼
+   Success? ──No──► [Update Metadata: Failed]
+       │                      │
+      Yes                     │
+       │                      │
+       ▼                      ▼
+[Update Metadata: Completed]  │
+       │                      │
+       └──────────┬───────────┘
+                  │
+                  ▼
+       [SaveChanges - Execute Effects]
+                  │
+                  ▼
+           [Return Result]
+```

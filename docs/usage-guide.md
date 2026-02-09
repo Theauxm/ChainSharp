@@ -190,17 +190,6 @@ This is useful when:
 
 The workflow still gets all the same effect handling (metadata, persistence, etc.)—it's just resolved differently.
 
-### Registering WorkflowBus with Dependency Injection
-
-```csharp
-using Microsoft.Extensions.DependencyInjection;
-using ChainSharp.Effect.Extensions;
-
-// Register ChainSharp services with dependency injection
-new ServiceCollection()
-    .AddChainSharpEffects(o => o.AddEffectWorkflowBus(assemblies: [typeof(AssemblyMarker).Assembly]));
-```
-
 ## Advanced Patterns
 
 ### Working with Tuples
@@ -310,7 +299,7 @@ public class CheckCacheStep(ICache Cache) : Step<OrderRequest, OrderResult>
 
 When a `ShortCircuit` step returns a value of the workflow's return type (`OrderResult` here), that value becomes the final result and remaining steps are skipped. If the step throws, the workflow continues normally (the exception is swallowed, not propagated).
 
-This is different from regular `Chain`—a `Chain` step that throws stops the workflow with an error. A `ShortCircuit` step that throws just means "keep going."
+> ⚠️ **This behavior is intentionally inverted from `Chain`.** A `Chain` step that throws stops the workflow with an error. A `ShortCircuit` step that throws means "no short-circuit available, keep going." This can be surprising if you're not expecting it.
 
 ### Extract
 
@@ -346,6 +335,84 @@ protected override async Task<Either<Exception, User>> RunInternal(CreateUserReq
         .Resolve();
 }
 ```
+
+## Configuring Effect Providers
+
+ChainSharp has several effect providers. Here's when to use each:
+
+### Database Persistence (Postgres or InMemory)
+
+**Use when:** You need to query workflow history, audit execution, or debug production issues.
+
+```csharp
+// Production
+services.AddChainSharpEffects(options => 
+    options.AddPostgresEffect("Host=localhost;Database=app;Username=postgres;Password=pass")
+);
+
+// Testing
+services.AddChainSharpEffects(options => 
+    options.AddInMemoryEffect()
+);
+```
+
+This persists a `Metadata` record for each workflow execution containing:
+- Workflow name and state (Pending → InProgress → Completed/Failed)
+- Start and end timestamps
+- Serialized input and output
+- Exception details if failed
+- Parent workflow ID for nested workflows
+
+### JSON Effect (`AddJsonEffect`)
+
+**Use when:** Debugging during development. Logs workflow state changes to your configured logger.
+
+```csharp
+services.AddChainSharpEffects(options => 
+    options.AddJsonEffect()
+);
+```
+
+This doesn't persist anything—it just logs. Useful for seeing what's happening without setting up a database.
+
+### Parameter Effect (`SaveWorkflowParameters`)
+
+**Use when:** You need to store workflow inputs/outputs in the database for later querying or replay.
+
+```csharp
+services.AddChainSharpEffects(options => 
+    options
+        .AddPostgresEffect(connectionString)
+        .SaveWorkflowParameters()  // Serializes Input/Output to Metadata
+);
+```
+
+Without this, the `Input` and `Output` columns in `Metadata` are null. With it, they contain JSON-serialized versions of your request and response objects.
+
+### Combining Providers
+
+Providers compose. A typical production setup:
+
+```csharp
+services.AddChainSharpEffects(options => 
+    options
+        .AddPostgresEffect(connectionString)   // Persist metadata
+        .SaveWorkflowParameters()              // Include input/output in metadata
+        .AddEffectWorkflowBus(assemblies)      // Enable workflow discovery
+);
+```
+
+A typical development setup:
+
+```csharp
+services.AddChainSharpEffects(options => 
+    options
+        .AddInMemoryEffect()                   // Fast, no database needed
+        .AddJsonEffect()                       // Log state changes
+        .AddEffectWorkflowBus(assemblies)
+);
+```
+
 ## Testing
 
 ### Unit Testing Steps
@@ -509,3 +576,60 @@ public class TestWorkflow(IEmailService emailService) : Workflow<CreateUserReque
             .Resolve();
 }
 ```
+
+## Troubleshooting
+
+### "No workflow found for input type X"
+
+The `WorkflowBus` couldn't find a workflow that accepts your input type.
+
+**Causes:**
+- The assembly containing your workflow wasn't registered with `AddEffectWorkflowBus`
+- Your workflow doesn't implement `IEffectWorkflow<TIn, TOut>`
+- Your workflow class is `abstract`
+
+**Fix:**
+```csharp
+services.AddChainSharpEffects(o => 
+    o.AddEffectWorkflowBus(typeof(YourWorkflow).Assembly)  // Ensure correct assembly
+);
+```
+
+### "Unable to resolve service for type 'IStep'"
+
+A step's dependency isn't registered in the DI container.
+
+**Cause:** Your step injects a service that wasn't added to `IServiceCollection`.
+
+**Fix:** Register the missing service:
+```csharp
+services.AddScoped<IUserRepository, UserRepository>();
+services.AddScoped<IEmailService, EmailService>();
+```
+
+### Step runs but Memory doesn't have the expected type
+
+The chain couldn't find a type in Memory to pass to your step.
+
+**Causes:**
+- A previous step didn't return or add the expected type to Memory
+- Type mismatch between step output and next step's input
+
+**Fix:** Check the chain flow. Each step's input type must exist in Memory (either from `Activate()` or a previous step's output):
+```csharp
+Activate(input)                    // Memory: CreateUserRequest
+    .Chain<ValidateStep>()         // Takes CreateUserRequest, returns Unit
+    .Chain<CreateUserStep>()       // Takes CreateUserRequest, returns User
+    .Chain<SendEmailStep>()        // Takes User (from previous step)
+    .Resolve();
+```
+
+### Workflow completes but metadata shows "Failed"
+
+Check `FailureException` and `FailureReason` in the metadata record for details. Common causes:
+- An effect provider failed during `SaveChanges` (database connection, serialization error)
+- A step threw after the main workflow logic completed
+
+### Steps execute out of order or skip unexpectedly
+
+If you're using `ShortCircuit`, remember that throwing an exception means "continue" not "stop." See [Short-Circuiting](#short-circuiting) for details.

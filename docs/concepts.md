@@ -80,19 +80,10 @@ await context.SaveChanges();
 public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>
 {
     protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
-    {
-        // 1. Create metadata (tracked, not saved yet)
-        var metadata = Metadata.Create(new CreateMetadata { Name = "CreateUser", Input = input });
-        
-        // 2. Execute business logic
-        var result = Activate(input)
+        => Activate(input)
             .Chain<ValidateUserStep>()
             .Chain<CreateUserStep>()
             .Resolve();
-            
-        // 3. All tracked effects are saved automatically when workflow completes
-        return result;
-    }
 }
 ```
 
@@ -173,70 +164,7 @@ public class EffectRunner : IEffectRunner
 }
 ```
 
-## 4. Dependency Injection with [Inject]
-
-### Traditional Constructor Injection
-
-```csharp
-// Traditional approach - verbose constructors
-public class CreateUserWorkflow(
-    IUserRepository userRepository,
-    IEmailService emailService,
-    ILogger<CreateUserWorkflow> logger
-) : EffectWorkflow<CreateUserRequest, User>
-{
-    private readonly IUserRepository _userRepository = userRepository;
-    // ... more boilerplate
-}
-```
-
-### ChainSharp Attribute Injection
-
-```csharp
-// ChainSharp approach - clean and focused
-public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>
-{
-    [Inject]
-    public IUserRepository UserRepository { get; set; }
-    
-    [Inject]
-    public IEmailService EmailService { get; set; }
-    
-    [Inject]
-    public ILogger<CreateUserWorkflow> Logger { get; set; }
-    
-    // Focus on business logic, not plumbing
-    protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
-        => Activate(input)
-            .Chain<ValidateUserStep>()
-            .Chain<CreateUserStep>()
-            .Resolve();
-}
-```
-
-### How [Inject] Works
-
-1. **Property Discovery**: System finds all properties with `[Inject]` attribute
-2. **Service Resolution**: Resolve services from dependency injection container
-3. **Property Setting**: Set property values before workflow execution
-4. **Automatic Lifecycle**: Happens automatically when workflow is created
-
-### Automatic Injection for Built-in Services
-
-EffectWorkflow automatically injects these services:
-
-```csharp
-[Inject]
-public IEffectRunner? EffectRunner { get; set; }
-
-[Inject]
-public ILogger<EffectWorkflow<TIn, TOut>>? EffectLogger { get; set; }
-
-[Inject]
-public IServiceProvider? ServiceProvider { get; set; }
-```
-
-## 5. Metadata Tracking and Lifecycle
+## 4. Metadata Tracking and Lifecycle
 
 ### What is Metadata?
 
@@ -272,11 +200,8 @@ public class Metadata : IMetadata
 Workflows can spawn child workflows:
 
 ```csharp
-public class ParentWorkflow : EffectWorkflow<ParentRequest, ParentResult>
+public class ParentWorkflow(IWorkflowBus WorkflowBus) : EffectWorkflow<ParentRequest, ParentResult>
 {
-    [Inject]
-    public IWorkflowBus WorkflowBus { get; set; }
-    
     protected override async Task<Either<Exception, ParentResult>> RunInternal(ParentRequest input)
     {
         // Pass current metadata as parent for child workflow
@@ -289,48 +214,6 @@ public class ParentWorkflow : EffectWorkflow<ParentRequest, ParentResult>
     }
 }
 ```
-
-## 6. Key Terminology Glossary
-
-### Core Terms
-
-| Term | Definition |
-|------|------------|
-| **Railway Oriented Programming** | Pattern where operations flow on success/failure tracks |
-| **Effect** | A deferred operation that will be executed later |
-| **EffectProvider** | Component that implements a specific type of effect |
-| **EffectRunner** | Coordinator that manages all effect providers |
-| **EffectWorkflow** | Workflow enhanced with effect tracking and dependency injection |
-
-### Component Terms
-
-| Term | Definition |
-|------|------------|
-| **Step** | Single operation in a workflow chain |
-| **Chain** | Sequence of steps executed in order |
-| **Activate** | Start a workflow chain with initial input |
-| **Resolve** | Execute the chain and return the result |
-| **Track** | Record an effect without executing it |
-| **SaveChanges** | Execute all tracked effects atomically |
-
-### Data Terms
-
-| Term | Definition |
-|------|------------|
-| **Metadata** | Record of workflow execution details |
-| **DataContext** | Database context that implements IEffectProvider |
-| **JsonDocument** | Immutable representation of JSON data |
-| **WorkflowState** | Current state of workflow execution |
-| **ParentId** | Reference to parent workflow for nested workflows |
-
-### Mediator Terms
-
-| Term | Definition |
-|------|------------|
-| **WorkflowBus** | Service that routes inputs to appropriate workflows |
-| **WorkflowRegistry** | Mapping of input types to workflow types |
-| **Auto-Discovery** | Automatic finding and registration of workflows |
-| **Input-Based Routing** | Determining workflow by the type of input |
 
 ## Understanding ChainSharp Flow
 
@@ -371,11 +254,3 @@ public class ParentWorkflow : EffectWorkflow<ParentRequest, ParentResult>
                   ▼
            [Return Result]
 ```
-
-This flow shows how all the concepts work together:
-1. **Railway Pattern**: Each step can succeed or fail
-2. **Effect Pattern**: Metadata tracked but not saved until end
-3. **Dependency Injection**: Services automatically injected
-4. **Metadata Lifecycle**: Tracked from start to finish
-
-These concepts form the foundation of ChainSharp. Understanding them will help you work effectively with any part of the system.

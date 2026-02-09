@@ -1,7 +1,7 @@
 using ChainSharp.ArrayLogger.Services.ArrayLoggingProvider;
 using ChainSharp.Effect.Extensions;
-using ChainSharp.Effect.Json.Extensions;
-using ChainSharp.Effect.Step.Logging.Extensions;
+using ChainSharp.Effect.Provider.Json.Extensions;
+using ChainSharp.Effect.StepProvider.Logging.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 

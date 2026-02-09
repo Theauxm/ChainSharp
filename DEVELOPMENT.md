@@ -109,9 +109,9 @@ ChainSharp/
 ├── ChainSharp.Effect.Data/               # Database persistence interfaces
 ├── ChainSharp.Effect.Data.InMemory/      # In-memory database implementation
 ├── ChainSharp.Effect.Data.Postgres/      # PostgreSQL implementation
-├── ChainSharp.Effect.Json/               # JSON logging effect
+├── ChainSharp.Effect.Provider.Json/               # JSON logging effect
 ├── ChainSharp.Effect.Mediator/           # Workflow discovery and routing
-├── ChainSharp.Effect.Parameter/          # Parameter serialization
+├── ChainSharp.Effect.Provider.Parameter/          # Parameter serialization
 ├── ChainSharp.ArrayLogger/               # Array-based logging effect
 ├── ChainSharp.Blazor/                    # Blazor integration (future)
 └── Tests/

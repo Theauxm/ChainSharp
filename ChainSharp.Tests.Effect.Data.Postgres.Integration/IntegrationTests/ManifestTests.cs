@@ -22,12 +22,7 @@ public class ManifestTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
-        var manifest = Manifest.Create(
-            new CreateManifest
-            {
-                Name = typeof(Unit)
-            }
-        );
+        var manifest = Manifest.Create(new CreateManifest { Name = typeof(Unit) });
 
         await context.Track(manifest);
 
@@ -59,11 +54,7 @@ public class ManifestTests : TestSetup
         };
 
         var manifest = Manifest.Create(
-            new CreateManifest
-            {
-                Name = typeof(Unit),
-                Properties = config
-            }
+            new CreateManifest { Name = typeof(Unit), Properties = config }
         );
 
         await context.Track(manifest);
@@ -94,12 +85,7 @@ public class ManifestTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
-        var manifest = Manifest.Create(
-            new CreateManifest
-            {
-                Name = typeof(Unit)
-            }
-        );
+        var manifest = Manifest.Create(new CreateManifest { Name = typeof(Unit) });
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);
@@ -130,11 +116,7 @@ public class ManifestTests : TestSetup
         };
 
         var manifest = Manifest.Create(
-            new CreateManifest
-            {
-                Name = typeof(Unit),
-                Properties = initialConfig
-            }
+            new CreateManifest { Name = typeof(Unit), Properties = initialConfig }
         );
 
         await context.Track(manifest);
@@ -184,11 +166,7 @@ public class ManifestTests : TestSetup
         };
 
         var manifest = Manifest.Create(
-            new CreateManifest
-            {
-                Name = typeof(Unit),
-                Properties = config
-            }
+            new CreateManifest { Name = typeof(Unit), Properties = config }
         );
 
         await context.Track(manifest);
@@ -245,8 +223,8 @@ public class ManifestTests : TestSetup
         context.Reset();
 
         // Act
-        var foundMetadata = await context.Metadatas
-            .Include(m => m.Manifest)
+        var foundMetadata = await context
+            .Metadatas.Include(m => m.Manifest)
             .FirstOrDefaultAsync(x => x.Id == metadata.Id);
 
         // Assert
@@ -309,8 +287,8 @@ public class ManifestTests : TestSetup
         context.Reset();
 
         // Act
-        var foundManifest = await context.Manifests
-            .Include(m => m.Metadatas)
+        var foundManifest = await context
+            .Manifests.Include(m => m.Metadatas)
             .FirstOrDefaultAsync(x => x.Id == manifest.Id);
 
         // Assert

@@ -8,7 +8,7 @@ using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
 using ChainSharp.Effect.Models;
 using Microsoft.Extensions.Logging;
 
-namespace ChainSharp.Effect.Json.Services.JsonEffect;
+namespace ChainSharp.Effect.Provider.Json.Services.JsonEffect;
 
 /// <summary>
 /// Implements a JSON-based effect provider for tracking and serializing model changes.

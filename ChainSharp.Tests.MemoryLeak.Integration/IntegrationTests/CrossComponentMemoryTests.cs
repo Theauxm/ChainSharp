@@ -1,8 +1,8 @@
 using System.Text.Json;
 using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
-using ChainSharp.Effect.Json.Services.JsonEffect;
 using ChainSharp.Effect.Models.Metadata;
-using ChainSharp.Effect.Parameter.Services.ParameterEffectProviderFactory;
+using ChainSharp.Effect.Provider.Json.Services.JsonEffect;
+using ChainSharp.Effect.Provider.Parameter.Services.ParameterEffectProviderFactory;
 using ChainSharp.Effect.Services.EffectProviderFactory;
 using ChainSharp.Effect.Services.EffectRunner;
 using ChainSharp.Tests.MemoryLeak.Integration.TestWorkflows.TestModels;

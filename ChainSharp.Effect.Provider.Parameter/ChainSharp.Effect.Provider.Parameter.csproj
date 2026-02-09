@@ -4,7 +4,10 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <AssemblyName>Theauxm.ChainSharp.Effect.Parameter</AssemblyName>
+        <Authors>Theauxm,mark-keaton</Authors>
+        <PackageDescription>Parameter Effect Provider for ChainSharp Effects</PackageDescription>
+        <RepositoryUrl>https://github.com/Theauxm/ChainSharp</RepositoryUrl>
+        <AssemblyName>Theauxm.ChainSharp.Effect.Provider.Parameter</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>

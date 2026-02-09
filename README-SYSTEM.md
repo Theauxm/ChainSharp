@@ -63,9 +63,9 @@ graph TB
 | **ChainSharp** | Core workflow engine with Railway pattern | All workflow scenarios |
 | **ChainSharp.Effect** | Enhanced workflows with dependency injection and metadata | When you need DI, tracking, or effects |
 | **ChainSharp.Effect.Data** | Database persistence for workflow metadata | Production systems requiring audit trails |
-| **ChainSharp.Effect.Json** | JSON logging of models for debugging | Development and troubleshooting |
+| **ChainSharp.Effect.Provider.Json** | JSON logging of models for debugging | Development and troubleshooting |
 | **ChainSharp.Effect.Mediator** | Automatic workflow discovery and routing | Applications with many workflows |
-| **ChainSharp.Effect.Parameter** | Serialize workflow inputs/outputs to database | When you need to persist and query parameters |
+| **ChainSharp.Effect.Provider.Parameter** | Serialize workflow inputs/outputs to database | When you need to persist and query parameters |
 
 ## Quick Start Example
 

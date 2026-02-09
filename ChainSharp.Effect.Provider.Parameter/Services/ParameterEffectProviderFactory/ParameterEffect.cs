@@ -6,7 +6,7 @@ using ChainSharp.Effect.Models;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Services.EffectProvider;
 
-namespace ChainSharp.Effect.Parameter.Services.ParameterEffectProviderFactory;
+namespace ChainSharp.Effect.Provider.Parameter.Services.ParameterEffectProviderFactory;
 
 /// <summary>
 /// Implements an effect provider that serializes workflow input and output parameters to JSON format.

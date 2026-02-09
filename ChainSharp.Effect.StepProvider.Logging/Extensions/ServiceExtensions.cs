@@ -1,10 +1,10 @@
 using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 using ChainSharp.Effect.Extensions;
-using ChainSharp.Effect.Step.Logging.Services.StepLoggerFactory;
-using ChainSharp.Effect.Step.Logging.Services.StepLoggerProvider;
+using ChainSharp.Effect.StepProvider.Logging.Services.StepLoggerFactory;
+using ChainSharp.Effect.StepProvider.Logging.Services.StepLoggerProvider;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace ChainSharp.Effect.Step.Logging.Extensions;
+namespace ChainSharp.Effect.StepProvider.Logging.Extensions;
 
 public static class ServiceExtensions
 {

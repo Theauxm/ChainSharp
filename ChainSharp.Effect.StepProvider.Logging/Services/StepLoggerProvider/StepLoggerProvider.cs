@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 using JsonConverter = System.Text.Json.Serialization.JsonConverter;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
-namespace ChainSharp.Effect.Step.Logging.Services.StepLoggerProvider;
+namespace ChainSharp.Effect.StepProvider.Logging.Services.StepLoggerProvider;
 
 public class StepLoggerProvider(
     IChainSharpEffectConfiguration configuration,

@@ -1,6 +1,6 @@
 using System.Text.Json;
 using ChainSharp.Effect.Models.Metadata;
-using ChainSharp.Effect.Parameter.Services.ParameterEffectProviderFactory;
+using ChainSharp.Effect.Provider.Parameter.Services.ParameterEffectProviderFactory;
 using ChainSharp.Tests.MemoryLeak.Integration.TestWorkflows.TestModels;
 using ChainSharp.Tests.MemoryLeak.Integration.Utils;
 using FluentAssertions;

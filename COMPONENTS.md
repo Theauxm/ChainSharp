@@ -197,8 +197,8 @@ public interface IEffectProvider : IDisposable
 | Provider | Package | Purpose | Performance Impact |
 |----------|---------|---------|-------------------|
 | **DataContext** | ChainSharp.Effect.Data | Database persistence | Medium - Database I/O |
-| **JsonEffect** | ChainSharp.Effect.Json | Debug logging | Low - JSON serialization |
-| **ParameterEffect** | ChainSharp.Effect.Parameter | Parameter serialization | Medium - JSON + Storage |
+| **JsonEffect** | ChainSharp.Effect.Provider.Json | Debug logging | Low - JSON serialization |
+| **ParameterEffect** | ChainSharp.Effect.Provider.Parameter | Parameter serialization | Medium - JSON + Storage |
 | **Custom Providers** | User-defined | Application-specific | Varies |
 
 ## 4. ChainSharp.Effect.Data (Persistence Layer)
@@ -377,7 +377,7 @@ public class UpdateUserWorkflow : EffectWorkflow<UpdateUserRequest, User> { }
 
 ## 6. Specialized Effect Providers
 
-### ChainSharp.Effect.Json (Debug Logging)
+### ChainSharp.Effect.Provider.Json (Debug Logging)
 
 ```csharp
 public class JsonEffectProvider : IJsonEffectProvider
@@ -417,7 +417,7 @@ public class JsonEffectProvider : IJsonEffectProvider
 - Change tracking without persistence
 - Integration test verification
 
-### ChainSharp.Effect.Parameter (Parameter Serialization)
+### ChainSharp.Effect.Provider.Parameter (Parameter Serialization)
 
 ```csharp
 public class ParameterEffect : IEffectProvider

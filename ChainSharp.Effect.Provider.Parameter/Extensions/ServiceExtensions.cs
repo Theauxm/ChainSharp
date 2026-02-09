@@ -1,24 +1,24 @@
 using System.Text.Json;
 using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 using ChainSharp.Effect.Extensions;
-using ChainSharp.Effect.Parameter.Services.ParameterEffectProviderFactory;
+using ChainSharp.Effect.Provider.Parameter.Services.ParameterEffectProviderFactory;
 using ChainSharp.Effect.Services.EffectProviderFactory;
 using ChainSharp.Effect.Utils;
 
-namespace ChainSharp.Effect.Parameter.Extensions;
+namespace ChainSharp.Effect.Provider.Parameter.Extensions;
 
 /// <summary>
-/// Provides extension methods for configuring ChainSharp.Effect.Parameter services in the dependency injection container.
+/// Provides extension methods for configuring ChainSharp.Effect.Provider.Parameter services in the dependency injection container.
 /// </summary>
 /// <remarks>
 /// The ServiceExtensions class contains utility methods that simplify the registration
-/// of ChainSharp.Effect.Parameter services with the dependency injection system.
+/// of ChainSharp.Effect.Provider.Parameter services with the dependency injection system.
 ///
 /// These extensions enable parameter serialization support for the ChainSharp.Effect system,
 /// allowing workflow input and output parameters to be serialized to and from JSON format.
 ///
 /// By using these extensions, applications can easily configure and use the
-/// ChainSharp.Effect.Parameter system with minimal boilerplate code.
+/// ChainSharp.Effect.Provider.Parameter system with minimal boilerplate code.
 /// </remarks>
 public static class ServiceExtensions
 {

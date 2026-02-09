@@ -5,9 +5,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Authors>Theauxm,mark-keaton</Authors>
-        <PackageDescription>Railway Oriented .NET Programming</PackageDescription>
+        <PackageDescription>Step Logging Provider for ChainSharp Effects</PackageDescription>
         <RepositoryUrl>https://github.com/Theauxm/ChainSharp</RepositoryUrl>
-        <AssemblyName>Theauxm.ChainSharp.Effect.Json</AssemblyName>
+        <AssemblyName>Theauxm.ChainSharp.Effect.StepProvider.Logging</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>
@@ -15,7 +15,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     </ItemGroup>
 
 </Project>

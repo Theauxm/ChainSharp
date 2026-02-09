@@ -1,5 +1,5 @@
-using ChainSharp.Effect.Json.Services.JsonEffect;
 using ChainSharp.Effect.Models.Metadata;
+using ChainSharp.Effect.Provider.Json.Services.JsonEffect;
 using ChainSharp.Tests.MemoryLeak.Integration.TestWorkflows.TestModels;
 using ChainSharp.Tests.MemoryLeak.Integration.Utils;
 using FluentAssertions;

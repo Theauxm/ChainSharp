@@ -1,6 +1,6 @@
 using ChainSharp.Effect.Services.EffectProvider;
 
-namespace ChainSharp.Effect.Json.Services.JsonEffect;
+namespace ChainSharp.Effect.Provider.Json.Services.JsonEffect;
 
 /// <summary>
 /// Defines a JSON-based effect provider for tracking and serializing model changes.

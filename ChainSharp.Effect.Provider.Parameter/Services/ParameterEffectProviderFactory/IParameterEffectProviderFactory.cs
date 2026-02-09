@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using ChainSharp.Effect.Services.EffectProviderFactory;
 
-namespace ChainSharp.Effect.Parameter.Services.ParameterEffectProviderFactory;
+namespace ChainSharp.Effect.Provider.Parameter.Services.ParameterEffectProviderFactory;
 
 /// <summary>
 /// Defines a factory for creating parameter effect providers.

@@ -1,24 +1,24 @@
 using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 using ChainSharp.Effect.Extensions;
-using ChainSharp.Effect.Json.Services.JsonEffect;
-using ChainSharp.Effect.Json.Services.JsonEffectFactory;
+using ChainSharp.Effect.Provider.Json.Services.JsonEffect;
+using ChainSharp.Effect.Provider.Json.Services.JsonEffectFactory;
 using ChainSharp.Effect.Services.EffectProviderFactory;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace ChainSharp.Effect.Json.Extensions;
+namespace ChainSharp.Effect.Provider.Json.Extensions;
 
 /// <summary>
-/// Provides extension methods for configuring ChainSharp.Effect.Json services in the dependency injection container.
+/// Provides extension methods for configuring ChainSharp.Effect.Provider.Json services in the dependency injection container.
 /// </summary>
 /// <remarks>
 /// The ServiceExtensions class contains utility methods that simplify the registration
-/// of ChainSharp.Effect.Json services with the dependency injection system.
+/// of ChainSharp.Effect.Provider.Json services with the dependency injection system.
 ///
 /// These extensions enable JSON serialization support for the ChainSharp.Effect system,
 /// allowing workflow models to be serialized to and from JSON format.
 ///
 /// By using these extensions, applications can easily configure and use the
-/// ChainSharp.Effect.Json system with minimal boilerplate code.
+/// ChainSharp.Effect.Provider.Json system with minimal boilerplate code.
 /// </remarks>
 public static class ServiceExtensions
 {

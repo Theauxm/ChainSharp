@@ -3,10 +3,10 @@
   <Project Path="ChainSharp.Effect.Data.InMemory/ChainSharp.Effect.Data.InMemory.csproj" />
   <Project Path="ChainSharp.Effect.Data.Postgres/ChainSharp.Effect.Data.Postgres.csproj" />
   <Project Path="ChainSharp.Effect.Data/ChainSharp.Effect.Data.csproj" />
-  <Project Path="ChainSharp.Effect.Json/ChainSharp.Effect.Json.csproj" />
+  <Project Path="ChainSharp.Effect.Provider.Json/ChainSharp.Effect.Provider.Json.csproj" />
   <Project Path="ChainSharp.Effect.Mediator/ChainSharp.Effect.Mediator.csproj" />
-  <Project Path="ChainSharp.Effect.Parameter/ChainSharp.Effect.Parameter.csproj" />
-  <Project Path="ChainSharp.Effect.Step.Logging/ChainSharp.Effect.Step.Logging.csproj" />
+  <Project Path="ChainSharp.Effect.Provider.Parameter/ChainSharp.Effect.Provider.Parameter.csproj" />
+  <Project Path="ChainSharp.Effect.StepProvider.Logging/ChainSharp.Effect.StepProvider.Logging.csproj" />
   <Project Path="ChainSharp.Effect/ChainSharp.Effect.csproj" />
   <Project Path="ChainSharp.Tests.Effect.Data.InMemory.Integration/ChainSharp.Tests.Effect.Data.InMemory.Integration.csproj" />
   <Project Path="ChainSharp.Tests.Effect.Data.Postgres.Integration/ChainSharp.Tests.Effect.Data.Postgres.Integration.csproj" />

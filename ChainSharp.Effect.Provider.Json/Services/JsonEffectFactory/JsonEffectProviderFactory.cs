@@ -1,11 +1,11 @@
 using System;
-using ChainSharp.Effect.Json.Services.JsonEffect;
+using ChainSharp.Effect.Provider.Json.Services.JsonEffect;
 using ChainSharp.Effect.Services.EffectProvider;
 using ChainSharp.Effect.Services.EffectProviderFactory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace ChainSharp.Effect.Json.Services.JsonEffectFactory;
+namespace ChainSharp.Effect.Provider.Json.Services.JsonEffectFactory;
 
 /// <summary>
 /// Implements a factory for creating JSON effect providers.

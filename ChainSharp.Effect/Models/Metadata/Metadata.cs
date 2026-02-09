@@ -384,7 +384,6 @@ public class Metadata : IMetadata, IDisposable
             ChainSharpEffectConfiguration.StaticSystemJsonSerializerOptions
         );
 
-
     /// <summary>
     /// Sets the deserialized input object for the workflow.
     /// </summary>
@@ -443,7 +442,5 @@ public class Metadata : IMetadata, IDisposable
     /// the properties after construction using property setters.
     /// </remarks>
     [JsonConstructor]
-    public Metadata()
-    {
-    }
+    public Metadata() { }
 }

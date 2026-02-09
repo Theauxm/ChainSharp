@@ -45,7 +45,7 @@ public class JsonEffectProviderTests : TestSetup
                     logger.Logs.Any(
                         log =>
                             log.Category
-                            == "ChainSharp.Effect.Json.Services.JsonEffect.JsonEffectProvider"
+                            == "ChainSharp.Effect.Provider.Json.Services.JsonEffect.JsonEffectProvider"
                     )
             )
             .ToList();

@@ -77,15 +77,15 @@ The foundation layer providing Railway Oriented Programming patterns.
 // Base workflow class
 public abstract class Workflow<TIn, TOut>
 {
-    public abstract Task<Either<Exception, TOut>> Run(TIn input);
+    public Task<TOut> Run(TIn input);
     
-    protected Chain<TIn> Activate(TIn input) => new Chain<TIn>(input);
+    protected Workflow<TIn, TOut> Activate(TIn input);
 }
 
 // Step interface for individual operations
 public interface IStep<TIn, TOut>
 {
-    Task<Either<Exception, TOut>> Run(TIn input);
+    Task<TOut> Run(TIn input);
 }
 
 // Chain class for composing steps

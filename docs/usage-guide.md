@@ -313,7 +313,7 @@ public class GetUserEmailWorkflow : EffectWorkflow<UserId, string>
             .Chain<LoadUserStep>()              // Returns User, stored in Memory
             .Extract<User, EmailAddress>()      // Finds EmailAddress property on User
             .Chain<ValidateEmailStep>()         // Takes EmailAddress from Memory
-            .Resolve<string>();
+            .Resolve();
 }
 ```
 

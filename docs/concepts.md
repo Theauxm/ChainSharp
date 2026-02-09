@@ -187,7 +187,7 @@ public class ProcessUserWorkflow : EffectWorkflow<CreateUserRequest, User>
             .Chain<ValidateUserStep>()    // Takes User, returns Unit (validation only)
             .Chain<EnrichUserStep>()      // Takes User, returns Unit (modifies in place)
             .Chain<SendNotificationStep>()// Takes User, returns Unit (side effect)
-            .Resolve<User>();             // Resolves the User from Memory
+            .Resolve();                   // Resolves the User from Memory
 }
 
 // Each step receives the same User reference from Memory

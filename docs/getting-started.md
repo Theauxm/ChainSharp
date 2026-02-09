@@ -15,9 +15,9 @@ This guide will walk you through setting up ChainSharp in your project and creat
 For a typical setup with database persistence and workflow discovery:
 
 ```xml
-<PackageReference Include="Theauxm.ChainSharp.Effect" Version="1.0.0" />
-<PackageReference Include="Theauxm.ChainSharp.Effect.Data.Postgres" Version="1.0.0" />
-<PackageReference Include="Theauxm.ChainSharp.Effect.Mediator" Version="1.0.0" />
+<PackageReference Include="Theauxm.ChainSharp.Effect" Version="5.*" />
+<PackageReference Include="Theauxm.ChainSharp.Effect.Data.Postgres" Version="5.*" />
+<PackageReference Include="Theauxm.ChainSharp.Effect.Mediator" Version="5.*" />
 ```
 
 Or via the .NET CLI:
@@ -82,12 +82,6 @@ public interface ICreateUserWorkflow : IEffectWorkflow<CreateUserRequest, User> 
 
 public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>, ICreateUserWorkflow
 {
-    [Inject]
-    public IUserRepository UserRepository { get; set; }
-    
-    [Inject]
-    public IEmailService EmailService { get; set; }
-    
     protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
         => Activate(input)
             .Chain<ValidateEmailStep>()
@@ -100,11 +94,8 @@ public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>, ICrea
 ### 3. Implement the Steps
 
 ```csharp
-public class ValidateEmailStep : Step<CreateUserRequest, CreateUserRequest>
+public class ValidateEmailStep(IUserRepository UserRepository) : Step<CreateUserRequest, Unit>
 {
-    [Inject]
-    public IUserRepository UserRepository { get; set; }
-    
     public override async Task<Either<Exception, CreateUserRequest>> Run(CreateUserRequest input)
     {
         // Check if email already exists
@@ -116,18 +107,15 @@ public class ValidateEmailStep : Step<CreateUserRequest, CreateUserRequest>
         if (!IsValidEmail(input.Email))
             return new ValidationException("Invalid email format");
             
-        return input; // Pass through unchanged
+        return Unit.Default;
     }
     
     private static bool IsValidEmail(string email)
         => new EmailAddressAttribute().IsValid(email);
 }
 
-public class CreateUserInDatabaseStep : Step<CreateUserRequest, User>
+public class CreateUserInDatabaseStep(IUserRepository UserRepository) : Step<CreateUserRequest, User>
 {
-    [Inject]
-    public IUserRepository UserRepository { get; set; }
-    
     public override async Task<User> Run(CreateUserRequest input)
     {
         var user = new User
@@ -141,15 +129,12 @@ public class CreateUserInDatabaseStep : Step<CreateUserRequest, User>
     }
 }
 
-public class SendWelcomeEmailStep : Step<User, User>
+public class SendWelcomeEmailStep(IEmailService EmailService) : Step<User, Unit>
 {
-    [Inject]
-    public IEmailService EmailService { get; set; }
-    
     public override async Task<User> Run(User input)
     {
         await EmailService.SendWelcomeEmailAsync(input.Email, input.FullName);
-        return input; // Pass through unchanged
+        return Unit.Default;
     }
 }
 ```
@@ -207,7 +192,6 @@ ChainSharp (Core)
 ```csharp
 services.AddChainSharpEffects(options => 
     options
-        .AddInMemoryEffect()
         .AddJsonEffect()
 );
 ```
@@ -217,8 +201,6 @@ services.AddChainSharpEffects(options =>
 ```csharp
 services.AddChainSharpEffects(options => 
     options
-        .AddPostgresEffect(connectionString)
-        .SaveWorkflowParameters()
         .AddEffectWorkflowBus(assemblies)
 );
 ```

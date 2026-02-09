@@ -63,9 +63,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     [JsonIgnore]
     public IEffectRunner? EffectRunner { get; set; }
 
-    [Inject]
-    [JsonIgnore]
-    public IStepEffectRunner? StepEffectRunner { get; set; }
+    [Inject] [JsonIgnore] public IStepEffectRunner? StepEffectRunner { get; set; }
 
     /// <summary>
     /// Logger specific to this workflow type, used for recording diagnostic information
@@ -153,7 +151,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
 
         EffectLogger?.LogTrace("Running Workflow: ({WorkflowName})", WorkflowName);
 
-        Metadata = await InitializeWorkflow(input);
+        Metadata ??= await InitializeWorkflow(input);
         await EffectRunner.SaveChanges(CancellationToken.None);
 
         try
@@ -181,6 +179,17 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
             throw;
         }
     }
+
+    public virtual async Task<TOut> Run(TIn input, Metadata metadata)
+    {
+        if (metadata.WorkflowState != WorkflowState.Pending)
+            throw new WorkflowException(
+                $"Cannot start a workflow with state ({metadata.WorkflowState}), must be Pending.");
+
+        Metadata = metadata;
+        return await Run(input);
+    }
+
 
     /// <summary>
     /// Initializes the workflow metadata in the database and sets the initial state.

@@ -230,16 +230,7 @@ using ChainSharp.Effect.Extensions;
 
 // Register ChainSharp services with dependency injection
 new ServiceCollection()
-    .AddChainSharpEffects(
-        options =>
-            options
-                .AddEffectWorkflowBus(
-                    assemblies:
-                    [
-                        typeof(AssemblyMarker).Assembly
-                    ]
-                )
-    );
+    .AddChainSharpEffects(o => o.AddEffectWorkflowBus(assemblies: [typeof(AssemblyMarker).Assembly]));
 ```
 
 ## Advanced Patterns
@@ -247,11 +238,8 @@ new ServiceCollection()
 ### Nested Workflows
 
 ```csharp
-public class ParentWorkflow : EffectWorkflow<ParentRequest, ParentResult>
+public class ParentWorkflow(IWorkflowBus WorkflowBus) : EffectWorkflow<ParentRequest, ParentResult>
 {
-    [Inject]
-    public IWorkflowBus WorkflowBus { get; set; }
-    
     protected override async Task<Either<Exception, ParentResult>> RunInternal(ParentRequest input)
     {
         // Run child workflow with parent metadata for tracking
@@ -266,156 +254,5 @@ public class ParentWorkflow : EffectWorkflow<ParentRequest, ParentResult>
             ChildResult = childResult
         };
     }
-}
-```
-
-### Conditional Step Execution
-
-```csharp
-public class ConditionalWorkflow : EffectWorkflow<OrderRequest, OrderResult>
-{
-    protected override async Task<Either<Exception, OrderResult>> RunInternal(OrderRequest input)
-    {
-        var chain = Activate(input)
-            .Chain<ValidateOrderStep>();
-        
-        // Add payment step only for paid orders
-        if (input.RequiresPayment)
-        {
-            chain = chain.Chain<ProcessPaymentStep>();
-        }
-        
-        return chain
-            .Chain<FulfillOrderStep>()
-            .Resolve();
-    }
-}
-```
-
-### Parallel Step Execution
-
-```csharp
-public class ParallelStep : Step<OrderRequest, EnrichedOrder>
-{
-    [Inject]
-    public IInventoryService InventoryService { get; set; }
-    
-    [Inject]
-    public IPricingService PricingService { get; set; }
-    
-    public override async Task<EnrichedOrder> Run(OrderRequest input)
-    {
-        // Run independent operations in parallel
-        var inventoryTask = InventoryService.CheckAvailabilityAsync(input.Items);
-        var pricingTask = PricingService.CalculateTotalAsync(input.Items);
-        
-        await Task.WhenAll(inventoryTask, pricingTask);
-        
-        return new EnrichedOrder
-        {
-            Items = input.Items,
-            Availability = await inventoryTask,
-            Total = await pricingTask
-        };
-    }
-}
-```
-
-### Retry Pattern
-
-```csharp
-public class RetryableStep : Step<ExternalApiRequest, ExternalApiResponse>
-{
-    [Inject]
-    public IExternalApiClient ApiClient { get; set; }
-    
-    [Inject]
-    public ILogger<RetryableStep> Logger { get; set; }
-    
-    private const int MaxRetries = 3;
-    private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(1);
-    
-    public override async Task<Either<Exception, ExternalApiResponse>> Run(ExternalApiRequest input)
-    {
-        for (int attempt = 1; attempt <= MaxRetries; attempt++)
-        {
-            try
-            {
-                return await ApiClient.CallAsync(input);
-            }
-            catch (TransientException ex) when (attempt < MaxRetries)
-            {
-                Logger.LogWarning("Attempt {Attempt} failed, retrying...", attempt);
-                await Task.Delay(RetryDelay * attempt);
-            }
-        }
-        
-        return new ExternalApiException("Max retries exceeded");
-    }
-}
-```
-
-## Testing Workflows
-
-### Unit Testing Steps
-
-```csharp
-[Fact]
-public async Task ValidateEmailStep_WithValidEmail_ReturnsInput()
-{
-    // Arrange
-    var mockRepo = new Mock<IUserRepository>();
-    mockRepo.Setup(r => r.GetByEmailAsync(It.IsAny<string>()))
-        .ReturnsAsync((User?)null);
-    
-    var step = new ValidateEmailStep
-    {
-        UserRepository = mockRepo.Object
-    };
-    
-    var input = new CreateUserRequest { Email = "test@example.com" };
-    
-    // Act
-    var result = await step.Run(input);
-    
-    // Assert
-    result.IsRight.Should().BeTrue();
-    result.Match(
-        Left: ex => throw ex,
-        Right: r => r.Should().BeEquivalentTo(input)
-    );
-}
-```
-
-### Integration Testing with InMemory Database
-
-```csharp
-[Fact]
-public async Task CreateUserWorkflow_WithValidInput_CreatesUser()
-{
-    // Arrange
-    var services = new ServiceCollection();
-    services.AddChainSharpEffects(options => 
-        options
-            .AddInMemoryEffect()
-            .AddEffectWorkflowBus(typeof(CreateUserWorkflow).Assembly)
-    );
-    
-    var serviceProvider = services.BuildServiceProvider();
-    var workflowBus = serviceProvider.GetRequiredService<IWorkflowBus>();
-    
-    var request = new CreateUserRequest
-    {
-        Email = "test@example.com",
-        FirstName = "Test",
-        LastName = "User"
-    };
-    
-    // Act
-    var user = await workflowBus.RunAsync<User>(request);
-    
-    // Assert
-    user.Email.Should().Be("test@example.com");
-    user.FullName.Should().Be("Test User");
 }
 ```

@@ -174,7 +174,7 @@ internal class StepToRunNestedWorkflow(IWorkflowBus workflowBus) : Step<Unit, II
 }
 ```
 
-### Using WorkflowBus in a Controller
+### Using WorkflowBus in a REST Controller
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
@@ -183,14 +183,14 @@ using ChainSharp.Exceptions;
 
 [ApiController]
 [Route("api/[controller]")]
-public class OrdersController(IWorkflowBus _workflowBus) : ControllerBase
+public class OrdersController(IWorkflowBus workflowBus) : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> CreateOrder(CreateOrderRequest request)
     {
         try
         {
-            var order = await _workflowBus.RunAsync<Order>(request);
+            var order = await workflowBus.RunAsync<Order>(request);
             return Ok(order);
         }
         catch (WorkflowException ex)
@@ -204,7 +204,7 @@ public class OrdersController(IWorkflowBus _workflowBus) : ControllerBase
     {
         try
         {
-            var order = await _workflowBus.RunAsync<Order>(new GetOrderRequest { Id = id });
+            var order = await workflowBus.RunAsync<Order>(new GetOrderRequest { Id = id });
             return Ok(order);
         }
         catch (WorkflowException ex) when (ex.Message.Contains("not found"))
@@ -218,6 +218,29 @@ public class OrdersController(IWorkflowBus _workflowBus) : ControllerBase
     }
 }
 ```
+
+### Injecting Workflows Directly
+
+You don't have to use `IWorkflowBus`. When you use `AddEffectWorkflowBus`, all discovered workflows are also registered in DI by their interface. You can inject them directly:
+
+```csharp
+// GraphQL mutation using Hot Chocolate
+[ExtendObjectType("Mutation")]
+public class UpdateUserMutation : IGqlMutation
+{
+    public async Task<UpdateUserOutput> UpdateUser(
+        [Service] IUpdateUserWorkflow updateUserWorkflow,
+        UpdateUserInput input
+    ) => await updateUserWorkflow.Run(input);
+}
+```
+
+This is useful when:
+- You know exactly which workflow you need at compile time
+- You want clearer type signatures in your resolvers/handlers
+- You prefer explicit dependencies over the mediator pattern
+
+The workflow still gets all the same effect handling (metadata, persistence, etc.)—it's just resolved differently.
 
 ### Registering WorkflowBus with Dependency Injection
 
@@ -302,5 +325,240 @@ public class ParentWorkflow(IWorkflowBus WorkflowBus) : EffectWorkflow<ParentReq
             ChildResult = childResult
         };
     }
+}
+```
+
+### Short-Circuiting
+
+Sometimes a step should end the workflow early with a valid result (not an error). Use `ShortCircuit<TStep>()` for this:
+
+```csharp
+public class ProcessOrderWorkflow : EffectWorkflow<OrderRequest, OrderResult>
+{
+    protected override async Task<Either<Exception, OrderResult>> RunInternal(OrderRequest input)
+        => Activate(input)
+            .Chain<ValidateOrderStep>()
+            .ShortCircuit<CheckCacheStep>()  // If cached, return early
+            .Chain<CalculatePricingStep>()   // Skipped if cache hit
+            .Chain<ProcessPaymentStep>()     // Skipped if cache hit
+            .Chain<SaveOrderStep>()
+            .Resolve();
+}
+
+public class CheckCacheStep(ICache Cache) : Step<OrderRequest, OrderResult>
+{
+    public override async Task<OrderResult> Run(OrderRequest input)
+    {
+        var cached = await Cache.GetAsync<OrderResult>(input.OrderId);
+        
+        if (cached != null)
+            return cached;  // This becomes the workflow's final result
+        
+        // Throwing signals "no short-circuit, continue the chain"
+        throw new Exception("Cache miss");
+    }
+}
+```
+
+When a `ShortCircuit` step returns a value of the workflow's return type (`OrderResult` here), that value becomes the final result and remaining steps are skipped. If the step throws, the workflow continues normally (the exception is swallowed, not propagated).
+
+This is different from regular `Chain`—a `Chain` step that throws stops the workflow with an error. A `ShortCircuit` step that throws just means "keep going."
+
+### Extract
+
+Pull a nested value out of an object in Memory:
+
+```csharp
+public class GetUserEmailWorkflow : EffectWorkflow<UserId, string>
+{
+    protected override async Task<Either<Exception, string>> RunInternal(UserId input)
+        => Activate(input)
+            .Chain<LoadUserStep>()              // Returns User, stored in Memory
+            .Extract<User, EmailAddress>()      // Finds EmailAddress property on User
+            .Chain<ValidateEmailStep>()         // Takes EmailAddress from Memory
+            .Resolve<string>();
+}
+```
+
+`Extract<TSource, TTarget>()` looks for a property or field of type `TTarget` on the `TSource` object in Memory. If found, it stores the value in Memory under the `TTarget` type.
+
+### AddServices and IChain
+
+You can add service instances to Memory and later chain them by interface:
+
+```csharp
+protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(Ingredients input)
+{
+    var ferment = new Ferment();
+    var prepare = new Prepare(ferment);
+    
+    return Activate(input)
+        .AddServices<IPrepare, IFerment>(prepare, ferment)  // Store in Memory by interface
+        .IChain<IPrepare>()    // Find IPrepare in Memory and execute it
+        .IChain<IFerment>()    // Find IFerment in Memory and execute it
+        .Chain<Bottle>()
+        .Resolve();
+}
+```
+
+`IChain<TInterface>()` requires the type parameter to be an interface. It finds the implementation in Memory (added via `AddServices`) and executes it. This is useful when you need to control which implementation runs, or when testing with fakes.
+
+## Testing
+
+### Unit Testing Steps
+
+Steps are easy to test because they're just classes with a `Run` method. Create simple fake implementations of your dependencies:
+
+```csharp
+// A simple fake repository for testing
+public class FakeUserRepository : IUserRepository
+{
+    private readonly List<User> _users = [];
+    private int _nextId = 1;
+    
+    public Task<User?> GetByEmailAsync(string email) 
+        => Task.FromResult(_users.FirstOrDefault(u => u.Email == email));
+    
+    public Task<User> CreateAsync(User user)
+    {
+        user = user with { Id = _nextId++ };
+        _users.Add(user);
+        return Task.FromResult(user);
+    }
+    
+    // Seed data for tests
+    public void AddExisting(User user) => _users.Add(user);
+}
+
+[Test]
+public async Task ValidateEmailStep_ThrowsForDuplicateEmail()
+{
+    // Arrange
+    var repo = new FakeUserRepository();
+    repo.AddExisting(new User { Id = 1, Email = "taken@example.com" });
+    
+    var step = new ValidateEmailStep(repo);
+    var request = new CreateUserRequest { Email = "taken@example.com" };
+    
+    // Act & Assert
+    await Assert.ThrowsAsync<ValidationException>(() => step.Run(request));
+}
+
+[Test]
+public async Task CreateUserStep_ReturnsNewUser()
+{
+    // Arrange
+    var repo = new FakeUserRepository();
+    var step = new CreateUserStep(repo);
+    var request = new CreateUserRequest 
+    { 
+        Email = "new@example.com",
+        FirstName = "Test",
+        LastName = "User"
+    };
+    
+    // Act
+    var result = await step.Run(request);
+    
+    // Assert
+    Assert.Equal(1, result.Id);  // First user gets ID 1
+    Assert.Equal("new@example.com", result.Email);
+}
+```
+
+### Unit Testing Workflows
+
+Register your fakes in the service collection:
+
+```csharp
+[Test]
+public async Task CreateUserWorkflow_CreatesUser()
+{
+    // Arrange
+    var services = new ServiceCollection();
+    services.AddSingleton<IUserRepository, FakeUserRepository>();
+    services.AddSingleton<IEmailService, FakeEmailService>();
+    services.AddChainSharpEffects(o => o.AddEffectWorkflowBus(typeof(CreateUserWorkflow).Assembly));
+    
+    var provider = services.BuildServiceProvider();
+    var bus = provider.GetRequiredService<IWorkflowBus>();
+    
+    // Act
+    var result = await bus.RunAsync<User>(new CreateUserRequest 
+    { 
+        Email = "test@example.com",
+        FirstName = "Test",
+        LastName = "User"
+    });
+    
+    // Assert
+    Assert.NotNull(result);
+    Assert.Equal("test@example.com", result.Email);
+}
+```
+
+### Integration Testing with InMemory Provider
+
+For integration tests, use the InMemory data provider to avoid database dependencies:
+
+```csharp
+[Test]
+public async Task Workflow_PersistsMetadata()
+{
+    // Arrange
+    var services = new ServiceCollection();
+    services.AddSingleton<IUserRepository, FakeUserRepository>();
+    services.AddChainSharpEffects(options => 
+        options
+            .AddInMemoryEffect()
+            .AddEffectWorkflowBus(typeof(CreateUserWorkflow).Assembly)
+    );
+    
+    var provider = services.BuildServiceProvider();
+    var bus = provider.GetRequiredService<IWorkflowBus>();
+    var context = provider.GetRequiredService<IDataContext>();
+    
+    // Act
+    await bus.RunAsync<User>(new CreateUserRequest { Email = "test@example.com" });
+    
+    // Assert
+    var metadata = await context.Metadatas.FirstOrDefaultAsync();
+    Assert.NotNull(metadata);
+    Assert.Equal(WorkflowState.Completed, metadata.WorkflowState);
+}
+```
+
+### Testing with Fake Steps
+
+You can use `AddServices` to inject fake step implementations:
+
+```csharp
+// A fake step that returns a predictable result
+public class FakeFerment : IFerment
+{
+    public Task<BrewingJug> Run(BrewingJug input) 
+        => Task.FromResult(new BrewingJug { Gallons = 100 });
+}
+
+[Test]
+public async Task Workflow_UsesFakeStep()
+{
+    var fakeFerment = new FakeFerment();
+    
+    var workflow = new TestWorkflow(fakeFerment);
+    var result = await workflow.Run(new Ingredients());
+    
+    Assert.True(result.IsRight);
+    Assert.Equal(100, result.Match(_ => 0, jug => jug.Gallons));
+}
+
+public class TestWorkflow(IFerment ferment) : Workflow<Ingredients, BrewingJug>
+{
+    protected override async Task<Either<Exception, BrewingJug>> RunInternal(Ingredients input)
+        => Activate(input)
+            .AddServices(ferment)
+            .Chain<Prepare>()
+            .IChain<IFerment>()
+            .Resolve();
 }
 ```

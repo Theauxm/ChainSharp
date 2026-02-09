@@ -180,22 +180,96 @@ ChainSharp (Core)
               └─── ChainSharp.Effect.StepProvider.Logging
 ```
 
-## Common Configuration Patterns
+## Choosing Effect Providers
 
-### Development with JSON Logging
+ChainSharp has several effect providers. Here's when to use each:
+
+### Database Persistence (Postgres or InMemory)
+
+**Use when:** You need to query workflow history, audit execution, or debug production issues.
 
 ```csharp
+// Production
 services.AddChainSharpEffects(options => 
-    options
-        .AddJsonEffect()
+    options.AddPostgresEffect("Host=localhost;Database=app;Username=postgres;Password=pass")
+);
+
+// Testing
+services.AddChainSharpEffects(options => 
+    options.AddInMemoryEffect()
 );
 ```
 
-### Production with Mediator
+This persists a `Metadata` record for each workflow execution containing:
+- Workflow name and state (Pending → InProgress → Completed/Failed)
+- Start and end timestamps
+- Serialized input and output
+- Exception details if failed
+- Parent workflow ID for nested workflows
+
+### JSON Effect (`AddJsonEffect`)
+
+**Use when:** Debugging during development. Logs workflow state changes to your configured logger.
+
+```csharp
+services.AddChainSharpEffects(options => 
+    options.AddJsonEffect()
+);
+```
+
+This doesn't persist anything—it just logs. Useful for seeing what's happening without setting up a database.
+
+### Parameter Effect (`SaveWorkflowParameters`)
+
+**Use when:** You need to store workflow inputs/outputs in the database for later querying or replay.
 
 ```csharp
 services.AddChainSharpEffects(options => 
     options
+        .AddPostgresEffect(connectionString)
+        .SaveWorkflowParameters()  // Serializes Input/Output to Metadata
+);
+```
+
+Without this, the `Input` and `Output` columns in `Metadata` are null. With it, they contain JSON-serialized versions of your request and response objects.
+
+### WorkflowBus (`AddEffectWorkflowBus`)
+
+**Use when:** You want to run workflows by input type without manually resolving them.
+
+```csharp
+services.AddChainSharpEffects(options => 
+    options.AddEffectWorkflowBus(typeof(Program).Assembly)
+);
+
+// Later:
+var user = await workflowBus.RunAsync<User>(new CreateUserRequest { ... });
+```
+
+This scans your assemblies for `IEffectWorkflow<TIn, TOut>` implementations and builds a registry. When you call `RunAsync`, it finds the workflow that handles your input type and executes it.
+
+**Note:** Each input type can only map to one workflow. If you have `CreateUserRequest`, only one workflow can accept it.
+
+### Combining Providers
+
+Providers compose. A typical production setup:
+
+```csharp
+services.AddChainSharpEffects(options => 
+    options
+        .AddPostgresEffect(connectionString)   // Persist metadata
+        .SaveWorkflowParameters()              // Include input/output in metadata
+        .AddEffectWorkflowBus(assemblies)      // Enable workflow discovery
+);
+```
+
+A typical development setup:
+
+```csharp
+services.AddChainSharpEffects(options => 
+    options
+        .AddInMemoryEffect()                   // Fast, no database needed
+        .AddJsonEffect()                       // Log state changes
         .AddEffectWorkflowBus(assemblies)
 );
 ```

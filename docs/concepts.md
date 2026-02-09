@@ -48,6 +48,68 @@ ChainSharp's `EffectWorkflow` does the same thing. Steps can track models, log e
 
 This gives you atomic workflows—either everything succeeds and all effects are applied, or something fails and nothing is applied.
 
+## Workflow vs EffectWorkflow
+
+ChainSharp has two base classes for workflows:
+
+**`Workflow<TIn, TOut>`** — The core class. Handles chaining, Memory, and error propagation. No metadata, no effects, no automatic dependency injection from an `IServiceProvider`. Use this when:
+- You want a lightweight workflow without persistence
+- You're composing steps inside a larger system that handles its own concerns
+- Testing or prototyping
+
+```csharp
+public class SimpleCider : Workflow<Ingredients, List<GlassBottle>>
+{
+    protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(
+        Ingredients input
+    ) => Activate(input)
+            .Chain<Prepare>()
+            .Chain<Ferment>()
+            .Chain<Bottle>()
+            .Resolve();
+}
+```
+
+You can still inject services into a base `Workflow`—you just have to add them to Memory yourself via `AddServices()`:
+
+```csharp
+public class CiderWithServices(IFerment ferment, IBottle bottle) 
+    : Workflow<Ingredients, List<GlassBottle>>
+{
+    protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(
+        Ingredients input
+    ) => Activate(input)
+            .AddServices(ferment, bottle)  // Add injected services to Memory
+            .Chain<Prepare>()
+            .IChain<IFerment>()            // Find IFerment in Memory
+            .IChain<IBottle>()             // Find IBottle in Memory
+            .Resolve();
+}
+```
+
+`AddServices` accepts a params array, so you can pass as many services as you need.
+
+**`EffectWorkflow<TIn, TOut>`** — Extends `Workflow` with:
+- Automatic metadata tracking (start time, end time, success/failure, inputs/outputs)
+- Effect providers (database persistence, JSON logging, parameter serialization)
+- Integration with `IWorkflowBus` for workflow discovery
+- `IServiceProvider` access for step instantiation
+
+Use this when you want observability, persistence, or the mediator pattern:
+
+```csharp
+public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>
+{
+    protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
+        => Activate(input)
+            .Chain<ValidateUserStep>()
+            .Chain<CreateUserStep>()
+            .Resolve();
+}
+```
+
+Most applications should use `EffectWorkflow`. The base `Workflow` exists for cases where you need the chaining pattern without the infrastructure.
+
 ## Workflows, Steps, and Effects
 
 ```

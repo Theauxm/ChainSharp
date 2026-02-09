@@ -47,8 +47,6 @@ public class MakeCider : Workflow<Ingredients, List<GlassBottle>>
 }
 ```
 
-If any step fails, subsequent steps are automatically short-circuited using `Either<Exception, T>` monads.
-
 ## Documentation
 
 📚 **[Full Documentation](https://theauxm.github.io/ChainSharp/)** — Getting started, concepts, architecture, and usage guides.

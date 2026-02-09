@@ -24,9 +24,7 @@ ChainSharp is a .NET library for Railway Oriented Programming, building from fun
 - **Extensible Providers**: Pluggable effects for different concerns (database, logging, etc.)
 
 ### Automatic Dependency Injection
-- **Attribute-Based**: Use `[Inject]` attribute instead of constructor injection
 - **Workflow Discovery**: Automatically find and register workflows based on input types
-- **Service Integration**: Seamless integration with .NET dependency injection
 
 ## Quick Start Example
 
@@ -34,12 +32,6 @@ ChainSharp is a .NET library for Railway Oriented Programming, building from fun
 ```csharp
 public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>
 {
-    [Inject]
-    public IUserRepository UserRepository { get; set; }
-    
-    [Inject]
-    public IEmailService EmailService { get; set; }
-    
     protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
         => Activate(input)
             .Chain<ValidateUserStep>()
@@ -52,11 +44,8 @@ public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>
 ### 2. Service Registration
 ```csharp
 // Program.cs
-services.AddChainSharpEffects(options => 
-    options
-        .AddPostgresEffect(connectionString)        // Database persistence
-        .SaveWorkflowParameters()                   // Save inputs/outputs
-        .AddEffectWorkflowBus(typeof(Program).Assembly) // Auto-discovery
+services.AddChainSharpEffects(
+    o => o.AddEffectWorkflowBus(assemblies: [typeof(AssemblyMarker).Assembly])
 );
 ```
 

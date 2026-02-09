@@ -111,7 +111,7 @@ public class ManifestTests : TestSetup
         foundManifest!.Id.Should().Be(manifest.Id);
     }
 
-    [Ignore("hangs for now.")]
+    [Theory]
     public async Task TestPostgresProviderCanUpdateManifestProperties()
     {
         // Arrange

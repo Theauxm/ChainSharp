@@ -1,4 +1,3 @@
-using ChainSharp.Tests.ArrayLogger.Services.ArrayLoggingProvider;
 using ChainSharp.Effect.Data.Extensions;
 using ChainSharp.Effect.Data.Postgres.Extensions;
 using ChainSharp.Effect.Extensions;
@@ -8,6 +7,7 @@ using ChainSharp.Effect.Provider.Json.Extensions;
 using ChainSharp.Effect.Provider.Parameter.Extensions;
 using ChainSharp.Effect.Services.EffectRunner;
 using ChainSharp.Effect.StepProvider.Logging.Extensions;
+using ChainSharp.Tests.ArrayLogger.Services.ArrayLoggingProvider;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

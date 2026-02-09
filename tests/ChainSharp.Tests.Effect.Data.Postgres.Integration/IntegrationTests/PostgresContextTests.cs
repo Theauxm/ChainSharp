@@ -1,4 +1,3 @@
-using ChainSharp.Tests.ArrayLogger.Services.ArrayLoggingProvider;
 using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Enums;
@@ -7,6 +6,7 @@ using ChainSharp.Effect.Models.Metadata.DTOs;
 using ChainSharp.Effect.Services.EffectStep;
 using ChainSharp.Effect.Services.EffectWorkflow;
 using ChainSharp.Step;
+using ChainSharp.Tests.ArrayLogger.Services.ArrayLoggingProvider;
 using FluentAssertions;
 using LanguageExt;
 using Microsoft.EntityFrameworkCore;

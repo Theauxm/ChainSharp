@@ -1,7 +1,7 @@
-using ChainSharp.Tests.ArrayLogger.Services.ArrayLoggingProvider;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Tests.ArrayLogger.Services.ArrayLoggingProvider;
 using FluentAssertions;
 using LanguageExt;
 using Microsoft.Extensions.DependencyInjection;

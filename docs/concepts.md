@@ -19,17 +19,17 @@ Failure Track:          Exception → [Skip] → [Skip] → Exception
 ChainSharp uses `Either<Exception, T>` from LanguageExt to represent this. A value is either `Left` (an exception) or `Right` (the success value):
 
 ```csharp
-public async Task<Either<Exception, User>> CreateUser(CreateUserRequest input)
+public async Task<Either<Exception, PaymentReceipt>> ProcessPayment(PaymentRequest input)
 {
     return Activate(input)
-        .Chain<ValidateUserStep>()    // If this fails, skip remaining steps
-        .Chain<CreateUserStep>()      // Only runs if validation succeeded
-        .Chain<SendEmailStep>()       // Only runs if creation succeeded
-        .Resolve();                   // Return Either<Exception, User>
+        .Chain<ValidateCardStep>()      // If this fails, skip remaining steps
+        .Chain<CheckFraudStep>()        // Only runs if card is valid
+        .Chain<ChargeCardStep>()        // Only runs if fraud check passed
+        .Resolve();                     // Return Either<Exception, PaymentReceipt>
 }
 ```
 
-If `ValidateUserStep` throws, the workflow immediately returns `Left(exception)`. `CreateUserStep` and `SendEmailStep` never execute. You don't write any error-checking code—the chain handles it.
+If `ValidateCardStep` throws, the workflow immediately returns `Left(exception)`. `CheckFraudStep` and `ChargeCardStep` never execute. You don't write any error-checking code—the chain handles it.
 
 ## The Effect Pattern
 
@@ -58,12 +58,12 @@ ChainSharp has two base classes for workflows:
 - Testing or prototyping
 
 ```csharp
-public class SimpleUserCreation : Workflow<CreateUserRequest, User>
+public class SimplePaymentFlow : Workflow<PaymentRequest, PaymentReceipt>
 {
-    protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
+    protected override async Task<Either<Exception, PaymentReceipt>> RunInternal(PaymentRequest input)
         => Activate(input)
-            .Chain<ValidateUserStep>()
-            .Chain<CreateUserStep>()
+            .Chain<ValidateCardStep>()
+            .Chain<ChargeCardStep>()
             .Resolve();
 }
 ```
@@ -77,12 +77,13 @@ public class SimpleUserCreation : Workflow<CreateUserRequest, User>
 Use this when you want observability, persistence, or the mediator pattern:
 
 ```csharp
-public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>
+public class ProcessPaymentWorkflow : EffectWorkflow<PaymentRequest, PaymentReceipt>
 {
-    protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
+    protected override async Task<Either<Exception, PaymentReceipt>> RunInternal(PaymentRequest input)
         => Activate(input)
-            .Chain<ValidateUserStep>()
-            .Chain<CreateUserStep>()
+            .Chain<ValidateCardStep>()
+            .Chain<CheckFraudStep>()
+            .Chain<ChargeCardStep>()
             .Resolve();
 }
 ```
@@ -110,178 +111,8 @@ Most applications should use `EffectWorkflow`. The base `Workflow` exists for ca
 └─────────────────────────────────────────────────────────┘
 ```
 
-A **workflow** is a sequence of steps that accomplish a business operation. `CreateUserWorkflow` chains together validation, database insertion, and email notification.
+A **workflow** is a sequence of steps that accomplish a business operation. `ProcessPaymentWorkflow` chains together card validation, fraud checking, and card charging.
 
-A **step** does one thing. `ValidateEmailStep` checks if an email is valid. `CreateUserInDatabaseStep` inserts a record. Steps are easy to test in isolation because they have a single responsibility.
+A **step** does one thing. `ValidateCardStep` checks if a card number is valid. `ChargeCardStep` processes the actual payment. Steps are easy to test in isolation because they have a single responsibility.
 
 **Effects** are cross-cutting concerns that happen as a result of steps running—database writes, log entries, serialized parameters. Effect providers collect these during workflow execution and apply them atomically at the end.
-
-## Common Misconceptions
-
-These are things developers hit immediately when starting with ChainSharp.
-
-### ❌ Misconception 1: Steps need the `[Inject]` attribute for dependency injection
-
-**This is FALSE.** The `[Inject]` attribute is used **internally** by the `EffectWorkflow` base class for its own framework-level services (`IEffectRunner`, `ILogger`, `IServiceProvider`). 
-
-**You do NOT need to use `[Inject]` anywhere in your workflow or step code.** Steps should use standard constructor injection for their dependencies:
-
-```csharp
-// ❌ WRONG - Don't use [Inject] in your steps
-public class MyStep : Step<Input, Output>
-{
-    [Inject]
-    public IMyService MyService { get; set; }  // Don't do this!
-    
-    public override async Task<Output> Run(Input input) { ... }
-}
-
-// ✅ CORRECT - Use constructor injection
-public class MyStep(IMyService MyService) : Step<Input, Output>
-{
-    public override async Task<Output> Run(Input input)
-    {
-        // Use MyService directly - it's injected via constructor
-        var result = await MyService.DoSomethingAsync(input);
-        return result;
-    }
-}
-```
-
-### ❌ Misconception 2: Steps must "pass through" their input type as the output
-
-**This is FALSE.** You do NOT need to return the same type you receive as input. The workflow's **Memory** system stores references to all objects, and these references are automatically updated.
-
-```csharp
-// ❌ WRONG - Unnecessarily passing through the User type
-public class UpdateUserStep : Step<User, User>  // Don't do this!
-{
-    public override async Task<User> Run(User input)
-    {
-        input.LastModified = DateTime.UtcNow;
-        return input;  // Unnecessarily returning the same object
-    }
-}
-
-// ✅ CORRECT - The reference in Memory is already updated
-public class UpdateUserStep : Step<User, Unit>  // This is correct!
-{
-    public override async Task<Unit> Run(User input)
-    {
-        input.LastModified = DateTime.UtcNow;
-        // No need to return the User - the reference in Memory is already updated
-        return Unit.Default;
-    }
-}
-```
-
-**Why does this work?** ChainSharp's Memory stores objects by their type. When you modify an object (like `User`), you're modifying the same reference that's stored in Memory. Subsequent steps that need the `User` will automatically get the updated object.
-
-```csharp
-// Example workflow demonstrating Memory reference behavior
-public class ProcessUserWorkflow : EffectWorkflow<CreateUserRequest, User>
-{
-    protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
-        => Activate(input)
-            .Chain<CreateUserStep>()      // Returns User, stored in Memory
-            .Chain<ValidateUserStep>()    // Takes User, returns Unit (validation only)
-            .Chain<EnrichUserStep>()      // Takes User, returns Unit (modifies in place)
-            .Chain<SendNotificationStep>()// Takes User, returns Unit (side effect)
-            .Resolve<User>();             // Resolves the User from Memory
-}
-
-// Each step receives the same User reference from Memory
-public class ValidateUserStep(IValidator Validator) : Step<User, Unit>
-{
-    public override async Task<Unit> Run(User user)
-    {
-        if (!Validator.IsValid(user))
-            throw new ValidationException("Invalid user");
-        return Unit.Default;  // User is still available in Memory for next steps
-    }
-}
-
-public class EnrichUserStep(IEnrichmentService Enricher) : Step<User, Unit>
-{
-    public override async Task<Unit> Run(User user)
-    {
-        user.EnrichedData = await Enricher.GetDataAsync(user.Id);
-        // The modification is reflected in Memory automatically
-        return Unit.Default;
-    }
-}
-```
-
-### Key Takeaways
-
-1. **Constructor injection for steps** - Use primary constructors or standard constructor DI, not `[Inject]` attributes
-2. **Memory handles references** - Objects in workflow Memory are references; modifications are automatically reflected
-3. **Return meaningful types** - Only return a type from a step if it's a NEW type being added to Memory, not the same type you received
-
-## Metadata
-
-Every workflow execution creates a metadata record:
-
-```csharp
-public class Metadata : IMetadata
-{
-    public int Id { get; }                          // Unique identifier
-    public string Name { get; set; }                // Workflow name
-    public WorkflowState WorkflowState { get; set; } // Pending/InProgress/Completed/Failed
-    public DateTime StartTime { get; set; }         // When workflow started
-    public DateTime? EndTime { get; set; }          // When workflow finished
-    public JsonDocument? Input { get; set; }        // Serialized input
-    public JsonDocument? Output { get; set; }       // Serialized output
-    public string? FailureException { get; }        // Error details if failed
-    public string? FailureReason { get; }           // Human-readable error
-    public int? ParentId { get; set; }              // For nested workflows
-}
-```
-
-The `WorkflowState` tracks progress: `Pending` → `InProgress` → `Completed` (or `Failed`). If a workflow fails, the metadata captures the exception, stack trace, and which step failed.
-
-### Nested Workflows
-
-Workflows can run other workflows by injecting `IWorkflowBus`. Pass the current `Metadata` to the child workflow to establish a parent-child relationship—this creates a tree of metadata records you can query to trace execution across workflows.
-
-See [Nested Workflows in the Usage Guide](usage-guide.md#nested-workflows) for implementation details.
-
-## Execution Flow (EffectWorkflow)
-
-```
-[Client Request]
-       │
-       ▼
-[WorkflowBus.RunAsync]
-       │
-       ▼
-[Find Workflow by Input Type]
-       │
-       ▼
-[Create Workflow Instance]
-       │
-       ▼
-[Inject Dependencies]
-       │
-       ▼
-[Initialize Metadata]
-       │
-       ▼
-[Execute Workflow Chain]
-       │
-       ▼
-   Success? ──No──► [Update Metadata: Failed]
-       │                      │
-      Yes                     │
-       │                      │
-       ▼                      ▼
-[Update Metadata: Completed]  │
-       │                      │
-       └──────────┬───────────┘
-                  │
-                  ▼
-       [SaveChanges - Execute Effects]
-                  │
-                  ▼
-           [Return Result]
-```

@@ -13,76 +13,52 @@ ChainSharp is a .NET library for building workflows as a chain of discrete steps
 
 ## The Problem
 
-Multi-step operations tend to accumulate error handling noise:
+Error handling piles up fast:
 
 ```csharp
-public async Task<User> CreateUser(CreateUserRequest request)
+public async Task<OrderReceipt> ProcessOrder(OrderRequest request)
 {
-    var validated = await _validator.ValidateAsync(request);
-    if (!validated.IsValid)
-        return Error("Validation failed");
+    var inventory = await _inventory.CheckAsync(request.Items);
+    if (!inventory.Available)
+        return Error("Items out of stock");
 
-    var user = await _userService.CreateAsync(validated);
-    if (user == null)
-        return Error("User creation failed");
+    var payment = await _payments.ChargeAsync(request.PaymentMethod, request.Total);
+    if (!payment.Success)
+        return Error("Payment failed");
 
-    var emailSent = await _emailService.SendWelcomeAsync(user);
-    if (!emailSent)
-        _logger.LogWarning("Welcome email failed for {UserId}", user.Id);
+    var shipment = await _shipping.CreateAsync(request.Address, request.Items);
+    if (shipment == null)
+        return Error("Shipping setup failed");
 
-    return user;
+    return new OrderReceipt(payment, shipment);
 }
 ```
 
-Each step needs its own error check. The actual business logic gets buried.
+The actual business logic gets buried under null checks and error handling.
 
 ## With ChainSharp
 
 The same flow, without the noise:
 
 ```csharp
-public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>
+public class ProcessOrderWorkflow : EffectWorkflow<OrderRequest, OrderReceipt>
 {
-    protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
+    protected override async Task<Either<Exception, OrderReceipt>> RunInternal(OrderRequest input)
         => Activate(input)
-            .Chain<ValidateUserStep>()
-            .Chain<CreateUserStep>()
-            .Chain<SendWelcomeEmailStep>()
+            .Chain<CheckInventoryStep>()
+            .Chain<ChargePaymentStep>()
+            .Chain<CreateShipmentStep>()
             .Resolve();
 }
 ```
 
-If `ValidateUserStep` throws, `CreateUserStep` never runs. The exception propagates automatically. Each step is a separate class with its own dependencies, easy to test in isolation.
+If `CheckInventoryStep` throws, `ChargePaymentStep` never runs. The exception propagates automatically. Each step is a separate class with its own dependencies, easy to test in isolation.
 
 For more on how this works, see [Core Concepts](concepts.md).
 
 ## Quick Start
 
-### Installation
-
-```bash
-dotnet add package Theauxm.ChainSharp.Effect
-dotnet add package Theauxm.ChainSharp.Effect.Mediator
-```
-
-### Service Registration
-```csharp
-// Program.cs
-services.AddChainSharpEffects(
-    o => o.AddEffectWorkflowBus(assemblies: [typeof(AssemblyMarker).Assembly])
-);
-```
-
-### Running a Workflow
-```csharp
-// Controller or service
-public class UserController(IWorkflowBus workflowBus) : ControllerBase
-{
-    [HttpPost]
-    public async Task<User> CreateUser(CreateUserRequest request)
-        => await workflowBus.RunAsync<User>(request);
-}
-```
+See [Getting Started](getting-started.md) for installation and your first workflow.
 
 ## Available NuGet Packages
 

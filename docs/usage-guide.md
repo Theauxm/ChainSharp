@@ -8,41 +8,6 @@ nav_order: 4
 
 Practical examples and patterns for building workflows.
 
-## Steps
-
-Steps are the building blocks of workflows. Each step does one thing:
-
-```csharp
-public class ValidateEmailStep(IUserRepository UserRepository) : Step<CreateUserRequest, Unit>
-{
-    public override async Task<Unit> Run(CreateUserRequest input)
-    {
-        var existingUser = await UserRepository.GetByEmailAsync(input.Email);
-        if (existingUser != null)
-            throw new ValidationException($"Email {input.Email} already exists");
-        
-        return Unit.Default;
-    }
-}
-
-public class CreateUserStep(IUserRepository UserRepository) : Step<CreateUserRequest, User>
-{
-    public override async Task<User> Run(CreateUserRequest input)
-    {
-        var user = new User
-        {
-            Email = input.Email,
-            FullName = $"{input.FirstName} {input.LastName}",
-            CreatedAt = DateTime.UtcNow
-        };
-        
-        return await UserRepository.CreateAsync(user);
-    }
-}
-```
-
-Steps use constructor injection for dependencies. When a step throws, the workflow stops and returns the exception.
-
 ## Common Patterns
 
 ### Error Handling Patterns
@@ -576,6 +541,67 @@ public class TestWorkflow(IEmailService emailService) : Workflow<CreateUserReque
             .Resolve();
 }
 ```
+
+## Common Gotchas
+
+Things developers hit immediately when starting with ChainSharp.
+
+### Don't use `[Inject]` for dependency injection
+
+The `[Inject]` attribute is used **internally** by the `EffectWorkflow` base class for its own framework-level services (`IEffectRunner`, `ILogger`, `IServiceProvider`). 
+
+You do NOT need to use `[Inject]` anywhere in your workflow or step code. Steps should use standard constructor injection:
+
+```csharp
+// ❌ WRONG - Don't use [Inject] in your steps
+public class MyStep : Step<Input, Output>
+{
+    [Inject]
+    public IMyService MyService { get; set; }  // Don't do this!
+    
+    public override async Task<Output> Run(Input input) { ... }
+}
+
+// ✅ CORRECT - Use constructor injection
+public class MyStep(IMyService MyService) : Step<Input, Output>
+{
+    public override async Task<Output> Run(Input input)
+    {
+        var result = await MyService.DoSomethingAsync(input);
+        return result;
+    }
+}
+```
+
+### Steps don't need to "pass through" their input type
+
+You do NOT need to return the same type you receive as input. The workflow's **Memory** system stores references to all objects, and modifications are automatically reflected.
+
+```csharp
+// ❌ WRONG - Unnecessarily passing through the User type
+public class UpdateUserStep : Step<User, User>
+{
+    public override async Task<User> Run(User input)
+    {
+        input.LastModified = DateTime.UtcNow;
+        return input;  // Unnecessarily returning the same object
+    }
+}
+
+// ✅ CORRECT - The reference in Memory is already updated
+public class UpdateUserStep : Step<User, Unit>
+{
+    public override async Task<Unit> Run(User input)
+    {
+        input.LastModified = DateTime.UtcNow;
+        return Unit.Default;  // No need to return User
+    }
+}
+```
+
+**Why does this work?** ChainSharp's Memory stores objects by their type. When you modify an object (like `User`), you're modifying the same reference that's stored in Memory. Subsequent steps that need the `User` will automatically get the updated object.
+
+**Rule of thumb:** Only return a type from a step if it's a NEW type being added to Memory, not the same type you received.
 
 ## Troubleshooting
 

@@ -8,81 +8,95 @@ nav_order: 4
 
 Practical examples and patterns for building workflows.
 
-## Configuring Effect Providers
+## Steps
 
-ChainSharp has several effect providers. Here's when to use each:
-
-### Database Persistence (Postgres or InMemory)
-
-**Use when:** You need to query workflow history, audit execution, or debug production issues.
+Steps are the building blocks of workflows. Each step does one thing:
 
 ```csharp
-// Production
-services.AddChainSharpEffects(options => 
-    options.AddPostgresEffect("Host=localhost;Database=app;Username=postgres;Password=pass")
-);
+public class ValidateEmailStep(IUserRepository UserRepository) : Step<CreateUserRequest, Unit>
+{
+    public override async Task<Unit> Run(CreateUserRequest input)
+    {
+        var existingUser = await UserRepository.GetByEmailAsync(input.Email);
+        if (existingUser != null)
+            throw new ValidationException($"Email {input.Email} already exists");
+        
+        return Unit.Default;
+    }
+}
 
-// Testing
-services.AddChainSharpEffects(options => 
-    options.AddInMemoryEffect()
-);
+public class CreateUserStep(IUserRepository UserRepository) : Step<CreateUserRequest, User>
+{
+    public override async Task<User> Run(CreateUserRequest input)
+    {
+        var user = new User
+        {
+            Email = input.Email,
+            FullName = $"{input.FirstName} {input.LastName}",
+            CreatedAt = DateTime.UtcNow
+        };
+        
+        return await UserRepository.CreateAsync(user);
+    }
+}
 ```
 
-This persists a `Metadata` record for each workflow execution containing:
-- Workflow name and state (Pending → InProgress → Completed/Failed)
-- Start and end timestamps
-- Serialized input and output
-- Exception details if failed
-- Parent workflow ID for nested workflows
+Steps use constructor injection for dependencies. When a step throws, the workflow stops and returns the exception.
 
-### JSON Effect (`AddJsonEffect`)
+## Common Patterns
 
-**Use when:** Debugging during development. Logs workflow state changes to your configured logger.
+### Error Handling Patterns
+
+#### Workflow-Level Error Handling
 
 ```csharp
-services.AddChainSharpEffects(options => 
-    options.AddJsonEffect()
-);
+public class RobustWorkflow : EffectWorkflow<ProcessOrderRequest, ProcessOrderResult>
+{
+    protected override async Task<Either<Exception, ProcessOrderResult>> RunInternal(ProcessOrderRequest input)
+    {
+        try
+        {
+            return await Activate(input)
+                .Chain<ValidateOrderStep>()
+                .Chain<ProcessPaymentStep>()
+                .Chain<FulfillOrderStep>()
+                .Resolve();
+        }
+        catch (PaymentException ex)
+        {
+            // Handle payment-specific errors
+            EffectLogger?.LogWarning("Payment failed for order {OrderId}: {Error}", 
+                input.OrderId, ex.Message);
+            return new OrderProcessingException("Payment processing failed", ex);
+        }
+        catch (InventoryException ex)
+        {
+            // Handle inventory-specific errors
+            return new OrderProcessingException("Insufficient inventory", ex);
+        }
+    }
+}
 ```
 
-This doesn't persist anything—it just logs. Useful for seeing what's happening without setting up a database.
-
-### Parameter Effect (`SaveWorkflowParameters`)
-
-**Use when:** You need to store workflow inputs/outputs in the database for later querying or replay.
+#### Step-Level Error Handling
 
 ```csharp
-services.AddChainSharpEffects(options => 
-    options
-        .AddPostgresEffect(connectionString)
-        .SaveWorkflowParameters()  // Serializes Input/Output to Metadata
-);
-```
-
-Without this, the `Input` and `Output` columns in `Metadata` are null. With it, they contain JSON-serialized versions of your request and response objects.
-
-### Combining Providers
-
-Providers compose. A typical production setup:
-
-```csharp
-services.AddChainSharpEffects(options => 
-    options
-        .AddPostgresEffect(connectionString)   // Persist metadata
-        .SaveWorkflowParameters()              // Include input/output in metadata
-        .AddEffectWorkflowBus(assemblies)      // Enable workflow discovery
-);
-```
-
-A typical development setup:
-
-```csharp
-services.AddChainSharpEffects(options => 
-    options
-        .AddInMemoryEffect()                   // Fast, no database needed
-        .AddJsonEffect()                       // Log state changes
-        .AddEffectWorkflowBus(assemblies)
-);
+public class RobustStep(IPaymentGateway PaymentGateway) : Step<PaymentRequest, PaymentResult>
+{
+    public override async Task<PaymentResult> Run(PaymentRequest input)
+    {
+        try
+        {
+            var result = await PaymentGateway.ProcessAsync(input);
+            return result;
+        }
+        catch (TimeoutException ex)
+        {
+            // Throw a meaningful error
+            throw new PaymentException("Payment gateway timed out", ex);
+        }
+    }
+}
 ```
 
 ## WorkflowBus Usage
@@ -176,7 +190,7 @@ This is useful when:
 
 The workflow still gets all the same effect handling (metadata, persistence, etc.)—it's just resolved differently.
 
-## Step Patterns
+## Advanced Patterns
 
 ### Working with Tuples
 
@@ -226,97 +240,6 @@ public class CheckoutWorkflow : EffectWorkflow<CheckoutRequest, Receipt>
             .Chain<ValidateOrderStep>()    // Takes Order from Memory  
             .Chain<ProcessCheckoutStep>()  // Takes (User, Order, Payment) - reconstructed
             .Resolve();
-}
-```
-
-### Extract
-
-Pull a nested value out of an object in Memory:
-
-```csharp
-public class GetUserEmailWorkflow : EffectWorkflow<UserId, string>
-{
-    protected override async Task<Either<Exception, string>> RunInternal(UserId input)
-        => Activate(input)
-            .Chain<LoadUserStep>()              // Returns User, stored in Memory
-            .Extract<User, EmailAddress>()      // Finds EmailAddress property on User
-            .Chain<ValidateEmailStep>()         // Takes EmailAddress from Memory
-            .Resolve<string>();
-}
-```
-
-`Extract<TSource, TTarget>()` looks for a property or field of type `TTarget` on the `TSource` object in Memory. If found, it stores the value in Memory under the `TTarget` type.
-
-### AddServices
-
-You can add service instances to Memory and later use them in steps:
-
-```csharp
-protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
-{
-    var validator = new CustomValidator();
-    var notifier = new SlackNotifier();
-    
-    return Activate(input)
-        .AddServices<IValidator, INotifier>(validator, notifier)
-        .Chain<CreateUserStep>()
-        .Resolve();
-}
-```
-
-## Advanced Patterns
-
-### Error Handling
-
-#### Workflow-Level Error Handling
-
-```csharp
-public class RobustWorkflow : EffectWorkflow<ProcessOrderRequest, ProcessOrderResult>
-{
-    protected override async Task<Either<Exception, ProcessOrderResult>> RunInternal(ProcessOrderRequest input)
-    {
-        try
-        {
-            return await Activate(input)
-                .Chain<ValidateOrderStep>()
-                .Chain<ProcessPaymentStep>()
-                .Chain<FulfillOrderStep>()
-                .Resolve();
-        }
-        catch (PaymentException ex)
-        {
-            // Handle payment-specific errors
-            EffectLogger?.LogWarning("Payment failed for order {OrderId}: {Error}", 
-                input.OrderId, ex.Message);
-            return new OrderProcessingException("Payment processing failed", ex);
-        }
-        catch (InventoryException ex)
-        {
-            // Handle inventory-specific errors
-            return new OrderProcessingException("Insufficient inventory", ex);
-        }
-    }
-}
-```
-
-#### Step-Level Error Handling
-
-```csharp
-public class RobustStep(IPaymentGateway PaymentGateway) : Step<PaymentRequest, PaymentResult>
-{
-    public override async Task<PaymentResult> Run(PaymentRequest input)
-    {
-        try
-        {
-            var result = await PaymentGateway.ProcessAsync(input);
-            return result;
-        }
-        catch (TimeoutException ex)
-        {
-            // Throw a meaningful error
-            throw new PaymentException("Payment gateway timed out", ex);
-        }
-    }
 }
 ```
 
@@ -377,6 +300,118 @@ public class CheckCacheStep(ICache Cache) : Step<OrderRequest, OrderResult>
 When a `ShortCircuit` step returns a value of the workflow's return type (`OrderResult` here), that value becomes the final result and remaining steps are skipped. If the step throws, the workflow continues normally (the exception is swallowed, not propagated).
 
 > ⚠️ **This behavior is intentionally inverted from `Chain`.** A `Chain` step that throws stops the workflow with an error. A `ShortCircuit` step that throws means "no short-circuit available, keep going." This can be surprising if you're not expecting it.
+
+### Extract
+
+Pull a nested value out of an object in Memory:
+
+```csharp
+public class GetUserEmailWorkflow : EffectWorkflow<UserId, string>
+{
+    protected override async Task<Either<Exception, string>> RunInternal(UserId input)
+        => Activate(input)
+            .Chain<LoadUserStep>()              // Returns User, stored in Memory
+            .Extract<User, EmailAddress>()      // Finds EmailAddress property on User
+            .Chain<ValidateEmailStep>()         // Takes EmailAddress from Memory
+            .Resolve<string>();
+}
+```
+
+`Extract<TSource, TTarget>()` looks for a property or field of type `TTarget` on the `TSource` object in Memory. If found, it stores the value in Memory under the `TTarget` type.
+
+### AddServices
+
+You can add service instances to Memory and later use them in steps:
+
+```csharp
+protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
+{
+    var validator = new CustomValidator();
+    var notifier = new SlackNotifier();
+    
+    return Activate(input)
+        .AddServices<IValidator, INotifier>(validator, notifier)
+        .Chain<CreateUserStep>()
+        .Resolve();
+}
+```
+
+## Configuring Effect Providers
+
+ChainSharp has several effect providers. Here's when to use each:
+
+### Database Persistence (Postgres or InMemory)
+
+**Use when:** You need to query workflow history, audit execution, or debug production issues.
+
+```csharp
+// Production
+services.AddChainSharpEffects(options => 
+    options.AddPostgresEffect("Host=localhost;Database=app;Username=postgres;Password=pass")
+);
+
+// Testing
+services.AddChainSharpEffects(options => 
+    options.AddInMemoryEffect()
+);
+```
+
+This persists a `Metadata` record for each workflow execution containing:
+- Workflow name and state (Pending → InProgress → Completed/Failed)
+- Start and end timestamps
+- Serialized input and output
+- Exception details if failed
+- Parent workflow ID for nested workflows
+
+### JSON Effect (`AddJsonEffect`)
+
+**Use when:** Debugging during development. Logs workflow state changes to your configured logger.
+
+```csharp
+services.AddChainSharpEffects(options => 
+    options.AddJsonEffect()
+);
+```
+
+This doesn't persist anything—it just logs. Useful for seeing what's happening without setting up a database.
+
+### Parameter Effect (`SaveWorkflowParameters`)
+
+**Use when:** You need to store workflow inputs/outputs in the database for later querying or replay.
+
+```csharp
+services.AddChainSharpEffects(options => 
+    options
+        .AddPostgresEffect(connectionString)
+        .SaveWorkflowParameters()  // Serializes Input/Output to Metadata
+);
+```
+
+Without this, the `Input` and `Output` columns in `Metadata` are null. With it, they contain JSON-serialized versions of your request and response objects.
+
+### Combining Providers
+
+Providers compose. A typical production setup:
+
+```csharp
+services.AddChainSharpEffects(options => 
+    options
+        .AddPostgresEffect(connectionString)   // Persist metadata
+        .SaveWorkflowParameters()              // Include input/output in metadata
+        .AddEffectWorkflowBus(assemblies)      // Enable workflow discovery
+);
+```
+
+A typical development setup:
+
+```csharp
+services.AddChainSharpEffects(options => 
+    options
+        .AddInMemoryEffect()                   // Fast, no database needed
+        .AddJsonEffect()                       // Log state changes
+        .AddEffectWorkflowBus(assemblies)
+);
+```
 
 ## Testing
 
@@ -543,63 +578,6 @@ public class TestWorkflow(IEmailService emailService) : Workflow<CreateUserReque
 ```
 
 ## Troubleshooting
-
-### Don't use `[Inject]` for dependency injection
-
-The `[Inject]` attribute is used **internally** by the `EffectWorkflow` base class for its own framework-level services (`IEffectRunner`, `ILogger`, `IServiceProvider`). 
-
-You do NOT need to use `[Inject]` anywhere in your workflow or step code. Steps should use standard constructor injection:
-
-```csharp
-// ❌ WRONG - Don't use [Inject] in your steps
-public class MyStep : Step<Input, Output>
-{
-    [Inject]
-    public IMyService MyService { get; set; }  // Don't do this!
-    
-    public override async Task<Output> Run(Input input) { ... }
-}
-
-// ✅ CORRECT - Use constructor injection
-public class MyStep(IMyService MyService) : Step<Input, Output>
-{
-    public override async Task<Output> Run(Input input)
-    {
-        var result = await MyService.DoSomethingAsync(input);
-        return result;
-    }
-}
-```
-
-### Steps don't need to "pass through" their input type
-
-You do NOT need to return the same type you receive as input. The workflow's **Memory** system stores references to all objects, and modifications are automatically reflected.
-
-```csharp
-// ❌ WRONG - Unnecessarily passing through the User type
-public class UpdateUserStep : Step<User, User>
-{
-    public override async Task<User> Run(User input)
-    {
-        input.LastModified = DateTime.UtcNow;
-        return input;  // Unnecessarily returning the same object
-    }
-}
-
-// ✅ CORRECT - The reference in Memory is already updated
-public class UpdateUserStep : Step<User, Unit>
-{
-    public override async Task<Unit> Run(User input)
-    {
-        input.LastModified = DateTime.UtcNow;
-        return Unit.Default;  // No need to return User
-    }
-}
-```
-
-**Why does this work?** ChainSharp's Memory stores objects by their type. When you modify an object (like `User`), you're modifying the same reference that's stored in Memory. Subsequent steps that need the `User` will automatically get the updated object.
-
-**Rule of thumb:** Only return a type from a step if it's a NEW type being added to Memory, not the same type you received.
 
 ### "No workflow found for input type X"
 

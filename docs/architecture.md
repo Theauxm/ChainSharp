@@ -67,6 +67,15 @@ ChainSharp (Core)
 
 ## Core Component Hierarchy
 
+ChainSharp provides two workflow base classes:
+
+| Base Class | Use When |
+|------------|----------|
+| `Workflow<TIn, TOut>` | Lightweight workflows without persistence, composing steps inside larger systems, testing/prototyping |
+| `EffectWorkflow<TIn, TOut>` | You need observability, persistence, metadata tracking, or the mediator pattern |
+
+Most applications should use `EffectWorkflow`. The base `Workflow` exists for cases where you need chaining without the infrastructure.
+
 ### 1. ChainSharp (Core Engine)
 
 The foundation layer providing Railway Oriented Programming patterns.

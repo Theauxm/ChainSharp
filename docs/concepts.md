@@ -48,48 +48,6 @@ ChainSharp's `EffectWorkflow` does the same thing. Steps can track models, log e
 
 This gives you atomic workflows—either everything succeeds and all effects are applied, or something fails and nothing is applied.
 
-## Workflow vs EffectWorkflow
-
-ChainSharp has two base classes for workflows:
-
-**`Workflow<TIn, TOut>`** — The core class. Handles chaining, Memory, and error propagation. No metadata, no effects, no automatic dependency injection from an `IServiceProvider`. Use this when:
-- You want a lightweight workflow without persistence
-- You're composing steps inside a larger system that handles its own concerns
-- Testing or prototyping
-
-```csharp
-public class SimplePaymentFlow : Workflow<PaymentRequest, PaymentReceipt>
-{
-    protected override async Task<Either<Exception, PaymentReceipt>> RunInternal(PaymentRequest input)
-        => Activate(input)
-            .Chain<ValidateCardStep>()
-            .Chain<ChargeCardStep>()
-            .Resolve();
-}
-```
-
-**`EffectWorkflow<TIn, TOut>`** — Extends `Workflow` with:
-- Automatic metadata tracking (start time, end time, success/failure, inputs/outputs)
-- Effect providers (database persistence, JSON logging, parameter serialization)
-- Integration with `IWorkflowBus` for workflow discovery
-- `IServiceProvider` access for step instantiation
-
-Use this when you want observability, persistence, or the mediator pattern:
-
-```csharp
-public class ProcessPaymentWorkflow : EffectWorkflow<PaymentRequest, PaymentReceipt>
-{
-    protected override async Task<Either<Exception, PaymentReceipt>> RunInternal(PaymentRequest input)
-        => Activate(input)
-            .Chain<ValidateCardStep>()
-            .Chain<CheckFraudStep>()
-            .Chain<ChargeCardStep>()
-            .Resolve();
-}
-```
-
-Most applications should use `EffectWorkflow`. The base `Workflow` exists for cases where you need the chaining pattern without the infrastructure.
-
 ## Workflows, Steps, and Effects
 
 ```

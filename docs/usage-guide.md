@@ -133,12 +133,9 @@ public class RobustWorkflow : EffectWorkflow<ProcessOrderRequest, ProcessOrderRe
 #### Step-Level Error Handling
 
 ```csharp
-public class RobustStep : Step<PaymentRequest, PaymentResult>
+public class RobustStep(IPaymentGateway PaymentGateway) : Step<PaymentRequest, PaymentResult>
 {
-    [Inject]
-    public IPaymentGateway PaymentGateway { get; set; }
-    
-    public override async Task<Either<Exception, PaymentResult>> Run(PaymentRequest input)
+    public override async Task<PaymentResult> Run(PaymentRequest input)
     {
         try
         {
@@ -147,8 +144,8 @@ public class RobustStep : Step<PaymentRequest, PaymentResult>
         }
         catch (TimeoutException ex)
         {
-            // Return a meaningful error instead of throwing
-            return new PaymentException("Payment gateway timed out", ex);
+            // Throw a meaningful error
+            throw new PaymentException("Payment gateway timed out", ex);
         }
     }
 }
@@ -234,6 +231,57 @@ new ServiceCollection()
 ```
 
 ## Advanced Patterns
+
+### Working with Tuples
+
+ChainSharp's Memory system automatically handles tuples, making it easy to work with multiple types in a single step.
+
+#### Returning Multiple Objects
+
+When a step needs to produce multiple objects, return them as a tuple. Memory will automatically deconstruct and store each type individually:
+
+```csharp
+public class LoadEntitiesStep(IRepository Repository) : Step<LoadRequest, (User, Order, Payment)>
+{
+    public override async Task<(User, Order, Payment)> Run(LoadRequest input)
+    {
+        // Load multiple entities
+        var user = await Repository.GetUserAsync(input.UserId);
+        var order = await Repository.GetOrderAsync(input.OrderId);
+        var payment = await Repository.GetPaymentAsync(input.PaymentId);
+        
+        // Return as tuple - each will be stored individually in Memory
+        return (user, order, payment);
+    }
+}
+```
+
+#### Consuming Multiple Objects
+
+When a step needs multiple objects from Memory, declare them as a tuple input. Memory will find each type and construct the tuple automatically:
+
+```csharp
+public class ProcessCheckoutStep(ICheckoutService CheckoutService) : Step<(User, Order, Payment), Receipt>
+{
+    public override async Task<Receipt> Run((User User, Order Order, Payment Payment) input)
+    {
+        // All three objects were found individually in Memory and combined
+        return await CheckoutService.ProcessAsync(input.User, input.Order, input.Payment);
+    }
+}
+
+// Complete workflow example
+public class CheckoutWorkflow : EffectWorkflow<CheckoutRequest, Receipt>
+{
+    protected override async Task<Either<Exception, Receipt>> RunInternal(CheckoutRequest input)
+        => Activate(input)
+            .Chain<LoadEntitiesStep>()     // Returns (User, Order, Payment) - deconstructed
+            .Chain<ValidateUserStep>()     // Takes User from Memory
+            .Chain<ValidateOrderStep>()    // Takes Order from Memory  
+            .Chain<ProcessCheckoutStep>()  // Takes (User, Order, Payment) - reconstructed
+            .Resolve();
+}
+```
 
 ### Nested Workflows
 

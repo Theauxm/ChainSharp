@@ -91,16 +91,16 @@ public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>, ICrea
 ```csharp
 public class ValidateEmailStep(IUserRepository UserRepository) : Step<CreateUserRequest, Unit>
 {
-    public override async Task<Either<Exception, CreateUserRequest>> Run(CreateUserRequest input)
+    public override async Task<Unit> Run(CreateUserRequest input)
     {
         // Check if email already exists
         var existingUser = await UserRepository.GetByEmailAsync(input.Email);
         if (existingUser != null)
-            return new ValidationException($"User with email {input.Email} already exists");
+            throw new ValidationException($"User with email {input.Email} already exists");
         
         // Validate email format
         if (!IsValidEmail(input.Email))
-            return new ValidationException("Invalid email format");
+            throw new ValidationException("Invalid email format");
             
         return Unit.Default;
     }
@@ -126,7 +126,7 @@ public class CreateUserInDatabaseStep(IUserRepository UserRepository) : Step<Cre
 
 public class SendWelcomeEmailStep(IEmailService EmailService) : Step<User, Unit>
 {
-    public override async Task<User> Run(User input)
+    public override async Task<Unit> Run(User input)
     {
         await EmailService.SendWelcomeEmailAsync(input.Email, input.FullName);
         return Unit.Default;

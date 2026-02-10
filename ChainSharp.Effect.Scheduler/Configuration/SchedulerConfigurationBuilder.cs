@@ -4,7 +4,9 @@ using ChainSharp.Effect.Scheduler.Services.BackgroundTaskServer;
 using ChainSharp.Effect.Scheduler.Services.ManifestScheduler;
 using ChainSharp.Effect.Scheduler.Services.Scheduling;
 using ChainSharp.Effect.Services.EffectWorkflow;
+using LanguageExt;
 using Microsoft.Extensions.DependencyInjection;
+using Schedule = ChainSharp.Effect.Scheduler.Services.Scheduling.Schedule;
 
 namespace ChainSharp.Effect.Scheduler.Configuration;
 
@@ -199,7 +201,7 @@ public class SchedulerConfigurationBuilder
         Schedule schedule,
         Action<ManifestOptions>? configure = null
     )
-        where TWorkflow : IEffectWorkflow
+        where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
     {
         _configuration.PendingManifests.Add(
@@ -255,7 +257,7 @@ public class SchedulerConfigurationBuilder
         Schedule schedule,
         Action<TSource, ManifestOptions>? configure = null
     )
-        where TWorkflow : IEffectWorkflow
+        where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
     {
         // Materialize the sources to avoid multiple enumeration

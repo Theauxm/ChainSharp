@@ -8,8 +8,10 @@ using ChainSharp.Effect.Scheduler.Configuration;
 using ChainSharp.Effect.Scheduler.Services.BackgroundTaskServer;
 using ChainSharp.Effect.Scheduler.Services.Scheduling;
 using ChainSharp.Effect.Services.EffectWorkflow;
+using LanguageExt;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Schedule = ChainSharp.Effect.Scheduler.Services.Scheduling.Schedule;
 
 namespace ChainSharp.Effect.Scheduler.Services.ManifestScheduler;
 
@@ -36,7 +38,7 @@ public class ManifestScheduler(
         Action<ManifestOptions>? configure = null,
         CancellationToken ct = default
     )
-        where TWorkflow : IEffectWorkflow
+        where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
     {
         ValidateWorkflowRegistration<TInput>();
@@ -76,7 +78,7 @@ public class ManifestScheduler(
         Action<TSource, ManifestOptions>? configure = null,
         CancellationToken ct = default
     )
-        where TWorkflow : IEffectWorkflow
+        where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
     {
         ValidateWorkflowRegistration<TInput>();
@@ -241,7 +243,7 @@ public class ManifestScheduler(
         ManifestOptions options,
         CancellationToken ct
     )
-        where TWorkflow : IEffectWorkflow
+        where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
     {
         var existing = await context.Manifests.FirstOrDefaultAsync(

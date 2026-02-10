@@ -1,7 +1,8 @@
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Scheduler.Configuration;
-using ChainSharp.Effect.Scheduler.Services.Scheduling;
 using ChainSharp.Effect.Services.EffectWorkflow;
+using LanguageExt;
+using Schedule = ChainSharp.Effect.Scheduler.Services.Scheduling.Schedule;
 
 namespace ChainSharp.Effect.Scheduler.Services.ManifestScheduler;
 
@@ -63,7 +64,7 @@ public interface IManifestScheduler
         Action<ManifestOptions>? configure = null,
         CancellationToken ct = default
     )
-        where TWorkflow : IEffectWorkflow
+        where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties;
 
     /// <summary>
@@ -104,7 +105,7 @@ public interface IManifestScheduler
         Action<TSource, ManifestOptions>? configure = null,
         CancellationToken ct = default
     )
-        where TWorkflow : IEffectWorkflow
+        where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties;
 
     /// <summary>

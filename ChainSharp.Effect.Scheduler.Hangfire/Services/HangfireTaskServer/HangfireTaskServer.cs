@@ -18,8 +18,11 @@ namespace ChainSharp.Effect.Scheduler.Hangfire.Services.HangfireTaskServer;
 ///
 /// Example usage:
 /// ```csharp
-/// services.AddChainSharpScheduler();
-/// services.AddHangfireTaskServer(config => config.UseSqlServerStorage(connectionString));
+/// services.AddChainSharpEffects(options => options
+///     .AddScheduler(scheduler => scheduler
+///         .UseHangfire(config => config.UseSqlServerStorage(connectionString))
+///     )
+/// );
 /// ```
 /// </remarks>
 public class HangfireTaskServer(
@@ -31,8 +34,8 @@ public class HangfireTaskServer(
     public Task<string> EnqueueAsync(int metadataId)
     {
         // Use the async overload explicitly via Expression<Func<T, Task>>
-        var jobId = backgroundJobClient.Enqueue<IManifestExecutorWorkflow>(
-            workflow => workflow.Run(new ExecuteManifestRequest(metadataId))
+        var jobId = backgroundJobClient.Enqueue<IManifestExecutorWorkflow>(workflow =>
+            workflow.Run(new ExecuteManifestRequest(metadataId))
         );
 
         return Task.FromResult(jobId);

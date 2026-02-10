@@ -72,6 +72,8 @@ See [Getting Started](getting-started.md) for installation and your first workfl
 | [Theauxm.ChainSharp.Effect.Provider.Json](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Provider.Json/) | JSON serialization for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Provider.Json) |
 | [Theauxm.ChainSharp.Effect.Mediator](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Mediator/) | Mediator pattern implementation for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Mediator) |
 | [Theauxm.ChainSharp.Effect.Provider.Parameter](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Provider.Parameter/) | Parameter serialization for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Provider.Parameter) |
+| [Theauxm.ChainSharp.Effect.Scheduler](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Scheduler/) | Manifest-based job scheduling for ChainSharp | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Scheduler) |
+| [Theauxm.ChainSharp.Effect.Scheduler.Hangfire](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Scheduler.Hangfire/) | Hangfire integration for ChainSharp Scheduler | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Scheduler.Hangfire) |
 
 ## License
 

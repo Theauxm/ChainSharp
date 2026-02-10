@@ -577,6 +577,10 @@ public class TestWorkflow(IEmailService emailService) : Workflow<CreateUserReque
 }
 ```
 
+## Background Job Scheduling
+
+Workflows can also run on a schedule. The [Scheduler](scheduler.md) handles recurring execution, automatic retries, and dead-lettering for jobs that fail too many times. You define a manifest (the job definition), and the scheduler takes care of the rest.
+
 ## Troubleshooting
 
 ### "No workflow found for input type X"

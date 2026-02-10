@@ -63,9 +63,8 @@ public abstract class TestSetup
                         .AddEffectDataContextLogging(minimumLogLevel: LogLevel.Trace)
                         .AddJsonEffect()
                         .AddStepLogger(serializeStepData: true)
+                        .AddScheduler(scheduler => scheduler.UseInMemoryTaskServer())
             )
-            .AddChainSharpScheduler()
-            .AddInMemoryTaskServer()
             // Register IDataContext as scoped, created from the factory
             .AddScoped<IDataContext>(sp =>
             {

@@ -17,8 +17,9 @@ namespace ChainSharp.Effect.Scheduler.Services.BackgroundTaskServer;
 ///
 /// Example usage:
 /// ```csharp
-/// services.AddChainSharpScheduler();
-/// services.AddScoped&lt;IBackgroundTaskServer, InMemoryTaskServer&gt;();
+/// services.AddChainSharpEffects(options => options
+///     .AddScheduler(scheduler => scheduler.UseInMemoryTaskServer())
+/// );
 /// ```
 /// </remarks>
 public class InMemoryTaskServer(IManifestExecutorWorkflow manifestExecutorWorkflow)

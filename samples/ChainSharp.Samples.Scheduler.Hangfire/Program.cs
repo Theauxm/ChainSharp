@@ -6,10 +6,8 @@ using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Mediator.Extensions;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Provider.Json.Extensions;
-using ChainSharp.Effect.Scheduler.Configuration;
 using ChainSharp.Effect.Scheduler.Extensions;
 using ChainSharp.Effect.Scheduler.Hangfire.Extensions;
-using ChainSharp.Effect.Scheduler.Services.BackgroundTaskServer;
 using ChainSharp.Effect.Scheduler.Workflows.ManifestExecutor;
 using ChainSharp.Samples.Scheduler.Hangfire.Workflows.HelloWorld;
 using Hangfire;
@@ -34,45 +32,34 @@ builder.Services.AddLogging(logging =>
     logging.SetMinimumLevel(LogLevel.Information);
 });
 
-// Add ChainSharp Effects with Postgres persistence
-builder.Services.AddChainSharpEffects(options =>
-    options
-        // Register workflows from this assembly and the Scheduler assembly
-        .AddEffectWorkflowBus(
-            assemblies:
-            [
-                typeof(Program).Assembly, // Sample workflows
-                typeof(ManifestExecutorWorkflow).Assembly, // Scheduler workflows
-            ]
+// Add ChainSharp Effects with Postgres persistence, Scheduler, and Hangfire in one fluent call
+builder.Services.AddChainSharpEffects(options => options
+    // Register workflows from this assembly and the Scheduler assembly
+    .AddEffectWorkflowBus(
+        assemblies:
+        [
+            typeof(Program).Assembly, // Sample workflows
+            typeof(ManifestExecutorWorkflow).Assembly, // Scheduler workflows
+        ]
+    )
+    // Add Postgres for workflow metadata persistence
+    .AddPostgresEffect(connectionString)
+    // Add JSON logging for debugging
+    .AddJsonEffect()
+    // Add Scheduler with Hangfire as the background task server
+    .AddScheduler(scheduler => scheduler
+        .PollingInterval(pollingInterval)
+        .MaxJobsPerCycle(maxJobsPerCycle)
+        .DefaultMaxRetries(defaultMaxRetries)
+        .UseHangfire(
+            hangfireConfig => hangfireConfig
+                .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                .UseSimpleAssemblyNameTypeSerializer()
+                .UseRecommendedSerializerSettings()
+                .UsePostgreSqlStorage(o => o.UseNpgsqlConnection(connectionString)),
+            serverOptions => { serverOptions.Queues = ["default", "scheduler"]; }
         )
-        // Add Postgres for workflow metadata persistence
-        .AddPostgresEffect(connectionString)
-        // Add JSON logging for debugging
-        .AddJsonEffect()
-);
-
-// Add ChainSharp Scheduler with configuration
-builder.Services.AddChainSharpScheduler(options =>
-{
-    options.PollingInterval = pollingInterval;
-    options.MaxJobsPerCycle = maxJobsPerCycle;
-    options.DefaultMaxRetries = defaultMaxRetries;
-});
-
-// Add Hangfire as the background task server
-builder.Services.AddHangfireTaskServer(
-    hangfireConfig => hangfireConfig
-        .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-        .UseSimpleAssemblyNameTypeSerializer()
-        .UseRecommendedSerializerSettings()
-        .UsePostgreSqlStorage(options =>
-            options.UseNpgsqlConnection(connectionString)
-        ),
-    serverOptions =>
-    {
-        serverOptions.WorkerCount = Environment.ProcessorCount * 2;
-        serverOptions.Queues = ["default", "scheduler"];
-    }
+    )
 );
 
 var app = builder.Build();
@@ -84,10 +71,8 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
     Authorization = []
 });
 
-// Start the recurring manifest polling job
-var taskServer = app.Services.GetRequiredService<IBackgroundTaskServer>();
-var schedulerConfig = app.Services.GetRequiredService<SchedulerConfiguration>();
-taskServer.StartManifestPolling(schedulerConfig, "manifest-manager-poll");
+// Start the ChainSharp scheduler (manifest polling)
+app.UseChainSharpScheduler();
 
 // Seed a sample manifest for demonstration
 await SeedSampleManifestAsync(app.Services, connectionString);

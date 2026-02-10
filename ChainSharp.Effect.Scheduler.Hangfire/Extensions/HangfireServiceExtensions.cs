@@ -1,6 +1,8 @@
 using ChainSharp.Effect.Scheduler.Configuration;
+using ChainSharp.Effect.Scheduler.Hangfire.Services.HangfireTaskServer;
 using ChainSharp.Effect.Scheduler.Services.BackgroundTaskServer;
 using Hangfire;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ChainSharp.Effect.Scheduler.Hangfire.Extensions;
@@ -11,95 +13,92 @@ namespace ChainSharp.Effect.Scheduler.Hangfire.Extensions;
 public static class HangfireServiceExtensions
 {
     /// <summary>
-    /// Adds Hangfire as the background task server for ChainSharp.Effect.Scheduler.
+    /// Configures Hangfire as the background task server for the scheduler.
     /// </summary>
-    /// <param name="services">The service collection</param>
+    /// <param name="builder">The scheduler configuration builder</param>
     /// <param name="configureHangfire">Action to configure Hangfire (e.g., storage provider)</param>
     /// <param name="configureServer">Optional action to configure the Hangfire server options</param>
-    /// <returns>The service collection for chaining</returns>
+    /// <returns>The scheduler configuration builder for continued chaining</returns>
     /// <remarks>
-    /// This method registers:
-    /// - Hangfire services with the provided configuration
-    /// - <see cref="HangfireTaskServer"/> as the <see cref="IBackgroundTaskServer"/> implementation
+    /// Use this method within the AddScheduler configuration to set up Hangfire:
     ///
-    /// You must call <see cref="AddChainSharpScheduler"/> before calling this method.
-    ///
-    /// Example usage:
-    /// ```csharp
-    /// services.AddChainSharpScheduler(options =>
-    /// {
-    ///     options.PollingInterval = TimeSpan.FromSeconds(30);
-    /// });
-    ///
-    /// services.AddHangfireTaskServer(
-    ///     config => config.UseSqlServerStorage(connectionString),
-    ///     server => server.WorkerCount = 4
+    /// <code>
+    /// services.AddChainSharpEffects(options => options
+    ///     .AddEffectWorkflowBus(assemblies)
+    ///     .AddPostgresEffect(connectionString)
+    ///     .AddScheduler(scheduler => scheduler
+    ///         .PollingInterval(TimeSpan.FromSeconds(30))
+    ///         .UseHangfire(
+    ///             config => config
+    ///                 .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    ///                 .UsePostgreSqlStorage(opts => opts.UseNpgsqlConnection(connectionString)),
+    ///             server => server.WorkerCount = Environment.ProcessorCount * 2
+    ///         )
+    ///     )
     /// );
-    /// ```
+    /// </code>
     /// </remarks>
-    public static IServiceCollection AddHangfireTaskServer(
-        this IServiceCollection services,
+    public static SchedulerConfigurationBuilder UseHangfire(
+        this SchedulerConfigurationBuilder builder,
         Action<IGlobalConfiguration> configureHangfire,
         Action<BackgroundJobServerOptions>? configureServer = null
     )
     {
-        // Configure Hangfire
-        services.AddHangfire(configureHangfire);
-
-        // Configure and add Hangfire server
-        var serverOptions = new BackgroundJobServerOptions();
-        configureServer?.Invoke(serverOptions);
-        services.AddHangfireServer(options =>
+        builder.UseTaskServer(services =>
         {
-            options.WorkerCount = serverOptions.WorkerCount;
-            options.Queues = serverOptions.Queues;
-            options.ServerName = serverOptions.ServerName;
-            options.ShutdownTimeout = serverOptions.ShutdownTimeout;
-            options.SchedulePollingInterval = serverOptions.SchedulePollingInterval;
+            // Configure Hangfire
+            services.AddHangfire(configureHangfire);
+
+            // Configure and add Hangfire server
+            var serverOptions = new BackgroundJobServerOptions();
+            configureServer?.Invoke(serverOptions);
+            services.AddHangfireServer(options =>
+            {
+                options.WorkerCount = serverOptions.WorkerCount;
+                options.Queues = serverOptions.Queues;
+                options.ServerName = serverOptions.ServerName;
+                options.ShutdownTimeout = serverOptions.ShutdownTimeout;
+                options.SchedulePollingInterval = serverOptions.SchedulePollingInterval;
+            });
+
+            // Register HangfireTaskServer as IBackgroundTaskServer
+            services.AddSingleton<IBackgroundTaskServer, HangfireTaskServer>();
         });
 
-        // Register HangfireTaskServer as IBackgroundTaskServer
-        // Singleton is appropriate here since HangfireTaskServer only wraps 
-        // IBackgroundJobClient and IRecurringJobManager, which are singletons
-        services.AddSingleton<IBackgroundTaskServer, Services.HangfireTaskServer.HangfireTaskServer>();
-
-        return services;
+        return builder;
     }
 
     /// <summary>
-    /// Starts the recurring manifest polling job.
+    /// Enables ChainSharp scheduler and starts the recurring manifest polling job.
     /// </summary>
-    /// <param name="backgroundTaskServer">The background task server</param>
-    /// <param name="schedulerConfiguration">The scheduler configuration</param>
+    /// <param name="app">The application builder</param>
     /// <param name="recurringJobId">Optional custom recurring job ID (default: "manifest-manager-poll")</param>
+    /// <returns>The application builder for method chaining</returns>
     /// <remarks>
-    /// Call this method during application startup (e.g., in Program.cs after app.Build())
-    /// to set up the recurring job that triggers manifest processing.
+    /// Call this method during application startup after building the app.
+    /// This is typically called alongside UseHangfireDashboard:
     ///
-    /// Example usage:
-    /// ```csharp
+    /// <code>
     /// var app = builder.Build();
     ///
-    /// // Start the manifest polling
-    /// var taskServer = app.Services.GetRequiredService&lt;IBackgroundTaskServer&gt;();
-    /// var config = app.Services.GetRequiredService&lt;SchedulerConfiguration&gt;();
-    /// taskServer.StartManifestPolling(config);
+    /// app.UseHangfireDashboard("/hangfire");
+    /// app.UseChainSharpScheduler();
     ///
     /// app.Run();
-    /// ```
+    /// </code>
     /// </remarks>
-    public static void StartManifestPolling(
-        this IBackgroundTaskServer backgroundTaskServer,
-        SchedulerConfiguration schedulerConfiguration,
+    public static IApplicationBuilder UseChainSharpScheduler(
+        this IApplicationBuilder app,
         string recurringJobId = "manifest-manager-poll"
     )
     {
-        // Convert TimeSpan to cron expression
-        // For intervals < 1 hour, use minute-based cron
-        // For intervals >= 1 hour, use hour-based cron
-        var cronExpression = ToCronExpression(schedulerConfiguration.PollingInterval);
+        var taskServer = app.ApplicationServices.GetRequiredService<IBackgroundTaskServer>();
+        var config = app.ApplicationServices.GetRequiredService<SchedulerConfiguration>();
 
-        backgroundTaskServer.AddOrUpdateRecurringManifestPoll(recurringJobId, cronExpression);
+        var cronExpression = ToCronExpression(config.PollingInterval);
+        taskServer.AddOrUpdateRecurringManifestPoll(recurringJobId, cronExpression);
+
+        return app;
     }
 
     /// <summary>

@@ -14,23 +14,27 @@ public class DeadLetterTests
     public void Create_ShouldSetPropertiesCorrectly()
     {
         // Arrange
-        var manifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(DeadLetterTests),
-            IsEnabled = true,
-            ScheduleType = ScheduleType.None,
-            MaxRetries = 3,
-        });
+        var manifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(DeadLetterTests),
+                IsEnabled = true,
+                ScheduleType = ScheduleType.None,
+                MaxRetries = 3,
+            }
+        );
         var reason = "Max retries exceeded";
         var retryCount = 5;
 
         // Act
-        var deadLetter = DeadLetter.Create(new CreateDeadLetter
-        {
-            Manifest = manifest,
-            Reason = reason,
-            RetryCount = retryCount,
-        });
+        var deadLetter = DeadLetter.Create(
+            new CreateDeadLetter
+            {
+                Manifest = manifest,
+                Reason = reason,
+                RetryCount = retryCount,
+            }
+        );
 
         // Assert
         deadLetter.ManifestId.Should().Be(manifest.Id);
@@ -48,21 +52,25 @@ public class DeadLetterTests
     public void Create_WithZeroRetries_ShouldSetRetryCountToZero()
     {
         // Arrange
-        var manifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(DeadLetterTests),
-            IsEnabled = true,
-            ScheduleType = ScheduleType.None,
-            MaxRetries = 3,
-        });
+        var manifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(DeadLetterTests),
+                IsEnabled = true,
+                ScheduleType = ScheduleType.None,
+                MaxRetries = 3,
+            }
+        );
 
         // Act
-        var deadLetter = DeadLetter.Create(new CreateDeadLetter
-        {
-            Manifest = manifest,
-            Reason = "Non-retryable exception",
-            RetryCount = 0,
-        });
+        var deadLetter = DeadLetter.Create(
+            new CreateDeadLetter
+            {
+                Manifest = manifest,
+                Reason = "Non-retryable exception",
+                RetryCount = 0,
+            }
+        );
 
         // Assert
         deadLetter.RetryCountAtDeadLetter.Should().Be(0);
@@ -72,19 +80,23 @@ public class DeadLetterTests
     public void Acknowledge_ShouldSetStatusAndResolutionDetails()
     {
         // Arrange
-        var manifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(DeadLetterTests),
-            IsEnabled = true,
-            ScheduleType = ScheduleType.None,
-            MaxRetries = 3,
-        });
-        var deadLetter = DeadLetter.Create(new CreateDeadLetter
-        {
-            Manifest = manifest,
-            Reason = "Max retries exceeded",
-            RetryCount = 3,
-        });
+        var manifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(DeadLetterTests),
+                IsEnabled = true,
+                ScheduleType = ScheduleType.None,
+                MaxRetries = 3,
+            }
+        );
+        var deadLetter = DeadLetter.Create(
+            new CreateDeadLetter
+            {
+                Manifest = manifest,
+                Reason = "Max retries exceeded",
+                RetryCount = 3,
+            }
+        );
         var note = "Data was manually corrected in the database";
 
         // Act
@@ -102,19 +114,23 @@ public class DeadLetterTests
     public void MarkRetried_ShouldSetStatusAndRetryMetadataId()
     {
         // Arrange
-        var manifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(DeadLetterTests),
-            IsEnabled = true,
-            ScheduleType = ScheduleType.None,
-            MaxRetries = 3,
-        });
-        var deadLetter = DeadLetter.Create(new CreateDeadLetter
-        {
-            Manifest = manifest,
-            Reason = "Max retries exceeded",
-            RetryCount = 3,
-        });
+        var manifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(DeadLetterTests),
+                IsEnabled = true,
+                ScheduleType = ScheduleType.None,
+                MaxRetries = 3,
+            }
+        );
+        var deadLetter = DeadLetter.Create(
+            new CreateDeadLetter
+            {
+                Manifest = manifest,
+                Reason = "Max retries exceeded",
+                RetryCount = 3,
+            }
+        );
         var retryMetadataId = 42;
 
         // Act
@@ -132,19 +148,23 @@ public class DeadLetterTests
     public void StatusTransition_FromAwaitingIntervention_ToAcknowledged()
     {
         // Arrange
-        var manifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(DeadLetterTests),
-            IsEnabled = true,
-            ScheduleType = ScheduleType.None,
-            MaxRetries = 3,
-        });
-        var deadLetter = DeadLetter.Create(new CreateDeadLetter
-        {
-            Manifest = manifest,
-            Reason = "Test reason",
-            RetryCount = 1,
-        });
+        var manifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(DeadLetterTests),
+                IsEnabled = true,
+                ScheduleType = ScheduleType.None,
+                MaxRetries = 3,
+            }
+        );
+        var deadLetter = DeadLetter.Create(
+            new CreateDeadLetter
+            {
+                Manifest = manifest,
+                Reason = "Test reason",
+                RetryCount = 1,
+            }
+        );
 
         // Assert initial state
         deadLetter.Status.Should().Be(DeadLetterStatus.AwaitingIntervention);
@@ -160,19 +180,23 @@ public class DeadLetterTests
     public void StatusTransition_FromAwaitingIntervention_ToRetried()
     {
         // Arrange
-        var manifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(DeadLetterTests),
-            IsEnabled = true,
-            ScheduleType = ScheduleType.None,
-            MaxRetries = 3,
-        });
-        var deadLetter = DeadLetter.Create(new CreateDeadLetter
-        {
-            Manifest = manifest,
-            Reason = "Test reason",
-            RetryCount = 1,
-        });
+        var manifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(DeadLetterTests),
+                IsEnabled = true,
+                ScheduleType = ScheduleType.None,
+                MaxRetries = 3,
+            }
+        );
+        var deadLetter = DeadLetter.Create(
+            new CreateDeadLetter
+            {
+                Manifest = manifest,
+                Reason = "Test reason",
+                RetryCount = 1,
+            }
+        );
 
         // Assert initial state
         deadLetter.Status.Should().Be(DeadLetterStatus.AwaitingIntervention);

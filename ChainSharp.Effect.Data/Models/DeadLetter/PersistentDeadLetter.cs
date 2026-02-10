@@ -1,4 +1,3 @@
-
 using Microsoft.EntityFrameworkCore;
 
 namespace ChainSharp.Effect.Data.Models.DeadLetter;

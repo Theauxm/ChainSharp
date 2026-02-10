@@ -30,7 +30,7 @@ public enum DeadLetterStatus
     /// When an operator decides to retry a dead-lettered job, a new Metadata
     /// record is created and enqueued. The DeadLetter record is marked as
     /// Retried and linked to the new Metadata via <c>RetryMetadataId</c>.
-    /// 
+    ///
     /// Note: If the retry also fails, a NEW DeadLetter record will be created
     /// (assuming max retries are exceeded again). The original DeadLetter
     /// remains in Retried status for audit purposes.

@@ -13,7 +13,7 @@ namespace ChainSharp.Effect.Models.DeadLetter;
 /// Dead letters are created when a job has failed too many times and requires manual intervention.
 /// They serve as both an audit trail and a mechanism for operators to review, retry, or acknowledge
 /// failed jobs.
-/// 
+///
 /// A dead letter maintains a reference to its Manifest (job definition), preserving the full
 /// context of what was being executed when the failure occurred.
 /// </remarks>
@@ -142,7 +142,5 @@ public class DeadLetter : IModel
 
     #endregion
 
-    public DeadLetter()
-    {
-    }
+    public DeadLetter() { }
 }

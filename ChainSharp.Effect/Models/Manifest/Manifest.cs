@@ -27,21 +27,27 @@ public class Manifest : IModel
 {
     #region Columns
 
-    [Column("id")] public int Id { get; }
+    [Column("id")]
+    public int Id { get; }
 
-    [Column("external_id")] public string ExternalId { get; set; }
+    [Column("external_id")]
+    public string ExternalId { get; set; }
 
-    [Column("name")] public string Name { get; set; }
+    [Column("name")]
+    public string Name { get; set; }
 
-    [Column("property_type")] public string? PropertyTypeName { get; set; }
+    [Column("property_type")]
+    public string? PropertyTypeName { get; set; }
 
-    [Column("properties")] public string? Properties { get; set; }
+    [Column("properties")]
+    public string? Properties { get; set; }
 
     [NotMapped]
     public Type PropertyType =>
         PropertyTypeName == null ? typeof(Unit) : ResolveType(PropertyTypeName);
 
-    [NotMapped] public Type NameType => Name == null ? typeof(Unit) : ResolveType(Name);
+    [NotMapped]
+    public Type NameType => Name == null ? typeof(Unit) : ResolveType(Name);
 
     #region Scheduling Properties
 
@@ -206,9 +212,7 @@ public class Manifest : IModel
     #endregion
 
     [JsonConstructor]
-    public Manifest()
-    {
-    }
+    public Manifest() { }
 
     /// <summary>
     /// Resolves a type by its full name, searching all loaded assemblies.

@@ -9,17 +9,17 @@ namespace ChainSharp.Effect.Scheduler.Services.DeadLetterService;
 /// <remarks>
 /// The DeadLetterService handles jobs that have failed repeatedly and require manual
 /// intervention. It provides:
-/// 
+///
 /// 1. Dead-lettering logic (when to move a job to the dead letter queue)
 /// 2. Querying of dead-lettered jobs
 /// 3. Manual intervention workflows (retry, acknowledge, purge)
 /// 4. Alerting integration points
-/// 
+///
 /// A job is dead-lettered when:
 /// - It has exceeded its maximum retry count
 /// - It has failed with a non-retryable exception type
 /// - It has been manually dead-lettered by an operator
-/// 
+///
 /// Dead-lettered jobs remain in the system for audit and debugging purposes
 /// until they are either retried successfully or explicitly purged.
 /// </remarks>
@@ -32,7 +32,11 @@ public interface IDeadLetterService
     /// <param name="reason">The reason for dead-lettering</param>
     /// <param name="cancellationToken">Cancellation token for the operation</param>
     /// <returns>The created DeadLetter record</returns>
-    Task<DeadLetter> DeadLetterAsync(int manifestId, string reason, CancellationToken cancellationToken = default);
+    Task<DeadLetter> DeadLetterAsync(
+        int manifestId,
+        string reason,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Determines if a failed job should be dead-lettered based on retry policy.
@@ -53,7 +57,8 @@ public interface IDeadLetterService
         int? manifestId = null,
         DateTime? fromDate = null,
         DateTime? toDate = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Retries a dead-lettered job.
@@ -65,7 +70,10 @@ public interface IDeadLetterService
     /// This creates a new Metadata record and enqueues the job for execution.
     /// The DeadLetter record is marked as resolved but retained for audit.
     /// </remarks>
-    Task<Metadata> RetryDeadLetterAsync(int deadLetterId, CancellationToken cancellationToken = default);
+    Task<Metadata> RetryDeadLetterAsync(
+        int deadLetterId,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Acknowledges a dead-lettered job without retrying.
@@ -78,7 +86,11 @@ public interface IDeadLetterService
     /// no longer relevant. The job will not be retried but remains in the
     /// dead letter history for audit purposes.
     /// </remarks>
-    Task AcknowledgeAsync(int deadLetterId, string acknowledgementNote, CancellationToken cancellationToken = default);
+    Task AcknowledgeAsync(
+        int deadLetterId,
+        string acknowledgementNote,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Permanently removes old dead letter records.
@@ -87,8 +99,11 @@ public interface IDeadLetterService
     /// <param name="onlyAcknowledged">If true, only purge acknowledged records</param>
     /// <param name="cancellationToken">Cancellation token for the operation</param>
     /// <returns>The number of records purged</returns>
-    Task<int> PurgeAsync(DateTime olderThan, bool onlyAcknowledged = true,
-        CancellationToken cancellationToken = default);
+    Task<int> PurgeAsync(
+        DateTime olderThan,
+        bool onlyAcknowledged = true,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Gets statistics about the dead letter queue.
@@ -116,7 +131,8 @@ public record DeadLetterStatistics
     public int RetriedSuccessfully { get; init; }
 
     /// <summary>Breakdown by manifest.</summary>
-    public IReadOnlyDictionary<int, int> CountByManifest { get; init; } = new Dictionary<int, int>();
+    public IReadOnlyDictionary<int, int> CountByManifest { get; init; } =
+        new Dictionary<int, int>();
 
     /// <summary>Most recent dead letter timestamp.</summary>
     public DateTime? MostRecentDeadLetter { get; init; }

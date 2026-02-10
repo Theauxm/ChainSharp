@@ -24,7 +24,7 @@ public static class SchedulerExtensions
     /// - AddHangfireTaskServer() from ChainSharp.Effect.Scheduler.Hangfire
     /// - AddQuartzTaskServer() from ChainSharp.Effect.Scheduler.Quartz
     /// - Or provide your own IBackgroundTaskServer implementation
-    /// 
+    ///
     /// Example usage:
     /// ```csharp
     /// services.AddChainSharpScheduler(options =>
@@ -32,14 +32,15 @@ public static class SchedulerExtensions
     ///     options.PollingInterval = TimeSpan.FromSeconds(30);
     ///     options.DefaultMaxRetries = 5;
     /// });
-    /// 
+    ///
     /// // Then add your preferred background task server
     /// services.AddHangfireTaskServer(config => config.UseSqlServerStorage(connectionString));
     /// ```
     /// </remarks>
     public static IServiceCollection AddChainSharpScheduler(
         this IServiceCollection services,
-        Action<SchedulerConfiguration>? configure = null)
+        Action<SchedulerConfiguration>? configure = null
+    )
     {
         var configuration = new SchedulerConfiguration();
         configure?.Invoke(configuration);
@@ -60,7 +61,9 @@ public static class SchedulerExtensions
     /// <typeparam name="TServer">The type of the background task server implementation</typeparam>
     /// <param name="services">The service collection</param>
     /// <returns>The service collection for chaining</returns>
-    public static IServiceCollection AddBackgroundTaskServer<TServer>(this IServiceCollection services)
+    public static IServiceCollection AddBackgroundTaskServer<TServer>(
+        this IServiceCollection services
+    )
         where TServer : class, IBackgroundTaskServer
     {
         services.AddScoped<IBackgroundTaskServer, TServer>();

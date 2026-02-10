@@ -8,16 +8,16 @@ namespace ChainSharp.Effect.Scheduler.Services.ManifestExecutor;
 /// <remarks>
 /// The ManifestExecutor is the "worker" component of the scheduling system. It is invoked
 /// by the background task server when a job is dequeued and is responsible for:
-/// 
+///
 /// 1. Loading the Metadata record by ID
 /// 2. Resolving the appropriate workflow via WorkflowBus
 /// 3. Executing the workflow with the stored input
 /// 4. Updating the Metadata with results (success/failure)
 /// 5. Handling retry logic and dead-lettering on failure
-/// 
+///
 /// This component runs within the context of the background task server (e.g., Hangfire worker)
 /// and should be designed to be idempotent where possible.
-/// 
+///
 /// The executor does NOT make scheduling decisions - that is the ManifestManager's responsibility.
 /// It simply executes what it is told to execute.
 /// </remarks>
@@ -58,6 +58,9 @@ public interface IManifestExecutor
     /// The original Metadata record is preserved for audit purposes.
     /// If the job was dead-lettered, this will remove it from the dead letter queue.
     /// </remarks>
-    Task<Metadata> RetryAsync(int metadataId, bool resetRetryCount = false,
-        CancellationToken cancellationToken = default);
+    Task<Metadata> RetryAsync(
+        int metadataId,
+        bool resetRetryCount = false,
+        CancellationToken cancellationToken = default
+    );
 }

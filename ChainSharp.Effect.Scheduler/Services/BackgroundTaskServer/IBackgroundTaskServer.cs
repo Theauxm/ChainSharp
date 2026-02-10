@@ -6,10 +6,10 @@ namespace ChainSharp.Effect.Scheduler.Services.BackgroundTaskServer;
 /// <remarks>
 /// This interface provides a provider-agnostic way to enqueue background tasks.
 /// Implementations can wrap Hangfire, Quartz.NET, or any other background job processing library.
-/// 
+///
 /// The abstraction allows ChainSharp.Effect.Scheduler to remain decoupled from specific
 /// background task implementations, enabling consumers to use their preferred infrastructure.
-/// 
+///
 /// Example implementations:
 /// - HangfireTaskServer (in ChainSharp.Effect.Scheduler.Hangfire)
 /// - QuartzTaskServer (in ChainSharp.Effect.Scheduler.Quartz)
@@ -28,7 +28,8 @@ public interface IBackgroundTaskServer
     /// The returned identifier can be stored for later correlation with the
     /// background task server's native tracking system.
     /// </remarks>
-    Task<string> EnqueueAsync<TJob>(string jobId, object payload) where TJob : class;
+    Task<string> EnqueueAsync<TJob>(string jobId, object payload)
+        where TJob : class;
 
     /// <summary>
     /// Enqueues a job for immediate execution using the job type at runtime.
@@ -47,7 +48,8 @@ public interface IBackgroundTaskServer
     /// <param name="payload">The serializable payload to pass to the job</param>
     /// <param name="runAt">The UTC time at which to run the job</param>
     /// <returns>A background task identifier for correlation/tracking</returns>
-    Task<string> ScheduleAsync<TJob>(string jobId, object payload, DateTime runAt) where TJob : class;
+    Task<string> ScheduleAsync<TJob>(string jobId, object payload, DateTime runAt)
+        where TJob : class;
 
     /// <summary>
     /// Schedules a recurring job using a cron expression.
@@ -59,7 +61,11 @@ public interface IBackgroundTaskServer
     /// <remarks>
     /// If a recurring job with the same ID already exists, it will be updated with the new schedule.
     /// </remarks>
-    Task AddOrUpdateRecurringAsync<TJob>(string recurringJobId, string cronExpression, object? payload = null)
+    Task AddOrUpdateRecurringAsync<TJob>(
+        string recurringJobId,
+        string cronExpression,
+        object? payload = null
+    )
         where TJob : class;
 
     /// <summary>

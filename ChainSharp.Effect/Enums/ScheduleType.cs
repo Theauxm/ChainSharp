@@ -49,7 +49,7 @@ public enum ScheduleType
     /// many jobs at once (e.g., one per table slice). These jobs are not automatically
     /// scheduled by the ManifestManager polling loop, but are instead triggered via
     /// <c>ManifestManager.BulkEnqueueAsync()</c>.
-    /// 
+    ///
     /// This type signals intent that the manifest is designed for bulk operations
     /// and helps with monitoring and reporting.
     /// </remarks>

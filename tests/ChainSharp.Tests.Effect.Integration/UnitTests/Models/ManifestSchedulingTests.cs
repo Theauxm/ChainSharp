@@ -13,10 +13,7 @@ public class ManifestSchedulingTests
     public void Create_WithDefaults_ShouldHaveCorrectSchedulingDefaults()
     {
         // Arrange & Act
-        var manifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(Unit)
-        });
+        var manifest = Manifest.Create(new CreateManifest { Name = typeof(Unit) });
 
         // Assert
         manifest.IsEnabled.Should().BeTrue();
@@ -32,12 +29,14 @@ public class ManifestSchedulingTests
     public void Create_WithCronSchedule_ShouldSetCronProperties()
     {
         // Arrange & Act
-        var manifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(Unit),
-            ScheduleType = ScheduleType.Cron,
-            CronExpression = "0 3 * * *" // Daily at 3am
-        });
+        var manifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(Unit),
+                ScheduleType = ScheduleType.Cron,
+                CronExpression = "0 3 * * *" // Daily at 3am
+            }
+        );
 
         // Assert
         manifest.ScheduleType.Should().Be(ScheduleType.Cron);
@@ -49,12 +48,14 @@ public class ManifestSchedulingTests
     public void Create_WithIntervalSchedule_ShouldSetIntervalProperties()
     {
         // Arrange & Act
-        var manifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(Unit),
-            ScheduleType = ScheduleType.Interval,
-            IntervalSeconds = 300 // Every 5 minutes
-        });
+        var manifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(Unit),
+                ScheduleType = ScheduleType.Interval,
+                IntervalSeconds = 300 // Every 5 minutes
+            }
+        );
 
         // Assert
         manifest.ScheduleType.Should().Be(ScheduleType.Interval);
@@ -66,11 +67,9 @@ public class ManifestSchedulingTests
     public void Create_WithOnDemandSchedule_ShouldSetScheduleType()
     {
         // Arrange & Act
-        var manifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(Unit),
-            ScheduleType = ScheduleType.OnDemand
-        });
+        var manifest = Manifest.Create(
+            new CreateManifest { Name = typeof(Unit), ScheduleType = ScheduleType.OnDemand }
+        );
 
         // Assert
         manifest.ScheduleType.Should().Be(ScheduleType.OnDemand);
@@ -80,11 +79,9 @@ public class ManifestSchedulingTests
     public void Create_WithDisabled_ShouldSetIsEnabledFalse()
     {
         // Arrange & Act
-        var manifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(Unit),
-            IsEnabled = false
-        });
+        var manifest = Manifest.Create(
+            new CreateManifest { Name = typeof(Unit), IsEnabled = false }
+        );
 
         // Assert
         manifest.IsEnabled.Should().BeFalse();
@@ -94,11 +91,7 @@ public class ManifestSchedulingTests
     public void Create_WithCustomMaxRetries_ShouldSetMaxRetries()
     {
         // Arrange & Act
-        var manifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(Unit),
-            MaxRetries = 10
-        });
+        var manifest = Manifest.Create(new CreateManifest { Name = typeof(Unit), MaxRetries = 10 });
 
         // Assert
         manifest.MaxRetries.Should().Be(10);
@@ -108,11 +101,7 @@ public class ManifestSchedulingTests
     public void Create_WithZeroMaxRetries_ShouldAllowZero()
     {
         // Arrange & Act
-        var manifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(Unit),
-            MaxRetries = 0
-        });
+        var manifest = Manifest.Create(new CreateManifest { Name = typeof(Unit), MaxRetries = 0 });
 
         // Assert
         manifest.MaxRetries.Should().Be(0);
@@ -122,11 +111,13 @@ public class ManifestSchedulingTests
     public void Create_WithTimeout_ShouldSetTimeoutSeconds()
     {
         // Arrange & Act
-        var manifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(Unit),
-            TimeoutSeconds = 3600 // 1 hour
-        });
+        var manifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(Unit),
+                TimeoutSeconds = 3600 // 1 hour
+            }
+        );
 
         // Assert
         manifest.TimeoutSeconds.Should().Be(3600);
@@ -136,15 +127,17 @@ public class ManifestSchedulingTests
     public void Create_WithAllSchedulingProperties_ShouldSetAllProperties()
     {
         // Arrange & Act
-        var manifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(Unit),
-            IsEnabled = true,
-            ScheduleType = ScheduleType.Cron,
-            CronExpression = "0 */6 * * *", // Every 6 hours
-            MaxRetries = 5,
-            TimeoutSeconds = 7200
-        });
+        var manifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(Unit),
+                IsEnabled = true,
+                ScheduleType = ScheduleType.Cron,
+                CronExpression = "0 */6 * * *", // Every 6 hours
+                MaxRetries = 5,
+                TimeoutSeconds = 7200
+            }
+        );
 
         // Assert
         manifest.IsEnabled.Should().BeTrue();
@@ -158,10 +151,7 @@ public class ManifestSchedulingTests
     public void LastSuccessfulRun_ShouldBeSettable()
     {
         // Arrange
-        var manifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(Unit)
-        });
+        var manifest = Manifest.Create(new CreateManifest { Name = typeof(Unit) });
         var successTime = DateTime.UtcNow;
 
         // Act
@@ -175,7 +165,9 @@ public class ManifestSchedulingTests
     public void ScheduleType_Enum_ShouldHaveCorrectValues()
     {
         // Assert enum values are as expected
-        ((int)ScheduleType.None).Should().Be(0);
+        ((int)ScheduleType.None)
+            .Should()
+            .Be(0);
         ((int)ScheduleType.Cron).Should().Be(1);
         ((int)ScheduleType.Interval).Should().Be(2);
         ((int)ScheduleType.OnDemand).Should().Be(3);

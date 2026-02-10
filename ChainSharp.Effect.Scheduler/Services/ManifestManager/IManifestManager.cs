@@ -9,16 +9,16 @@ namespace ChainSharp.Effect.Scheduler.Services.ManifestManager;
 /// <remarks>
 /// The ManifestManager is the core orchestrator of the scheduling system. It runs as a
 /// recurring background job (typically once per minute) and is responsible for:
-/// 
+///
 /// 1. Polling the Manifest table to determine which jobs need to run
 /// 2. Applying scheduling rules (cron, interval, concurrency limits)
 /// 3. Creating Metadata records for new job executions
 /// 4. Enqueuing jobs to the background task server
 /// 5. Respecting throttling and rate limiting configurations
-/// 
+///
 /// This component acts as the "brain" of the scheduling system, making decisions about
 /// what to run and when, while delegating actual execution to the ManifestExecutor.
-/// 
+///
 /// Example flow:
 /// 1. ManifestManager.ProcessPendingManifestsAsync() is called by a recurring job
 /// 2. Queries Manifests that are due to run
@@ -51,7 +51,10 @@ public interface IManifestManager
     /// a Metadata record and enqueues the job. Useful for manual re-runs or
     /// on-demand execution.
     /// </remarks>
-    Task<Metadata> TriggerManifestAsync(int manifestId, CancellationToken cancellationToken = default);
+    Task<Metadata> TriggerManifestAsync(
+        int manifestId,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Manually triggers a manifest with custom input properties.
@@ -60,7 +63,11 @@ public interface IManifestManager
     /// <param name="inputOverride">Custom input to use instead of the manifest's default properties</param>
     /// <param name="cancellationToken">Cancellation token for the operation</param>
     /// <returns>The created Metadata record for the execution</returns>
-    Task<Metadata> TriggerManifestAsync(int manifestId, object inputOverride, CancellationToken cancellationToken = default);
+    Task<Metadata> TriggerManifestAsync(
+        int manifestId,
+        object inputOverride,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Checks if a manifest is currently eligible to run based on scheduling rules.
@@ -91,5 +98,6 @@ public interface IManifestManager
     Task<IReadOnlyList<Metadata>> BulkEnqueueAsync(
         int manifestId,
         IEnumerable<object> inputs,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 }

@@ -310,15 +310,17 @@ public class ManifestTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
-        var manifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(Unit),
-            IsEnabled = true,
-            ScheduleType = ScheduleType.Cron,
-            CronExpression = "0 3 * * *",
-            MaxRetries = 5,
-            TimeoutSeconds = 3600
-        });
+        var manifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(Unit),
+                IsEnabled = true,
+                ScheduleType = ScheduleType.Cron,
+                CronExpression = "0 3 * * *",
+                MaxRetries = 5,
+                TimeoutSeconds = 3600
+            }
+        );
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);
@@ -345,12 +347,14 @@ public class ManifestTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
-        var manifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(Unit),
-            ScheduleType = ScheduleType.Interval,
-            IntervalSeconds = 300 // Every 5 minutes
-        });
+        var manifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(Unit),
+                ScheduleType = ScheduleType.Interval,
+                IntervalSeconds = 300 // Every 5 minutes
+            }
+        );
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);
@@ -374,13 +378,15 @@ public class ManifestTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
-        var manifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(Unit),
-            IsEnabled = false,
-            ScheduleType = ScheduleType.Cron,
-            CronExpression = "0 0 * * *"
-        });
+        var manifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(Unit),
+                IsEnabled = false,
+                ScheduleType = ScheduleType.Cron,
+                CronExpression = "0 0 * * *"
+            }
+        );
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);
@@ -403,11 +409,9 @@ public class ManifestTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
-        var manifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(Unit),
-            ScheduleType = ScheduleType.OnDemand
-        });
+        var manifest = Manifest.Create(
+            new CreateManifest { Name = typeof(Unit), ScheduleType = ScheduleType.OnDemand }
+        );
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);
@@ -438,21 +442,25 @@ public class ManifestTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
-        var enabledManifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(Unit),
-            IsEnabled = true,
-            ScheduleType = ScheduleType.Cron,
-            CronExpression = "0 * * * *"
-        });
+        var enabledManifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(Unit),
+                IsEnabled = true,
+                ScheduleType = ScheduleType.Cron,
+                CronExpression = "0 * * * *"
+            }
+        );
 
-        var disabledManifest = Manifest.Create(new CreateManifest
-        {
-            Name = typeof(Unit),
-            IsEnabled = false,
-            ScheduleType = ScheduleType.Cron,
-            CronExpression = "0 * * * *"
-        });
+        var disabledManifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(Unit),
+                IsEnabled = false,
+                ScheduleType = ScheduleType.Cron,
+                CronExpression = "0 * * * *"
+            }
+        );
 
         await context.Track(enabledManifest);
         await context.Track(disabledManifest);
@@ -460,8 +468,8 @@ public class ManifestTests : TestSetup
         context.Reset();
 
         // Act
-        var enabledManifests = await context.Manifests
-            .Where(m => m.IsEnabled && m.ScheduleType == ScheduleType.Cron)
+        var enabledManifests = await context
+            .Manifests.Where(m => m.IsEnabled && m.ScheduleType == ScheduleType.Cron)
             .ToListAsync();
 
         // Assert
@@ -479,12 +487,14 @@ public class ManifestTests : TestSetup
         using var context = (IDataContext)postgresContextFactory.Create();
 
         var scheduledTime = DateTime.UtcNow.AddMinutes(-5);
-        var metadata = Metadata.Create(new CreateMetadata
-        {
-            Name = nameof(TestMetadataCanHaveScheduledTime),
-            ExternalId = Guid.NewGuid().ToString("N"),
-            Input = new { Test = "value" }
-        });
+        var metadata = Metadata.Create(
+            new CreateMetadata
+            {
+                Name = nameof(TestMetadataCanHaveScheduledTime),
+                ExternalId = Guid.NewGuid().ToString("N"),
+                Input = new { Test = "value" }
+            }
+        );
         metadata.ScheduledTime = scheduledTime;
 
         await context.Track(metadata);

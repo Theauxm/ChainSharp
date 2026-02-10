@@ -193,12 +193,12 @@ public class Metadata : IModel, IDisposable
     /// <remarks>
     /// This is the time the job was *supposed* to run, as determined by the scheduler,
     /// as opposed to <see cref="StartTime"/> which is when it actually started.
-    /// 
+    ///
     /// Useful for:
     /// - SLA tracking (how long between scheduled time and actual start?)
     /// - Understanding execution delays due to queue backlog
     /// - Debugging scheduling issues
-    /// 
+    ///
     /// This property is null for manually triggered jobs or jobs created before
     /// the scheduling system was implemented.
     /// </remarks>
@@ -460,7 +460,5 @@ public class Metadata : IModel, IDisposable
     /// the properties after construction using property setters.
     /// </remarks>
     [JsonConstructor]
-    public Metadata()
-    {
-    }
+    public Metadata() { }
 }

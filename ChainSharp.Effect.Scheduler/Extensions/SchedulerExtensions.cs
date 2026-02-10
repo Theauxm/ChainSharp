@@ -44,10 +44,6 @@ public static class SchedulerExtensions
 
         services.AddSingleton(configuration);
 
-        // Register other services - implementations will be added later
-        // services.AddScoped<IManifestManager, ManifestManager>();
-        // services.AddScoped<IDeadLetterService, DeadLetterService>();
-
         return services;
     }
 

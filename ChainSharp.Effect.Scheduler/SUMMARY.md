@@ -147,7 +147,7 @@ public enum DeadLetterStatus
 
 ## ManifestManagerWorkflow
 
-The `ManifestManagerWorkflow` is an `EffectWorkflow<Unit, PollResult>` that runs on a recurring schedule (e.g., once per minute) via IBackgroundTaskServer. It uses the standard ChainSharp step pattern:
+The `ManifestManagerWorkflow` is an `EffectWorkflow<Unit, Unit>` that runs on a recurring schedule (e.g., once per minute) via IBackgroundTaskServer. It uses the standard ChainSharp step pattern:
 
 ```csharp
 public class ManifestManagerWorkflow : EffectWorkflow<Unit, PollResult>
@@ -169,40 +169,6 @@ Using `EffectWorkflow` provides:
 - **Consistency**: Follows the same pattern as all other workflows in ChainSharp
 
 **Trade-off**: EffectWorkflow calls `SaveChanges()` atomically at the end. If `EnqueueJobsStep` succeeds but something after fails, DeadLetter records from step 1 could be rolled back. Steps that need immediate persistence should call `SaveChanges()` explicitly within the step.
-
-### Step Details
-
-```
-ManifestManagerWorkflow.Run(Unit)
-    │
-    ├─1─► ReapFailedJobsStep : Step<Unit, List<DeadLetter>>
-    │     Input: Unit
-    │     Output: List<DeadLetter> (newly created dead letters)
-    │     
-    │     - Query manifests where failed execution count >= max_retries
-    │     - Create DeadLetter records with status AwaitingIntervention
-    │     - SaveChanges() immediately (dead letters persist regardless of later steps)
-    │
-    ├─2─► DetermineJobsToQueueStep : Step<Unit, List<Manifest>>
-    │     Input: Unit (reads dead letters from Memory if needed)
-    │     Output: List<Manifest> (manifests due for execution)
-    │     
-    │     - Query enabled manifests due for execution based on:
-    │       - schedule_type (Cron, Interval, OnDemand)
-    │       - cron_expression / interval_seconds
-    │       - last_successful_run
-    │     - Filter out manifests already in dead letter queue
-    │     - Filter out manifests with pending/in-progress executions
-    │
-    └─3─► EnqueueJobsStep : Step<List<Manifest>, PollResult>
-          Input: List<Manifest> (from previous step)
-          Output: PollResult (summary of what was enqueued)
-          
-          For each manifest:
-            - Create new Metadata row with state = Pending
-            - SaveChanges() immediately
-            - Enqueue ManifestExecutor.ExecuteAsync(metadataId) to IBackgroundTaskServer
-```
 
 ### Why This Order?
 
@@ -293,36 +259,11 @@ Full integration test suite for `ManifestExecutor` located in `tests/ChainSharp.
 - Real `IWorkflowBus`, `IDataContext`, and `IManifestExecutor`
 - Test workflows that implement actual ChainSharp patterns
 
----
-
-## What Still Needs Implementation
-
 ### 1. Workflow & Steps (ChainSharp.Effect.Scheduler)
 
 **ManifestManagerWorkflow:**
-- `Workflow<Unit, PollResult>` that chains the three steps
+- `Workflow<Unit, Unit>` that chains the three steps
 - Called by IBackgroundTaskServer on recurring schedule
-
-**ReapFailedJobsStep : Step<Unit, List<DeadLetter>>**
-- Query manifests where failed execution count >= max_retries
-- Create DeadLetter records with status AwaitingIntervention
-- Call `IDataContext.SaveChanges()` immediately
-- Handle stuck job recovery (jobs stuck in InProgress past timeout_seconds)
-
-**DetermineJobsToQueueStep : Step<Unit, List<Manifest>>**
-- Query enabled manifests due for execution based on schedule_type, cron/interval, last_successful_run
-- Filter out manifests already in dead letter queue (status = AwaitingIntervention)
-- Filter out manifests with pending/in-progress executions
-- Concurrency controls (prevent duplicate queuing of same manifest)
-
-**EnqueueJobsStep : Step<List<Manifest>, PollResult>**
-- For each manifest: create Pending Metadata row, SaveChanges, enqueue to IBackgroundTaskServer
-- Return PollResult with summary (jobs enqueued, dead letters created, etc.)
-
-**Scheduling Utilities:**
-- Cron expression parsing (use Cronos or similar library)
-- Interval calculation helpers
-- `ShouldRunNow(manifest)` predicate for DetermineJobsToQueueStep
 
 ### 2. Background Task Server Implementation
 

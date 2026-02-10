@@ -59,7 +59,9 @@ public static class HangfireServiceExtensions
         });
 
         // Register HangfireTaskServer as IBackgroundTaskServer
-        services.AddScoped<IBackgroundTaskServer, Services.HangfireTaskServer.HangfireTaskServer>();
+        // Singleton is appropriate here since HangfireTaskServer only wraps 
+        // IBackgroundJobClient and IRecurringJobManager, which are singletons
+        services.AddSingleton<IBackgroundTaskServer, Services.HangfireTaskServer.HangfireTaskServer>();
 
         return services;
     }

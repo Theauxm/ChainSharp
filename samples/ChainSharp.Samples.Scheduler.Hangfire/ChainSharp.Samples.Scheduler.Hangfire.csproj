@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- Hangfire storage for Postgres -->
+        <PackageReference Include="Hangfire.PostgreSql" Version="1.20.*" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- ChainSharp project references -->
+        <ProjectReference Include="..\..\ChainSharp.Effect\ChainSharp.Effect.csproj" />
+        <ProjectReference Include="..\..\ChainSharp.Effect.Data.Postgres\ChainSharp.Effect.Data.Postgres.csproj" />
+        <ProjectReference Include="..\..\ChainSharp.Effect.Mediator\ChainSharp.Effect.Mediator.csproj" />
+        <ProjectReference Include="..\..\ChainSharp.Effect.Provider.Json\ChainSharp.Effect.Provider.Json.csproj" />
+        <ProjectReference Include="..\..\ChainSharp.Effect.Scheduler\ChainSharp.Effect.Scheduler.csproj" />
+        <ProjectReference Include="..\..\ChainSharp.Effect.Scheduler.Hangfire\ChainSharp.Effect.Scheduler.Hangfire.csproj" />
+    </ItemGroup>
+
+</Project>

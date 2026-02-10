@@ -71,14 +71,18 @@ public static class ServiceExtensions
         var dataSource = ModelBuilderExtensions.BuildDataSource(connectionString);
 
         // Register the DbContextFactory
-        configurationBuilder.ServiceCollection.AddDbContextFactory<PostgresContext>(
-            (_, options) =>
+        configurationBuilder.ServiceCollection.AddDbContextFactory<PostgresContext>((_, options) =>
             {
                 options
                     .UseNpgsql(dataSource)
                     .UseLoggerFactory(new NullLoggerFactory())
                     .ConfigureWarnings(x => x.Log(CoreEventId.ManyServiceProvidersCreatedWarning));
             }
+        );
+
+        // Register PostgresContext directly for injection (created from the factory)
+        configurationBuilder.ServiceCollection.AddScoped<IDataContext, PostgresContext>(sp =>
+            sp.GetRequiredService<IDbContextFactory<PostgresContext>>().CreateDbContext()
         );
 
         // Enable data context logging

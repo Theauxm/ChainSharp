@@ -9,11 +9,12 @@ public class PersistentDeadLetter : Effect.Models.DeadLetter.DeadLetter
         modelBuilder.Entity<Effect.Models.DeadLetter.DeadLetter>(entity =>
         {
             entity.ToTable("dead_letter", "chain_sharp");
+            entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).ValueGeneratedOnAdd();
 
             entity
                 .HasOne(x => x.Manifest)
-                .WithMany()
+                .WithMany(m => m.DeadLetters)
                 .HasForeignKey(x => x.ManifestId)
                 .OnDelete(DeleteBehavior.Restrict);
         });

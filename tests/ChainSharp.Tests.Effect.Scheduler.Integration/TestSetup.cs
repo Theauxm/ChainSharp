@@ -65,6 +65,7 @@ public abstract class TestSetup
                         .AddStepLogger(serializeStepData: true)
             )
             .AddChainSharpScheduler()
+            .AddInMemoryTaskServer()
             // Register IDataContext as scoped, created from the factory
             .AddScoped<IDataContext>(sp =>
             {

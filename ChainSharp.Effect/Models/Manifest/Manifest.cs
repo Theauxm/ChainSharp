@@ -134,6 +134,16 @@ public class Manifest : IModel
     /// </remarks>
     public ICollection<Metadata.Metadata> Metadatas { get; private set; } = [];
 
+    /// <summary>
+    /// Gets the collection of dead letter records for jobs that exceeded retry limits.
+    /// </summary>
+    /// <remarks>
+    /// This navigation property allows for traversal from a job definition (Manifest)
+    /// to all its dead-lettered executions. It is populated by the ORM when loaded
+    /// from the database.
+    /// </remarks>
+    public ICollection<DeadLetter.DeadLetter> DeadLetters { get; private set; } = [];
+
     #endregion
 
     #region Functions

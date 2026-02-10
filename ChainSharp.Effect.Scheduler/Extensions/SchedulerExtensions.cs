@@ -1,7 +1,5 @@
 using ChainSharp.Effect.Scheduler.Configuration;
 using ChainSharp.Effect.Scheduler.Services.BackgroundTaskServer;
-using ChainSharp.Effect.Scheduler.Services.DeadLetterService;
-using ChainSharp.Effect.Scheduler.Services.ManifestManager;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ChainSharp.Effect.Scheduler.Extensions;

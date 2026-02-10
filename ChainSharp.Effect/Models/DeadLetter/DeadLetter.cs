@@ -98,12 +98,17 @@ public class DeadLetter : IModel
     /// </summary>
     /// <param name="createDeadLetter"></param>
     /// <returns>A new DeadLetter instance</returns>
+    /// <remarks>
+    /// Note: Only ManifestId is set, not the Manifest navigation property.
+    /// This avoids EF Core tracking issues when the Manifest was loaded with .Include().
+    /// </remarks>
     public static DeadLetter Create(CreateDeadLetter createDeadLetter)
     {
         return new DeadLetter
         {
             ManifestId = createDeadLetter.Manifest.Id,
-            Manifest = createDeadLetter.Manifest,
+            // Don't set Manifest navigation property to avoid EF Core tracking issues
+            // when the manifest was loaded with includes
             DeadLetteredAt = DateTime.UtcNow,
             Reason = createDeadLetter.Reason,
             RetryCountAtDeadLetter = createDeadLetter.RetryCount,

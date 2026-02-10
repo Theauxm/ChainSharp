@@ -38,7 +38,7 @@ public class DeadLetterTests
 
         // Assert
         deadLetter.ManifestId.Should().Be(manifest.Id);
-        deadLetter.Manifest.Should().BeNull(); // Navigation property intentionally not set to avoid EF Core tracking issues
+        deadLetter.Manifest.Should().NotBeNull();
         deadLetter.Reason.Should().Be(reason);
         deadLetter.RetryCountAtDeadLetter.Should().Be(retryCount);
         deadLetter.Status.Should().Be(DeadLetterStatus.AwaitingIntervention);

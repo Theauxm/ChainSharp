@@ -107,6 +107,7 @@ public class DeadLetter : IModel
         return new DeadLetter
         {
             ManifestId = createDeadLetter.Manifest.Id,
+            Manifest = createDeadLetter.Manifest,
             // Don't set Manifest navigation property to avoid EF Core tracking issues
             // when the manifest was loaded with includes
             DeadLetteredAt = DateTime.UtcNow,
@@ -147,5 +148,7 @@ public class DeadLetter : IModel
 
     #endregion
 
-    public DeadLetter() { }
+    public DeadLetter()
+    {
+    }
 }

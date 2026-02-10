@@ -5,7 +5,6 @@ using ChainSharp.Effect.Scheduler.Configuration;
 using ChainSharp.Effect.Scheduler.Workflows.ManifestManager.Utilities;
 using ChainSharp.Effect.Services.EffectStep;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace ChainSharp.Effect.Scheduler.Workflows.ManifestManager.Steps;
 
@@ -13,12 +12,10 @@ namespace ChainSharp.Effect.Scheduler.Workflows.ManifestManager.Steps;
 /// Determines which manifests are due for execution based on their scheduling rules.
 /// </summary>
 internal class DetermineJobsToQueueStep(
-    IOptions<SchedulerConfiguration> configOptions,
+    SchedulerConfiguration config,
     ILogger<DetermineJobsToQueueStep> logger
 ) : EffectStep<(List<Manifest>, List<DeadLetter>), List<Manifest>>
 {
-    private readonly SchedulerConfiguration _config = configOptions.Value;
-
     public override async Task<List<Manifest>> Run((List<Manifest>, List<DeadLetter>) input)
     {
         var (manifests, newlyCreatedDeadLetters) = input;
@@ -95,11 +92,11 @@ internal class DetermineJobsToQueueStep(
                 );
                 manifestsToQueue.Add(manifest);
 
-                if (manifestsToQueue.Count >= _config.MaxJobsPerCycle)
+                if (manifestsToQueue.Count >= config.MaxJobsPerCycle)
                 {
                     logger.LogInformation(
                         "Reached MaxJobsPerCycle limit ({MaxJobs}), will queue remaining manifests in next poll cycle",
-                        _config.MaxJobsPerCycle
+                        config.MaxJobsPerCycle
                     );
                     break;
                 }

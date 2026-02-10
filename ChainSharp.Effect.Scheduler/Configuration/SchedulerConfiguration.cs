@@ -10,18 +10,15 @@ public class SchedulerConfiguration
     /// </summary>
     /// <remarks>
     /// Pending manifests are added via the fluent configuration API
-    /// (e.g., <c>.Schedule&lt;TWorkflow, TInput&gt;(...)</c>) and processed
-    /// by <see cref="Extensions.ApplicationBuilderExtensions.UseChainSharpScheduler"/>.
+    /// (e.g., <c>.Schedule&lt;TWorkflow, TInput&gt;(...)</c>) and seeded
+    /// automatically on startup by the ManifestPollingService.
     /// </remarks>
     internal List<PendingManifest> PendingManifests { get; } = [];
 
     /// <summary>
     /// The interval at which the ManifestManager polls for pending jobs.
     /// </summary>
-    /// <remarks>
-    /// Default is 60 seconds. Lower values mean faster job pickup but more database load.
-    /// </remarks>
-    public TimeSpan PollingInterval { get; set; } = TimeSpan.FromSeconds(60);
+    public TimeSpan PollingInterval { get; set; } = TimeSpan.FromSeconds(5);
 
     /// <summary>
     /// The maximum number of jobs that can be enqueued in a single polling cycle.
@@ -32,14 +29,6 @@ public class SchedulerConfiguration
     /// in the next polling cycle.
     /// </remarks>
     public int MaxJobsPerCycle { get; set; } = 100;
-
-    /// <summary>
-    /// The maximum number of concurrent executions allowed for a single manifest.
-    /// </summary>
-    /// <remarks>
-    /// Set to 0 for unlimited. This can be overridden per-manifest.
-    /// </remarks>
-    public int DefaultMaxConcurrentExecutions { get; set; } = 1;
 
     /// <summary>
     /// The default number of retry attempts before a job is dead-lettered.
@@ -97,13 +86,4 @@ public class SchedulerConfiguration
     /// Whether to enable automatic purging of old dead letter records.
     /// </summary>
     public bool AutoPurgeDeadLetters { get; set; } = true;
-
-    /// <summary>
-    /// The cron expression for the ManifestManager's recurring job.
-    /// </summary>
-    /// <remarks>
-    /// Default is "* * * * *" (every minute). This controls how often
-    /// the scheduler checks for pending manifests to execute.
-    /// </remarks>
-    public string ManagerCronExpression { get; set; } = "* * * * *";
 }

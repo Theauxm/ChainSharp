@@ -1,6 +1,7 @@
 using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Scheduler.Services.BackgroundTaskServer;
+using ChainSharp.Effect.Scheduler.Services.ManifestPollingService;
 using ChainSharp.Effect.Scheduler.Services.ManifestScheduler;
 using ChainSharp.Effect.Services.EffectWorkflow;
 using LanguageExt;
@@ -177,8 +178,8 @@ public class SchedulerConfigurationBuilder
     /// <param name="configure">Optional action to configure additional manifest options</param>
     /// <returns>The builder for method chaining</returns>
     /// <remarks>
-    /// The manifest is not created immediately. It is captured and will be created
-    /// when <see cref="Extensions.ApplicationBuilderExtensions.UseChainSharpScheduler"/> is called.
+    /// The manifest is not created immediately. It is captured and will be seeded
+    /// automatically on startup by the ManifestPollingService.
     /// All scheduled manifests use upsert semantics based on ExternalId.
     /// </remarks>
     /// <example>
@@ -233,8 +234,8 @@ public class SchedulerConfigurationBuilder
     /// <param name="configure">Optional action to configure additional manifest options per source item</param>
     /// <returns>The builder for method chaining</returns>
     /// <remarks>
-    /// The manifests are not created immediately. They are captured and will be created
-    /// when <see cref="Extensions.ApplicationBuilderExtensions.UseChainSharpScheduler"/> is called.
+    /// The manifests are not created immediately. They are captured and will be seeded
+    /// automatically on startup by the ManifestPollingService.
     /// All manifests are created in a single transaction.
     /// </remarks>
     /// <example>
@@ -298,6 +299,9 @@ public class SchedulerConfigurationBuilder
 
         // Register task server if configured
         _taskServerRegistration?.Invoke(_parentBuilder.ServiceCollection);
+
+        // Register the background polling service (seeds manifests on startup, then polls)
+        _parentBuilder.ServiceCollection.AddHostedService<ManifestPollingService>();
 
         return _parentBuilder;
     }

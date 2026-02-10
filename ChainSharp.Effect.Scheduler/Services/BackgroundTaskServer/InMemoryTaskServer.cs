@@ -51,15 +51,4 @@ public class InMemoryTaskServer(IManifestExecutorWorkflow manifestExecutorWorkfl
         // For testing, just execute immediately (ignore scheduled time)
         return await EnqueueAsync(metadataId);
     }
-
-    /// <inheritdoc />
-    /// <remarks>
-    /// This is a no-op in the in-memory implementation. For testing manifest polling,
-    /// call <see cref="IManifestManager.ProcessPendingManifestsAsync"/> directly.
-    /// </remarks>
-    public void AddOrUpdateRecurringManifestPoll(string recurringJobId, string cronExpression)
-    {
-        // No-op for in-memory implementation
-        // Tests should call IManifestManager.ProcessPendingManifestsAsync() directly
-    }
 }

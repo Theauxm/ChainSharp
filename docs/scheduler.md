@@ -62,8 +62,8 @@ Operators can retry (which creates a new execution) or acknowledge (mark as hand
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                Background Task Server (Hangfire)                 │
-│              Triggers ManifestManager on schedule                │
+│              ManifestPollingService (BackgroundService)           │
+│          Polls ManifestManager on a configurable interval        │
 └─────────────────────────────────┬───────────────────────────────┘
                                   │
                                   ▼
@@ -73,10 +73,11 @@ Operators can retry (which creates a new execution) or acknowledge (mark as hand
 │  LoadManifests → ReapFailedJobs → DetermineJobsToQueue →        │
 │                                        EnqueueJobs               │
 └─────────────────────────────────┬───────────────────────────────┘
-                                  │ Enqueues jobs
+                                  │ Enqueues jobs to Hangfire
                                   ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                  ManifestExecutorWorkflow                        │
+│                  (runs on Hangfire workers)                       │
 │                                                                  │
 │  LoadMetadata → ValidateState → ExecuteWorkflow →               │
 │                                      UpdateManifest              │
@@ -89,9 +90,11 @@ Operators can retry (which creates a new execution) or acknowledge (mark as hand
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-The **ManifestManagerWorkflow** runs on a recurring schedule (every minute by default). It loads enabled manifests, dead-letters any that have exceeded their retry limit, determines which are due for execution, and enqueues them to the background task server.
+The **ManifestPollingService** is a .NET `BackgroundService` that runs the ManifestManager on a configurable interval. It supports sub-minute polling (e.g., every 5 seconds)—something that wasn't possible when the manager was triggered by a Hangfire cron job. On startup, it also seeds any manifests configured via `.Schedule()` or `.ScheduleMany()`.
 
-The **ManifestExecutorWorkflow** runs for each enqueued job. It loads the Metadata and Manifest, validates the job is still pending, executes the target workflow via `IWorkflowBus`, and updates `LastSuccessfulRun` on success.
+The **ManifestManagerWorkflow** loads enabled manifests, dead-letters any that have exceeded their retry limit, determines which are due for execution, and enqueues them to the background task server (Hangfire).
+
+The **ManifestExecutorWorkflow** runs on Hangfire workers for each enqueued job. It loads the Metadata and Manifest, validates the job is still pending, executes the target workflow via `IWorkflowBus`, and updates `LastSuccessfulRun` on success.
 
 ## Quick Setup with Hangfire
 
@@ -118,17 +121,17 @@ builder.Services.AddChainSharpEffects(options => options
     )
     .AddPostgresEffect(connectionString)
     .AddScheduler(scheduler => scheduler
-        .PollingInterval(TimeSpan.FromSeconds(30))
+        .PollingInterval(TimeSpan.FromSeconds(5))
         .MaxJobsPerCycle(100)
         .DefaultMaxRetries(3)
         .UseHangfire(connectionString)
-        
+
         // Schedule jobs directly in configuration
         .Schedule<IHelloWorldWorkflow, HelloWorldInput>(
             "hello-world",
             new HelloWorldInput { Name = "ChainSharp Scheduler" },
             Every.Minutes(1))
-        
+
         .Schedule<IDailyReportWorkflow, DailyReportInput>(
             "daily-report",
             new DailyReportInput { ReportType = "sales" },
@@ -140,12 +143,11 @@ builder.Services.AddChainSharpEffects(options => options
 var app = builder.Build();
 
 app.UseHangfireDashboard("/hangfire");
-app.UseChainSharpScheduler();  // Seeds manifests from configuration
 
 app.Run();
 ```
 
-Hangfire is configured internally—you only need to provide the connection string. Hangfire's automatic retries are disabled since the scheduler manages retries through the manifest system.
+`AddScheduler` registers a `BackgroundService` that handles manifest seeding and polling automatically—no extra startup call needed. Hangfire is configured internally; you only need to provide the connection string. Hangfire's automatic retries are disabled since the scheduler manages retries through the manifest system.
 
 ## Creating Scheduled Workflows
 
@@ -354,7 +356,7 @@ await scheduler.ScheduleAsync<IMyWorkflow, MyInput>(
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `PollingInterval` | 60s | How often ManifestManager checks for pending jobs |
+| `PollingInterval` | 5s | How often ManifestManager checks for pending jobs (supports sub-minute) |
 | `MaxJobsPerCycle` | 100 | Maximum jobs enqueued per poll (prevents overwhelming workers) |
 | `DefaultMaxRetries` | 3 | Retry attempts before dead-lettering |
 | `DefaultRetryDelay` | 5m | Delay between retries |
@@ -386,7 +388,7 @@ await context.SaveChanges(ct);
 
 ## Monitoring
 
-The Hangfire Dashboard at `/hangfire` shows queued jobs, failures, recurring schedules, and worker health. Configure authorization for production.
+The Hangfire Dashboard at `/hangfire` shows enqueued ManifestExecutor jobs, failures, and worker health. The ManifestManager polling itself runs as a .NET `BackgroundService` outside of Hangfire, so it won't appear in the dashboard. Configure authorization for production.
 
 For workflow-level details, query the `Metadata` table:
 

@@ -6,6 +6,16 @@ namespace ChainSharp.Effect.Scheduler.Configuration;
 public class SchedulerConfiguration
 {
     /// <summary>
+    /// Gets the collection of pending manifests to be seeded on startup.
+    /// </summary>
+    /// <remarks>
+    /// Pending manifests are added via the fluent configuration API
+    /// (e.g., <c>.Schedule&lt;TWorkflow, TInput&gt;(...)</c>) and processed
+    /// by <see cref="Extensions.ApplicationBuilderExtensions.UseChainSharpScheduler"/>.
+    /// </remarks>
+    internal List<PendingManifest> PendingManifests { get; } = [];
+
+    /// <summary>
     /// The interval at which the ManifestManager polls for pending jobs.
     /// </summary>
     /// <remarks>

@@ -13,4 +13,8 @@
       <ProjectReference Include="..\ChainSharp.Effect.Data\ChainSharp.Effect.Data.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <InternalsVisibleTo Include="Theauxm.ChainSharp.Effect.Scheduler.Hangfire" />
+    </ItemGroup>
+
 </Project>

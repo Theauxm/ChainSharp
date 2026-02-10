@@ -10,8 +10,6 @@ namespace ChainSharp.Samples.Scheduler.Hangfire.Workflows.HelloWorld;
 /// </summary>
 public class HelloWorldWorkflow : EffectWorkflow<HelloWorldInput, Unit>, IHelloWorldWorkflow
 {
-  protected override async Task<Either<Exception, Unit>> RunInternal(HelloWorldInput input) =>
-    Activate(input)
-      .Chain<LogGreetingStep>()
-      .Resolve();
+    protected override async Task<Either<Exception, Unit>> RunInternal(HelloWorldInput input) =>
+        Activate(input).Chain<LogGreetingStep>().Resolve();
 }

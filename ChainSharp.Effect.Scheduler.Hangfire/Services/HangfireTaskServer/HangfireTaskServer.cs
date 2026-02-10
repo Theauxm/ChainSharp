@@ -34,8 +34,8 @@ public class HangfireTaskServer(
     public Task<string> EnqueueAsync(int metadataId)
     {
         // Use the async overload explicitly via Expression<Func<T, Task>>
-        var jobId = backgroundJobClient.Enqueue<IManifestExecutorWorkflow>(workflow =>
-            workflow.Run(new ExecuteManifestRequest(metadataId))
+        var jobId = backgroundJobClient.Enqueue<IManifestExecutorWorkflow>(
+            workflow => workflow.Run(new ExecuteManifestRequest(metadataId))
         );
 
         return Task.FromResult(jobId);

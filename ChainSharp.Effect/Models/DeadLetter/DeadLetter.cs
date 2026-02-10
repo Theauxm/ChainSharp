@@ -148,7 +148,5 @@ public class DeadLetter : IModel
 
     #endregion
 
-    public DeadLetter()
-    {
-    }
+    public DeadLetter() { }
 }

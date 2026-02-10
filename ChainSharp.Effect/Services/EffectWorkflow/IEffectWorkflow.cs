@@ -4,6 +4,16 @@ using ChainSharp.Workflow;
 namespace ChainSharp.Effect.Services.EffectWorkflow;
 
 /// <summary>
+/// Non-generic marker interface for effect workflows.
+/// </summary>
+/// <remarks>
+/// This interface serves as a base marker for all effect workflows, enabling
+/// generic constraints in APIs like <see cref="ChainSharp.Effect.Scheduler"/>
+/// without requiring knowledge of the specific input/output types.
+/// </remarks>
+public interface IEffectWorkflow { }
+
+/// <summary>
 /// Defines the contract for workflows that include database tracking and logging capabilities.
 /// This interface extends the base IWorkflow interface to add metadata tracking.
 /// </summary>
@@ -13,7 +23,7 @@ namespace ChainSharp.Effect.Services.EffectWorkflow;
 /// IEffectWorkflow is the interface representation of the EffectWorkflow class.
 /// It allows for dependency injection and testing of workflows with database tracking.
 /// </remarks>
-public interface IEffectWorkflow<in TIn, TOut> : IWorkflow<TIn, TOut>, IDisposable
+public interface IEffectWorkflow<in TIn, TOut> : IEffectWorkflow, IWorkflow<TIn, TOut>, IDisposable
 {
     /// <summary>
     /// Executes the workflow with the given input and records execution details in the database.

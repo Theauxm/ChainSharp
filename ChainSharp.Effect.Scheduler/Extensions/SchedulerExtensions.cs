@@ -47,9 +47,11 @@ public static class SchedulerExtensions
 
         services.AddSingleton(configuration);
 
-        // Register core services - implementations will be added later
+        // Register ManifestExecutor for executing scheduled jobs
+        services.AddScoped<IManifestExecutor, Services.ManifestExecutor.ManifestExecutor>();
+
+        // Register other services - implementations will be added later
         // services.AddScoped<IManifestManager, ManifestManager>();
-        // services.AddScoped<IManifestExecutor, ManifestExecutor>();
         // services.AddScoped<IDeadLetterService, DeadLetterService>();
 
         return services;

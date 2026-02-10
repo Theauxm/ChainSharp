@@ -1,7 +1,8 @@
 using ChainSharp.Effect.Scheduler.Services.BackgroundTaskServer;
-using ChainSharp.Effect.Scheduler.Services.ManifestManager;
 using ChainSharp.Effect.Scheduler.Workflows.ManifestExecutor;
+using ChainSharp.Effect.Scheduler.Workflows.ManifestManager;
 using Hangfire;
+using LanguageExt;
 
 namespace ChainSharp.Effect.Scheduler.Hangfire.Services.HangfireTaskServer;
 
@@ -52,9 +53,9 @@ public class HangfireTaskServer(
     /// <inheritdoc />
     public void AddOrUpdateRecurringManifestPoll(string recurringJobId, string cronExpression)
     {
-        recurringJobManager.AddOrUpdate<IManifestManager>(
+        recurringJobManager.AddOrUpdate<IManifestManagerWorkflow>(
             recurringJobId,
-            manager => manager.ProcessPendingManifestsAsync(CancellationToken.None),
+            manager => manager.Run(Unit.Default),
             cronExpression
         );
     }

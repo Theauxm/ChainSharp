@@ -44,6 +44,8 @@ public static class ModelBuilderExtensions
     {
         modelBuilder.HasPostgresEnum<WorkflowState>();
         modelBuilder.HasPostgresEnum<LogLevel>();
+        modelBuilder.HasPostgresEnum<ScheduleType>();
+        modelBuilder.HasPostgresEnum<DeadLetterStatus>();
 
         return modelBuilder;
     }
@@ -69,6 +71,8 @@ public static class ModelBuilderExtensions
 
         npgsqlDataSourceBuilder.MapEnum<WorkflowState>();
         npgsqlDataSourceBuilder.MapEnum<LogLevel>();
+        npgsqlDataSourceBuilder.MapEnum<ScheduleType>();
+        npgsqlDataSourceBuilder.MapEnum<DeadLetterStatus>();
 
         return npgsqlDataSourceBuilder.Build();
     }

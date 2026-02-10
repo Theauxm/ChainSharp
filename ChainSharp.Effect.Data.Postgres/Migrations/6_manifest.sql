@@ -1,5 +1,8 @@
+-- Create the schedule_type enum for manifest scheduling strategies
+create type chain_sharp.schedule_type as enum ('none', 'cron', 'interval', 'on_demand');
+
 -- Create the manifest table to store workflow manifest information
--- This table stores configuration and property information for workflows
+-- This table stores configuration, scheduling, and retry policies for workflows
 create table if not exists chain_sharp.manifest
 (
     -- Primary key with auto-incrementing ID
@@ -17,7 +20,30 @@ create table if not exists chain_sharp.manifest
     property_type varchar,
     
     -- JSON properties stored as JSONB for flexible configuration
-    properties jsonb
+    properties jsonb,
+    
+    -- Scheduling columns
+    
+    -- Whether this manifest is enabled for scheduling (allows pausing without deleting)
+    is_enabled boolean not null default true,
+    
+    -- The scheduling strategy: none (manual), cron, interval, or on_demand (bulk)
+    schedule_type chain_sharp.schedule_type not null default 'none',
+    
+    -- Cron expression for cron-type schedules (e.g., "0 3 * * *" for daily at 3am)
+    cron_expression varchar,
+    
+    -- Interval in seconds for interval-type schedules
+    interval_seconds integer,
+    
+    -- Maximum retry attempts before dead-lettering
+    max_retries integer not null default 3,
+    
+    -- Timeout in seconds for job execution (null = use global default)
+    timeout_seconds integer,
+    
+    -- Timestamp of the last successful execution
+    last_successful_run timestamptz
 );
 
 -- Create index on external_id for faster lookups
@@ -27,3 +53,8 @@ create index if not exists manifest_external_id_idx
 -- Create index on name for faster lookups by type
 create index if not exists manifest_name_idx 
     on chain_sharp.manifest (name);
+
+-- Create index on is_enabled and schedule_type for efficient polling queries
+create index if not exists manifest_scheduling_idx
+    on chain_sharp.manifest (is_enabled, schedule_type)
+    where is_enabled = true;

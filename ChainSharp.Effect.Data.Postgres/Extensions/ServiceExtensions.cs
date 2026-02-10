@@ -81,6 +81,11 @@ public static class ServiceExtensions
             }
         );
 
+        // Register PostgresContext directly for injection (created from the factory)
+        configurationBuilder.ServiceCollection.AddScoped<IDataContext, PostgresContext>(
+            sp => sp.GetRequiredService<IDbContextFactory<PostgresContext>>().CreateDbContext()
+        );
+
         // Enable data context logging
         configurationBuilder.DataContextLoggingEffectEnabled = true;
 

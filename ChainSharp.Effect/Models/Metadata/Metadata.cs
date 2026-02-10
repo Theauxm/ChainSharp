@@ -33,7 +33,7 @@ namespace ChainSharp.Effect.Models.Metadata;
 /// IMPORTANT: This class implements IDisposable to properly dispose of JsonDocument objects
 /// that hold unmanaged memory resources.
 /// </remarks>
-public class Metadata : IMetadata, IDisposable
+public class Metadata : IModel, IDisposable
 {
     #region Columns
 
@@ -186,6 +186,24 @@ public class Metadata : IMetadata, IDisposable
     /// </remarks>
     [Column("end_time")]
     public DateTime? EndTime { get; set; }
+
+    /// <summary>
+    /// Gets or sets the time when this execution was scheduled to run.
+    /// </summary>
+    /// <remarks>
+    /// This is the time the job was *supposed* to run, as determined by the scheduler,
+    /// as opposed to <see cref="StartTime"/> which is when it actually started.
+    ///
+    /// Useful for:
+    /// - SLA tracking (how long between scheduled time and actual start?)
+    /// - Understanding execution delays due to queue backlog
+    /// - Debugging scheduling issues
+    ///
+    /// This property is null for manually triggered jobs or jobs created before
+    /// the scheduling system was implemented.
+    /// </remarks>
+    [Column("scheduled_time")]
+    public DateTime? ScheduledTime { get; set; }
 
     /// <summary>
     /// Gets a value indicating whether this workflow is a child of another workflow.

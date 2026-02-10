@@ -5,6 +5,9 @@
   <Project Path="ChainSharp.Effect.Data/ChainSharp.Effect.Data.csproj" />
   <Project Path="ChainSharp.Effect.Provider.Json/ChainSharp.Effect.Provider.Json.csproj" />
   <Project Path="ChainSharp.Effect.Mediator/ChainSharp.Effect.Mediator.csproj" />
+  <Project Path="ChainSharp.Effect.Scheduler/ChainSharp.Effect.Scheduler.csproj" />
+  <Project Path="ChainSharp.Effect.Scheduler.Hangfire/ChainSharp.Effect.Scheduler.Hangfire.csproj" />
+  <Project Path="samples/ChainSharp.Samples.Scheduler.Hangfire/ChainSharp.Samples.Scheduler.Hangfire.csproj" />
   <Project Path="ChainSharp.Effect.Provider.Parameter/ChainSharp.Effect.Provider.Parameter.csproj" />
   <Project Path="ChainSharp.Effect.StepProvider.Logging/ChainSharp.Effect.StepProvider.Logging.csproj" />
   <Project Path="ChainSharp.Effect/ChainSharp.Effect.csproj" />

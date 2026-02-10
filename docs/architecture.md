@@ -18,6 +18,12 @@ How ChainSharp's components fit together.
                                   │
                                   ▼
 ┌─────────────────────────────────────────────────────────────────────┐
+│                  ChainSharp.Effect.Scheduler (Optional)             │
+│    [ManifestManager] ───► [ManifestExecutor] ───► [DeadLetter]     │
+└─────────────────────────────────┬───────────────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────┐
 │                  ChainSharp.Effect.Mediator                         │
 │         [WorkflowBus] ────────► [WorkflowRegistry]                  │
 └─────────────────────────────────┬───────────────────────────────────┘
@@ -59,6 +65,10 @@ ChainSharp (Core)
               │         │
               │         ├─── ChainSharp.Effect.Data.Postgres
               │         └─── ChainSharp.Effect.Data.InMemory
+              │
+              ├─── ChainSharp.Effect.Scheduler (Job Orchestration)
+              │         │
+              │         └─── ChainSharp.Effect.Scheduler.Hangfire
               │
               ├─── ChainSharp.Effect.Provider.Json
               ├─── ChainSharp.Effect.Provider.Parameter

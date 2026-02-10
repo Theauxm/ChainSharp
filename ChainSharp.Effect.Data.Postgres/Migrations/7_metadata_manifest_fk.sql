@@ -16,3 +16,8 @@ alter table chain_sharp.metadata
 -- Create index on manifest_id for faster lookups
 create index if not exists metadata_manifest_id_idx 
     on chain_sharp.metadata (manifest_id);
+
+-- Add scheduled_time column for tracking when the job was supposed to run
+-- This is distinct from start_time (when it actually started) - useful for SLA tracking
+alter table chain_sharp.metadata
+    add column if not exists scheduled_time timestamptz;

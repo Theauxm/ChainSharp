@@ -7,7 +7,7 @@ using LanguageExt;
 
 namespace ChainSharp.Effect.Models.StepMetadata;
 
-public class StepMetadata : IStepMetadata
+public class StepMetadata : IModel
 {
     #region Columns
 

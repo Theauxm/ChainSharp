@@ -1,0 +1,233 @@
+using ChainSharp.Effect.Enums;
+using ChainSharp.Effect.Models.Manifest;
+using ChainSharp.Effect.Models.Manifest.DTOs;
+using ChainSharp.Effect.Models.Metadata;
+using ChainSharp.Effect.Models.Metadata.DTOs;
+using ChainSharp.Effect.Scheduler.Workflows.ManifestExecutor;
+using ChainSharp.Exceptions;
+using ChainSharp.Tests.Effect.Scheduler.Integration.Examples.Workflows;
+using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+
+namespace ChainSharp.Tests.Effect.Scheduler.Integration.IntegrationTests;
+
+[TestFixture]
+public class ManifestExecutorTests : TestSetup
+{
+    #region Run - Null Metadata Tests
+
+    [Test]
+    public async Task Run_WhenMetadataNotFound_ThrowsWorkflowException()
+    {
+        // Arrange
+        var nonExistentMetadataId = 999999;
+
+        // Act
+        var act = async () =>
+            await ManifestExecutor.Run(new ExecuteManifestRequest(nonExistentMetadataId));
+
+        // Assert
+        await act.Should().ThrowAsync<WorkflowException>().WithMessage("*not found*");
+    }
+
+    #endregion
+
+    #region Run - Invalid State Tests
+
+    [Test]
+    public async Task Run_WhenStateIsCompleted_ThrowsWorkflowException()
+    {
+        // Arrange
+        var manifest = await CreateAndSaveManifest();
+        var metadata = await CreateAndSaveMetadata(manifest, WorkflowState.Completed);
+
+        // Act
+        var act = async () => await ManifestExecutor.Run(new ExecuteManifestRequest(metadata.Id));
+
+        // Assert
+        await act.Should()
+            .ThrowAsync<WorkflowException>()
+            .WithMessage("*Cannot execute a job with state Completed*");
+    }
+
+    [Test]
+    public async Task Run_WhenStateIsFailed_ThrowsWorkflowException()
+    {
+        // Arrange
+        var manifest = await CreateAndSaveManifest();
+        var metadata = await CreateAndSaveMetadata(manifest, WorkflowState.Failed);
+
+        // Act
+        var act = async () => await ManifestExecutor.Run(new ExecuteManifestRequest(metadata.Id));
+
+        // Assert
+        await act.Should()
+            .ThrowAsync<WorkflowException>()
+            .WithMessage("*Cannot execute a job with state Failed*");
+    }
+
+    [Test]
+    public async Task Run_WhenStateIsInProgress_ThrowsWorkflowException()
+    {
+        // Arrange
+        var manifest = await CreateAndSaveManifest();
+        var metadata = await CreateAndSaveMetadata(manifest, WorkflowState.InProgress);
+
+        // Act
+        var act = async () => await ManifestExecutor.Run(new ExecuteManifestRequest(metadata.Id));
+
+        // Assert
+        await act.Should()
+            .ThrowAsync<WorkflowException>()
+            .WithMessage("*Cannot execute a job with state InProgress*");
+    }
+
+    #endregion
+
+    #region Run - Null Manifest Tests
+
+    [Test]
+    public async Task Run_WhenManifestIsNull_ThrowsWorkflowException()
+    {
+        // Arrange - Create metadata without a manifest
+        var metadata = Metadata.Create(
+            new CreateMetadata
+            {
+                Name = typeof(SchedulerTestWorkflow).FullName!,
+                ExternalId = Guid.NewGuid().ToString("N"),
+                Input = new SchedulerTestInput { Value = "Test" },
+                ManifestId = null
+            }
+        );
+
+        await DataContext.Track(metadata);
+        await DataContext.SaveChanges(CancellationToken.None);
+        DataContext.Reset();
+
+        // Act
+        var act = async () => await ManifestExecutor.Run(new ExecuteManifestRequest(metadata.Id));
+
+        // Assert
+        await act.Should().ThrowAsync<WorkflowException>().WithMessage("*Manifest not loaded*");
+    }
+
+    #endregion
+
+    #region Run - Successful Execution Tests
+
+    [Test]
+    public async Task Run_WhenStateIsPending_ExecutesWorkflowSuccessfully()
+    {
+        // Arrange
+        var manifest = await CreateAndSaveManifest();
+        var metadata = await CreateAndSaveMetadata(manifest, WorkflowState.Pending);
+        var metadataId = metadata.Id;
+
+        // Act
+        await ManifestExecutor.Run(new ExecuteManifestRequest(metadataId));
+
+        // Assert - Verify execution happened (LastSuccessfulRun updated)
+        DataContext.Reset();
+        var updatedManifest = await DataContext.Manifests.FirstOrDefaultAsync(
+            x => x.Id == manifest.Id
+        );
+
+        updatedManifest.Should().NotBeNull();
+        updatedManifest!.LastSuccessfulRun.Should().NotBeNull();
+        updatedManifest
+            .LastSuccessfulRun.Should()
+            .BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(10));
+    }
+
+    [Test]
+    public async Task Run_WhenSuccessful_UpdatesLastSuccessfulRunOnManifest()
+    {
+        // Arrange
+        var manifest = await CreateAndSaveManifest();
+        var beforeExecution = DateTime.UtcNow;
+        var metadata = await CreateAndSaveMetadata(manifest, WorkflowState.Pending);
+
+        // Act
+        await ManifestExecutor.Run(new ExecuteManifestRequest(metadata.Id));
+        var afterExecution = DateTime.UtcNow;
+
+        // Assert
+        DataContext.Reset();
+        var updatedManifest = await DataContext.Manifests.FirstOrDefaultAsync(
+            x => x.Id == manifest.Id
+        );
+
+        updatedManifest.Should().NotBeNull();
+        updatedManifest!.LastSuccessfulRun.Should().NotBeNull();
+        updatedManifest.LastSuccessfulRun.Should().BeOnOrAfter(beforeExecution);
+        updatedManifest.LastSuccessfulRun.Should().BeOnOrBefore(afterExecution.AddSeconds(1));
+    }
+
+    [Test]
+    public async Task Run_WithDifferentInputValues_ExecutesCorrectly()
+    {
+        // Arrange
+        var testValue = $"UniqueValue_{Guid.NewGuid():N}";
+        var manifest = await CreateAndSaveManifest(testValue);
+        var metadata = await CreateAndSaveMetadata(manifest, WorkflowState.Pending);
+
+        // Act
+        await ManifestExecutor.Run(new ExecuteManifestRequest(metadata.Id));
+
+        // Assert
+        DataContext.Reset();
+        var updatedManifest = await DataContext.Manifests.FirstOrDefaultAsync(
+            x => x.Id == manifest.Id
+        );
+
+        updatedManifest.Should().NotBeNull();
+        updatedManifest!.LastSuccessfulRun.Should().NotBeNull();
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private async Task<Manifest> CreateAndSaveManifest(string inputValue = "TestValue")
+    {
+        var manifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(SchedulerTestWorkflow),
+                IsEnabled = true,
+                ScheduleType = ScheduleType.None,
+                MaxRetries = 3,
+                Properties = new SchedulerTestInput { Value = inputValue }
+            }
+        );
+
+        await DataContext.Track(manifest);
+        await DataContext.SaveChanges(CancellationToken.None);
+        DataContext.Reset();
+
+        return manifest;
+    }
+
+    private async Task<Metadata> CreateAndSaveMetadata(Manifest manifest, WorkflowState state)
+    {
+        var metadata = Metadata.Create(
+            new CreateMetadata
+            {
+                Name = typeof(SchedulerTestWorkflow).FullName!,
+                ExternalId = Guid.NewGuid().ToString("N"),
+                Input = manifest.GetProperties<SchedulerTestInput>(),
+                ManifestId = manifest.Id
+            }
+        );
+
+        metadata.WorkflowState = state;
+
+        await DataContext.Track(metadata);
+        await DataContext.SaveChanges(CancellationToken.None);
+        DataContext.Reset();
+
+        return metadata;
+    }
+
+    #endregion
+}

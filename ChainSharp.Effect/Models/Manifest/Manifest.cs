@@ -43,10 +43,12 @@ public class Manifest : IModel
     public string? Properties { get; set; }
 
     [NotMapped]
+    [JsonIgnore]
     public Type PropertyType =>
         PropertyTypeName == null ? typeof(Unit) : ResolveType(PropertyTypeName);
 
     [NotMapped]
+    [JsonIgnore]
     public Type NameType => Name == null ? typeof(Unit) : ResolveType(Name);
 
     #region Scheduling Properties

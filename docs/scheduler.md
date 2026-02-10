@@ -121,10 +121,7 @@ builder.Services.AddChainSharpEffects(options => options
         .PollingInterval(TimeSpan.FromSeconds(30))
         .MaxJobsPerCycle(100)
         .DefaultMaxRetries(3)
-        .UseHangfire(
-            config => config.UsePostgreSqlStorage(opts => opts.UseNpgsqlConnection(connectionString)),
-            server => server.Queues = new[] { "default", "scheduler" }
-        )
+        .UseHangfire(connectionString)
         
         // Schedule jobs directly in configuration
         .Schedule<IHelloWorldWorkflow, HelloWorldInput>(
@@ -147,6 +144,8 @@ app.UseChainSharpScheduler();  // Seeds manifests from configuration
 
 app.Run();
 ```
+
+Hangfire is configured internally—you only need to provide the connection string. Hangfire's automatic retries are disabled since the scheduler manages retries through the manifest system.
 
 ## Creating Scheduled Workflows
 
@@ -188,7 +187,7 @@ public class SyncCustomersWorkflow : EffectWorkflow<SyncCustomersInput, Unit>, I
 
 ```csharp
 .AddScheduler(scheduler => scheduler
-    .UseHangfire(/* ... */)
+    .UseHangfire(connectionString)
     .Schedule<ISyncCustomersWorkflow, SyncCustomersInput>(
         "sync-customers-us-east",
         new SyncCustomersInput { Region = "us-east", BatchSize = 500 },

@@ -77,7 +77,7 @@ public class SchedulerConfiguration
     /// Jobs that have been in "InProgress" state longer than this duration
     /// may be automatically failed and potentially retried.
     /// </remarks>
-    public TimeSpan DefaultJobTimeout { get; set; } = TimeSpan.FromHours(1);
+    public TimeSpan DefaultJobTimeout { get; set; } = TimeSpan.FromMinutes(20);
 
     /// <summary>
     /// Whether to automatically recover stuck jobs on scheduler startup.

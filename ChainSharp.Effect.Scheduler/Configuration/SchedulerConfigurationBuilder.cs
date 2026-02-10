@@ -2,7 +2,6 @@ using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Scheduler.Services.BackgroundTaskServer;
 using ChainSharp.Effect.Scheduler.Services.ManifestScheduler;
-using ChainSharp.Effect.Scheduler.Services.Scheduling;
 using ChainSharp.Effect.Services.EffectWorkflow;
 using LanguageExt;
 using Microsoft.Extensions.DependencyInjection;

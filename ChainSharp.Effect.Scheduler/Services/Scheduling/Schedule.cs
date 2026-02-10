@@ -60,4 +60,46 @@ public record Schedule
     /// </example>
     public static Schedule FromCron(string expression) =>
         new() { Type = ScheduleType.Cron, CronExpression = expression };
+
+    /// <summary>
+    /// Converts the schedule to a cron expression.
+    /// </summary>
+    /// <returns>A 5-field cron expression representing this schedule</returns>
+    /// <remarks>
+    /// For cron-type schedules, returns the existing expression.
+    /// For interval-type schedules, converts to the closest valid cron expression.
+    /// Note that cron has limited expressiveness—intervals that don't divide evenly
+    /// into an hour (e.g., 45 minutes) will be approximated to the nearest valid interval.
+    /// </remarks>
+    public string ToCronExpression()
+    {
+        if (Type == ScheduleType.Cron && CronExpression is not null)
+            return CronExpression;
+
+        if (Interval is null)
+            return "* * * * *"; // Default to every minute
+
+        var totalMinutes = (int)Math.Max(1, Math.Round(Interval.Value.TotalMinutes));
+
+        return totalMinutes switch
+        {
+            1 => "* * * * *",
+            <= 30 when 60 % totalMinutes == 0 => $"*/{totalMinutes} * * * *",
+            60 => "0 * * * *",
+            > 60 when totalMinutes % 60 == 0 && 24 % (totalMinutes / 60) == 0
+                => $"0 */{totalMinutes / 60} * * *",
+            // For intervals that don't map cleanly to cron, use the closest divisor of 60
+            _ => $"*/{ClosestDivisorOf60(totalMinutes)} * * * *"
+        };
+    }
+
+    /// <summary>
+    /// Finds the closest divisor of 60 to the given value.
+    /// Valid cron minute intervals must divide evenly into 60.
+    /// </summary>
+    private static int ClosestDivisorOf60(int value)
+    {
+        int[] divisors = [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30];
+        return divisors.MinBy(d => Math.Abs(d - value));
+    }
 }

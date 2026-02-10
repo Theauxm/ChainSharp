@@ -2,7 +2,9 @@ using ChainSharp.Effect.Scheduler.Configuration;
 using ChainSharp.Effect.Scheduler.Hangfire.Services.HangfireTaskServer;
 using ChainSharp.Effect.Scheduler.Services.BackgroundTaskServer;
 using ChainSharp.Effect.Scheduler.Services.ManifestScheduler;
+using ChainSharp.Effect.Scheduler.Services.Scheduling;
 using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -15,14 +17,14 @@ namespace ChainSharp.Effect.Scheduler.Hangfire.Extensions;
 public static class HangfireServiceExtensions
 {
     /// <summary>
-    /// Configures Hangfire as the background task server for the scheduler.
+    /// Configures Hangfire as the background task server for the scheduler using PostgreSQL storage.
     /// </summary>
     /// <param name="builder">The scheduler configuration builder</param>
-    /// <param name="configureHangfire">Action to configure Hangfire (e.g., storage provider)</param>
-    /// <param name="configureServer">Optional action to configure the Hangfire server options</param>
+    /// <param name="connectionString">PostgreSQL connection string for Hangfire storage</param>
     /// <returns>The scheduler configuration builder for continued chaining</returns>
     /// <remarks>
-    /// Use this method within the AddScheduler configuration to set up Hangfire:
+    /// Hangfire is configured internally with sensible defaults. Retries are disabled since
+    /// ChainSharp.Effect.Scheduler manages its own retry logic through the manifest system.
     ///
     /// <code>
     /// services.AddChainSharpEffects(options => options
@@ -30,37 +32,34 @@ public static class HangfireServiceExtensions
     ///     .AddPostgresEffect(connectionString)
     ///     .AddScheduler(scheduler => scheduler
     ///         .PollingInterval(TimeSpan.FromSeconds(30))
-    ///         .UseHangfire(
-    ///             config => config
-    ///                 .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-    ///                 .UsePostgreSqlStorage(opts => opts.UseNpgsqlConnection(connectionString)),
-    ///             server => server.WorkerCount = Environment.ProcessorCount * 2
-    ///         )
+    ///         .UseHangfire(connectionString)
     ///     )
     /// );
     /// </code>
     /// </remarks>
     public static SchedulerConfigurationBuilder UseHangfire(
         this SchedulerConfigurationBuilder builder,
-        Action<IGlobalConfiguration> configureHangfire,
-        Action<BackgroundJobServerOptions>? configureServer = null
+        string connectionString
     )
     {
         builder.UseTaskServer(services =>
         {
-            // Configure Hangfire
-            services.AddHangfire(configureHangfire);
+            // Configure Hangfire with PostgreSQL storage and disable automatic retries
+            // ChainSharp.Effect.Scheduler manages retries through its own manifest system
+            services.AddHangfire(
+                config =>
+                    config
+                        .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                        .UseSimpleAssemblyNameTypeSerializer()
+                        .UseRecommendedSerializerSettings()
+                        .UsePostgreSqlStorage(opts => opts.UseNpgsqlConnection(connectionString))
+                        .UseFilter(new AutomaticRetryAttribute { Attempts = 0 })
+            );
 
-            // Configure and add Hangfire server
-            var serverOptions = new BackgroundJobServerOptions();
-            configureServer?.Invoke(serverOptions);
+            // Add Hangfire server with default settings
             services.AddHangfireServer(options =>
             {
-                options.WorkerCount = serverOptions.WorkerCount;
-                options.Queues = serverOptions.Queues;
-                options.ServerName = serverOptions.ServerName;
-                options.ShutdownTimeout = serverOptions.ShutdownTimeout;
-                options.SchedulePollingInterval = serverOptions.SchedulePollingInterval;
+                options.Queues = ["default", "scheduler"];
             });
 
             // Register HangfireTaskServer as IBackgroundTaskServer
@@ -106,7 +105,7 @@ public static class HangfireServiceExtensions
         SeedPendingManifests(app.ApplicationServices, config, logger);
 
         // Start the recurring manifest polling job
-        var cronExpression = ToCronExpression(config.PollingInterval);
+        var cronExpression = Schedule.FromInterval(config.PollingInterval).ToCronExpression();
         taskServer.AddOrUpdateRecurringManifestPoll(recurringJobId, cronExpression);
 
         return app;
@@ -156,26 +155,5 @@ public static class HangfireServiceExtensions
             "Successfully seeded {Count} manifest(s)",
             config.PendingManifests.Count
         );
-    }
-
-    /// <summary>
-    /// Converts a TimeSpan to a cron expression.
-    /// </summary>
-    /// <param name="interval">The interval to convert</param>
-    /// <returns>A cron expression representing the interval</returns>
-    private static string ToCronExpression(TimeSpan interval)
-    {
-        // Round to nearest minute
-        var totalMinutes = (int)Math.Max(1, Math.Round(interval.TotalMinutes));
-
-        return totalMinutes switch
-        {
-            1 => "* * * * *", // Every minute
-            < 60 when 60 % totalMinutes == 0 => $"*/{totalMinutes} * * * *", // Every N minutes
-            60 => "0 * * * *", // Every hour
-            > 60 when totalMinutes % 60 == 0 && 24 % (totalMinutes / 60) == 0
-                => $"0 */{totalMinutes / 60} * * *", // Every N hours
-            _ => $"*/{Math.Min(totalMinutes, 59)} * * * *" // Fallback to closest minute interval
-        };
     }
 }

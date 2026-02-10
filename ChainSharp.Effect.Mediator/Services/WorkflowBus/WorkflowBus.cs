@@ -49,6 +49,15 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
     private static readonly ConcurrentDictionary<Type, MethodInfo> RunMethodCache = new();
 
     /// <summary>
+    /// Thread-safe cache for storing the 2-parameter Run(TIn, Metadata) method lookups.
+    /// </summary>
+    /// <remarks>
+    /// This cache is used when executing workflows with pre-created metadata (e.g., from the scheduler).
+    /// </remarks>
+    private static readonly ConcurrentDictionary<Type, MethodInfo> RunWithMetadataMethodCache =
+        new();
+
+    /// <summary>
     /// Clears the static reflection method cache. This should be called during testing
     /// or when memory cleanup is needed to prevent memory leaks from cached MethodInfo objects.
     /// </summary>
@@ -60,6 +69,7 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
     public static void ClearMethodCache()
     {
         RunMethodCache.Clear();
+        RunWithMetadataMethodCache.Clear();
     }
 
     /// <summary>
@@ -68,7 +78,7 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
     /// <returns>The number of cached method entries</returns>
     public static int GetMethodCacheSize()
     {
-        return RunMethodCache.Count;
+        return RunMethodCache.Count + RunWithMetadataMethodCache.Count;
     }
 
     public object InitializeWorkflow(object workflowInput, Metadata? metadata = null)
@@ -94,7 +104,11 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
         var workflowService = serviceProvider.GetRequiredService(correctWorkflow);
         serviceProvider.InjectProperties(workflowService);
 
-        if (metadata != null)
+        // When metadata is provided WITHOUT a ManifestId, it's from a parent workflow
+        // calling a child workflow. Set ParentId to establish the parent-child relationship.
+        // When metadata HAS a ManifestId, it's from the scheduler and should be passed
+        // directly to the Run(input, metadata) overload instead.
+        if (metadata != null && metadata.ManifestId == null)
         {
             var parentIdProperty = workflowService
                 .GetType()
@@ -125,21 +139,63 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
     /// 3. Looks up the workflow type in the registry based on the input type
     /// 4. Resolves the workflow instance from the service provider
     /// 5. Injects properties into the workflow instance
-    /// 6. Sets the parent ID if metadata is provided
+    /// 6. Sets the parent ID if metadata is provided (for parent-child relationships)
     /// 7. Finds the appropriate Run method on the workflow using reflection
-    /// 8. Invokes the Run method with the input
+    /// 8. Invokes the Run method with the input (and metadata if scheduler-created)
     /// 9. Returns the result cast to the expected output type
     ///
     /// The method uses reflection to find and invoke the Run method because workflows
     /// can have multiple Run method implementations, and we need to select the correct one
     /// from ChainSharp.Effect rather than the base ChainSharp implementation.
+    ///
+    /// When metadata with a ManifestId is provided (scheduler-created metadata), the
+    /// Run(TIn, Metadata) overload is called so the workflow uses that pre-created metadata
+    /// instead of creating a new one. This ensures the scheduler's metadata record is properly
+    /// updated from Pending to Completed.
     /// </remarks>
     public Task<TOut> RunAsync<TOut>(object workflowInput, Metadata? metadata = null)
     {
         var workflowService = InitializeWorkflow(workflowInput, metadata);
-
-        // Get the run methodInfo from the workflow type using cache for performance
         var workflowType = workflowService.GetType();
+
+        // When metadata has a ManifestId, it's scheduler-created metadata.
+        // Use the 2-param Run(input, metadata) method so the workflow uses this
+        // pre-created metadata instead of creating a new one.
+        if (metadata?.ManifestId != null)
+        {
+            var runWithMetadataMethod = RunWithMetadataMethodCache.GetOrAdd(
+                workflowType,
+                type =>
+                {
+                    var method = type.GetMethods()
+                        .Where(x => x.Name == "Run")
+                        // Run(input, metadata) has 2 parameters
+                        .Where(x => x.GetParameters().Length == 2)
+                        .FirstOrDefault(
+                            x => x.GetParameters()[1].ParameterType == typeof(Metadata)
+                        );
+
+                    if (method == null)
+                        throw new WorkflowException(
+                            $"Failed to find Run(input, metadata) method for workflow type ({type.Name})"
+                        );
+
+                    return method;
+                }
+            );
+
+            var taskWithMetadata = (Task<TOut>?)
+                runWithMetadataMethod.Invoke(workflowService, [workflowInput, metadata]);
+
+            if (taskWithMetadata is null)
+                throw new WorkflowException(
+                    $"Failed to invoke Run(input, metadata) method for workflow type ({workflowType.Name})"
+                );
+
+            return taskWithMetadata;
+        }
+
+        // Standard case: Get the 1-param Run method from cache
         var runMethod = RunMethodCache.GetOrAdd(
             workflowType,
             type =>

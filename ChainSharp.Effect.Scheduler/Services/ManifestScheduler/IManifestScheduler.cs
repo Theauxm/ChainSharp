@@ -9,29 +9,6 @@ namespace ChainSharp.Effect.Scheduler.Services.ManifestScheduler;
 /// <summary>
 /// Provides a type-safe API for scheduling workflows as recurring jobs.
 /// </summary>
-/// <remarks>
-/// IManifestScheduler simplifies manifest creation by hiding the complexity of
-/// assembly-qualified names and JSON serialization. It uses generic constraints
-/// to ensure type safety between workflows and their inputs at compile time.
-///
-/// All scheduling operations use upsert semantics based on ExternalId, making
-/// them safe to call on every application startup.
-/// </remarks>
-/// <example>
-/// <code>
-/// // Schedule a single job
-/// await scheduler.ScheduleAsync&lt;IHelloWorldWorkflow, HelloWorldInput&gt;(
-///     "hello-world",
-///     new HelloWorldInput { Name = "Scheduler" },
-///     Every.Minutes(1));
-///
-/// // Schedule multiple jobs from a collection
-/// await scheduler.ScheduleManyAsync&lt;ISyncTableWorkflow, SyncTableInput, string&gt;(
-///     new[] { "users", "orders", "products" },
-///     table => ($"sync-{table}", new SyncTableInput { TableName = table }),
-///     Every.Minutes(5));
-/// </code>
-/// </example>
 public interface IManifestScheduler
 {
     /// <summary>

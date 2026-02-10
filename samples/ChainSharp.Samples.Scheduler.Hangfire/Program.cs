@@ -1,13 +1,14 @@
 using ChainSharp.Effect.Data.Postgres.Extensions;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Mediator.Extensions;
+using ChainSharp.Effect.Provider.Json.Extensions;
+using ChainSharp.Effect.Provider.Parameter.Extensions;
 using ChainSharp.Effect.Scheduler.Extensions;
 using ChainSharp.Effect.Scheduler.Hangfire.Extensions;
 using ChainSharp.Effect.Scheduler.Services.Scheduling;
 using ChainSharp.Effect.Scheduler.Workflows.ManifestExecutor;
 using ChainSharp.Samples.Scheduler.Hangfire.Workflows.HelloWorld;
 using Hangfire;
-using Hangfire.PostgreSql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,20 +38,13 @@ builder.Services.AddChainSharpEffects(
             )
             // Add Postgres for workflow metadata persistence
             .AddPostgresEffect(connectionString)
+            .AddJsonEffect()
+            .SaveWorkflowParameters()
             // Add Scheduler with Hangfire as the background task server
             .AddScheduler(
                 scheduler =>
                     scheduler
-                        .UseHangfire(
-                            h =>
-                                h.UsePostgreSqlStorage(
-                                    o => o.UseNpgsqlConnection(connectionString)
-                                ),
-                            serverOptions =>
-                            {
-                                serverOptions.Queues = ["default", "scheduler"];
-                            }
-                        )
+                        .UseHangfire(connectionString)
                         .Schedule<IHelloWorldWorkflow, HelloWorldInput>(
                             "sample-hello-world",
                             new HelloWorldInput { Name = "ChainSharp Scheduler" },

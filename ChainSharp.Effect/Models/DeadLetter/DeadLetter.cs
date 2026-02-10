@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations.Schema;
-using ChainSharp.Effect.Models;
-using ChainSharp.Effect.Models.Metadata;
+using System.Text.Json;
+using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
+using ChainSharp.Effect.Enums;
+using ChainSharp.Effect.Models.DeadLetter.DTOs;
 
-namespace ChainSharp.Effect.Scheduler.Models;
+namespace ChainSharp.Effect.Models.DeadLetter;
 
 /// <summary>
 /// Represents a job execution that has been moved to the dead letter queue after exceeding retry limits.
@@ -12,8 +14,8 @@ namespace ChainSharp.Effect.Scheduler.Models;
 /// They serve as both an audit trail and a mechanism for operators to review, retry, or acknowledge
 /// failed jobs.
 /// 
-/// A dead letter maintains a reference to its original Metadata record, preserving the full
-/// execution history including the failure details, stack traces, and input/output data.
+/// A dead letter maintains a reference to its Manifest (job definition), preserving the full
+/// context of what was being executed when the failure occurred.
 /// </remarks>
 public class DeadLetter : IModel
 {
@@ -30,16 +32,6 @@ public class DeadLetter : IModel
     /// </summary>
     [Column("dead_lettered_at")]
     public DateTime DeadLetteredAt { get; private set; }
-
-    /// <summary>
-    /// Gets the reason why this job was dead-lettered.
-    /// </summary>
-    /// <remarks>
-    /// This could be "Max retries exceeded", "Non-retryable exception", 
-    /// "Manual dead-letter by operator", etc.
-    /// </remarks>
-    [Column("reason")]
-    public string Reason { get; private set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the current resolution status of this dead letter.
@@ -60,7 +52,13 @@ public class DeadLetter : IModel
     public string? ResolutionNote { get; set; }
 
     /// <summary>
-    /// Gets the total number of retry attempts before dead-lettering.
+    /// Gets the reason why this job was moved to the dead letter queue.
+    /// </summary>
+    [Column("reason")]
+    public string Reason { get; private set; }
+
+    /// <summary>
+    /// Gets the number of retry attempts made before this job was dead-lettered.
     /// </summary>
     [Column("retry_count_at_dead_letter")]
     public int RetryCountAtDeadLetter { get; private set; }
@@ -70,15 +68,15 @@ public class DeadLetter : IModel
     #region ForeignKeys
 
     /// <summary>
-    /// Gets the ID of the associated Metadata record.
+    /// Gets the ID of the associated Manifest (job definition).
     /// </summary>
-    [Column("metadata_id")]
-    public int MetadataId { get; private set; }
+    [Column("manifest_id")]
+    public int ManifestId { get; private set; }
 
     /// <summary>
-    /// Gets the associated Metadata record containing the execution details.
+    /// Gets the associated Manifest containing the job definition.
     /// </summary>
-    public Metadata? Metadata { get; private set; }
+    public Manifest.Manifest? Manifest { get; private set; }
 
     /// <summary>
     /// Gets or sets the ID of the retry Metadata record, if this dead letter was retried.
@@ -89,7 +87,7 @@ public class DeadLetter : IModel
     /// <summary>
     /// Gets the Metadata record for the retry execution, if applicable.
     /// </summary>
-    public Metadata? RetryMetadata { get; private set; }
+    public Metadata.Metadata? RetryMetadata { get; private set; }
 
     #endregion
 
@@ -98,20 +96,18 @@ public class DeadLetter : IModel
     /// <summary>
     /// Creates a new DeadLetter record for a failed job execution.
     /// </summary>
-    /// <param name="metadata">The failed Metadata record</param>
-    /// <param name="reason">The reason for dead-lettering</param>
-    /// <param name="retryCount">The number of retries attempted</param>
+    /// <param name="createDeadLetter"></param>
     /// <returns>A new DeadLetter instance</returns>
-    public static DeadLetter Create(Metadata metadata, string reason, int retryCount)
+    public static DeadLetter Create(CreateDeadLetter createDeadLetter)
     {
         return new DeadLetter
         {
-            MetadataId = metadata.Id,
-            Metadata = metadata,
+            ManifestId = createDeadLetter.Manifest.Id,
+            Manifest = createDeadLetter.Manifest,
             DeadLetteredAt = DateTime.UtcNow,
-            Reason = reason,
+            Reason = createDeadLetter.Reason,
+            RetryCountAtDeadLetter = createDeadLetter.RetryCount,
             Status = DeadLetterStatus.AwaitingIntervention,
-            RetryCountAtDeadLetter = retryCount
         };
     }
 
@@ -137,28 +133,16 @@ public class DeadLetter : IModel
         RetryMetadataId = retryMetadataId;
     }
 
+    public override string ToString() =>
+        JsonSerializer.Serialize(
+            this,
+            GetType(),
+            ChainSharpEffectConfiguration.StaticSystemJsonSerializerOptions
+        );
+
     #endregion
 
-    private DeadLetter() { }
-}
-
-/// <summary>
-/// The resolution status of a dead letter.
-/// </summary>
-public enum DeadLetterStatus
-{
-    /// <summary>
-    /// The dead letter is awaiting manual intervention.
-    /// </summary>
-    AwaitingIntervention,
-
-    /// <summary>
-    /// The dead letter has been retried (a new execution was enqueued).
-    /// </summary>
-    Retried,
-
-    /// <summary>
-    /// The dead letter has been acknowledged without retry.
-    /// </summary>
-    Acknowledged
+    public DeadLetter()
+    {
+    }
 }

@@ -7,45 +7,33 @@ using LanguageExt;
 
 namespace ChainSharp.Effect.Models.StepMetadata;
 
-public class StepMetadata : IStepMetadata
+public class StepMetadata : IModel
 {
     #region Columns
 
-    [Column("id")]
-    public int Id { get; private set; }
+    [Column("id")] public int Id { get; private set; }
 
-    [Column("workflow_name")]
-    public string WorkflowName { get; private set; }
+    [Column("workflow_name")] public string WorkflowName { get; private set; }
 
-    [Column("name")]
-    public string Name { get; private set; }
+    [Column("name")] public string Name { get; private set; }
 
-    [Column("external_id")]
-    public string ExternalId { get; private set; }
+    [Column("external_id")] public string ExternalId { get; private set; }
 
-    [Column("workflow_external_id")]
-    public string WorkflowExternalId { get; private set; }
+    [Column("workflow_external_id")] public string WorkflowExternalId { get; private set; }
 
-    [Column("start_time_utc")]
-    public DateTime? StartTimeUtc { get; set; }
+    [Column("start_time_utc")] public DateTime? StartTimeUtc { get; set; }
 
-    [Column("end_time_utc")]
-    public DateTime? EndTimeUtc { get; set; }
+    [Column("end_time_utc")] public DateTime? EndTimeUtc { get; set; }
 
-    [Column("input_type")]
-    public Type InputType { get; private set; }
+    [Column("input_type")] public Type InputType { get; private set; }
 
-    [Column("output_type")]
-    public Type OutputType { get; private set; }
+    [Column("output_type")] public Type OutputType { get; private set; }
 
-    [Column("state")]
-    public EitherStatus State { get; set; }
+    [Column("state")] public EitherStatus State { get; set; }
 
-    [Column("has_ran")]
-    public bool HasRan { get; set; }
+    [Column("has_ran")] public bool HasRan { get; set; }
 
-    [Column("output_json")]
-    public string? OutputJson { get; set; }
+    [Column("output_json")] public string? OutputJson { get; set; }
 
     #endregion
 
@@ -83,5 +71,7 @@ public class StepMetadata : IStepMetadata
     #endregion
 
     [JsonConstructor]
-    public StepMetadata() { }
+    public StepMetadata()
+    {
+    }
 }

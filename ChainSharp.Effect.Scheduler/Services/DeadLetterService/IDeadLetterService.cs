@@ -1,5 +1,5 @@
+using ChainSharp.Effect.Models.DeadLetter;
 using ChainSharp.Effect.Models.Metadata;
-using ChainSharp.Effect.Scheduler.Models;
 
 namespace ChainSharp.Effect.Scheduler.Services.DeadLetterService;
 
@@ -28,11 +28,11 @@ public interface IDeadLetterService
     /// <summary>
     /// Moves a failed job execution to the dead letter queue.
     /// </summary>
-    /// <param name="metadataId">The ID of the failed Metadata record</param>
+    /// <param name="manifestId">The ID of the Manifest (job definition) to dead-letter</param>
     /// <param name="reason">The reason for dead-lettering</param>
     /// <param name="cancellationToken">Cancellation token for the operation</param>
     /// <returns>The created DeadLetter record</returns>
-    Task<DeadLetter> DeadLetterAsync(int metadataId, string reason, CancellationToken cancellationToken = default);
+    Task<DeadLetter> DeadLetterAsync(int manifestId, string reason, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Determines if a failed job should be dead-lettered based on retry policy.
@@ -87,7 +87,8 @@ public interface IDeadLetterService
     /// <param name="onlyAcknowledged">If true, only purge acknowledged records</param>
     /// <param name="cancellationToken">Cancellation token for the operation</param>
     /// <returns>The number of records purged</returns>
-    Task<int> PurgeAsync(DateTime olderThan, bool onlyAcknowledged = true, CancellationToken cancellationToken = default);
+    Task<int> PurgeAsync(DateTime olderThan, bool onlyAcknowledged = true,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets statistics about the dead letter queue.
@@ -104,19 +105,19 @@ public record DeadLetterStatistics
 {
     /// <summary>Total number of unresolved dead letters.</summary>
     public int TotalUnresolved { get; init; }
-    
+
     /// <summary>Number of dead letters awaiting manual intervention.</summary>
     public int AwaitingIntervention { get; init; }
-    
+
     /// <summary>Number of dead letters that have been acknowledged.</summary>
     public int Acknowledged { get; init; }
-    
+
     /// <summary>Number of dead letters that were successfully retried.</summary>
     public int RetriedSuccessfully { get; init; }
-    
+
     /// <summary>Breakdown by manifest.</summary>
     public IReadOnlyDictionary<int, int> CountByManifest { get; init; } = new Dictionary<int, int>();
-    
+
     /// <summary>Most recent dead letter timestamp.</summary>
     public DateTime? MostRecentDeadLetter { get; init; }
 }

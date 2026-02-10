@@ -1,5 +1,6 @@
 using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
+using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.Manifest.DTOs;
 using ChainSharp.Effect.Models.Metadata;
@@ -297,6 +298,208 @@ public class ManifestTests : TestSetup
         foundManifest.Metadatas.Should().Contain(m => m.Id == metadata1.Id);
         foundManifest.Metadatas.Should().Contain(m => m.Id == metadata2.Id);
     }
+
+    #region Scheduling Property Tests
+
+    [Theory]
+    public async Task TestPostgresProviderCanCreateManifestWithSchedulingProperties()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var manifest = Manifest.Create(new CreateManifest
+        {
+            Name = typeof(Unit),
+            IsEnabled = true,
+            ScheduleType = ScheduleType.Cron,
+            CronExpression = "0 3 * * *",
+            MaxRetries = 5,
+            TimeoutSeconds = 3600
+        });
+
+        await context.Track(manifest);
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        // Act
+        var foundManifest = await context.Manifests.FirstOrDefaultAsync(x => x.Id == manifest.Id);
+
+        // Assert
+        foundManifest.Should().NotBeNull();
+        foundManifest!.IsEnabled.Should().BeTrue();
+        foundManifest.ScheduleType.Should().Be(ScheduleType.Cron);
+        foundManifest.CronExpression.Should().Be("0 3 * * *");
+        foundManifest.MaxRetries.Should().Be(5);
+        foundManifest.TimeoutSeconds.Should().Be(3600);
+    }
+
+    [Theory]
+    public async Task TestPostgresProviderCanCreateManifestWithIntervalSchedule()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var manifest = Manifest.Create(new CreateManifest
+        {
+            Name = typeof(Unit),
+            ScheduleType = ScheduleType.Interval,
+            IntervalSeconds = 300 // Every 5 minutes
+        });
+
+        await context.Track(manifest);
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        // Act
+        var foundManifest = await context.Manifests.FirstOrDefaultAsync(x => x.Id == manifest.Id);
+
+        // Assert
+        foundManifest.Should().NotBeNull();
+        foundManifest!.ScheduleType.Should().Be(ScheduleType.Interval);
+        foundManifest.IntervalSeconds.Should().Be(300);
+    }
+
+    [Theory]
+    public async Task TestPostgresProviderCanCreateDisabledManifest()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var manifest = Manifest.Create(new CreateManifest
+        {
+            Name = typeof(Unit),
+            IsEnabled = false,
+            ScheduleType = ScheduleType.Cron,
+            CronExpression = "0 0 * * *"
+        });
+
+        await context.Track(manifest);
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        // Act
+        var foundManifest = await context.Manifests.FirstOrDefaultAsync(x => x.Id == manifest.Id);
+
+        // Assert
+        foundManifest.Should().NotBeNull();
+        foundManifest!.IsEnabled.Should().BeFalse();
+    }
+
+    [Theory]
+    public async Task TestPostgresProviderCanUpdateLastSuccessfulRun()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var manifest = Manifest.Create(new CreateManifest
+        {
+            Name = typeof(Unit),
+            ScheduleType = ScheduleType.OnDemand
+        });
+
+        await context.Track(manifest);
+        await context.SaveChanges(CancellationToken.None);
+        var manifestId = manifest.Id;
+        context.Reset();
+
+        // Act - Update LastSuccessfulRun
+        var foundManifest = await context.Manifests.FirstOrDefaultAsync(x => x.Id == manifestId);
+        foundManifest.Should().NotBeNull();
+
+        var successTime = DateTime.UtcNow;
+        foundManifest!.LastSuccessfulRun = successTime;
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        // Assert
+        var updatedManifest = await context.Manifests.FirstOrDefaultAsync(x => x.Id == manifestId);
+        updatedManifest.Should().NotBeNull();
+        updatedManifest!.LastSuccessfulRun.Should().BeCloseTo(successTime, TimeSpan.FromSeconds(1));
+    }
+
+    [Theory]
+    public async Task TestPostgresProviderCanQueryEnabledManifests()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var enabledManifest = Manifest.Create(new CreateManifest
+        {
+            Name = typeof(Unit),
+            IsEnabled = true,
+            ScheduleType = ScheduleType.Cron,
+            CronExpression = "0 * * * *"
+        });
+
+        var disabledManifest = Manifest.Create(new CreateManifest
+        {
+            Name = typeof(Unit),
+            IsEnabled = false,
+            ScheduleType = ScheduleType.Cron,
+            CronExpression = "0 * * * *"
+        });
+
+        await context.Track(enabledManifest);
+        await context.Track(disabledManifest);
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        // Act
+        var enabledManifests = await context.Manifests
+            .Where(m => m.IsEnabled && m.ScheduleType == ScheduleType.Cron)
+            .ToListAsync();
+
+        // Assert
+        enabledManifests.Should().Contain(m => m.Id == enabledManifest.Id);
+        enabledManifests.Should().NotContain(m => m.Id == disabledManifest.Id);
+    }
+
+    [Theory]
+    public async Task TestMetadataCanHaveScheduledTime()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var scheduledTime = DateTime.UtcNow.AddMinutes(-5);
+        var metadata = Metadata.Create(new CreateMetadata
+        {
+            Name = nameof(TestMetadataCanHaveScheduledTime),
+            ExternalId = Guid.NewGuid().ToString("N"),
+            Input = new { Test = "value" }
+        });
+        metadata.ScheduledTime = scheduledTime;
+
+        await context.Track(metadata);
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        // Act
+        var foundMetadata = await context.Metadatas.FirstOrDefaultAsync(x => x.Id == metadata.Id);
+
+        // Assert
+        foundMetadata.Should().NotBeNull();
+        foundMetadata!.ScheduledTime.Should().BeCloseTo(scheduledTime, TimeSpan.FromSeconds(1));
+    }
+
+    #endregion
 
     /// <summary>
     /// Test configuration class used for Manifest property serialization tests.

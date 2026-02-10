@@ -2,6 +2,7 @@ using System.Data;
 using ChainSharp.Effect.Data.Models.Metadata;
 using ChainSharp.Effect.Data.Services.DataContextTransaction;
 using ChainSharp.Effect.Models;
+using ChainSharp.Effect.Models.DeadLetter;
 using ChainSharp.Effect.Models.Log;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.Metadata;
@@ -67,6 +68,18 @@ public interface IDataContext : IEffectProvider
     /// that can be serialized/deserialized as JSONB.
     /// </remarks>
     DbSet<Manifest> Manifests { get; }
+
+    /// <summary>
+    /// Gets the DbSet for dead letter records.
+    /// </summary>
+    /// <remarks>
+    /// This property provides access to the DeadLetter table, which stores jobs
+    /// that have exceeded their retry limits and require manual intervention.
+    ///
+    /// The DeadLetters DbSet allows for tracking failed jobs, their resolution status,
+    /// and any retry attempts made after dead-lettering.
+    /// </remarks>
+    DbSet<DeadLetter> DeadLetters { get; }
 
     #endregion
 

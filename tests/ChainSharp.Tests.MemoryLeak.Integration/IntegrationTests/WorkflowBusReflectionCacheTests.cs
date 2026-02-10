@@ -171,6 +171,7 @@ public class WorkflowBusReflectionCacheTests
             var warmInput = MemoryTestModelFactory.CreateInput($"warm_{i}");
             await workflowBus.RunAsync<MemoryTestOutput>(warmInput);
         }
+
         warmStopwatch.Stop();
 
         // Assert
@@ -183,7 +184,7 @@ public class WorkflowBusReflectionCacheTests
         // Warm executions should be comparable or faster due to caching
         warmAverageMs
             .Should()
-            .BeLessOrEqualTo(
+            .BeLessThanOrEqualTo(
                 coldStartMs * 1.2,
                 "Cached executions should be reasonably fast compared to cold start"
             );
@@ -224,7 +225,7 @@ public class WorkflowBusReflectionCacheTests
 
         laterScopesAverage
             .Should()
-            .BeLessOrEqualTo(
+            .BeLessThanOrEqualTo(
                 firstScopeAverage * 1.5,
                 "Later scopes should benefit from shared static reflection cache"
             );

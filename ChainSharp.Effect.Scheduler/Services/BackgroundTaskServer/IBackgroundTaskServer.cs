@@ -59,7 +59,8 @@ public interface IBackgroundTaskServer
     /// <remarks>
     /// If a recurring job with the same ID already exists, it will be updated with the new schedule.
     /// </remarks>
-    Task AddOrUpdateRecurringAsync<TJob>(string recurringJobId, string cronExpression, object? payload = null) where TJob : class;
+    Task AddOrUpdateRecurringAsync<TJob>(string recurringJobId, string cronExpression, object? payload = null)
+        where TJob : class;
 
     /// <summary>
     /// Removes a recurring job definition.

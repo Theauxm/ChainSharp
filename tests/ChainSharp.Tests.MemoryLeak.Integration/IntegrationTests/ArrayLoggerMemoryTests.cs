@@ -133,7 +133,7 @@ public class ArrayLoggerMemoryTests
                 var arrayLogger = provider.Loggers.First();
                 arrayLogger
                     .Logs.Count.Should()
-                    .BeLessOrEqualTo(
+                    .BeLessThanOrEqualTo(
                         600,
                         "Logs should be approximately trimmed to the specified limit"
                     );

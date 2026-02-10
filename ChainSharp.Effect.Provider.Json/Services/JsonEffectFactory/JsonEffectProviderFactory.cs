@@ -1,9 +1,7 @@
-using System;
 using ChainSharp.Effect.Provider.Json.Services.JsonEffect;
 using ChainSharp.Effect.Services.EffectProvider;
 using ChainSharp.Effect.Services.EffectProviderFactory;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace ChainSharp.Effect.Provider.Json.Services.JsonEffectFactory;
 

@@ -58,5 +58,6 @@ public interface IManifestExecutor
     /// The original Metadata record is preserved for audit purposes.
     /// If the job was dead-lettered, this will remove it from the dead letter queue.
     /// </remarks>
-    Task<Metadata> RetryAsync(int metadataId, bool resetRetryCount = false, CancellationToken cancellationToken = default);
+    Task<Metadata> RetryAsync(int metadataId, bool resetRetryCount = false,
+        CancellationToken cancellationToken = default);
 }

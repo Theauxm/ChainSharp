@@ -4,78 +4,68 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'Directory.Build.props'
 
-permissions:
-  contents: write  # Ensure the token has write permissions to contents
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  DOTNET_VERSION: '8.0.204'
+  NODE_VERSION: '20'
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      issues: write
+      pull-requests: write
+    timeout-minutes: 30
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v3
+        uses: actions/checkout@v4
         with:
-          dotnet-version: '8.0.204'
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Cache NuGet packages
-        uses: actions/cache@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('Directory.Build.props') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
+          node-version: ${{ env.NODE_VERSION }}
 
-      - name: Verify version change
-        id: version
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure git
         run: |
-          props_file="Directory.Build.props"
-          version_line=$(grep '<Version>' $props_file)
-          new_version=$(echo $version_line | sed -E 's/.*<Version>(.*)<\/Version>.*/\1/')
-          echo "New version: $new_version"
-          git fetch --tags
-          last_tag=$(git tag --sort=-creatordate | head -n 1)
-          echo "Last tag: $last_tag"
-          if [ "$new_version" == "${last_tag#v}" ]; then
-            echo "Version has not changed. Exiting."
-            exit 0
-          fi
-          echo "Version has changed. Proceeding."
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Build project
-        run: dotnet build --configuration Release
-
-      - name: Pack NuGet package
-        run: dotnet pack --configuration Release --no-build --output ./nupkgs
-
-      - name: Publish NuGet package
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-        run: |
-          dotnet nuget push ./nupkgs/*.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json
-
-      - name: Create GitHub release
+      - name: Run semantic-release
+        run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore /clp:ErrorsOnly
+
+      - name: Pack NuGet packages
+        run: dotnet pack --configuration Release --no-build --output nupkg /clp:ErrorsOnly
+
+      - name: Push to NuGet
         run: |
-          new_version=$(grep '<Version>' Directory.Build.props | sed -E 's/.*<Version>(.*)<\/Version>.*/\1/')
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag v$new_version
-          git push origin v$new_version
-          curl -X POST \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/${{ github.repository }}/releases \
-            -d '{
-              "tag_name": "v'${new_version}'",
-              "target_commitish": "main",
-              "name": "v'${new_version}'",
-              "body": "Release of version '${new_version}'",
-              "draft": false,
-              "prerelease": false
-            }'
+          for file in nupkg/*.nupkg; do
+            dotnet nuget push "$file" \
+              --api-key ${{ secrets.NUGET_API_KEY }} \
+              --source https://api.nuget.org/v3/index.json \
+              --skip-duplicate
+          done

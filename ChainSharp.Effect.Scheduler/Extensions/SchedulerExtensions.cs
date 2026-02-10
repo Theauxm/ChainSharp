@@ -67,4 +67,28 @@ public static class SchedulerExtensions
         services.AddScoped<IBackgroundTaskServer, TServer>();
         return services;
     }
+
+    /// <summary>
+    /// Registers the in-memory background task server for testing and development.
+    /// </summary>
+    /// <param name="services">The service collection</param>
+    /// <returns>The service collection for chaining</returns>
+    /// <remarks>
+    /// The in-memory task server executes jobs immediately and synchronously.
+    /// It's useful for:
+    /// - Unit and integration testing without Hangfire/Quartz infrastructure
+    /// - Local development scenarios
+    /// - Simple use cases where true background processing isn't needed
+    ///
+    /// Example usage:
+    /// ```csharp
+    /// services.AddChainSharpScheduler();
+    /// services.AddInMemoryTaskServer();
+    /// ```
+    /// </remarks>
+    public static IServiceCollection AddInMemoryTaskServer(this IServiceCollection services)
+    {
+        services.AddScoped<IBackgroundTaskServer, InMemoryTaskServer>();
+        return services;
+    }
 }

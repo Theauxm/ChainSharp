@@ -113,28 +113,116 @@ public enum DeadLetterStatus
 ┌─────────────────────────────────────────────────────────────────┐
 │                  ChainSharp.Effect.Scheduler                     │
 │                                                                  │
-│  ┌──────────────────┐    ┌──────────────────┐                   │
-│  │  ManifestManager │───►│ ManifestExecutor │                   │
-│  │  (polls/decides) │    │ (runs workflows) │                   │
-│  └────────┬─────────┘    └────────┬─────────┘                   │
-│           │                       │                              │
-│           │              ┌────────▼─────────┐                   │
-│           │              │ DeadLetterService│                   │
-│           │              └──────────────────┘                   │
-│           │                                                      │
-│           ▼                                                      │
-│  ┌──────────────────────────────────────────┐                   │
-│  │        IBackgroundTaskServer             │ ◄── Abstraction   │
-│  │  (Hangfire, Quartz, custom, etc.)        │                   │
-│  └──────────────────────────────────────────┘                   │
-└─────────────────────────────────┬───────────────────────────────┘
-                                  │
-                                  ▼
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │   ManifestManagerWorkflow : EffectWorkflow<Unit, PollResult>│   │
+│  │                                                            │   │
+│  │  Activate(Unit)                                            │   │
+│  │      .Chain<ReapFailedJobsStep>()                          │   │
+│  │      .Chain<DetermineJobsToQueueStep>()                    │   │
+│  │      .Chain<EnqueueJobsStep>()                             │   │
+│  │      .Resolve()                                            │   │
+│  └──────────────────────────────┬───────────────────────────┘   │
+│                                 │                                │
+│                                 ▼                                │
+│                    ┌──────────────────────┐                     │
+│                    │ IBackgroundTaskServer│ ◄── Abstraction     │
+│                    │ (Hangfire/Quartz/etc)│                     │
+│                    └──────────┬───────────┘                     │
+│                               │                                  │
+│                               ▼                                  │
+│                    ┌──────────────────┐                         │
+│                    │ ManifestExecutor │                         │
+│                    │ (runs workflows) │                         │
+│                    └────────┬─────────┘                         │
+└─────────────────────────────┼───────────────────────────────────┘
+                              │
+                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                  ChainSharp.Effect.Mediator                      │
 │                      [WorkflowBus]                               │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## ManifestManagerWorkflow
+
+The `ManifestManagerWorkflow` is an `EffectWorkflow<Unit, PollResult>` that runs on a recurring schedule (e.g., once per minute) via IBackgroundTaskServer. It uses the standard ChainSharp step pattern:
+
+```csharp
+public class ManifestManagerWorkflow : EffectWorkflow<Unit, PollResult>
+{
+    protected override async Task<Either<Exception, PollResult>> RunInternal(Unit input)
+        => Activate(input)
+            .Chain<ReapFailedJobsStep>()
+            .Chain<DetermineJobsToQueueStep>()
+            .Chain<EnqueueJobsStep>()
+            .Resolve();
+}
+```
+
+### Why `EffectWorkflow`?
+
+Using `EffectWorkflow` provides:
+- **Metadata tracking**: Each poll execution is recorded with start time, end time, success/failure status
+- **Visibility**: Can query "when did the last poll run?" and "did it fail?"
+- **Consistency**: Follows the same pattern as all other workflows in ChainSharp
+
+**Trade-off**: EffectWorkflow calls `SaveChanges()` atomically at the end. If `EnqueueJobsStep` succeeds but something after fails, DeadLetter records from step 1 could be rolled back. Steps that need immediate persistence should call `SaveChanges()` explicitly within the step.
+
+### Step Details
+
+```
+ManifestManagerWorkflow.Run(Unit)
+    │
+    ├─1─► ReapFailedJobsStep : Step<Unit, List<DeadLetter>>
+    │     Input: Unit
+    │     Output: List<DeadLetter> (newly created dead letters)
+    │     
+    │     - Query manifests where failed execution count >= max_retries
+    │     - Create DeadLetter records with status AwaitingIntervention
+    │     - SaveChanges() immediately (dead letters persist regardless of later steps)
+    │
+    ├─2─► DetermineJobsToQueueStep : Step<Unit, List<Manifest>>
+    │     Input: Unit (reads dead letters from Memory if needed)
+    │     Output: List<Manifest> (manifests due for execution)
+    │     
+    │     - Query enabled manifests due for execution based on:
+    │       - schedule_type (Cron, Interval, OnDemand)
+    │       - cron_expression / interval_seconds
+    │       - last_successful_run
+    │     - Filter out manifests already in dead letter queue
+    │     - Filter out manifests with pending/in-progress executions
+    │
+    └─3─► EnqueueJobsStep : Step<List<Manifest>, PollResult>
+          Input: List<Manifest> (from previous step)
+          Output: PollResult (summary of what was enqueued)
+          
+          For each manifest:
+            - Create new Metadata row with state = Pending
+            - SaveChanges() immediately
+            - Enqueue ManifestExecutor.ExecuteAsync(metadataId) to IBackgroundTaskServer
+```
+
+### Why This Order?
+
+1. **Reap first**: Dead-lettering happens before queuing to prevent re-queuing jobs that have already failed too many times
+2. **Determine second**: Scheduling logic runs after reaping so it can skip dead-lettered manifests
+3. **Enqueue last**: Only after all decisions are made do we actually create Metadata and enqueue work
+
+---
+
+## Component Responsibilities
+
+| Component | Responsibility |
+|-----------|---------------|
+| **ManifestManagerWorkflow** | Orchestration: chains the three poll steps together, runs on schedule via IBackgroundTaskServer |
+| **ReapFailedJobsStep** | Dead-letter logic: finds manifests exceeding max_retries, creates DeadLetter records, persists immediately |
+| **DetermineJobsToQueueStep** | Scheduling logic: queries enabled manifests due for execution based on schedule_type, filters out dead-lettered/in-progress |
+| **EnqueueJobsStep** | Enqueue logic: creates Pending Metadata rows, enqueues ManifestExecutor calls to IBackgroundTaskServer |
+| **ManifestExecutor** | Execution: runs a single workflow from a Pending Metadata row (already implemented ✅) |
+| **IBackgroundTaskServer** | Queue abstraction: Hangfire/Quartz/etc. - receives enqueued ManifestExecutor calls, runs ManifestManagerWorkflow on schedule |
+| **Scheduling Utilities** | Helper functions for cron parsing, interval checks - used by DetermineJobsToQueueStep |
 
 ---
 
@@ -146,9 +234,11 @@ public enum DeadLetterStatus
 
 ### Interfaces & Services
 - `IBackgroundTaskServer` - Abstraction over Hangfire/Quartz/etc. (interface only)
-- `IManifestManager` - Polling and orchestration logic (interface only)
+- `ManifestManagerWorkflow` - Workflow that orchestrates the poll (not yet implemented)
+- `ReapFailedJobsStep` - Step for dead-letter reaping (not yet implemented)
+- `DetermineJobsToQueueStep` - Step for scheduling logic (not yet implemented)
+- `EnqueueJobsStep` - Step for creating Metadata and enqueuing (not yet implemented)
 - `IManifestExecutor` / `ManifestExecutor` ✅ **Implemented** - Workflow execution from scheduled jobs
-- `IDeadLetterService` - Dead letter queue management (interface only)
 
 ### Models ✅
 - `Manifest` - Job definition with all scheduling columns (`is_enabled`, `schedule_type`, `cron_expression`, `interval_seconds`, `max_retries`, `timeout_seconds`, `last_successful_run`)
@@ -207,20 +297,32 @@ Full integration test suite for `ManifestExecutor` located in `tests/ChainSharp.
 
 ## What Still Needs Implementation
 
-### 1. Service Implementations (ChainSharp.Effect.Scheduler)
+### 1. Workflow & Steps (ChainSharp.Effect.Scheduler)
 
-**ManifestManager implementation:**
-- Query enabled manifests due for execution
-- Apply scheduling rules (cron parsing, interval checks, concurrency)
-- Create Metadata rows for new executions
-- Enqueue jobs to IBackgroundTaskServer
-- Handle stuck job recovery
+**ManifestManagerWorkflow:**
+- `Workflow<Unit, PollResult>` that chains the three steps
+- Called by IBackgroundTaskServer on recurring schedule
 
-**DeadLetterService implementation:**
-- Dead-letter threshold evaluation (count failed Metadatas for Manifest)
-- CRUD operations for dead letters
-- Retry/acknowledge workflows
-- Statistics/reporting queries
+**ReapFailedJobsStep : Step<Unit, List<DeadLetter>>**
+- Query manifests where failed execution count >= max_retries
+- Create DeadLetter records with status AwaitingIntervention
+- Call `IDataContext.SaveChanges()` immediately
+- Handle stuck job recovery (jobs stuck in InProgress past timeout_seconds)
+
+**DetermineJobsToQueueStep : Step<Unit, List<Manifest>>**
+- Query enabled manifests due for execution based on schedule_type, cron/interval, last_successful_run
+- Filter out manifests already in dead letter queue (status = AwaitingIntervention)
+- Filter out manifests with pending/in-progress executions
+- Concurrency controls (prevent duplicate queuing of same manifest)
+
+**EnqueueJobsStep : Step<List<Manifest>, PollResult>**
+- For each manifest: create Pending Metadata row, SaveChanges, enqueue to IBackgroundTaskServer
+- Return PollResult with summary (jobs enqueued, dead letters created, etc.)
+
+**Scheduling Utilities:**
+- Cron expression parsing (use Cronos or similar library)
+- Interval calculation helpers
+- `ShouldRunNow(manifest)` predicate for DetermineJobsToQueueStep
 
 ### 2. Background Task Server Implementation
 
@@ -237,7 +339,7 @@ Full integration test suite for `ManifestExecutor` located in `tests/ChainSharp.
 
 - ✅ Integration tests for ManifestExecutor with Postgres (9 tests passing)
 - Unit tests for ManifestManager scheduling logic
-- Unit tests for DeadLetterService threshold logic
+- Unit tests for ManifestManager dead-letter reaping logic
 - Integration tests with InMemory data context
 
 ### 4. Documentation

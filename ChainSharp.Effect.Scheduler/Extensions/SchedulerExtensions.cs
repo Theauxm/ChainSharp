@@ -1,7 +1,6 @@
 using ChainSharp.Effect.Scheduler.Configuration;
 using ChainSharp.Effect.Scheduler.Services.BackgroundTaskServer;
 using ChainSharp.Effect.Scheduler.Services.DeadLetterService;
-using ChainSharp.Effect.Scheduler.Services.ManifestExecutor;
 using ChainSharp.Effect.Scheduler.Services.ManifestManager;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -46,9 +45,6 @@ public static class SchedulerExtensions
         configure?.Invoke(configuration);
 
         services.AddSingleton(configuration);
-
-        // Register ManifestExecutor for executing scheduled jobs
-        services.AddScoped<IManifestExecutor, Services.ManifestExecutor.ManifestExecutor>();
 
         // Register other services - implementations will be added later
         // services.AddScoped<IManifestManager, ManifestManager>();

@@ -12,9 +12,8 @@ public class SchedulerTestWorkflow
     : EffectWorkflow<SchedulerTestInput, Unit>,
         ISchedulerTestWorkflow
 {
-    protected override async Task<Either<Exception, Unit>> RunInternal(
-        SchedulerTestInput input
-    ) => Activate(input, Unit.Default).Resolve();
+    protected override async Task<Either<Exception, Unit>> RunInternal(SchedulerTestInput input) =>
+        Activate(input, Unit.Default).Resolve();
 }
 
 /// <summary>
@@ -53,4 +52,5 @@ public record FailingSchedulerTestInput : IManifestProperties
 /// <summary>
 /// Interface for the failing scheduler test workflow.
 /// </summary>
-public interface IFailingSchedulerTestWorkflow : IEffectWorkflow<FailingSchedulerTestInput, Unit> { }
+public interface IFailingSchedulerTestWorkflow
+    : IEffectWorkflow<FailingSchedulerTestInput, Unit> { }

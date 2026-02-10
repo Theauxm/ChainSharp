@@ -8,7 +8,7 @@ using ChainSharp.Effect.Mediator.Services.WorkflowBus;
 using ChainSharp.Effect.Provider.Json.Extensions;
 using ChainSharp.Effect.Provider.Parameter.Extensions;
 using ChainSharp.Effect.Scheduler.Extensions;
-using ChainSharp.Effect.Scheduler.Services.ManifestExecutor;
+using ChainSharp.Effect.Scheduler.Workflows.ManifestExecutor;
 using ChainSharp.Effect.StepProvider.Logging.Extensions;
 using ChainSharp.Tests.ArrayLogger.Services.ArrayLoggingProvider;
 using Microsoft.Extensions.Configuration;
@@ -26,7 +26,7 @@ public abstract class TestSetup
 
     public IWorkflowBus WorkflowBus { get; private set; } = null!;
 
-    public IManifestExecutor ManifestExecutor { get; private set; } = null!;
+    public IManifestExecutorWorkflow ManifestExecutor { get; private set; } = null!;
 
     public IDataContext DataContext { get; private set; } = null!;
 
@@ -54,6 +54,7 @@ public abstract class TestSetup
                             assemblies:
                             [
                                 typeof(AssemblyMarker).Assembly,
+                                typeof(ManifestExecutorWorkflow).Assembly,
                             ]
                         )
                         .SetEffectLogLevel(LogLevel.Information)
@@ -84,16 +85,19 @@ public abstract class TestSetup
     {
         Scope = ServiceProvider.CreateScope();
         WorkflowBus = Scope.ServiceProvider.GetRequiredService<IWorkflowBus>();
-        ManifestExecutor = Scope.ServiceProvider.GetRequiredService<IManifestExecutor>();
+        ManifestExecutor = Scope.ServiceProvider.GetRequiredService<IManifestExecutorWorkflow>();
         DataContext = Scope.ServiceProvider.GetRequiredService<IDataContext>();
     }
 
     [TearDown]
     public async Task TestTearDown()
     {
+        if (ManifestExecutor is IDisposable manifestDisposable)
+            manifestDisposable.Dispose();
+
         if (DataContext is IDisposable disposable)
             disposable.Dispose();
-        
+
         Scope.Dispose();
     }
 }

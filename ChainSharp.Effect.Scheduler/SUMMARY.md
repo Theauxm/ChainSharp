@@ -144,11 +144,11 @@ public enum DeadLetterStatus
 - `ChainSharp.Effect.Scheduler.csproj` - Project file with dependencies
 - Added to solution file
 
-### Skeleton Interfaces ✅
-- `IBackgroundTaskServer` - Abstraction over Hangfire/Quartz/etc.
-- `IManifestManager` - Polling and orchestration logic
-- `IManifestExecutor` - Workflow execution from scheduled jobs
-- `IDeadLetterService` - Dead letter queue management
+### Interfaces & Services
+- `IBackgroundTaskServer` - Abstraction over Hangfire/Quartz/etc. (interface only)
+- `IManifestManager` - Polling and orchestration logic (interface only)
+- `IManifestExecutor` / `ManifestExecutor` ✅ **Implemented** - Workflow execution from scheduled jobs
+- `IDeadLetterService` - Dead letter queue management (interface only)
 
 ### Models ✅
 - `Manifest` - Job definition with all scheduling columns (`is_enabled`, `schedule_type`, `cron_expression`, `interval_seconds`, `max_retries`, `timeout_seconds`, `last_successful_run`)
@@ -167,6 +167,42 @@ public enum DeadLetterStatus
 ### Extensions ✅
 - `SchedulerExtensions` - DI registration helpers
 
+### ManifestExecutor ✅ (Implemented)
+
+The `ManifestExecutor` service executes workflow jobs that have been scheduled via the manifest system:
+
+**Implementation details:**
+- Loads Metadata by ID with Manifest navigation property
+- Validates state (must be `Pending` to execute)
+- Resolves input from Manifest properties via `GetProperties()`
+- Executes workflow via `IWorkflowBus.RunAsync()`
+- Updates `LastSuccessfulRun` on the Manifest after successful execution
+- Persists changes via `IDataContext.SaveChanges()`
+
+**Location:** `Services/ManifestExecutor/ManifestExecutor.cs`
+
+### Integration Tests ✅ (Implemented)
+
+Full integration test suite for `ManifestExecutor` located in `tests/ChainSharp.Tests.Effect.Scheduler.Integration/`:
+
+| Test | Description |
+|------|-------------|
+| `ExecuteAsync_WhenMetadataNotFound_ThrowsInvalidOperationException` | Verifies exception when metadata ID doesn't exist |
+| `ExecuteAsync_WhenStateIsCompleted_ThrowsWorkflowException` | Verifies exception when state is Completed |
+| `ExecuteAsync_WhenStateIsFailed_ThrowsWorkflowException` | Verifies exception when state is Failed |
+| `ExecuteAsync_WhenStateIsInProgress_ThrowsWorkflowException` | Verifies exception when state is InProgress |
+| `ExecuteAsync_WhenManifestIsNull_ThrowsInvalidOperationException` | Verifies exception when manifest not loaded |
+| `ExecuteAsync_WhenStateIsPending_ExecutesWorkflowSuccessfully` | Verifies workflow bus is called correctly |
+| `ExecuteAsync_WhenSuccessful_UpdatesLastSuccessfulRunOnManifest` | Verifies timestamp update |
+| `ExecuteAsync_WithDifferentInputValues_ExecutesCorrectly` | Verifies different inputs work |
+| `ExecuteAsync_WhenCancellationRequested_ThrowsOperationCanceledException` | Verifies cancellation token propagation |
+
+**Test project features:**
+- Uses real Postgres database (no mocks)
+- Real DI container with all ChainSharp effects configured
+- Real `IWorkflowBus`, `IDataContext`, and `IManifestExecutor`
+- Test workflows that implement actual ChainSharp patterns
+
 ---
 
 ## What Still Needs Implementation
@@ -179,13 +215,6 @@ public enum DeadLetterStatus
 - Create Metadata rows for new executions
 - Enqueue jobs to IBackgroundTaskServer
 - Handle stuck job recovery
-
-**ManifestExecutor implementation:**
-- Load Metadata by ID
-- Resolve workflow via WorkflowBus
-- Execute workflow with proper error handling
-- Update Metadata state on completion/failure
-- Trigger dead-letter evaluation on failure
 
 **DeadLetterService implementation:**
 - Dead-letter threshold evaluation (count failed Metadatas for Manifest)
@@ -206,10 +235,10 @@ public enum DeadLetterStatus
 
 ### 3. Testing
 
+- ✅ Integration tests for ManifestExecutor with Postgres (9 tests passing)
 - Unit tests for ManifestManager scheduling logic
 - Unit tests for DeadLetterService threshold logic
 - Integration tests with InMemory data context
-- Integration tests with Postgres
 
 ### 4. Documentation
 

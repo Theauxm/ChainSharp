@@ -50,9 +50,7 @@ public static class DashboardServiceExtensions
         app.UseStaticFiles();
         app.UseAntiforgery();
 
-        app.MapRazorComponents<App>()
-            .AddInteractiveServerRenderMode()
-            .AddAdditionalAssemblies(typeof(DashboardServiceExtensions).Assembly);
+        app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
         return app;
     }

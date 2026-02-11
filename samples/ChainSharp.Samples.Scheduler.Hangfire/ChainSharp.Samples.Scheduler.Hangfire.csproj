@@ -17,6 +17,7 @@
         <ProjectReference Include="..\..\ChainSharp.Effect.Scheduler\ChainSharp.Effect.Scheduler.csproj" />
         <ProjectReference Include="..\..\ChainSharp.Effect.Scheduler.Hangfire\ChainSharp.Effect.Scheduler.Hangfire.csproj" />
         <ProjectReference Include="..\..\ChainSharp.Effect.Provider.Parameter\ChainSharp.Effect.Provider.Parameter.csproj" />
+        <ProjectReference Include="..\..\ChainSharp.Effect.Dashboard\ChainSharp.Effect.Dashboard.csproj" />
 
     </ItemGroup>
 

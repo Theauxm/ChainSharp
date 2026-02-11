@@ -11,6 +11,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\effect\ChainSharp.Effect\ChainSharp.Effect.csproj" />
+        <ProjectReference Include="..\..\data\ChainSharp.Effect.Data\ChainSharp.Effect.Data.csproj" />
     </ItemGroup>
 
     <ItemGroup>

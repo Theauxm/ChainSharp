@@ -1,0 +1,68 @@
+@page "/chainsharp/data/manifests"
+@inject IDataContextProviderFactory DataContextFactory
+
+<RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Manifests</RadzenText>
+
+<RadzenDataGrid Data="@_items"
+                TItem="Manifest"
+                AllowFiltering="true"
+                AllowSorting="true"
+                AllowPaging="true"
+                PageSize="20"
+                PagerHorizontalAlign="HorizontalAlign.Center"
+                FilterMode="FilterMode.Simple"
+                class="rz-datatable-striped">
+    <Columns>
+        <RadzenDataGridColumn TItem="Manifest"
+                              Property="Id"
+                              Title="Id"
+                              Width="80px" />
+        <RadzenDataGridColumn TItem="Manifest"
+                              Property="Name"
+                              Title="Name"
+                              Width="250px" />
+        <RadzenDataGridColumn TItem="Manifest"
+                              Property="ExternalId"
+                              Title="External Id"
+                              Width="200px" />
+        <RadzenDataGridColumn TItem="Manifest"
+                              Property="IsEnabled"
+                              Title="Enabled"
+                              Width="100px" />
+        <RadzenDataGridColumn TItem="Manifest"
+                              Property="ScheduleType"
+                              Title="Schedule Type"
+                              Width="130px" />
+        <RadzenDataGridColumn TItem="Manifest"
+                              Property="CronExpression"
+                              Title="Cron Expression"
+                              Width="150px" />
+        <RadzenDataGridColumn TItem="Manifest"
+                              Property="IntervalSeconds"
+                              Title="Interval (s)"
+                              Width="120px" />
+        <RadzenDataGridColumn TItem="Manifest"
+                              Property="MaxRetries"
+                              Title="Max Retries"
+                              Width="110px" />
+        <RadzenDataGridColumn TItem="Manifest"
+                              Property="TimeoutSeconds"
+                              Title="Timeout (s)"
+                              Width="110px" />
+        <RadzenDataGridColumn TItem="Manifest"
+                              Property="LastSuccessfulRun"
+                              Title="Last Successful Run"
+                              Width="180px"
+                              FormatString="{0:yyyy-MM-dd HH:mm:ss}" />
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    private List<Manifest> _items = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = await DataContextFactory.CreateDbContextAsync(CancellationToken.None);
+        _items = await context.Manifests.AsNoTracking().ToListAsync();
+    }
+}

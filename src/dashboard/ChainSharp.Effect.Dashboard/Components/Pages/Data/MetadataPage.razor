@@ -1,0 +1,69 @@
+@page "/chainsharp/data/metadata"
+@inject IDataContextProviderFactory DataContextFactory
+
+<RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Metadata</RadzenText>
+
+<RadzenDataGrid Data="@_items"
+                TItem="Metadata"
+                AllowFiltering="true"
+                AllowSorting="true"
+                AllowPaging="true"
+                PageSize="20"
+                PagerHorizontalAlign="HorizontalAlign.Center"
+                FilterMode="FilterMode.Simple"
+                class="rz-datatable-striped">
+    <Columns>
+        <RadzenDataGridColumn TItem="Metadata"
+                              Property="Id"
+                              Title="Id"
+                              Width="80px" />
+        <RadzenDataGridColumn TItem="Metadata"
+                              Property="Name"
+                              Title="Name"
+                              Width="200px" />
+        <RadzenDataGridColumn TItem="Metadata"
+                              Property="WorkflowState"
+                              Title="State"
+                              Width="120px" />
+        <RadzenDataGridColumn TItem="Metadata"
+                              Property="ExternalId"
+                              Title="External Id"
+                              Width="200px" />
+        <RadzenDataGridColumn TItem="Metadata"
+                              Property="StartTime"
+                              Title="Start Time"
+                              Width="180px"
+                              FormatString="{0:yyyy-MM-dd HH:mm:ss}" />
+        <RadzenDataGridColumn TItem="Metadata"
+                              Property="EndTime"
+                              Title="End Time"
+                              Width="180px"
+                              FormatString="{0:yyyy-MM-dd HH:mm:ss}" />
+        <RadzenDataGridColumn TItem="Metadata"
+                              Property="FailureStep"
+                              Title="Failure Step"
+                              Width="150px" />
+        <RadzenDataGridColumn TItem="Metadata"
+                              Property="FailureReason"
+                              Title="Failure Reason"
+                              Width="250px" />
+        <RadzenDataGridColumn TItem="Metadata"
+                              Property="ParentId"
+                              Title="Parent Id"
+                              Width="100px" />
+        <RadzenDataGridColumn TItem="Metadata"
+                              Property="ManifestId"
+                              Title="Manifest Id"
+                              Width="110px" />
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    private List<Metadata> _items = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = await DataContextFactory.CreateDbContextAsync(CancellationToken.None);
+        _items = await context.Metadatas.AsNoTracking().ToListAsync();
+    }
+}

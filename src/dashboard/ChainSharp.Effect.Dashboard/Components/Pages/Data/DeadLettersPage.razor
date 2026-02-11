@@ -1,0 +1,61 @@
+@page "/chainsharp/data/dead-letters"
+@inject IDataContextProviderFactory DataContextFactory
+
+<RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Dead Letters</RadzenText>
+
+<RadzenDataGrid Data="@_items"
+                TItem="DeadLetter"
+                AllowFiltering="true"
+                AllowSorting="true"
+                AllowPaging="true"
+                PageSize="20"
+                PagerHorizontalAlign="HorizontalAlign.Center"
+                FilterMode="FilterMode.Simple"
+                class="rz-datatable-striped">
+    <Columns>
+        <RadzenDataGridColumn TItem="DeadLetter"
+                              Property="Id"
+                              Title="Id"
+                              Width="80px" />
+        <RadzenDataGridColumn TItem="DeadLetter"
+                              Property="ManifestId"
+                              Title="Manifest Id"
+                              Width="110px" />
+        <RadzenDataGridColumn TItem="DeadLetter"
+                              Property="Status"
+                              Title="Status"
+                              Width="150px" />
+        <RadzenDataGridColumn TItem="DeadLetter"
+                              Property="DeadLetteredAt"
+                              Title="Dead Lettered At"
+                              Width="180px"
+                              FormatString="{0:yyyy-MM-dd HH:mm:ss}" />
+        <RadzenDataGridColumn TItem="DeadLetter"
+                              Property="Reason"
+                              Title="Reason"
+                              Width="300px" />
+        <RadzenDataGridColumn TItem="DeadLetter"
+                              Property="RetryCountAtDeadLetter"
+                              Title="Retry Count"
+                              Width="120px" />
+        <RadzenDataGridColumn TItem="DeadLetter"
+                              Property="ResolvedAt"
+                              Title="Resolved At"
+                              Width="180px"
+                              FormatString="{0:yyyy-MM-dd HH:mm:ss}" />
+        <RadzenDataGridColumn TItem="DeadLetter"
+                              Property="ResolutionNote"
+                              Title="Resolution Note"
+                              Width="250px" />
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    private List<DeadLetter> _items = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = await DataContextFactory.CreateDbContextAsync(CancellationToken.None);
+        _items = await context.DeadLetters.AsNoTracking().ToListAsync();
+    }
+}

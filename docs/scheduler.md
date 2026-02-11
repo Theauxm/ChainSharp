@@ -401,6 +401,85 @@ var failures = await context.Metadatas
     .ToListAsync();
 ```
 
+## Metadata Cleanup
+
+System workflows like `ManifestManagerWorkflow` run frequently (every 5 seconds by default), generating metadata rows that have no long-term value. The metadata cleanup service automatically purges old entries to keep the database clean.
+
+### How It Works
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│        MetadataCleanupPollingService (BackgroundService)         │
+│            Polls on CleanupInterval (default: 1 minute)         │
+└─────────────────────────────┬───────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                  MetadataCleanupWorkflow                         │
+│                                                                  │
+│  DeleteExpiredMetadataStep:                                      │
+│    1. Find metadata matching whitelist + older than retention    │
+│    2. Only terminal states (Completed / Failed)                  │
+│    3. Delete associated log entries (FK safety)                  │
+│    4. Delete metadata rows                                       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+The cleanup only targets metadata in **terminal states** (Completed or Failed). Pending and InProgress metadata is never deleted, regardless of age. Associated log entries are deleted first to avoid foreign key constraint violations.
+
+Deletion uses EF Core's `ExecuteDeleteAsync` for efficient single-statement SQL—no entities are loaded into memory.
+
+### Enabling Cleanup
+
+Add `.AddMetadataCleanup()` to your scheduler configuration:
+
+```csharp
+builder.Services.AddChainSharpEffects(options => options
+    .AddScheduler(scheduler => scheduler
+        .AddMetadataCleanup()
+    )
+);
+```
+
+With no configuration, this cleans up `ManifestManagerWorkflow` and `MetadataCleanupWorkflow` metadata older than 1 hour, checking every minute.
+
+### Custom Configuration
+
+Override defaults and add your own workflow types to the whitelist:
+
+```csharp
+.AddScheduler(scheduler => scheduler
+    .UseHangfire(connectionString)
+    .AddMetadataCleanup(cleanup =>
+    {
+        cleanup.RetentionPeriod = TimeSpan.FromHours(2);
+        cleanup.CleanupInterval = TimeSpan.FromMinutes(5);
+        cleanup.AddWorkflowType<IMyNoisyWorkflow>();
+        cleanup.AddWorkflowType("LegacyWorkflowName");
+    })
+)
+```
+
+`AddWorkflowType<T>()` uses `typeof(T).Name` to match the `Name` column in the metadata table—the same value workflows record when they execute. You can also pass a raw string for workflows that aren't easily referenced by type.
+
+### Cleanup Configuration Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `CleanupInterval` | 1 minute | How often the cleanup service runs |
+| `RetentionPeriod` | 1 hour | How long to keep metadata before it becomes eligible for deletion |
+| `WorkflowTypeWhitelist` | `ManifestManagerWorkflow`, `MetadataCleanupWorkflow` | Workflow names whose metadata can be deleted (append via `AddWorkflowType`) |
+
+### What Gets Deleted
+
+A metadata row is deleted when **all** of these conditions are true:
+
+1. Its `Name` matches a workflow in the whitelist
+2. Its `StartTime` is older than the retention period
+3. Its `WorkflowState` is `Completed` or `Failed`
+
+Any log entries associated with deleted metadata are also removed.
+
 ## Testing
 
 For integration tests, use the in-memory task server instead of Hangfire:

@@ -1,3 +1,10 @@
+# [5.3.0](https://github.com/Theauxm/ChainSharp/compare/v5.2.0...v5.3.0) (2026-02-11)
+
+
+### Features
+
+* background service manager ([#113](https://github.com/Theauxm/ChainSharp/issues/113)) ([2802ad2](https://github.com/Theauxm/ChainSharp/commit/2802ad2edf59351e99e613553940caeb1a93ab1b))
+
 # [5.2.0](https://github.com/Theauxm/ChainSharp/compare/v5.1.0...v5.2.0) (2026-02-10)
 
 

@@ -19,4 +19,10 @@
         <PackageReference Include="Radzen.Blazor" Version="5.*" />
     </ItemGroup>
 
+    <!-- Propagate RequiresAspNetWebAssets to NuGet consumers so blazor.web.js is resolved -->
+    <ItemGroup>
+        <None Include="build\**" Pack="true" PackagePath="build\" />
+        <None Include="buildTransitive\**" Pack="true" PackagePath="buildTransitive\" />
+    </ItemGroup>
+
 </Project>

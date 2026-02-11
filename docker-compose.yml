@@ -6,10 +6,11 @@ services:
     shm_size: 512m
     environment:
       POSTGRES_USER: chain_sharp
-      POSTGRES_PASSWORD: chain_sharp123 
+      POSTGRES_PASSWORD: chain_sharp123
       POSTGRES_DB: chain_sharp
+      PGPORT: 5433
     tty: true
     ports:
-      - "5432:5432"
+      - "5433:5433"
     networks:
       - default

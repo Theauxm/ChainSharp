@@ -50,6 +50,7 @@ public static class DashboardServiceExtensions
         app.UseStaticFiles();
         app.UseAntiforgery();
 
+        app.MapStaticAssets();
         app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
         return app;

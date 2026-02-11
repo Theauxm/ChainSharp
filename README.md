@@ -16,7 +16,7 @@ For enhanced workflows with effects and persistence:
 ```bash
 dotnet add package Theauxm.ChainSharp.Effect
 dotnet add package Theauxm.ChainSharp.Effect.Data.Postgres
-dotnet add package Theauxm.ChainSharp.Effect.Mediator
+dotnet add package Theauxm.ChainSharp.Effect.Orchestration.Mediator
 ```
 
 ## Available Packages
@@ -27,7 +27,7 @@ dotnet add package Theauxm.ChainSharp.Effect.Mediator
 | [Theauxm.ChainSharp.Effect](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect/) | Enhanced workflows with effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect) |
 | [Theauxm.ChainSharp.Effect.Data.Postgres](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Data.Postgres/) | PostgreSQL persistence | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Data.Postgres) |
 | [Theauxm.ChainSharp.Effect.Data.InMemory](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Data.InMemory/) | In-memory persistence | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Data.InMemory) |
-| [Theauxm.ChainSharp.Effect.Mediator](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Mediator/) | Workflow discovery & execution | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Mediator) |
+| [Theauxm.ChainSharp.Effect.Orchestration.Mediator](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Orchestration.Mediator/) | Workflow discovery & execution | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Orchestration.Mediator) |
 | [Theauxm.ChainSharp.Effect.Provider.Json](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Provider.Json/) | JSON serialization | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Provider.Json) |
 | [Theauxm.ChainSharp.Effect.Provider.Parameter](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Provider.Parameter/) | Parameter serialization | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Provider.Parameter) |
 

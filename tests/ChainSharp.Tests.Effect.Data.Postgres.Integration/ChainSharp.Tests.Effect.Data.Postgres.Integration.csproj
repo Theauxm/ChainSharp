@@ -30,7 +30,7 @@
       <ProjectReference Include="..\ChainSharp.Tests.ArrayLogger\ChainSharp.Tests.ArrayLogger.csproj" />
       <ProjectReference Include="..\..\ChainSharp.Effect.Data.Postgres\ChainSharp.Effect.Data.Postgres.csproj" />
       <ProjectReference Include="..\..\ChainSharp.Effect.Provider.Json\ChainSharp.Effect.Provider.Json.csproj" />
-      <ProjectReference Include="..\..\ChainSharp.Effect.Mediator\ChainSharp.Effect.Mediator.csproj" />
+      <ProjectReference Include="..\..\ChainSharp.Effect.Orchestration.Mediator\ChainSharp.Effect.Orchestration.Mediator.csproj" />
       <ProjectReference Include="..\..\ChainSharp.Effect.Provider.Parameter\ChainSharp.Effect.Provider.Parameter.csproj" />
       <ProjectReference Include="..\..\ChainSharp.Effect.StepProvider.Logging\ChainSharp.Effect.StepProvider.Logging.csproj" />
       <ProjectReference Include="..\ChainSharp.Tests.Effect.Integration\ChainSharp.Tests.Effect.Integration.csproj" />

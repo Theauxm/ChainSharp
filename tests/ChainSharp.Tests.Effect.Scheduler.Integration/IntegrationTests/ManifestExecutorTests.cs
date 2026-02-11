@@ -3,7 +3,7 @@ using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.Manifest.DTOs;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.Metadata.DTOs;
-using ChainSharp.Effect.Scheduler.Workflows.ManifestExecutor;
+using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestExecutor;
 using ChainSharp.Exceptions;
 using ChainSharp.Tests.Effect.Scheduler.Integration.Examples.Workflows;
 using FluentAssertions;

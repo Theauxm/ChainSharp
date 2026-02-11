@@ -15,7 +15,7 @@ For a typical setup with database persistence and workflow discovery:
 ```xml
 <PackageReference Include="Theauxm.ChainSharp.Effect" Version="5.*" />
 <PackageReference Include="Theauxm.ChainSharp.Effect.Data.Postgres" Version="5.*" />
-<PackageReference Include="Theauxm.ChainSharp.Effect.Mediator" Version="5.*" />
+<PackageReference Include="Theauxm.ChainSharp.Effect.Orchestration.Mediator" Version="5.*" />
 ```
 
 Or via the .NET CLI:
@@ -23,7 +23,7 @@ Or via the .NET CLI:
 ```bash
 dotnet add package Theauxm.ChainSharp.Effect
 dotnet add package Theauxm.ChainSharp.Effect.Data.Postgres
-dotnet add package Theauxm.ChainSharp.Effect.Mediator
+dotnet add package Theauxm.ChainSharp.Effect.Orchestration.Mediator
 ```
 
 ## Basic Configuration

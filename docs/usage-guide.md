@@ -224,7 +224,7 @@ The WorkflowBus provides a way to run workflows from anywhere in your applicatio
 
 ```csharp
 using ChainSharp.Step;
-using ChainSharp.Effect.Mediator.Services.WorkflowBus;
+using ChainSharp.Effect.Orchestration.Mediator.Services.WorkflowBus;
 using LanguageExt;
 
 // Define a step that runs another workflow
@@ -243,7 +243,7 @@ internal class StepToRunNestedWorkflow(IWorkflowBus workflowBus) : Step<Unit, II
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
-using ChainSharp.Effect.Mediator.Services.WorkflowBus;
+using ChainSharp.Effect.Orchestration.Mediator.Services.WorkflowBus;
 using ChainSharp.Exceptions;
 
 [ApiController]

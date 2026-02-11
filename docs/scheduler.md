@@ -6,7 +6,7 @@ nav_order: 7
 
 # Scheduling
 
-ChainSharp.Effect.Scheduler adds background job orchestration to workflows. Define a manifest (what to run, when, and how many retries), and the scheduler handles execution, retries, and dead-lettering.
+ChainSharp.Effect.Orchestration.Scheduler adds background job orchestration to workflows. Define a manifest (what to run, when, and how many retries), and the scheduler handles execution, retries, and dead-lettering.
 
 This isn't a traditional cron scheduler. It supports cron expressions, but its design goal is controlled bulk job orchestration—database replication with thousands of table slices, for example—where you need visibility into every execution attempt.
 
@@ -101,8 +101,8 @@ The **ManifestExecutorWorkflow** runs on Hangfire workers for each enqueued job.
 ### Installation
 
 ```bash
-dotnet add package Theauxm.ChainSharp.Effect.Scheduler
-dotnet add package Theauxm.ChainSharp.Effect.Scheduler.Hangfire
+dotnet add package Theauxm.ChainSharp.Effect.Orchestration.Scheduler
+dotnet add package Theauxm.ChainSharp.Effect.Orchestration.Scheduler.Hangfire
 ```
 
 ### Configuration

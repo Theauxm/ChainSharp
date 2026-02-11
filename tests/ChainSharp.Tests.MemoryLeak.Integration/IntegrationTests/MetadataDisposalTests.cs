@@ -1,6 +1,6 @@
-using ChainSharp.Effect.Mediator.Services.WorkflowBus;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.Metadata.DTOs;
+using ChainSharp.Effect.Orchestration.Mediator.Services.WorkflowBus;
 using ChainSharp.Tests.MemoryLeak.Integration.TestWorkflows;
 using ChainSharp.Tests.MemoryLeak.Integration.TestWorkflows.TestModels;
 using ChainSharp.Tests.MemoryLeak.Integration.Utils;

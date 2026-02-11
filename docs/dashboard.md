@@ -138,7 +138,7 @@ The dashboard sits alongside other Effect packages in the dependency tree:
 ```
 ChainSharp.Effect
     ├── ChainSharp.Effect.Dashboard (UI)
-    ├── ChainSharp.Effect.Mediator (WorkflowBus)
+    ├── ChainSharp.Effect.Orchestration.Mediator (WorkflowBus)
     ├── ChainSharp.Effect.Data (Persistence)
     └── ...
 ```

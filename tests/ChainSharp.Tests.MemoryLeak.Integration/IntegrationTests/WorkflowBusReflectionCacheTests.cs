@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using ChainSharp.Effect.Mediator.Services.WorkflowBus;
+using ChainSharp.Effect.Orchestration.Mediator.Services.WorkflowBus;
 using ChainSharp.Tests.MemoryLeak.Integration.TestWorkflows.TestModels;
 using ChainSharp.Tests.MemoryLeak.Integration.Utils;
 using FluentAssertions;

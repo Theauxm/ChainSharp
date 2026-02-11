@@ -1,7 +1,7 @@
 using ChainSharp.Effect.Data.InMemory.Extensions;
 using ChainSharp.Effect.Extensions;
-using ChainSharp.Effect.Mediator.Extensions;
-using ChainSharp.Effect.Mediator.Services.WorkflowBus;
+using ChainSharp.Effect.Orchestration.Mediator.Extensions;
+using ChainSharp.Effect.Orchestration.Mediator.Services.WorkflowBus;
 using ChainSharp.Effect.Provider.Json.Extensions;
 using ChainSharp.Effect.Provider.Parameter.Extensions;
 using Microsoft.Extensions.DependencyInjection;

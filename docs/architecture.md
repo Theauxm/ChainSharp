@@ -24,13 +24,13 @@ How ChainSharp's components fit together.
                                   │
                                   ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│                  ChainSharp.Effect.Scheduler (Optional)             │
+│           ChainSharp.Effect.Orchestration.Scheduler (Optional)      │
 │    [ManifestManager] ───► [ManifestExecutor] ───► [DeadLetter]     │
 └─────────────────────────────────┬───────────────────────────────────┘
                                   │
                                   ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│                  ChainSharp.Effect.Mediator                         │
+│           ChainSharp.Effect.Orchestration.Mediator                  │
 │         [WorkflowBus] ────────► [WorkflowRegistry]                  │
 └─────────────────────────────────┬───────────────────────────────────┘
                                   │
@@ -67,16 +67,16 @@ ChainSharp (Core)
               │
               ├─── ChainSharp.Effect.Dashboard (Web UI)
               │
-              ├─── ChainSharp.Effect.Mediator (WorkflowBus)
+              ├─── ChainSharp.Effect.Orchestration.Mediator (WorkflowBus)
               │
               ├─── ChainSharp.Effect.Data (Abstract Persistence)
               │         │
               │         ├─── ChainSharp.Effect.Data.Postgres
               │         └─── ChainSharp.Effect.Data.InMemory
               │
-              ├─── ChainSharp.Effect.Scheduler (Job Orchestration)
+              ├─── ChainSharp.Effect.Orchestration.Scheduler (Job Orchestration)
               │         │
-              │         └─── ChainSharp.Effect.Scheduler.Hangfire
+              │         └─── ChainSharp.Effect.Orchestration.Scheduler.Hangfire
               │
               ├─── ChainSharp.Effect.Provider.Json
               ├─── ChainSharp.Effect.Provider.Parameter
@@ -325,7 +325,7 @@ public class InMemoryContext : DataContext<InMemoryContext>
 - Automatic cleanup between tests
 - API-compatible with production database
 
-## 5. ChainSharp.Effect.Mediator (Discovery & Routing)
+## 5. ChainSharp.Effect.Orchestration.Mediator (Discovery & Routing)
 
 ### WorkflowRegistry
 

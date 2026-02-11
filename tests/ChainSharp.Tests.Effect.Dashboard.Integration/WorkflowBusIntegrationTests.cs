@@ -1,7 +1,7 @@
 using ChainSharp.Effect.Dashboard.Extensions;
 using ChainSharp.Effect.Dashboard.Services.WorkflowDiscovery;
 using ChainSharp.Effect.Extensions;
-using ChainSharp.Effect.Mediator.Extensions;
+using ChainSharp.Effect.Orchestration.Mediator.Extensions;
 using ChainSharp.Tests.Effect.Dashboard.Integration.Fakes;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,6 +1,6 @@
 # ChainSharp.Samples.Scheduler.Hangfire
 
-A sample application demonstrating how to use ChainSharp.Effect.Scheduler with Hangfire as the background task server.
+A sample application demonstrating how to use ChainSharp.Effect.Orchestration.Scheduler with Hangfire as the background task server.
 
 ## Prerequisites
 

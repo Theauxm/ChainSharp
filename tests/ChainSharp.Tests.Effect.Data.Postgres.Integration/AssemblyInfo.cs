@@ -1,3 +1,3 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("ChainSharp.Effect.Mediator")]
+[assembly: InternalsVisibleTo("ChainSharp.Effect.Orchestration.Mediator")]

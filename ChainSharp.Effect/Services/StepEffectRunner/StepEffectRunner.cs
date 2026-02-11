@@ -1,4 +1,5 @@
 using ChainSharp.Effect.Extensions;
+using ChainSharp.Effect.Services.EffectRegistry;
 using ChainSharp.Effect.Services.EffectStep;
 using ChainSharp.Effect.Services.EffectWorkflow;
 using ChainSharp.Effect.Services.StepEffectProvider;
@@ -15,6 +16,7 @@ public class StepEffectRunner : IStepEffectRunner
 
     public StepEffectRunner(
         IEnumerable<IStepEffectProviderFactory> stepEffectProviderFactories,
+        IEffectRegistry effectRegistry,
         ILogger<StepEffectRunner>? logger = null
     )
     {
@@ -22,7 +24,9 @@ public class StepEffectRunner : IStepEffectRunner
 
         ActiveStepEffectProviders = [];
         ActiveStepEffectProviders.AddRange(
-            stepEffectProviderFactories.RunAll(factory => factory.Create())
+            stepEffectProviderFactories
+                .Where(factory => effectRegistry.IsEnabled(factory.GetType()))
+                .RunAll(factory => factory.Create())
         );
     }
 

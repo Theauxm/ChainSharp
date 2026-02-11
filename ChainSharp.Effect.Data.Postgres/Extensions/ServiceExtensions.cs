@@ -93,6 +93,6 @@ public static class ServiceExtensions
         return configurationBuilder.AddEffect<
             IDataContextProviderFactory,
             PostgresContextProviderFactory
-        >();
+        >(toggleable: false);
     }
 }

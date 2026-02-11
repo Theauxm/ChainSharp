@@ -2,6 +2,7 @@ using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models;
 using ChainSharp.Effect.Services.EffectProvider;
 using ChainSharp.Effect.Services.EffectProviderFactory;
+using ChainSharp.Effect.Services.EffectRegistry;
 using Microsoft.Extensions.Logging;
 
 namespace ChainSharp.Effect.Services.EffectRunner;
@@ -42,6 +43,7 @@ public class EffectRunner : IEffectRunner
     /// Initializes a new instance of the EffectRunner with the specified effect provider factories.
     /// </summary>
     /// <param name="effectProviderFactories">Collection of factories that create effect providers</param>
+    /// <param name="effectRegistry">Registry used to determine which effect providers are enabled</param>
     /// <param name="logger">Optional logger for tracking operations and errors</param>
     /// <remarks>
     /// During initialization, the runner:
@@ -54,13 +56,18 @@ public class EffectRunner : IEffectRunner
     /// </remarks>
     public EffectRunner(
         IEnumerable<IEffectProviderFactory> effectProviderFactories,
+        IEffectRegistry effectRegistry,
         ILogger<EffectRunner>? logger = null
     )
     {
         _logger = logger;
         ActiveEffectProviders = [];
 
-        ActiveEffectProviders.AddRange(effectProviderFactories.RunAll(factory => factory.Create()));
+        ActiveEffectProviders.AddRange(
+            effectProviderFactories
+                .Where(factory => effectRegistry.IsEnabled(factory.GetType()))
+                .RunAll(factory => factory.Create())
+        );
     }
 
     /// <summary>

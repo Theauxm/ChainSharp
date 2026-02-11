@@ -53,8 +53,7 @@ public static class ServiceExtensions
     public static ChainSharpEffectConfigurationBuilder AddInMemoryEffect(
         this ChainSharpEffectConfigurationBuilder configurationBuilder
     ) =>
-        configurationBuilder.AddEffect<
-            IDataContextProviderFactory,
-            InMemoryContextProviderFactory
-        >();
+        configurationBuilder.AddEffect<IDataContextProviderFactory, InMemoryContextProviderFactory>(
+            toggleable: false
+        );
 }

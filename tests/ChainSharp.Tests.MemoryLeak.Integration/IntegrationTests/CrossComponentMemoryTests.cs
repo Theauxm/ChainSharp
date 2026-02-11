@@ -4,6 +4,7 @@ using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Provider.Json.Services.JsonEffect;
 using ChainSharp.Effect.Provider.Parameter.Services.ParameterEffectProviderFactory;
 using ChainSharp.Effect.Services.EffectProviderFactory;
+using ChainSharp.Effect.Services.EffectRegistry;
 using ChainSharp.Effect.Services.EffectRunner;
 using ChainSharp.Tests.MemoryLeak.Integration.TestWorkflows.TestModels;
 using ChainSharp.Tests.MemoryLeak.Integration.Utils;
@@ -38,6 +39,7 @@ public class CrossComponentMemoryTests
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.AddConsole());
         services.AddSingleton(_jsonOptions);
+        services.AddSingleton<IEffectRegistry>(new EffectRegistry());
         _serviceProvider = services.BuildServiceProvider();
 
         // Create a mock configuration for JsonEffectProvider
@@ -159,6 +161,7 @@ public class CrossComponentMemoryTests
 
                     using var effectRunner = new EffectRunner(
                         providerFactories,
+                        _serviceProvider.GetRequiredService<IEffectRegistry>(),
                         _serviceProvider.GetService<ILogger<EffectRunner>>()
                     );
 

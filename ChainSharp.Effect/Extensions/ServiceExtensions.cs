@@ -3,6 +3,7 @@ using ChainSharp.Effect.Attributes;
 using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
 using ChainSharp.Effect.Services.EffectProviderFactory;
+using ChainSharp.Effect.Services.EffectRegistry;
 using ChainSharp.Effect.Services.EffectRunner;
 using ChainSharp.Effect.Services.StepEffectProviderFactory;
 using ChainSharp.Effect.Services.StepEffectRunner;
@@ -19,9 +20,13 @@ public static class ServiceExtensions
         Action<ChainSharpEffectConfigurationBuilder>? options = null
     )
     {
-        var configuration = BuildConfiguration(serviceCollection, options);
+        // Create the registry eagerly so AddEffect calls during configuration can register types
+        var registry = new EffectRegistry();
+
+        var configuration = BuildConfiguration(serviceCollection, options, registry);
 
         return serviceCollection
+            .AddSingleton<IEffectRegistry>(registry)
             .AddSingleton<IChainSharpEffectConfiguration>(configuration)
             .AddTransient<IEffectRunner, EffectRunner>()
             .AddTransient<IStepEffectRunner, StepEffectRunner>();
@@ -29,11 +34,12 @@ public static class ServiceExtensions
 
     private static ChainSharpEffectConfiguration BuildConfiguration(
         IServiceCollection serviceCollection,
-        Action<ChainSharpEffectConfigurationBuilder>? options
+        Action<ChainSharpEffectConfigurationBuilder>? options,
+        IEffectRegistry registry
     )
     {
         // Create Builder to be used after Options are invoked
-        var builder = new ChainSharpEffectConfigurationBuilder(serviceCollection);
+        var builder = new ChainSharpEffectConfigurationBuilder(serviceCollection, registry);
 
         // Options able to be null since all values have defaults
         options?.Invoke(builder);
@@ -85,7 +91,11 @@ public static class ServiceExtensions
     public static ChainSharpEffectConfigurationBuilder AddEffect<
         TIEffectProviderFactory,
         TEffectProviderFactory
-    >(this ChainSharpEffectConfigurationBuilder builder, TEffectProviderFactory factory)
+    >(
+        this ChainSharpEffectConfigurationBuilder builder,
+        TEffectProviderFactory factory,
+        bool toggleable = true
+    )
         where TIEffectProviderFactory : class, IEffectProviderFactory
         where TEffectProviderFactory : class, TIEffectProviderFactory
     {
@@ -98,11 +108,15 @@ public static class ServiceExtensions
                 sp => sp.GetRequiredService<TEffectProviderFactory>()
             );
 
+        if (toggleable)
+            builder.EffectRegistry?.Register(typeof(TEffectProviderFactory));
+
         return builder;
     }
 
     public static ChainSharpEffectConfigurationBuilder AddEffect<TEffectProviderFactory>(
-        this ChainSharpEffectConfigurationBuilder builder
+        this ChainSharpEffectConfigurationBuilder builder,
+        bool toggleable = true
     )
         where TEffectProviderFactory : class, IEffectProviderFactory
     {
@@ -112,13 +126,16 @@ public static class ServiceExtensions
                 sp => sp.GetRequiredService<TEffectProviderFactory>()
             );
 
+        if (toggleable)
+            builder.EffectRegistry?.Register(typeof(TEffectProviderFactory));
+
         return builder;
     }
 
     public static ChainSharpEffectConfigurationBuilder AddEffect<
         TIEffectProviderFactory,
         TEffectProviderFactory
-    >(this ChainSharpEffectConfigurationBuilder builder)
+    >(this ChainSharpEffectConfigurationBuilder builder, bool toggleable = true)
         where TIEffectProviderFactory : class, IEffectProviderFactory
         where TEffectProviderFactory : class, TIEffectProviderFactory
     {
@@ -131,16 +148,23 @@ public static class ServiceExtensions
                 sp => sp.GetRequiredService<TEffectProviderFactory>()
             );
 
+        if (toggleable)
+            builder.EffectRegistry?.Register(typeof(TEffectProviderFactory));
+
         return builder;
     }
 
     public static ChainSharpEffectConfigurationBuilder AddEffect<TEffectProviderFactory>(
         this ChainSharpEffectConfigurationBuilder builder,
-        TEffectProviderFactory factory
+        TEffectProviderFactory factory,
+        bool toggleable = true
     )
         where TEffectProviderFactory : class, IEffectProviderFactory
     {
         builder.ServiceCollection.AddSingleton<IEffectProviderFactory>(factory);
+
+        if (toggleable)
+            builder.EffectRegistry?.Register(typeof(TEffectProviderFactory));
 
         return builder;
     }
@@ -152,7 +176,11 @@ public static class ServiceExtensions
     public static ChainSharpEffectConfigurationBuilder AddStepEffect<
         TIStepEffectProviderFactory,
         TStepEffectProviderFactory
-    >(this ChainSharpEffectConfigurationBuilder builder, TStepEffectProviderFactory factory)
+    >(
+        this ChainSharpEffectConfigurationBuilder builder,
+        TStepEffectProviderFactory factory,
+        bool toggleable = true
+    )
         where TIStepEffectProviderFactory : class, IStepEffectProviderFactory
         where TStepEffectProviderFactory : class, TIStepEffectProviderFactory
     {
@@ -165,11 +193,15 @@ public static class ServiceExtensions
                 sp => sp.GetRequiredService<TStepEffectProviderFactory>()
             );
 
+        if (toggleable)
+            builder.EffectRegistry?.Register(typeof(TStepEffectProviderFactory));
+
         return builder;
     }
 
     public static ChainSharpEffectConfigurationBuilder AddStepEffect<TStepEffectProviderFactory>(
-        this ChainSharpEffectConfigurationBuilder builder
+        this ChainSharpEffectConfigurationBuilder builder,
+        bool toggleable = true
     )
         where TStepEffectProviderFactory : class, IStepEffectProviderFactory
     {
@@ -179,16 +211,23 @@ public static class ServiceExtensions
                 sp => sp.GetRequiredService<TStepEffectProviderFactory>()
             );
 
+        if (toggleable)
+            builder.EffectRegistry?.Register(typeof(TStepEffectProviderFactory));
+
         return builder;
     }
 
     public static ChainSharpEffectConfigurationBuilder AddStepEffect<TStepEffectProviderFactory>(
         this ChainSharpEffectConfigurationBuilder builder,
-        TStepEffectProviderFactory factory
+        TStepEffectProviderFactory factory,
+        bool toggleable = true
     )
         where TStepEffectProviderFactory : class, IStepEffectProviderFactory
     {
         builder.ServiceCollection.AddSingleton<IStepEffectProviderFactory>(factory);
+
+        if (toggleable)
+            builder.EffectRegistry?.Register(typeof(TStepEffectProviderFactory));
 
         return builder;
     }

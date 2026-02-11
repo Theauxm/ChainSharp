@@ -1,3 +1,10 @@
+## [5.5.1](https://github.com/Theauxm/ChainSharp/compare/v5.5.0...v5.5.1) (2026-02-11)
+
+
+### Bug Fixes
+
+* Orchestration Subdomain added to Scheduler and Mediator Effect projects ([#119](https://github.com/Theauxm/ChainSharp/issues/119)) ([dce559f](https://github.com/Theauxm/ChainSharp/commit/dce559f55bfadd42f23731759ce76f3684d49e4c))
+
 # [5.5.0](https://github.com/Theauxm/ChainSharp/compare/v5.4.0...v5.5.0) (2026-02-11)
 
 

@@ -18,6 +18,12 @@ How ChainSharp's components fit together.
                                   │
                                   ▼
 ┌─────────────────────────────────────────────────────────────────────┐
+│              ChainSharp.Effect.Dashboard (Optional)                  │
+│         [Blazor Server UI] ────► [WorkflowDiscovery]                │
+└─────────────────────────────────┬───────────────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────┐
 │                  ChainSharp.Effect.Scheduler (Optional)             │
 │    [ManifestManager] ───► [ManifestExecutor] ───► [DeadLetter]     │
 └─────────────────────────────────┬───────────────────────────────────┘
@@ -58,6 +64,8 @@ How ChainSharp's components fit together.
 ChainSharp (Core)
     │
     └─── ChainSharp.Effect (Enhanced Workflows)
+              │
+              ├─── ChainSharp.Effect.Dashboard (Web UI)
               │
               ├─── ChainSharp.Effect.Mediator (WorkflowBus)
               │

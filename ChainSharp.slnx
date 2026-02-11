@@ -11,8 +11,10 @@
   <Project Path="ChainSharp.Effect.Provider.Parameter/ChainSharp.Effect.Provider.Parameter.csproj" />
   <Project Path="ChainSharp.Effect.StepProvider.Logging/ChainSharp.Effect.StepProvider.Logging.csproj" />
   <Project Path="ChainSharp.Effect/ChainSharp.Effect.csproj" />
+  <Project Path="ChainSharp.Effect.Dashboard/ChainSharp.Effect.Dashboard.csproj" />
   <Project Path="tests/ChainSharp.Tests.Effect.Data.InMemory.Integration/ChainSharp.Tests.Effect.Data.InMemory.Integration.csproj" />
   <Project Path="tests/ChainSharp.Tests.Effect.Data.Postgres.Integration/ChainSharp.Tests.Effect.Data.Postgres.Integration.csproj" />
+  <Project Path="tests/ChainSharp.Tests.Effect.Dashboard.Integration/ChainSharp.Tests.Effect.Dashboard.Integration.csproj" />
   <Project Path="tests/ChainSharp.Tests.Effect.Integration/ChainSharp.Tests.Effect.Integration.csproj" />
   <Project Path="tests/ChainSharp.Tests.Effect.Json.Integration/ChainSharp.Tests.Effect.Json.Integration.csproj" />
   <Project Path="tests/ChainSharp.Tests.Integration/ChainSharp.Tests.Integration.csproj" />

@@ -56,6 +56,17 @@ If `CheckInventoryStep` throws, `ChargePaymentStep` never runs. The exception pr
 
 For more on how this works, see [Core Concepts](concepts.md).
 
+## Dashboard
+
+ChainSharp ships with a built-in web dashboard. Add two lines to your `Program.cs` and get a UI for inspecting every workflow registered in your application:
+
+```csharp
+builder.Services.AddChainSharpDashboard();
+app.UseChainSharpDashboard("/chainsharp");
+```
+
+See [Dashboard](dashboard.md) for setup and configuration.
+
 ## Quick Start
 
 See [Getting Started](getting-started.md) for installation and your first workflow.
@@ -66,6 +77,7 @@ See [Getting Started](getting-started.md) for installation and your first workfl
 |---------|-------------|---------|
 | [Theauxm.ChainSharp](https://www.nuget.org/packages/Theauxm.ChainSharp/) | Core library for Railway Oriented Programming | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp) |
 | [Theauxm.ChainSharp.Effect](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect/) | Effects for ChainSharp Workflows | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect) |
+| [Theauxm.ChainSharp.Effect.Dashboard](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Dashboard/) | Web dashboard for inspecting ChainSharp workflows | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Dashboard) |
 | [Theauxm.ChainSharp.Effect.Data](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Data/) | Data persistence abstractions for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Data) |
 | [Theauxm.ChainSharp.Effect.Data.InMemory](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Data.InMemory/) | In-memory data persistence for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Data.InMemory) |
 | [Theauxm.ChainSharp.Effect.Data.Postgres](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Data.Postgres/) | PostgreSQL data persistence for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Data.Postgres) |

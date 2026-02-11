@@ -1,3 +1,4 @@
+using ChainSharp.Effect.Dashboard.Extensions;
 using ChainSharp.Effect.Data.Postgres.Extensions;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Mediator.Extensions;
@@ -25,6 +26,8 @@ builder.Services.AddLogging(logging =>
 });
 
 // Add ChainSharp Effects with Postgres persistence, Scheduler, and Hangfire in one fluent call
+builder.Services.AddChainSharpDashboard();
+
 builder.Services.AddChainSharpEffects(
     options =>
         options
@@ -58,6 +61,7 @@ builder.Services.AddChainSharpEffects(
 
 var app = builder.Build();
 
+app.UseChainSharpDashboard();
 app.UseHangfireDashboard("/hangfire", new DashboardOptions { Authorization = [] });
 
 app.Run();

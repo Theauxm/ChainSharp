@@ -1,17 +1,17 @@
 <Solution>
   <Project Path="tests/ChainSharp.Tests.ArrayLogger/ChainSharp.Tests.ArrayLogger.csproj" />
-  <Project Path="ChainSharp.Effect.Data.InMemory/ChainSharp.Effect.Data.InMemory.csproj" />
-  <Project Path="ChainSharp.Effect.Data.Postgres/ChainSharp.Effect.Data.Postgres.csproj" />
-  <Project Path="ChainSharp.Effect.Data/ChainSharp.Effect.Data.csproj" />
-  <Project Path="ChainSharp.Effect.Provider.Json/ChainSharp.Effect.Provider.Json.csproj" />
-  <Project Path="ChainSharp.Effect.Orchestration.Mediator/ChainSharp.Effect.Orchestration.Mediator.csproj" />
-  <Project Path="ChainSharp.Effect.Orchestration.Scheduler/ChainSharp.Effect.Orchestration.Scheduler.csproj" />
-  <Project Path="ChainSharp.Effect.Orchestration.Scheduler.Hangfire/ChainSharp.Effect.Orchestration.Scheduler.Hangfire.csproj" />
+  <Project Path="src/data/ChainSharp.Effect.Data.InMemory/ChainSharp.Effect.Data.InMemory.csproj" />
+  <Project Path="src/data/ChainSharp.Effect.Data.Postgres/ChainSharp.Effect.Data.Postgres.csproj" />
+  <Project Path="src/data/ChainSharp.Effect.Data/ChainSharp.Effect.Data.csproj" />
+  <Project Path="src/providers/ChainSharp.Effect.Provider.Json/ChainSharp.Effect.Provider.Json.csproj" />
+  <Project Path="src/orchestration/ChainSharp.Effect.Orchestration.Mediator/ChainSharp.Effect.Orchestration.Mediator.csproj" />
+  <Project Path="src/orchestration/ChainSharp.Effect.Orchestration.Scheduler/ChainSharp.Effect.Orchestration.Scheduler.csproj" />
+  <Project Path="src/orchestration/ChainSharp.Effect.Orchestration.Scheduler.Hangfire/ChainSharp.Effect.Orchestration.Scheduler.Hangfire.csproj" />
   <Project Path="samples/ChainSharp.Samples.Scheduler.Hangfire/ChainSharp.Samples.Scheduler.Hangfire.csproj" />
-  <Project Path="ChainSharp.Effect.Provider.Parameter/ChainSharp.Effect.Provider.Parameter.csproj" />
-  <Project Path="ChainSharp.Effect.StepProvider.Logging/ChainSharp.Effect.StepProvider.Logging.csproj" />
-  <Project Path="ChainSharp.Effect/ChainSharp.Effect.csproj" />
-  <Project Path="ChainSharp.Effect.Dashboard/ChainSharp.Effect.Dashboard.csproj" />
+  <Project Path="src/providers/ChainSharp.Effect.Provider.Parameter/ChainSharp.Effect.Provider.Parameter.csproj" />
+  <Project Path="src/providers/ChainSharp.Effect.StepProvider.Logging/ChainSharp.Effect.StepProvider.Logging.csproj" />
+  <Project Path="src/effect/ChainSharp.Effect/ChainSharp.Effect.csproj" />
+  <Project Path="src/dashboard/ChainSharp.Effect.Dashboard/ChainSharp.Effect.Dashboard.csproj" />
   <Project Path="tests/ChainSharp.Tests.Effect.Data.InMemory.Integration/ChainSharp.Tests.Effect.Data.InMemory.Integration.csproj" />
   <Project Path="tests/ChainSharp.Tests.Effect.Data.Postgres.Integration/ChainSharp.Tests.Effect.Data.Postgres.Integration.csproj" />
   <Project Path="tests/ChainSharp.Tests.Effect.Dashboard.Integration/ChainSharp.Tests.Effect.Dashboard.Integration.csproj" />
@@ -25,5 +25,5 @@
     <Platform Project="?" />
     <Build Project="false" />
   </Project>
-  <Project Path="ChainSharp/ChainSharp.csproj" />
+  <Project Path="src/core/ChainSharp/ChainSharp.csproj" />
 </Solution>

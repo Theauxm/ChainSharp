@@ -83,6 +83,29 @@ ChainSharp (Core)
               └─── ChainSharp.Effect.StepProvider.Logging
 ```
 
+### Repository Structure
+
+The source projects are organized under `src/` by subdomain:
+
+```
+src/
+├── core/           ChainSharp
+├── effect/         ChainSharp.Effect
+├── data/           ChainSharp.Effect.Data
+│                   ChainSharp.Effect.Data.InMemory
+│                   ChainSharp.Effect.Data.Postgres
+├── providers/      ChainSharp.Effect.Provider.Json
+│                   ChainSharp.Effect.Provider.Parameter
+│                   ChainSharp.Effect.StepProvider.Logging
+├── orchestration/  ChainSharp.Effect.Orchestration.Mediator
+│                   ChainSharp.Effect.Orchestration.Scheduler
+│                   ChainSharp.Effect.Orchestration.Scheduler.Hangfire
+└── dashboard/      ChainSharp.Effect.Dashboard
+tests/              Test projects
+samples/            Sample applications
+docs/               Documentation (GitHub Pages)
+```
+
 ## Core Component Hierarchy
 
 ### 1. ChainSharp (Core Engine)

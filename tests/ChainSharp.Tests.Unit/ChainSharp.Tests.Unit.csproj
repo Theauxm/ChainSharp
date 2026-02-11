@@ -19,7 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\ChainSharp\ChainSharp.csproj" />
+      <ProjectReference Include="..\..\src\core\ChainSharp\ChainSharp.csproj" />
     </ItemGroup>
 
 </Project>

@@ -8,9 +8,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ChainSharp.Effect\ChainSharp.Effect.csproj" />
+      <ProjectReference Include="..\..\effect\ChainSharp.Effect\ChainSharp.Effect.csproj" />
       <ProjectReference Include="..\ChainSharp.Effect.Orchestration.Mediator\ChainSharp.Effect.Orchestration.Mediator.csproj" />
-      <ProjectReference Include="..\ChainSharp.Effect.Data\ChainSharp.Effect.Data.csproj" />
+      <ProjectReference Include="..\..\data\ChainSharp.Effect.Data\ChainSharp.Effect.Data.csproj" />
     </ItemGroup>
 
     <ItemGroup>

@@ -21,7 +21,7 @@ public static class ServiceExtensions
     )
     {
         // Create the registry eagerly so AddEffect calls during configuration can register types
-        var registry = new Services.EffectRegistry.EffectRegistry();
+        var registry = new EffectRegistry();
 
         var configuration = BuildConfiguration(serviceCollection, options, registry);
 
@@ -101,11 +101,9 @@ public static class ServiceExtensions
     {
         builder
             .ServiceCollection.AddSingleton<TEffectProviderFactory>(factory)
-            .AddSingleton<IEffectProviderFactory>(
-                sp => sp.GetRequiredService<TEffectProviderFactory>()
+            .AddSingleton<IEffectProviderFactory>(sp => sp.GetRequiredService<TEffectProviderFactory>()
             )
-            .AddSingleton<TIEffectProviderFactory>(
-                sp => sp.GetRequiredService<TEffectProviderFactory>()
+            .AddSingleton<TIEffectProviderFactory>(sp => sp.GetRequiredService<TEffectProviderFactory>()
             );
 
         if (toggleable)
@@ -122,8 +120,7 @@ public static class ServiceExtensions
     {
         builder
             .ServiceCollection.AddSingleton<TEffectProviderFactory>()
-            .AddSingleton<IEffectProviderFactory>(
-                sp => sp.GetRequiredService<TEffectProviderFactory>()
+            .AddSingleton<IEffectProviderFactory>(sp => sp.GetRequiredService<TEffectProviderFactory>()
             );
 
         if (toggleable)
@@ -141,11 +138,9 @@ public static class ServiceExtensions
     {
         builder
             .ServiceCollection.AddSingleton<TEffectProviderFactory>()
-            .AddSingleton<IEffectProviderFactory>(
-                sp => sp.GetRequiredService<TEffectProviderFactory>()
+            .AddSingleton<IEffectProviderFactory>(sp => sp.GetRequiredService<TEffectProviderFactory>()
             )
-            .AddSingleton<TIEffectProviderFactory>(
-                sp => sp.GetRequiredService<TEffectProviderFactory>()
+            .AddSingleton<TIEffectProviderFactory>(sp => sp.GetRequiredService<TEffectProviderFactory>()
             );
 
         if (toggleable)
@@ -186,11 +181,9 @@ public static class ServiceExtensions
     {
         builder
             .ServiceCollection.AddSingleton<TStepEffectProviderFactory>(factory)
-            .AddSingleton<IStepEffectProviderFactory>(
-                sp => sp.GetRequiredService<TStepEffectProviderFactory>()
+            .AddSingleton<IStepEffectProviderFactory>(sp => sp.GetRequiredService<TStepEffectProviderFactory>()
             )
-            .AddSingleton<TIStepEffectProviderFactory>(
-                sp => sp.GetRequiredService<TStepEffectProviderFactory>()
+            .AddSingleton<TIStepEffectProviderFactory>(sp => sp.GetRequiredService<TStepEffectProviderFactory>()
             );
 
         if (toggleable)
@@ -207,8 +200,7 @@ public static class ServiceExtensions
     {
         builder
             .ServiceCollection.AddSingleton<TStepEffectProviderFactory>()
-            .AddSingleton<IStepEffectProviderFactory>(
-                sp => sp.GetRequiredService<TStepEffectProviderFactory>()
+            .AddSingleton<IStepEffectProviderFactory>(sp => sp.GetRequiredService<TStepEffectProviderFactory>()
             );
 
         if (toggleable)
@@ -241,54 +233,54 @@ public static class ServiceExtensions
     )
         where TService : class
         where TImplementation : class, TService
-        // Nothing inherently different about the injection. Overload for posterity.
+    // Nothing inherently different about the injection. Overload for posterity.
         =>
-        services.AddScopedChainSharpWorkflow<TService, TImplementation>();
+            services.AddScopedChainSharpWorkflow<TService, TImplementation>();
 
     public static IServiceCollection AddScopedChainSharpStep(
-        this IServiceCollection services,
-        Type serviceInterface,
-        Type serviceImplementation
-    )
+            this IServiceCollection services,
+            Type serviceInterface,
+            Type serviceImplementation
+        )
         // Nothing inherently different about the injection. Overload for posterity.
         =>
-        services.AddScopedChainSharpWorkflow(serviceInterface, serviceImplementation);
+            services.AddScopedChainSharpWorkflow(serviceInterface, serviceImplementation);
 
     public static IServiceCollection AddTransientChainSharpStep<TService, TImplementation>(
         this IServiceCollection services
     )
         where TService : class
         where TImplementation : class, TService
-        // Nothing inherently different about the injection. Overload for posterity.
+    // Nothing inherently different about the injection. Overload for posterity.
         =>
-        services.AddTransientChainSharpWorkflow<TService, TImplementation>();
+            services.AddTransientChainSharpWorkflow<TService, TImplementation>();
 
     public static IServiceCollection AddTransientChainSharpStep(
-        this IServiceCollection services,
-        Type serviceInterface,
-        Type serviceImplementation
-    )
+            this IServiceCollection services,
+            Type serviceInterface,
+            Type serviceImplementation
+        )
         // Nothing inherently different about the injection. Overload for posterity.
         =>
-        services.AddTransientChainSharpWorkflow(serviceInterface, serviceImplementation);
+            services.AddTransientChainSharpWorkflow(serviceInterface, serviceImplementation);
 
     public static IServiceCollection AddSingletonChainSharpStep<TService, TImplementation>(
         this IServiceCollection services
     )
         where TService : class
         where TImplementation : class, TService
-        // Nothing inherently different about the injection. Overload for posterity.
+    // Nothing inherently different about the injection. Overload for posterity.
         =>
-        services.AddSingletonChainSharpWorkflow<TService, TImplementation>();
+            services.AddSingletonChainSharpWorkflow<TService, TImplementation>();
 
     public static IServiceCollection AddSingletonChainSharpStep(
-        this IServiceCollection services,
-        Type serviceInterface,
-        Type serviceImplementation
-    )
+            this IServiceCollection services,
+            Type serviceInterface,
+            Type serviceImplementation
+        )
         // Nothing inherently different about the injection. Overload for posterity.
         =>
-        services.AddSingletonChainSharpWorkflow(serviceInterface, serviceImplementation);
+            services.AddSingletonChainSharpWorkflow(serviceInterface, serviceImplementation);
 
     #endregion
 

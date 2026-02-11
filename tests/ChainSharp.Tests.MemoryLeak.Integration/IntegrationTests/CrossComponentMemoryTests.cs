@@ -39,6 +39,7 @@ public class CrossComponentMemoryTests
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.AddConsole());
         services.AddSingleton(_jsonOptions);
+        services.AddSingleton<IEffectRegistry>(new EffectRegistry());
         _serviceProvider = services.BuildServiceProvider();
 
         // Create a mock configuration for JsonEffectProvider

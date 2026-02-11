@@ -14,7 +14,12 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
       <InternalsVisibleTo Include="Theauxm.ChainSharp.Effect.Scheduler.Hangfire" />
+      <InternalsVisibleTo Include="ChainSharp.Tests.Effect.Scheduler.Integration" />
     </ItemGroup>
 
 </Project>

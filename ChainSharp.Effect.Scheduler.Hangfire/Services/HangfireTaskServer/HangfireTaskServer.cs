@@ -1,8 +1,6 @@
 using ChainSharp.Effect.Scheduler.Services.BackgroundTaskServer;
 using ChainSharp.Effect.Scheduler.Workflows.ManifestExecutor;
-using ChainSharp.Effect.Scheduler.Workflows.ManifestManager;
 using Hangfire;
-using LanguageExt;
 
 namespace ChainSharp.Effect.Scheduler.Hangfire.Services.HangfireTaskServer;
 
@@ -10,7 +8,7 @@ namespace ChainSharp.Effect.Scheduler.Hangfire.Services.HangfireTaskServer;
 /// Hangfire implementation of <see cref="IBackgroundTaskServer"/>.
 /// </summary>
 /// <remarks>
-/// This implementation wraps Hangfire's <see cref="IBackgroundJobClient"/> and <see cref="IRecurringJobManager"/>
+/// This implementation wraps Hangfire's <see cref="IBackgroundJobClient"/>
 /// to provide background job execution for ChainSharp.Effect.Scheduler.
 ///
 /// Jobs are enqueued to Hangfire which resolves <see cref="IManifestExecutorWorkflow"/> from the DI container
@@ -20,15 +18,12 @@ namespace ChainSharp.Effect.Scheduler.Hangfire.Services.HangfireTaskServer;
 /// ```csharp
 /// services.AddChainSharpEffects(options => options
 ///     .AddScheduler(scheduler => scheduler
-///         .UseHangfire(config => config.UseSqlServerStorage(connectionString))
+///         .UseHangfire(connectionString)
 ///     )
 /// );
 /// ```
 /// </remarks>
-public class HangfireTaskServer(
-    IBackgroundJobClient backgroundJobClient,
-    IRecurringJobManager recurringJobManager
-) : IBackgroundTaskServer
+public class HangfireTaskServer(IBackgroundJobClient backgroundJobClient) : IBackgroundTaskServer
 {
     /// <inheritdoc />
     public Task<string> EnqueueAsync(int metadataId)
@@ -51,15 +46,5 @@ public class HangfireTaskServer(
         );
 
         return Task.FromResult(jobId);
-    }
-
-    /// <inheritdoc />
-    public void AddOrUpdateRecurringManifestPoll(string recurringJobId, string cronExpression)
-    {
-        recurringJobManager.AddOrUpdate<IManifestManagerWorkflow>(
-            recurringJobId,
-            manager => manager.Run(Unit.Default),
-            cronExpression
-        );
     }
 }

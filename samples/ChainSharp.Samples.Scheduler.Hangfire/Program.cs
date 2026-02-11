@@ -44,11 +44,14 @@ builder.Services.AddChainSharpEffects(
             .AddScheduler(
                 scheduler =>
                     scheduler
+                        .AddMetadataCleanup(
+                            cleanup => cleanup.AddWorkflowType<IHelloWorldWorkflow>()
+                        )
                         .UseHangfire(connectionString)
                         .Schedule<IHelloWorldWorkflow, HelloWorldInput>(
                             "sample-hello-world",
                             new HelloWorldInput { Name = "ChainSharp Scheduler" },
-                            Every.Minutes(1)
+                            Every.Seconds(20)
                         )
             )
 );
@@ -57,6 +60,4 @@ var app = builder.Build();
 
 app.UseHangfireDashboard("/hangfire", new DashboardOptions { Authorization = [] });
 
-// Start the ChainSharp scheduler (manifest polling and seeds pending manifests)
-app.UseChainSharpScheduler();
 app.Run();

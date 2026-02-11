@@ -11,8 +11,8 @@ namespace ChainSharp.Effect.Scheduler.Configuration;
 /// at configuration time. This avoids reflection when processing manifests
 /// during application startup and ensures type safety is preserved.
 ///
-/// Pending manifests are collected during service configuration and processed
-/// by <see cref="Extensions.ApplicationBuilderExtensions.UseChainSharpScheduler"/>.
+/// Pending manifests are collected during service configuration and seeded
+/// automatically on startup by the ManifestPollingService.
 /// </remarks>
 internal class PendingManifest
 {

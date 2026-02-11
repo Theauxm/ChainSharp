@@ -47,20 +47,4 @@ public interface IBackgroundTaskServer
     /// Useful for delayed retries or scheduled execution.
     /// </remarks>
     Task<string> ScheduleAsync(int metadataId, DateTimeOffset scheduledTime);
-
-    /// <summary>
-    /// Adds or updates a recurring job that runs the ManifestManager polling.
-    /// </summary>
-    /// <param name="recurringJobId">A unique identifier for the recurring job</param>
-    /// <param name="cronExpression">The cron expression defining when the job runs</param>
-    /// <remarks>
-    /// This method sets up the recurring job that triggers ManifestManager.ProcessPendingManifestsAsync().
-    /// It should be called during application startup.
-    ///
-    /// Common cron expressions:
-    /// - "* * * * *" - Every minute
-    /// - "*/5 * * * *" - Every 5 minutes
-    /// - "0 * * * *" - Every hour
-    /// </remarks>
-    void AddOrUpdateRecurringManifestPoll(string recurringJobId, string cronExpression);
 }

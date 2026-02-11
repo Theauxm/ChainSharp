@@ -62,8 +62,8 @@ Operators can retry (which creates a new execution) or acknowledge (mark as hand
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                Background Task Server (Hangfire)                 │
-│              Triggers ManifestManager on schedule                │
+│              ManifestPollingService (BackgroundService)           │
+│          Polls ManifestManager on a configurable interval        │
 └─────────────────────────────────┬───────────────────────────────┘
                                   │
                                   ▼
@@ -73,10 +73,11 @@ Operators can retry (which creates a new execution) or acknowledge (mark as hand
 │  LoadManifests → ReapFailedJobs → DetermineJobsToQueue →        │
 │                                        EnqueueJobs               │
 └─────────────────────────────────┬───────────────────────────────┘
-                                  │ Enqueues jobs
+                                  │ Enqueues jobs to Hangfire
                                   ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                  ManifestExecutorWorkflow                        │
+│                  (runs on Hangfire workers)                       │
 │                                                                  │
 │  LoadMetadata → ValidateState → ExecuteWorkflow →               │
 │                                      UpdateManifest              │
@@ -89,9 +90,11 @@ Operators can retry (which creates a new execution) or acknowledge (mark as hand
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-The **ManifestManagerWorkflow** runs on a recurring schedule (every minute by default). It loads enabled manifests, dead-letters any that have exceeded their retry limit, determines which are due for execution, and enqueues them to the background task server.
+The **ManifestPollingService** is a .NET `BackgroundService` that runs the ManifestManager on a configurable interval. It supports sub-minute polling (e.g., every 5 seconds)—something that wasn't possible when the manager was triggered by a Hangfire cron job. On startup, it also seeds any manifests configured via `.Schedule()` or `.ScheduleMany()`.
 
-The **ManifestExecutorWorkflow** runs for each enqueued job. It loads the Metadata and Manifest, validates the job is still pending, executes the target workflow via `IWorkflowBus`, and updates `LastSuccessfulRun` on success.
+The **ManifestManagerWorkflow** loads enabled manifests, dead-letters any that have exceeded their retry limit, determines which are due for execution, and enqueues them to the background task server (Hangfire).
+
+The **ManifestExecutorWorkflow** runs on Hangfire workers for each enqueued job. It loads the Metadata and Manifest, validates the job is still pending, executes the target workflow via `IWorkflowBus`, and updates `LastSuccessfulRun` on success.
 
 ## Quick Setup with Hangfire
 
@@ -118,17 +121,17 @@ builder.Services.AddChainSharpEffects(options => options
     )
     .AddPostgresEffect(connectionString)
     .AddScheduler(scheduler => scheduler
-        .PollingInterval(TimeSpan.FromSeconds(30))
+        .PollingInterval(TimeSpan.FromSeconds(5))
         .MaxJobsPerCycle(100)
         .DefaultMaxRetries(3)
         .UseHangfire(connectionString)
-        
+
         // Schedule jobs directly in configuration
         .Schedule<IHelloWorldWorkflow, HelloWorldInput>(
             "hello-world",
             new HelloWorldInput { Name = "ChainSharp Scheduler" },
             Every.Minutes(1))
-        
+
         .Schedule<IDailyReportWorkflow, DailyReportInput>(
             "daily-report",
             new DailyReportInput { ReportType = "sales" },
@@ -140,12 +143,11 @@ builder.Services.AddChainSharpEffects(options => options
 var app = builder.Build();
 
 app.UseHangfireDashboard("/hangfire");
-app.UseChainSharpScheduler();  // Seeds manifests from configuration
 
 app.Run();
 ```
 
-Hangfire is configured internally—you only need to provide the connection string. Hangfire's automatic retries are disabled since the scheduler manages retries through the manifest system.
+`AddScheduler` registers a `BackgroundService` that handles manifest seeding and polling automatically—no extra startup call needed. Hangfire is configured internally; you only need to provide the connection string. Hangfire's automatic retries are disabled since the scheduler manages retries through the manifest system.
 
 ## Creating Scheduled Workflows
 
@@ -354,7 +356,7 @@ await scheduler.ScheduleAsync<IMyWorkflow, MyInput>(
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `PollingInterval` | 60s | How often ManifestManager checks for pending jobs |
+| `PollingInterval` | 5s | How often ManifestManager checks for pending jobs (supports sub-minute) |
 | `MaxJobsPerCycle` | 100 | Maximum jobs enqueued per poll (prevents overwhelming workers) |
 | `DefaultMaxRetries` | 3 | Retry attempts before dead-lettering |
 | `DefaultRetryDelay` | 5m | Delay between retries |
@@ -386,7 +388,7 @@ await context.SaveChanges(ct);
 
 ## Monitoring
 
-The Hangfire Dashboard at `/hangfire` shows queued jobs, failures, recurring schedules, and worker health. Configure authorization for production.
+The Hangfire Dashboard at `/hangfire` shows enqueued ManifestExecutor jobs, failures, and worker health. The ManifestManager polling itself runs as a .NET `BackgroundService` outside of Hangfire, so it won't appear in the dashboard. Configure authorization for production.
 
 For workflow-level details, query the `Metadata` table:
 
@@ -398,6 +400,85 @@ var failures = await context.Metadatas
     .Take(10)
     .ToListAsync();
 ```
+
+## Metadata Cleanup
+
+System workflows like `ManifestManagerWorkflow` run frequently (every 5 seconds by default), generating metadata rows that have no long-term value. The metadata cleanup service automatically purges old entries to keep the database clean.
+
+### How It Works
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│        MetadataCleanupPollingService (BackgroundService)         │
+│            Polls on CleanupInterval (default: 1 minute)         │
+└─────────────────────────────┬───────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                  MetadataCleanupWorkflow                         │
+│                                                                  │
+│  DeleteExpiredMetadataStep:                                      │
+│    1. Find metadata matching whitelist + older than retention    │
+│    2. Only terminal states (Completed / Failed)                  │
+│    3. Delete associated log entries (FK safety)                  │
+│    4. Delete metadata rows                                       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+The cleanup only targets metadata in **terminal states** (Completed or Failed). Pending and InProgress metadata is never deleted, regardless of age. Associated log entries are deleted first to avoid foreign key constraint violations.
+
+Deletion uses EF Core's `ExecuteDeleteAsync` for efficient single-statement SQL—no entities are loaded into memory.
+
+### Enabling Cleanup
+
+Add `.AddMetadataCleanup()` to your scheduler configuration:
+
+```csharp
+builder.Services.AddChainSharpEffects(options => options
+    .AddScheduler(scheduler => scheduler
+        .AddMetadataCleanup()
+    )
+);
+```
+
+With no configuration, this cleans up `ManifestManagerWorkflow` and `MetadataCleanupWorkflow` metadata older than 1 hour, checking every minute.
+
+### Custom Configuration
+
+Override defaults and add your own workflow types to the whitelist:
+
+```csharp
+.AddScheduler(scheduler => scheduler
+    .UseHangfire(connectionString)
+    .AddMetadataCleanup(cleanup =>
+    {
+        cleanup.RetentionPeriod = TimeSpan.FromHours(2);
+        cleanup.CleanupInterval = TimeSpan.FromMinutes(5);
+        cleanup.AddWorkflowType<IMyNoisyWorkflow>();
+        cleanup.AddWorkflowType("LegacyWorkflowName");
+    })
+)
+```
+
+`AddWorkflowType<T>()` uses `typeof(T).Name` to match the `Name` column in the metadata table—the same value workflows record when they execute. You can also pass a raw string for workflows that aren't easily referenced by type.
+
+### Cleanup Configuration Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `CleanupInterval` | 1 minute | How often the cleanup service runs |
+| `RetentionPeriod` | 1 hour | How long to keep metadata before it becomes eligible for deletion |
+| `WorkflowTypeWhitelist` | `ManifestManagerWorkflow`, `MetadataCleanupWorkflow` | Workflow names whose metadata can be deleted (append via `AddWorkflowType`) |
+
+### What Gets Deleted
+
+A metadata row is deleted when **all** of these conditions are true:
+
+1. Its `Name` matches a workflow in the whitelist
+2. Its `StartTime` is older than the retention period
+3. Its `WorkflowState` is `Completed` or `Failed`
+
+Any log entries associated with deleted metadata are also removed.
 
 ## Testing
 

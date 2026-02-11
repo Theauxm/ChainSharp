@@ -5,6 +5,7 @@
 
 <RadzenDataGrid Data="@_items"
                 TItem="Log"
+                IsLoading="@_loading"
                 AllowFiltering="true"
                 AllowSorting="true"
                 AllowPaging="true"
@@ -42,10 +43,12 @@
 
 @code {
     private List<Log> _items = [];
+    private bool _loading = true;
 
     protected override async Task OnInitializedAsync()
     {
         using var context = await DataContextFactory.CreateDbContextAsync(CancellationToken.None);
         _items = await context.Logs.AsNoTracking().ToListAsync();
+        _loading = false;
     }
 }

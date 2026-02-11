@@ -59,6 +59,19 @@ The dashboard scans your DI container for all services implementing `IEffectWork
 
 This is the same information the `WorkflowRegistry` uses internally, but surfaced in a UI instead of buried in reflection.
 
+### Data Pages
+
+When `ChainSharp.Effect.Data` is registered, the dashboard exposes pages for browsing persisted data:
+
+| Page | Description |
+|------|-------------|
+| **Metadata** | Workflow execution history—start/end times, success/failure, inputs/outputs |
+| **Logs** | Application log entries captured during workflow execution |
+| **Manifests** | Scheduled job definitions (requires Scheduler) |
+| **Dead Letters** | Failed jobs that exhausted their retry budget (requires Scheduler) |
+
+These pages are accessible from the **Data** section in the sidebar navigation.
+
 ## How Discovery Works
 
 The dashboard reads from the same `IServiceCollection` that your application builds. When you call `AddChainSharpDashboard()`, it captures a reference to the service collection. At request time, it scans the registered `ServiceDescriptor` entries for anything that implements `IEffectWorkflow<,>`, extracts the generic type arguments, and deduplicates.
@@ -82,7 +95,7 @@ app.UseChainSharpDashboard("/admin/chainsharp");
 
 ## Layout
 
-The dashboard uses [Radzen Blazor](https://blazor.radzen.com/) components with a sidebar navigation layout. The sidebar is designed for multiple pages—right now there's only Workflows, but as more Effect packages are integrated, pages for metadata history, scheduler status, and dead letter management will follow.
+The dashboard uses [Radzen Blazor](https://blazor.radzen.com/) v6 components with a sidebar navigation layout. A theme toggle in the header switches between light and dark mode, with the preference persisted in `localStorage`.
 
 ## Integration with Existing Blazor Apps
 

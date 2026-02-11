@@ -1,0 +1,24 @@
+@* Components/Layout/Sidebar/DashboardSidebar.razor *@
+@inject DashboardOptions Options
+
+<RadzenSidebar Expanded="@Expanded">
+    <RadzenPanelMenu>
+        <RadzenPanelMenuItem Text="Workflows"
+                            Path="@($"{Options.RoutePrefix.TrimStart('/')}/workflows")"
+                            Icon="account_tree" />
+        <RadzenPanelMenuItem Text="Data" Icon="storage" @bind-Expanded="_dataExpanded">
+            <RadzenPanelMenuItem Text="Metadata"
+                                Path="@($"{Options.RoutePrefix.TrimStart('/')}/data/metadata")"
+                                Icon="timeline" />
+            <RadzenPanelMenuItem Text="Logs"
+                                Path="@($"{Options.RoutePrefix.TrimStart('/')}/data/logs")"
+                                Icon="list_alt" />
+            <RadzenPanelMenuItem Text="Manifests"
+                                Path="@($"{Options.RoutePrefix.TrimStart('/')}/data/manifests")"
+                                Icon="description" />
+            <RadzenPanelMenuItem Text="Dead Letters"
+                                Path="@($"{Options.RoutePrefix.TrimStart('/')}/data/dead-letters")"
+                                Icon="error_outline" />
+        </RadzenPanelMenuItem>
+    </RadzenPanelMenu>
+</RadzenSidebar>

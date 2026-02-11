@@ -1,0 +1,23 @@
+@* Components/Layout/Header/DashboardHeader.razor *@
+
+<RadzenHeader>
+    <RadzenStack Orientation="Orientation.Horizontal"
+                 AlignItems="AlignItems.Center"
+                 JustifyContent="JustifyContent.SpaceBetween"
+                 Style="height: 100%; padding: 0 1rem;">
+        <RadzenStack Orientation="Orientation.Horizontal"
+                     AlignItems="AlignItems.Center" Gap="0.75rem">
+            <RadzenSidebarToggle Click="@OnToggleSidebar" />
+            <RadzenText Text="@Title" Style="font-weight: 600;" />
+        </RadzenStack>
+        <RadzenStack Orientation="Orientation.Horizontal"
+                     AlignItems="AlignItems.Center" Gap="0.5rem">
+            <RadzenButton Icon="@(IsDarkMode ? "light_mode" : "dark_mode")"
+                          ButtonStyle="ButtonStyle.Light"
+                          Variant="Variant.Text"
+                          Click="@OnToggleTheme"
+                          title="@(IsDarkMode ? "Switch to light mode"
+                                              : "Switch to dark mode")" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenHeader>

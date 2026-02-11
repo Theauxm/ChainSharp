@@ -1,5 +1,7 @@
 using ChainSharp.Effect.Dashboard.Components;
 using ChainSharp.Effect.Dashboard.Configuration;
+using ChainSharp.Effect.Dashboard.Services.LocalStorage;
+using ChainSharp.Effect.Dashboard.Services.ThemeState;
 using ChainSharp.Effect.Dashboard.Services.WorkflowDiscovery;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +28,8 @@ public static class DashboardServiceExtensions
         services.AddSingleton<IServiceCollection>(services);
 
         services.AddScoped<IWorkflowDiscoveryService, WorkflowDiscoveryService>();
+        services.AddScoped<ILocalStorageService, LocalStorageService>();
+        services.AddScoped<IThemeStateService, ThemeStateService>();
 
         services.AddRadzenComponents();
 

@@ -16,7 +16,7 @@
 
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
-        <PackageReference Include="Radzen.Blazor" Version="5.*" />
+        <PackageReference Include="Radzen.Blazor" Version="6.*" />
     </ItemGroup>
 
     <!-- Propagate RequiresAspNetWebAssets to NuGet consumers so blazor.web.js is resolved -->

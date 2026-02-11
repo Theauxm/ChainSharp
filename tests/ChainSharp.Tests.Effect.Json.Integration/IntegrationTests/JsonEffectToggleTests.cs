@@ -28,11 +28,15 @@ public class JsonEffectToggleTests
 
         services
             .AddSingleton<IArrayLoggingProvider>(arrayProvider)
-            .AddLogging(x => x.AddConsole().AddProvider(arrayProvider).SetMinimumLevel(LogLevel.Debug))
-            .AddChainSharpEffects(options => options
-                .SetEffectLogLevel(LogLevel.Information)
-                .AddJsonEffect()
-                .AddStepLogger(serializeStepData: true)
+            .AddLogging(
+                x => x.AddConsole().AddProvider(arrayProvider).SetMinimumLevel(LogLevel.Debug)
+            )
+            .AddChainSharpEffects(
+                options =>
+                    options
+                        .SetEffectLogLevel(LogLevel.Information)
+                        .AddJsonEffect()
+                        .AddStepLogger(serializeStepData: true)
             )
             .AddTransientChainSharpWorkflow<IToggleTestWorkflow, ToggleTestWorkflow>();
 
@@ -62,7 +66,8 @@ public class JsonEffectToggleTests
         workflow.Metadata!.WorkflowState.Should().Be(WorkflowState.Completed);
 
         var jsonLogCountAfter = GetJsonEffectLogCount(arrayProvider);
-        (jsonLogCountAfter - jsonLogCountBefore).Should()
+        (jsonLogCountAfter - jsonLogCountBefore)
+            .Should()
             .BeGreaterThan(0, "JsonEffect is enabled, so JSON logs should be produced");
     }
 
@@ -87,7 +92,8 @@ public class JsonEffectToggleTests
 
         // But no new JSON logs should have been written
         var jsonLogCountAfter = GetJsonEffectLogCount(arrayProvider);
-        (jsonLogCountAfter - jsonLogCountBefore).Should()
+        (jsonLogCountAfter - jsonLogCountBefore)
+            .Should()
             .Be(0, "JsonEffect is disabled, so no JSON logs should be produced");
     }
 
@@ -111,13 +117,14 @@ public class JsonEffectToggleTests
         workflow.Metadata!.WorkflowState.Should().Be(WorkflowState.Completed);
 
         var jsonLogCountAfter = GetJsonEffectLogCount(arrayProvider);
-        (jsonLogCountAfter - jsonLogCountBefore).Should()
+        (jsonLogCountAfter - jsonLogCountBefore)
+            .Should()
             .BeGreaterThan(0, "JsonEffect was re-enabled, so JSON logs should be produced again");
     }
 
     private static int GetJsonEffectLogCount(IArrayLoggingProvider arrayProvider) =>
-        arrayProvider.Loggers
-            .Where(logger => logger.Logs.Any(log => log.Category == JsonEffectCategory))
+        arrayProvider
+            .Loggers.Where(logger => logger.Logs.Any(log => log.Category == JsonEffectCategory))
             .SelectMany(logger => logger.Logs.Where(log => log.Category == JsonEffectCategory))
             .Count();
 

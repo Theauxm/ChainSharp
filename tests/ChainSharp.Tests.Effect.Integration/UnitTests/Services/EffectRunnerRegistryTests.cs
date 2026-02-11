@@ -79,10 +79,7 @@ public class EffectRunnerRegistryTests
         registry.Register(typeof(DisabledEffectFactory), enabled: false);
 
         // Act
-        using var runner = new EffectRunner(
-            [enabledFactory, disabledFactory],
-            registry
-        );
+        using var runner = new EffectRunner([enabledFactory, disabledFactory], registry);
 
         // Assert
         enabledFactory.CreateCalled.Should().BeTrue();
@@ -154,10 +151,7 @@ public class EffectRunnerRegistryTests
         registry.Register(typeof(DisabledStepEffectFactory), enabled: false);
 
         // Act
-        using var runner = new StepEffectRunner(
-            [enabledFactory, disabledFactory],
-            registry
-        );
+        using var runner = new StepEffectRunner([enabledFactory, disabledFactory], registry);
 
         // Assert
         enabledFactory.CreateCalled.Should().BeTrue();
@@ -174,20 +168,32 @@ public class EffectRunnerRegistryTests
     private class StubEffectProvider : IEffectProvider
     {
         public Task SaveChanges(CancellationToken cancellationToken) => Task.CompletedTask;
+
         public Task Track(IModel model) => Task.CompletedTask;
+
         public void Dispose() { }
     }
 
     private class EnabledEffectFactory : IEffectProviderFactory
     {
         public bool CreateCalled { get; private set; }
-        public IEffectProvider Create() { CreateCalled = true; return new StubEffectProvider(); }
+
+        public IEffectProvider Create()
+        {
+            CreateCalled = true;
+            return new StubEffectProvider();
+        }
     }
 
     private class DisabledEffectFactory : IEffectProviderFactory
     {
         public bool CreateCalled { get; private set; }
-        public IEffectProvider Create() { CreateCalled = true; return new StubEffectProvider(); }
+
+        public IEffectProvider Create()
+        {
+            CreateCalled = true;
+            return new StubEffectProvider();
+        }
     }
 
     private class StubStepEffectProvider : IStepEffectProvider
@@ -195,24 +201,38 @@ public class EffectRunnerRegistryTests
         public Task BeforeStepExecution<TIn, TOut, TWorkflowIn, TWorkflowOut>(
             EffectStep<TIn, TOut> effectStep,
             EffectWorkflow<TWorkflowIn, TWorkflowOut> effectWorkflow,
-            CancellationToken cancellationToken) => Task.CompletedTask;
+            CancellationToken cancellationToken
+        ) => Task.CompletedTask;
+
         public Task AfterStepExecution<TIn, TOut, TWorkflowIn, TWorkflowOut>(
             EffectStep<TIn, TOut> effectStep,
             EffectWorkflow<TWorkflowIn, TWorkflowOut> effectWorkflow,
-            CancellationToken cancellationToken) => Task.CompletedTask;
+            CancellationToken cancellationToken
+        ) => Task.CompletedTask;
+
         public void Dispose() { }
     }
 
     private class EnabledStepEffectFactory : IStepEffectProviderFactory
     {
         public bool CreateCalled { get; private set; }
-        public IStepEffectProvider Create() { CreateCalled = true; return new StubStepEffectProvider(); }
+
+        public IStepEffectProvider Create()
+        {
+            CreateCalled = true;
+            return new StubStepEffectProvider();
+        }
     }
 
     private class DisabledStepEffectFactory : IStepEffectProviderFactory
     {
         public bool CreateCalled { get; private set; }
-        public IStepEffectProvider Create() { CreateCalled = true; return new StubStepEffectProvider(); }
+
+        public IStepEffectProvider Create()
+        {
+            CreateCalled = true;
+            return new StubStepEffectProvider();
+        }
     }
 
     #endregion

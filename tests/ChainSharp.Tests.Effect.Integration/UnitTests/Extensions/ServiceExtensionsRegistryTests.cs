@@ -94,10 +94,7 @@ public class ServiceExtensionsRegistryTests
         services.AddLogging();
 
         // Act
-        services.AddChainSharpEffects(options => options
-            .AddJsonEffect()
-            .AddStepLogger()
-        );
+        services.AddChainSharpEffects(options => options.AddJsonEffect().AddStepLogger());
         using var provider = services.BuildServiceProvider();
 
         // Assert

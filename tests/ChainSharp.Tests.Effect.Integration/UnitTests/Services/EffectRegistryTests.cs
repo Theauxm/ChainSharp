@@ -163,18 +163,22 @@ public class EffectRegistryTests
     {
         _registry.Register(typeof(FakeFactory), enabled: true);
 
-        var tasks = Enumerable.Range(0, 100).Select(i =>
-            Task.Run(() =>
-            {
-                if (i % 2 == 0)
-                    _registry.Enable(typeof(FakeFactory));
-                else
-                    _registry.Disable(typeof(FakeFactory));
+        var tasks = Enumerable
+            .Range(0, 100)
+            .Select(
+                i =>
+                    Task.Run(() =>
+                    {
+                        if (i % 2 == 0)
+                            _registry.Enable(typeof(FakeFactory));
+                        else
+                            _registry.Disable(typeof(FakeFactory));
 
-                _ = _registry.IsEnabled(typeof(FakeFactory));
-                _ = _registry.GetAll();
-            })
-        ).ToArray();
+                        _ = _registry.IsEnabled(typeof(FakeFactory));
+                        _ = _registry.GetAll();
+                    })
+            )
+            .ToArray();
 
         var act = () => Task.WaitAll(tasks);
 
@@ -184,15 +188,19 @@ public class EffectRegistryTests
     [Test]
     public void ConcurrentRegisterAndQuery_DoesNotThrow()
     {
-        var tasks = Enumerable.Range(0, 100).Select(i =>
-            Task.Run(() =>
-            {
-                // Use a unique type per iteration via a dictionary lookup
-                _registry.Register(typeof(FakeFactory), enabled: i % 2 == 0);
-                _ = _registry.IsEnabled(typeof(FakeFactory));
-                _ = _registry.GetAll();
-            })
-        ).ToArray();
+        var tasks = Enumerable
+            .Range(0, 100)
+            .Select(
+                i =>
+                    Task.Run(() =>
+                    {
+                        // Use a unique type per iteration via a dictionary lookup
+                        _registry.Register(typeof(FakeFactory), enabled: i % 2 == 0);
+                        _ = _registry.IsEnabled(typeof(FakeFactory));
+                        _ = _registry.GetAll();
+                    })
+            )
+            .ToArray();
 
         var act = () => Task.WaitAll(tasks);
 

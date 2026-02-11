@@ -1,3 +1,10 @@
+# [5.4.0](https://github.com/Theauxm/ChainSharp/compare/v5.3.0...v5.4.0) (2026-02-11)
+
+
+### Features
+
+* Toggleable Effects Implementation ([#115](https://github.com/Theauxm/ChainSharp/issues/115)) ([6134922](https://github.com/Theauxm/ChainSharp/commit/613492291f368399a74d2cc241abd9bd9c924575))
+
 # [5.3.0](https://github.com/Theauxm/ChainSharp/compare/v5.2.0...v5.3.0) (2026-02-11)
 
 

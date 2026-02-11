@@ -11,7 +11,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ChainSharp\ChainSharp.csproj" />
+      <ProjectReference Include="..\..\core\ChainSharp\ChainSharp.csproj" />
     </ItemGroup>
 
     <ItemGroup>

@@ -10,7 +10,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\ChainSharp.Effect\ChainSharp.Effect.csproj" />
+        <ProjectReference Include="..\..\effect\ChainSharp.Effect\ChainSharp.Effect.csproj" />
     </ItemGroup>
 
     <ItemGroup>

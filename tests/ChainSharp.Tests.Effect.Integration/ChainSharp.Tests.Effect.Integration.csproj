@@ -27,9 +27,9 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\ChainSharp.Effect\ChainSharp.Effect.csproj" />
-      <ProjectReference Include="..\..\ChainSharp.Effect.Provider.Json\ChainSharp.Effect.Provider.Json.csproj" />
-      <ProjectReference Include="..\..\ChainSharp.Effect.StepProvider.Logging\ChainSharp.Effect.StepProvider.Logging.csproj" />
+      <ProjectReference Include="..\..\src\effect\ChainSharp.Effect\ChainSharp.Effect.csproj" />
+      <ProjectReference Include="..\..\src\providers\ChainSharp.Effect.Provider.Json\ChainSharp.Effect.Provider.Json.csproj" />
+      <ProjectReference Include="..\..\src\providers\ChainSharp.Effect.StepProvider.Logging\ChainSharp.Effect.StepProvider.Logging.csproj" />
     </ItemGroup>
 
 </Project>

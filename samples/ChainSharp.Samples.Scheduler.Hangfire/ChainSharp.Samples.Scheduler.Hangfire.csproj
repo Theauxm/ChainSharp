@@ -10,14 +10,14 @@
 
     <ItemGroup>
         <!-- ChainSharp project references -->
-        <ProjectReference Include="..\..\ChainSharp.Effect\ChainSharp.Effect.csproj" />
-        <ProjectReference Include="..\..\ChainSharp.Effect.Data.Postgres\ChainSharp.Effect.Data.Postgres.csproj" />
-        <ProjectReference Include="..\..\ChainSharp.Effect.Orchestration.Mediator\ChainSharp.Effect.Orchestration.Mediator.csproj" />
-        <ProjectReference Include="..\..\ChainSharp.Effect.Provider.Json\ChainSharp.Effect.Provider.Json.csproj" />
-        <ProjectReference Include="..\..\ChainSharp.Effect.Orchestration.Scheduler\ChainSharp.Effect.Orchestration.Scheduler.csproj" />
-        <ProjectReference Include="..\..\ChainSharp.Effect.Orchestration.Scheduler.Hangfire\ChainSharp.Effect.Orchestration.Scheduler.Hangfire.csproj" />
-        <ProjectReference Include="..\..\ChainSharp.Effect.Provider.Parameter\ChainSharp.Effect.Provider.Parameter.csproj" />
-        <ProjectReference Include="..\..\ChainSharp.Effect.Dashboard\ChainSharp.Effect.Dashboard.csproj" />
+        <ProjectReference Include="..\..\src\effect\ChainSharp.Effect\ChainSharp.Effect.csproj" />
+        <ProjectReference Include="..\..\src\data\ChainSharp.Effect.Data.Postgres\ChainSharp.Effect.Data.Postgres.csproj" />
+        <ProjectReference Include="..\..\src\orchestration\ChainSharp.Effect.Orchestration.Mediator\ChainSharp.Effect.Orchestration.Mediator.csproj" />
+        <ProjectReference Include="..\..\src\providers\ChainSharp.Effect.Provider.Json\ChainSharp.Effect.Provider.Json.csproj" />
+        <ProjectReference Include="..\..\src\orchestration\ChainSharp.Effect.Orchestration.Scheduler\ChainSharp.Effect.Orchestration.Scheduler.csproj" />
+        <ProjectReference Include="..\..\src\orchestration\ChainSharp.Effect.Orchestration.Scheduler.Hangfire\ChainSharp.Effect.Orchestration.Scheduler.Hangfire.csproj" />
+        <ProjectReference Include="..\..\src\providers\ChainSharp.Effect.Provider.Parameter\ChainSharp.Effect.Provider.Parameter.csproj" />
+        <ProjectReference Include="..\..\src\dashboard\ChainSharp.Effect.Dashboard\ChainSharp.Effect.Dashboard.csproj" />
 
     </ItemGroup>
 

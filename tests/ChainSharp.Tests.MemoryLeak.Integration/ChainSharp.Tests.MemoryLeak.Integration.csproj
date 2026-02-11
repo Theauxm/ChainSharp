@@ -29,10 +29,10 @@
 
     <ItemGroup>
       <ProjectReference Include="..\ChainSharp.Tests.ArrayLogger\ChainSharp.Tests.ArrayLogger.csproj" />
-      <ProjectReference Include="..\..\ChainSharp.Effect.Data.InMemory\ChainSharp.Effect.Data.InMemory.csproj" />
-      <ProjectReference Include="..\..\ChainSharp.Effect.Provider.Json\ChainSharp.Effect.Provider.Json.csproj" />
-      <ProjectReference Include="..\..\ChainSharp.Effect.Orchestration.Mediator\ChainSharp.Effect.Orchestration.Mediator.csproj" />
-      <ProjectReference Include="..\..\ChainSharp.Effect.Provider.Parameter\ChainSharp.Effect.Provider.Parameter.csproj" />
+      <ProjectReference Include="..\..\src\data\ChainSharp.Effect.Data.InMemory\ChainSharp.Effect.Data.InMemory.csproj" />
+      <ProjectReference Include="..\..\src\providers\ChainSharp.Effect.Provider.Json\ChainSharp.Effect.Provider.Json.csproj" />
+      <ProjectReference Include="..\..\src\orchestration\ChainSharp.Effect.Orchestration.Mediator\ChainSharp.Effect.Orchestration.Mediator.csproj" />
+      <ProjectReference Include="..\..\src\providers\ChainSharp.Effect.Provider.Parameter\ChainSharp.Effect.Provider.Parameter.csproj" />
       <ProjectReference Include="..\ChainSharp.Tests.Effect.Integration\ChainSharp.Tests.Effect.Integration.csproj" />
     </ItemGroup>
 

@@ -24,9 +24,9 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\ChainSharp.Effect.Dashboard\ChainSharp.Effect.Dashboard.csproj" />
-      <ProjectReference Include="..\..\ChainSharp.Effect\ChainSharp.Effect.csproj" />
-      <ProjectReference Include="..\..\ChainSharp.Effect.Orchestration.Mediator\ChainSharp.Effect.Orchestration.Mediator.csproj" />
+      <ProjectReference Include="..\..\src\dashboard\ChainSharp.Effect.Dashboard\ChainSharp.Effect.Dashboard.csproj" />
+      <ProjectReference Include="..\..\src\effect\ChainSharp.Effect\ChainSharp.Effect.csproj" />
+      <ProjectReference Include="..\..\src\orchestration\ChainSharp.Effect.Orchestration.Mediator\ChainSharp.Effect.Orchestration.Mediator.csproj" />
     </ItemGroup>
 
 </Project>

@@ -36,11 +36,18 @@ var builder = WebApplication.CreateBuilder(args);
 // Add ChainSharp services
 builder.Services.AddChainSharpEffects(o => o.AddEffectWorkflowBus(typeof(Program).Assembly));
 
+// Add the dashboard (optional)
+builder.Services.AddChainSharpDashboard();
+
 // Add your application services
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 var app = builder.Build();
+
+// Mount the dashboard at /chainsharp (optional)
+app.UseChainSharpDashboard("/chainsharp");
+
 app.Run();
 ```
 
@@ -161,6 +168,7 @@ public class UsersController(IWorkflowBus workflowBus) : ControllerBase
 
 ## Next Steps
 
+- [Dashboard](dashboard) - See your registered workflows in a web UI
 - [Core Concepts](concepts) - Learn the fundamental concepts behind ChainSharp
 - [Usage Guide](usage-guide) - Explore more advanced patterns and examples
 - [Architecture](architecture) - Understand the system architecture in detail

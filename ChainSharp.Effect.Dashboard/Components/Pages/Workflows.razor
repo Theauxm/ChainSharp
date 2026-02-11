@@ -1,0 +1,46 @@
+@page "/chainsharp/workflows"
+@inject IWorkflowDiscoveryService WorkflowDiscovery
+
+<RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Registered Workflows</RadzenText>
+
+<RadzenDataGrid Data="@_workflows"
+                TItem="WorkflowRegistration"
+                AllowFiltering="true"
+                AllowSorting="true"
+                AllowPaging="true"
+                PageSize="20"
+                PagerHorizontalAlign="HorizontalAlign.Center"
+                FilterMode="FilterMode.Simple"
+                class="rz-datatable-striped">
+    <Columns>
+        <RadzenDataGridColumn TItem="WorkflowRegistration"
+                              Property="ServiceTypeName"
+                              Title="Workflow"
+                              Width="250px" />
+        <RadzenDataGridColumn TItem="WorkflowRegistration"
+                              Property="ImplementationTypeName"
+                              Title="Implementation"
+                              Width="250px" />
+        <RadzenDataGridColumn TItem="WorkflowRegistration"
+                              Property="InputTypeName"
+                              Title="Input Type"
+                              Width="200px" />
+        <RadzenDataGridColumn TItem="WorkflowRegistration"
+                              Property="OutputTypeName"
+                              Title="Output Type"
+                              Width="200px" />
+        <RadzenDataGridColumn TItem="WorkflowRegistration"
+                              Property="Lifetime"
+                              Title="Lifetime"
+                              Width="120px" />
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    private IReadOnlyList<WorkflowRegistration> _workflows = [];
+
+    protected override void OnInitialized()
+    {
+        _workflows = WorkflowDiscovery.DiscoverWorkflows();
+    }
+}

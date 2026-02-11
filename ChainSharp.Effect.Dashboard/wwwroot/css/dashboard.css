@@ -1,0 +1,9 @@
+/* ChainSharp Dashboard - minimal overrides on top of Radzen material theme */
+
+.rz-layout {
+    min-height: 100vh;
+}
+
+.rz-sidebar {
+    width: 250px;
+}

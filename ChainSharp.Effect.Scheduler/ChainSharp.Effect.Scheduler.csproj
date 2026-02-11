@@ -19,6 +19,7 @@
 
     <ItemGroup>
       <InternalsVisibleTo Include="Theauxm.ChainSharp.Effect.Scheduler.Hangfire" />
+      <InternalsVisibleTo Include="ChainSharp.Tests.Effect.Scheduler.Integration" />
     </ItemGroup>
 
 </Project>

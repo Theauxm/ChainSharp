@@ -86,4 +86,14 @@ public class SchedulerConfiguration
     /// Whether to enable automatic purging of old dead letter records.
     /// </summary>
     public bool AutoPurgeDeadLetters { get; set; } = true;
+
+    /// <summary>
+    /// Configuration for automatic metadata cleanup, if enabled.
+    /// </summary>
+    /// <remarks>
+    /// When set (via <c>.AddMetadataCleanup()</c>), a background service will
+    /// periodically delete old metadata entries for the configured workflow types.
+    /// Null means metadata cleanup is disabled.
+    /// </remarks>
+    public MetadataCleanupConfiguration? MetadataCleanup { get; set; }
 }

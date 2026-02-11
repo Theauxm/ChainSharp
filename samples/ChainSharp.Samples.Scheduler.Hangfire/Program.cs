@@ -44,6 +44,9 @@ builder.Services.AddChainSharpEffects(
             .AddScheduler(
                 scheduler =>
                     scheduler
+                        .AddMetadataCleanup(
+                            cleanup => cleanup.AddWorkflowType<IHelloWorldWorkflow>()
+                        )
                         .UseHangfire(connectionString)
                         .Schedule<IHelloWorldWorkflow, HelloWorldInput>(
                             "sample-hello-world",

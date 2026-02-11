@@ -1,4 +1,5 @@
 using System.Text.Json;
+using ChainSharp.Effect.Services.EffectRegistry;
 using ChainSharp.Effect.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -6,9 +7,14 @@ using Newtonsoft.Json;
 
 namespace ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 
-public class ChainSharpEffectConfigurationBuilder(IServiceCollection serviceCollection)
+public class ChainSharpEffectConfigurationBuilder(
+    IServiceCollection serviceCollection,
+    IEffectRegistry? effectRegistry = null
+)
 {
     public IServiceCollection ServiceCollection => serviceCollection;
+
+    public IEffectRegistry? EffectRegistry => effectRegistry;
 
     public bool DataContextLoggingEffectEnabled { get; set; } = false;
 

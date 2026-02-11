@@ -90,6 +90,47 @@ If your application already uses Blazor Server, the dashboard's `AddChainSharpDa
 
 If your application is a minimal API or MVC app that doesn't use Blazor, the dashboard adds the necessary Blazor Server infrastructure automatically.
 
+## Troubleshooting
+
+### "Page doesn't load" or blank screen
+
+`UseChainSharpDashboard()` needs to be called after `builder.Build()` and before `app.Run()`. If it's missing or misordered, the Blazor endpoints won't be mapped.
+
+```csharp
+var app = builder.Build();
+
+app.UseChainSharpDashboard("/chainsharp");  // After Build(), before Run()
+
+app.Run();
+```
+
+### "No workflows listed"
+
+The dashboard discovers workflows by scanning `ServiceDescriptor` entries in your DI container. If the grid is empty:
+
+**Causes:**
+- The assembly containing your workflows wasn't passed to `AddEffectWorkflowBus`
+- `AddChainSharpDashboard()` was called before the workflows were registered, so the captured `IServiceCollection` snapshot doesn't include them yet
+
+**Fix:** Make sure `AddChainSharpDashboard()` is called after `AddChainSharpEffects`:
+
+```csharp
+builder.Services.AddChainSharpEffects(o =>
+    o.AddEffectWorkflowBus(typeof(Program).Assembly)
+);
+builder.Services.AddChainSharpDashboard();  // After workflows are registered
+```
+
+### Blazor static assets returning 404
+
+If styles are missing or `_content/` paths return 404, ensure `UseStaticFiles()` is in your middleware pipeline. `UseChainSharpDashboard()` calls it internally, but if something earlier in the pipeline is short-circuiting requests, the static file middleware might not run.
+
+### Duplicate workflow entries in the grid
+
+`AddScopedChainSharpWorkflow<IMyWorkflow, MyWorkflow>()` registers two DI descriptors—one for the concrete type and one for the interface. The discovery service attempts to deduplicate these, but in some cases both registrations appear in the grid. The entries will have the same input/output types; one will show the interface name and the other the concrete class name.
+
+This is cosmetic and doesn't affect workflow execution. If it bothers you, it's a known limitation of how the discovery service groups factory-based descriptors.
+
 ## Architecture
 
 The dashboard sits alongside other Effect packages in the dependency tree:

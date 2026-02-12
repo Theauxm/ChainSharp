@@ -135,3 +135,6 @@ _NCrunch*
 *.idea
 
 .vscode/*
+
+# VSCode extension packages
+*.vsix

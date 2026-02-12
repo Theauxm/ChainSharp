@@ -2,7 +2,7 @@
   "name": "chainsharp-hints",
   "displayName": "ChainSharp Chain Hints",
   "description": "Inlay hints showing TIn/TOut types for ChainSharp workflow chain steps",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "ChainSharp",
   "license": "MIT",
   "repository": {

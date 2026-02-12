@@ -1,3 +1,4 @@
+using ChainSharp.Effect.Dashboard.Services.DashboardSettings;
 using ChainSharp.Effect.Dashboard.Services.WorkflowDiscovery;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Enums;
@@ -22,6 +23,9 @@ public partial class Index
     [Inject]
     private IServiceProvider ServiceProvider { get; set; } = default!;
 
+    [Inject]
+    private IDashboardSettingsService DashboardSettings { get; set; } = default!;
+
     // Summary card values
     private int _executionsToday;
     private double _successRate;
@@ -42,15 +46,22 @@ public partial class Index
 
     protected override async Task LoadDataAsync(CancellationToken cancellationToken)
     {
+        await DashboardSettings.InitializeAsync();
+
         using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
         var now = DateTime.UtcNow;
         var todayStart = now.Date;
 
+        var hideAdmin = DashboardSettings.HideAdminWorkflows;
+        var adminNames = DashboardSettings.AdminWorkflowNames;
+
         // Summary cards
-        var todayMetadata = await context
-            .Metadatas.AsNoTracking()
-            .Where(m => m.StartTime >= todayStart)
-            .ToListAsync(cancellationToken);
+        var todayQuery = context.Metadatas.AsNoTracking().Where(m => m.StartTime >= todayStart);
+
+        if (hideAdmin)
+            todayQuery = todayQuery.Where(m => !adminNames.Contains(m.Name));
+
+        var todayMetadata = await todayQuery.ToListAsync(cancellationToken);
 
         _executionsToday = todayMetadata.Count;
 
@@ -60,9 +71,14 @@ public partial class Index
         );
         _successRate = terminal > 0 ? Math.Round(100.0 * completed / terminal, 1) : 0;
 
-        _currentlyRunning = await context
+        var runningQuery = context
             .Metadatas.AsNoTracking()
-            .CountAsync(m => m.WorkflowState == WorkflowState.InProgress, cancellationToken);
+            .Where(m => m.WorkflowState == WorkflowState.InProgress);
+
+        if (hideAdmin)
+            runningQuery = runningQuery.Where(m => !adminNames.Contains(m.Name));
+
+        _currentlyRunning = await runningQuery.CountAsync(cancellationToken);
 
         _unresolvedDeadLetters = await context
             .DeadLetters.AsNoTracking()
@@ -76,9 +92,12 @@ public partial class Index
 
         // Executions over time (last 24h, grouped by hour)
         var last24h = now.AddHours(-24);
-        var recentMetadata = await context
-            .Metadatas.AsNoTracking()
-            .Where(m => m.StartTime >= last24h)
+        var recentQuery = context.Metadatas.AsNoTracking().Where(m => m.StartTime >= last24h);
+
+        if (hideAdmin)
+            recentQuery = recentQuery.Where(m => !adminNames.Contains(m.Name));
+
+        var recentMetadata = await recentQuery
             .Select(m => new { m.StartTime, m.WorkflowState })
             .ToListAsync(cancellationToken);
 
@@ -127,10 +146,15 @@ public partial class Index
 
         // Top failing workflows (last 7 days)
         var last7d = now.AddDays(-7);
+        var failuresQuery = context
+            .Metadatas.AsNoTracking()
+            .Where(m => m.WorkflowState == WorkflowState.Failed && m.StartTime >= last7d);
+
+        if (hideAdmin)
+            failuresQuery = failuresQuery.Where(m => !adminNames.Contains(m.Name));
+
         _topFailures = (
-            await context
-                .Metadatas.AsNoTracking()
-                .Where(m => m.WorkflowState == WorkflowState.Failed && m.StartTime >= last7d)
+            await failuresQuery
                 .GroupBy(m => m.Name)
                 .Select(g => new WorkflowFailureCount { Name = g.Key, Count = g.Count() })
                 .OrderByDescending(x => x.Count)
@@ -141,7 +165,7 @@ public partial class Index
             .ToList();
 
         // Average duration by workflow (completed in last 7 days)
-        var completedRecent = await context
+        var durationsQuery = context
             .Metadatas.AsNoTracking()
             .Where(
                 m =>
@@ -149,7 +173,12 @@ public partial class Index
                     && m.EndTime != null
                     && m.StartTime >= last7d
                     && m.ParentId == null
-            )
+            );
+
+        if (hideAdmin)
+            durationsQuery = durationsQuery.Where(m => !adminNames.Contains(m.Name));
+
+        var completedRecent = await durationsQuery
             .Select(
                 m =>
                     new
@@ -179,9 +208,14 @@ public partial class Index
             .ToList();
 
         // Recent failures
-        _recentFailures = await context
+        var recentFailuresQuery = context
             .Metadatas.AsNoTracking()
-            .Where(m => m.WorkflowState == WorkflowState.Failed)
+            .Where(m => m.WorkflowState == WorkflowState.Failed);
+
+        if (hideAdmin)
+            recentFailuresQuery = recentFailuresQuery.Where(m => !adminNames.Contains(m.Name));
+
+        _recentFailures = await recentFailuresQuery
             .OrderByDescending(m => m.StartTime)
             .Take(10)
             .ToListAsync(cancellationToken);

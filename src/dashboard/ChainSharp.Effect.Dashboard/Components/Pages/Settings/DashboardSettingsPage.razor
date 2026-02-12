@@ -31,6 +31,24 @@
         </RadzenStack>
     </RadzenFieldset>
 
+    <RadzenFieldset Text="Administration Workflows">
+        <RadzenStack Gap="1rem">
+            <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenColumn Size="4">
+                    <RadzenLabel Text="Hide Administration Workflows" Component="HideAdminWorkflows" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenSwitch @bind-Value="_hideAdminWorkflows" Name="HideAdminWorkflows" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                        Exclude scheduler internals (ManifestManager, ManifestExecutor, MetadataCleanup) from dashboard statistics and charts.
+                    </RadzenText>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenFieldset>
+
     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
         <RadzenButton Text="Reset Default"
                       Icon="restart_alt"

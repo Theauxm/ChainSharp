@@ -6,8 +6,8 @@ nav_order: 1
 
 # ChainSharp
 
-[![Build Status](https://github.com/Theauxm/ChainSharp/workflows/Release%20NuGet%20Package/badge.svg)](https://github.com/Theauxm/ChainSharp/actions)
-[![Test Status](https://github.com/Theauxm/ChainSharp/workflows/ChainSharp:%20Run%20CI/CD%20Test%20Suite/badge.svg)](https://github.com/Theauxm/ChainSharp/actions)
+[![Build Status](https://github.com/Theauxm/ChainSharp/workflows/Release%20NuGet%20Package/badge.svg?branch=main)](https://github.com/Theauxm/ChainSharp/actions)
+[![Test Status](https://github.com/Theauxm/ChainSharp/workflows/ChainSharp:%20Run%20CI/CD%20Test%20Suite/badge.svg?branch=main)](https://github.com/Theauxm/ChainSharp/actions)
 
 ChainSharp is a .NET library for building workflows as a chain of discrete steps.
 
@@ -54,18 +54,24 @@ public class ProcessOrderWorkflow : EffectWorkflow<OrderRequest, OrderReceipt>
 
 If `CheckInventoryStep` throws, `ChargePaymentStep` never runs. The exception propagates automatically. Each step is a separate class with its own dependencies, easy to test in isolation.
 
-For more on how this works, see [Core Concepts](concepts.md).
-
-## Dashboard
-
-ChainSharp ships with a built-in web dashboard. Add two lines to your `Program.cs` and get a UI for inspecting every workflow registered in your application:
-
-```csharp
-builder.Services.AddChainSharpDashboard();
-app.UseChainSharpDashboard("/chainsharp");
+```
+Success Track:  Input → [Step 1] → [Step 2] → [Step 3] → Output
+                            ↓
+Failure Track:          Exception → [Skip] → [Skip] → Exception
 ```
 
-See [Dashboard](dashboard.md) for setup and configuration.
+Remove a step or reorder the chain incorrectly, and the built-in [Analyzer](analyzer.md) tells you at compile time—before you ever run the code.
+
+For more on how this works, see [Core Concepts](concepts.md).
+
+## IDE Extensions
+
+Inlay hint extensions for VSCode and Rider/ReSharper. They show `TIn → TOut` types inline for each `.Chain<TStep>()` call.
+
+- **VSCode** — Install from the [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=ChainSharp.chainsharp-hints)
+- **Rider / ReSharper** — Search for **ChainSharp Chain Hints** in JetBrains Marketplace
+
+See [IDE Extensions](ide-extensions.md) for details.
 
 ## Quick Start
 

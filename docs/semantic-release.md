@@ -1,3 +1,9 @@
+---
+layout: default
+title: Semantic Release
+nav_order: 10
+---
+
 # Semantic Release
 
 ChainSharp uses [semantic-release](https://github.com/semantic-release/semantic-release) to automatically version releases. When you push to `main`, it analyzes commits, determines the next version, updates `Directory.Build.props` and `CHANGELOG.md`, and publishes to NuGet.

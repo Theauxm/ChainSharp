@@ -535,7 +535,11 @@ public class WorkflowTests : TestSetup
     {
         protected override async Task<Either<Exception, Unit>> RunInternal(
             IFirstInheritedInterface input
-        ) => Activate(input).Chain<TestMemoryStep>().Resolve();
+        ) => Activate(input)
+#pragma warning disable CHAIN001 // Analyzer sees TInput as IFirstInheritedInterface; runtime concrete type also implements ISecondInheritedInterface
+            .Chain<TestMemoryStep>()
+#pragma warning restore CHAIN001
+            .Resolve();
     }
 
     private class ChainTestWithNoInputs : Workflow<Ingredients, List<GlassBottle>>

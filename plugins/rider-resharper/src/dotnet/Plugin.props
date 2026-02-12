@@ -1,0 +1,20 @@
+﻿<Project>
+
+  <PropertyGroup>
+    <!-- See https://www.nuget.org/packages/JetBrains.ReSharper.SDK -->
+    <!-- Keep in sync with ProductVersion in gradle.properties -->
+    <SdkVersion>2025.3.0.1</SdkVersion>
+
+    <Title>ChainSharp Chain Hints</Title>
+    <Description>Inlay hints showing TIn/TOut types for ChainSharp workflow chain steps</Description>
+
+    <Authors>ChainSharp</Authors>
+    <Copyright>Copyright $([System.DateTime]::Now.Year) Maintainers of ChainSharp</Copyright>
+    <PackageTags>resharper rider plugin chainsharp inlay-hints workflow</PackageTags>
+
+    <PackageProjectUrl>https://github.com/theauxm/ChainSharp</PackageProjectUrl>
+    <PackageLicenseUrl></PackageLicenseUrl>
+    <PackageIconUrl></PackageIconUrl>
+  </PropertyGroup>
+
+</Project>

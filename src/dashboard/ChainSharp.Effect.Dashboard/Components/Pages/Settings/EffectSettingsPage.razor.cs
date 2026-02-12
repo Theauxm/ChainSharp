@@ -38,6 +38,7 @@ public partial class EffectSettingsPage
                         Name = kvp.Key.Name,
                         FullName = kvp.Key.FullName ?? kvp.Key.Name,
                         Enabled = kvp.Value,
+                        Toggleable = _registry.IsToggleable(kvp.Key),
                     }
             )
             .OrderBy(e => e.Name)
@@ -70,7 +71,7 @@ public partial class EffectSettingsPage
 
     private void EnableAll()
     {
-        foreach (var entry in _effects)
+        foreach (var entry in _effects.Where(e => e.Toggleable))
         {
             entry.Enabled = true;
             _registry!.Enable(entry.FactoryType);
@@ -88,7 +89,7 @@ public partial class EffectSettingsPage
 
     private void DisableAll()
     {
-        foreach (var entry in _effects)
+        foreach (var entry in _effects.Where(e => e.Toggleable))
         {
             entry.Enabled = false;
             _registry!.Disable(entry.FactoryType);
@@ -110,5 +111,6 @@ public partial class EffectSettingsPage
         public required string Name { get; init; }
         public required string FullName { get; init; }
         public bool Enabled { get; set; }
+        public required bool Toggleable { get; init; }
     }
 }

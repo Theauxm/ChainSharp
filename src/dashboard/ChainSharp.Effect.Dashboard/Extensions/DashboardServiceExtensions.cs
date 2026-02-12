@@ -1,5 +1,6 @@
 using ChainSharp.Effect.Dashboard.Components;
 using ChainSharp.Effect.Dashboard.Configuration;
+using ChainSharp.Effect.Dashboard.Services.DashboardSettings;
 using ChainSharp.Effect.Dashboard.Services.LocalStorage;
 using ChainSharp.Effect.Dashboard.Services.ThemeState;
 using ChainSharp.Effect.Dashboard.Services.WorkflowDiscovery;
@@ -30,6 +31,7 @@ public static class DashboardServiceExtensions
         services.AddScoped<IWorkflowDiscoveryService, WorkflowDiscoveryService>();
         services.AddScoped<ILocalStorageService, LocalStorageService>();
         services.AddScoped<IThemeStateService, ThemeStateService>();
+        services.AddScoped<IDashboardSettingsService, DashboardSettingsService>();
 
         services.AddRadzenComponents();
 

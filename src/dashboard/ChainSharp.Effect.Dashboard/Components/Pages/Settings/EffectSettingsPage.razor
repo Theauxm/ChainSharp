@@ -13,7 +13,7 @@
 @if (_effects.Count == 0)
 {
     <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" AllowClose="false">
-        No toggleable effects are registered. Effects registered with <code>toggleable: false</code> are infrastructure effects and cannot be disabled.
+        No effects are registered. Ensure effects are added via <code>.AddChainSharpEffects()</code> configuration.
     </RadzenAlert>
     return;
 }
@@ -52,11 +52,18 @@
                                   Title="Full Type Name" />
             <RadzenDataGridColumn TItem="EffectEntry"
                                   Title="Status"
-                                  Width="120px"
+                                  Width="150px"
                                   Sortable="false">
                 <Template Context="entry">
-                    <RadzenSwitch @bind-Value="entry.Enabled"
-                                  Change="@(() => OnToggle(entry))" />
+                    @if (entry.Toggleable)
+                    {
+                        <RadzenSwitch @bind-Value="entry.Enabled"
+                                      Change="@(() => OnToggle(entry))" />
+                    }
+                    else
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Always On" />
+                    }
                 </Template>
             </RadzenDataGridColumn>
         </Columns>

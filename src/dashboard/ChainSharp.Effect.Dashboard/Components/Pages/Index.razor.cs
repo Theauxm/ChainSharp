@@ -22,8 +22,6 @@ public partial class Index
     [Inject]
     private IServiceProvider ServiceProvider { get; set; } = default!;
 
-    private bool _loading = true;
-
     // Summary card values
     private int _executionsToday;
     private double _successRate;
@@ -42,9 +40,9 @@ public partial class Index
     private List<Metadata> _recentFailures = [];
     private List<Manifest> _activeManifestList = [];
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task LoadDataAsync(CancellationToken cancellationToken)
     {
-        using var context = await DataContextFactory.CreateDbContextAsync(CancellationToken.None);
+        using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
         var now = DateTime.UtcNow;
         var todayStart = now.Date;
 
@@ -52,7 +50,7 @@ public partial class Index
         var todayMetadata = await context
             .Metadatas.AsNoTracking()
             .Where(m => m.StartTime >= todayStart)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         _executionsToday = todayMetadata.Count;
 
@@ -64,13 +62,15 @@ public partial class Index
 
         _currentlyRunning = await context
             .Metadatas.AsNoTracking()
-            .CountAsync(m => m.WorkflowState == WorkflowState.InProgress);
+            .CountAsync(m => m.WorkflowState == WorkflowState.InProgress, cancellationToken);
 
         _unresolvedDeadLetters = await context
             .DeadLetters.AsNoTracking()
-            .CountAsync(d => d.Status == DeadLetterStatus.AwaitingIntervention);
+            .CountAsync(d => d.Status == DeadLetterStatus.AwaitingIntervention, cancellationToken);
 
-        _activeManifests = await context.Manifests.AsNoTracking().CountAsync(m => m.IsEnabled);
+        _activeManifests = await context
+            .Manifests.AsNoTracking()
+            .CountAsync(m => m.IsEnabled, cancellationToken);
 
         _registeredWorkflows = WorkflowDiscovery.DiscoverWorkflows().Count;
 
@@ -80,7 +80,7 @@ public partial class Index
             .Metadatas.AsNoTracking()
             .Where(m => m.StartTime >= last24h)
             .Select(m => new { m.StartTime, m.WorkflowState })
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         _executionsOverTime = Enumerable
             .Range(0, 24)
@@ -135,7 +135,7 @@ public partial class Index
                 .Select(g => new WorkflowFailureCount { Name = g.Key, Count = g.Count() })
                 .OrderByDescending(x => x.Count)
                 .Take(10)
-                .ToListAsync()
+                .ToListAsync(cancellationToken)
         )
             .Select(x => new WorkflowFailureCount { Name = ShortName(x.Name), Count = x.Count })
             .ToList();
@@ -159,7 +159,7 @@ public partial class Index
                         m.EndTime,
                     }
             )
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         _avgDurations = completedRecent
             .GroupBy(m => m.Name)
@@ -184,16 +184,14 @@ public partial class Index
             .Where(m => m.WorkflowState == WorkflowState.Failed)
             .OrderByDescending(m => m.StartTime)
             .Take(10)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         // Active scheduled manifests
         _activeManifestList = await context
             .Manifests.AsNoTracking()
             .Where(m => m.IsEnabled && m.ScheduleType != ScheduleType.None)
             .OrderBy(m => m.Name)
-            .ToListAsync();
-
-        _loading = false;
+            .ToListAsync(cancellationToken);
     }
 
     private static string ShortName(string fullName)

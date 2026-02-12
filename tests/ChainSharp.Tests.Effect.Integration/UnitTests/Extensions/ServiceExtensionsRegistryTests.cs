@@ -70,20 +70,36 @@ public class ServiceExtensionsRegistryTests
     }
 
     [Test]
-    public void AddEffect_NotToggleable_DoesNotRegisterInRegistry()
+    public void AddChainSharpEffects_NoEffects_RegistryIsEmpty()
     {
         // Arrange
         var services = new ServiceCollection();
 
-        // Act - Simulate what AddInMemoryEffect does: AddEffect with toggleable=false
-        // We can't easily call AddInMemoryEffect here without the InMemory package,
-        // but we can verify the registry is empty when no toggleable effects are added
+        // Act
         services.AddChainSharpEffects();
         using var provider = services.BuildServiceProvider();
 
         // Assert
         var registry = provider.GetRequiredService<IEffectRegistry>();
         registry.GetAll().Should().BeEmpty();
+    }
+
+    [Test]
+    public void AddEffect_Toggleable_AppearsInGetToggleable()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+
+        // Act
+        services.AddChainSharpEffects(options => options.AddJsonEffect());
+        using var provider = services.BuildServiceProvider();
+
+        // Assert
+        var registry = provider.GetRequiredService<IEffectRegistry>();
+        var toggleable = registry.GetToggleable();
+
+        toggleable.Should().ContainKey(typeof(JsonEffectProviderFactory));
     }
 
     [Test]

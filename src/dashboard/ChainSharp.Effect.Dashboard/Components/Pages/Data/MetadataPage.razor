@@ -1,11 +1,12 @@
 @page "/chainsharp/data/metadata"
+@inherits PollingComponentBase
 @inject IDataContextProviderFactory DataContextFactory
 
 <RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Metadata</RadzenText>
 
 <RadzenDataGrid Data="@_items"
                 TItem="Metadata"
-                IsLoading="@_loading"
+                IsLoading="@IsLoading"
                 AllowFiltering="true"
                 AllowSorting="true"
                 AllowPaging="true"
@@ -62,12 +63,10 @@
 
 @code {
     private List<Metadata> _items = [];
-    private bool _loading = true;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task LoadDataAsync(CancellationToken cancellationToken)
     {
-        using var context = await DataContextFactory.CreateDbContextAsync(CancellationToken.None);
-        _items = await context.Metadatas.AsNoTracking().ToListAsync();
-        _loading = false;
+        using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
+        _items = await context.Metadatas.AsNoTracking().ToListAsync(cancellationToken);
     }
 }

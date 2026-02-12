@@ -4,4 +4,5 @@ public static class StorageKeys
 {
     public const string Theme = "chainsharp-theme";
     public const string SidebarExpanded = "chainsharp-sidebar-expanded";
+    public const string PollingInterval = "chainsharp-polling-interval";
 }

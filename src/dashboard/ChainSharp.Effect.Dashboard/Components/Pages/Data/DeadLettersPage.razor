@@ -1,11 +1,12 @@
 @page "/chainsharp/data/dead-letters"
+@inherits PollingComponentBase
 @inject IDataContextProviderFactory DataContextFactory
 
 <RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Dead Letters</RadzenText>
 
 <RadzenDataGrid Data="@_items"
                 TItem="DeadLetter"
-                IsLoading="@_loading"
+                IsLoading="@IsLoading"
                 AllowFiltering="true"
                 AllowSorting="true"
                 AllowPaging="true"
@@ -54,12 +55,10 @@
 
 @code {
     private List<DeadLetter> _items = [];
-    private bool _loading = true;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task LoadDataAsync(CancellationToken cancellationToken)
     {
-        using var context = await DataContextFactory.CreateDbContextAsync(CancellationToken.None);
-        _items = await context.DeadLetters.AsNoTracking().ToListAsync();
-        _loading = false;
+        using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
+        _items = await context.DeadLetters.AsNoTracking().ToListAsync(cancellationToken);
     }
 }

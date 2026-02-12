@@ -1,8 +1,9 @@
 @page "/chainsharp"
+@inherits PollingComponentBase
 
 <RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Dashboard</RadzenText>
 
-@if (_loading)
+@if (IsLoading)
 {
     <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
     return;

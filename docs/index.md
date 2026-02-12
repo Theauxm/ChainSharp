@@ -7,7 +7,7 @@ nav_order: 1
 # ChainSharp
 
 [![Build Status](https://github.com/Theauxm/ChainSharp/workflows/Release%20NuGet%20Package/badge.svg?branch=main)](https://github.com/Theauxm/ChainSharp/actions)
-[![Test Status](https://github.com/Theauxm/ChainSharp/workflows/ChainSharp:%20Run%20CI/CD%20Test%20Suite/badge.svg?branch=main)](https://github.com/Theauxm/ChainSharp/actions)
+[![Test Status](https://github.com/Theauxm/ChainSharp/workflows/ChainSharp:%20Run%20CI%2FCD%20Test%20Suite/badge.svg?branch=main)](https://github.com/Theauxm/ChainSharp/actions)
 
 ChainSharp is a .NET library for building workflows as a chain of discrete steps.
 

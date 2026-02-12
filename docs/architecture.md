@@ -87,12 +87,11 @@ ChainSharp (Core)
 
 ### Repository Structure
 
-The source projects are organized under `src/` by subdomain:
-
 ```
 src/
 ├── core/           ChainSharp
 ├── effect/         ChainSharp.Effect
+├── analyzers/      ChainSharp.Analyzers (Roslyn compile-time validation)
 ├── data/           ChainSharp.Effect.Data
 │                   ChainSharp.Effect.Data.InMemory
 │                   ChainSharp.Effect.Data.Postgres
@@ -103,6 +102,9 @@ src/
 │                   ChainSharp.Effect.Orchestration.Scheduler
 │                   ChainSharp.Effect.Orchestration.Scheduler.Hangfire
 └── dashboard/      ChainSharp.Effect.Dashboard
+plugins/
+├── vscode/         ChainSharp Chain Hints (VSCode inlay hints extension)
+└── rider-resharper/ ChainSharp Chain Hints (Rider/ReSharper inlay hints plugin)
 tests/              Test projects
 samples/            Sample applications
 docs/               Documentation (GitHub Pages)
@@ -276,37 +278,81 @@ public class DataContext<TDbContext> : DbContext, IDataContext
 ### Data Model Structure
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                           METADATA                               │
-├─────────────────────────────────────────────────────────────────┤
-│ Id (PK)          │ int                                          │
-│ ParentId (FK)    │ int?           → Self-reference              │
-│ ExternalId       │ string                                       │
-│ Name             │ string                                       │
-│ Executor         │ string                                       │
-│ WorkflowState    │ enum                                         │
-│ FailureStep      │ string?                                      │
-│ FailureException │ string?                                      │
-│ FailureReason    │ string?                                      │
-│ StackTrace       │ string?                                      │
-│ Input            │ json                                         │
-│ Output           │ json                                         │
-│ StartTime        │ datetime                                     │
-│ EndTime          │ datetime?                                    │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              │ 1:N
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                             LOG                                  │
-├─────────────────────────────────────────────────────────────────┤
-│ Id (PK)          │ int                                          │
-│ MetadataId (FK)  │ int            → METADATA.Id                 │
-│ LogLevel         │ enum                                         │
-│ Message          │ string                                       │
-│ Properties       │ json                                         │
-│ Timestamp        │ datetime                                     │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                           MANIFEST                                │
+├──────────────────────────────────────────────────────────────────┤
+│ Id (PK)            │ int                                         │
+│ ExternalId         │ string                                      │
+│ Name               │ string                                      │
+│ PropertyTypeName   │ string?                                     │
+│ Properties         │ jsonb                                       │
+│ IsEnabled          │ bool                                        │
+│ ScheduleType       │ enum (None/Cron/Interval/OnDemand)          │
+│ CronExpression     │ string?                                     │
+│ IntervalSeconds    │ int?                                        │
+│ MaxRetries         │ int                                         │
+│ TimeoutSeconds     │ int?                                        │
+│ LastSuccessfulRun  │ datetime?                                   │
+└──────────────────────────────────────────────────────────────────┘
+          │                              │
+          │ 1:N                          │ 1:N
+          ▼                              ▼
+┌─────────────────────────────┐  ┌─────────────────────────────────┐
+│        DEAD_LETTER          │  │           METADATA               │
+├─────────────────────────────┤  ├─────────────────────────────────┤
+│ Id (PK)          │ int      │  │ Id (PK)            │ int        │
+│ ManifestId (FK)  │ int      │  │ ParentId (FK)      │ int?  → Self │
+│ DeadLetteredAt   │ datetime │  │ ManifestId (FK)    │ int?       │
+│ Status           │ enum     │  │ ExternalId         │ string     │
+│ Reason           │ string   │  │ Name               │ string     │
+│ RetryCount       │ int      │  │ Executor           │ string?    │
+│ ResolvedAt       │ datetime?│  │ WorkflowState      │ enum       │
+│ ResolutionNote   │ string?  │  │ FailureStep        │ string?    │
+│ RetryMetadataId  │ int?     │  │ FailureException   │ string?    │
+└─────────────────────────────┘  │ FailureReason      │ string?    │
+                                 │ StackTrace         │ string?    │
+  DeadLetterStatus:              │ Input              │ jsonb      │
+  - AwaitingIntervention         │ Output             │ jsonb      │
+  - Retried                      │ StartTime          │ datetime   │
+  - Acknowledged                 │ EndTime            │ datetime?  │
+                                 │ ScheduledTime      │ datetime?  │
+                                 └─────────────────────────────────┘
+                                          │
+                                          │ 1:N
+                                          ▼
+                                 ┌─────────────────────────────────┐
+                                 │              LOG                 │
+                                 ├─────────────────────────────────┤
+                                 │ Id (PK)          │ int          │
+                                 │ MetadataId (FK)  │ int          │
+                                 │ EventId          │ int          │
+                                 │ Level            │ enum         │
+                                 │ Message          │ string       │
+                                 │ Category         │ string       │
+                                 │ Exception        │ string?      │
+                                 │ StackTrace       │ string?      │
+                                 └─────────────────────────────────┘
+```
+
+Additionally, **StepMetadata** tracks individual step executions within a workflow (not persisted to the database, used in-memory during workflow execution):
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                        STEP_METADATA                              │
+├──────────────────────────────────────────────────────────────────┤
+│ Id (PK)              │ int                                       │
+│ WorkflowName         │ string                                    │
+│ WorkflowExternalId   │ string                                    │
+│ Name                 │ string                                    │
+│ ExternalId           │ string                                    │
+│ InputType            │ Type                                      │
+│ OutputType           │ Type                                      │
+│ State                │ EitherStatus                              │
+│ HasRan               │ bool                                      │
+│ StartTimeUtc         │ datetime?                                 │
+│ EndTimeUtc           │ datetime?                                 │
+│ OutputJson           │ string?                                   │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ### Implementation Variants

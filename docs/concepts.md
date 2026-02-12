@@ -19,13 +19,14 @@ Failure Track:          Exception → [Skip] → [Skip] → Exception
 ChainSharp uses `Either<Exception, T>` from LanguageExt to represent this. A value is either `Left` (an exception) or `Right` (the success value):
 
 ```csharp
-public async Task<Either<Exception, User>> CreateUser(CreateUserRequest input)
+public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>, ICreateUserWorkflow
 {
-    return Activate(input)
-        .Chain<ValidateUserStep>()    // If this fails, skip remaining steps
-        .Chain<CreateUserStep>()      // Only runs if validation succeeded
-        .Chain<SendEmailStep>()       // Only runs if creation succeeded
-        .Resolve();                   // Return Either<Exception, User>
+    protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
+        => Activate(input)
+            .Chain<ValidateUserStep>()    // If this fails, skip remaining steps
+            .Chain<CreateUserStep>()      // Only runs if validation succeeded
+            .Chain<SendEmailStep>()       // Only runs if creation succeeded
+            .Resolve();                   // Return Either<Exception, User>
 }
 ```
 
@@ -223,18 +224,23 @@ public class EnrichUserStep(IEnrichmentService Enricher) : Step<User, Unit>
 Every workflow execution creates a metadata record:
 
 ```csharp
-public class Metadata : IMetadata
+public class Metadata : IModel, IDisposable
 {
     public int Id { get; }                          // Unique identifier
     public string Name { get; set; }                // Workflow name
+    public string ExternalId { get; set; }          // GUID for external references
+    public string? Executor { get; }                // Assembly that ran the workflow
     public WorkflowState WorkflowState { get; set; } // Pending/InProgress/Completed/Failed
     public DateTime StartTime { get; set; }         // When workflow started
     public DateTime? EndTime { get; set; }          // When workflow finished
-    public JsonDocument? Input { get; set; }        // Serialized input
-    public JsonDocument? Output { get; set; }       // Serialized output
-    public string? FailureException { get; }        // Error details if failed
-    public string? FailureReason { get; }           // Human-readable error
+    public string? Input { get; set; }              // Serialized input (jsonb)
+    public string? Output { get; set; }             // Serialized output (jsonb)
+    public string? FailureStep { get; }             // Which step failed
+    public string? FailureException { get; }        // Exception type
+    public string? FailureReason { get; }           // Error message
+    public string? StackTrace { get; set; }         // Stack trace if failed
     public int? ParentId { get; set; }              // For nested workflows
+    public int? ManifestId { get; set; }            // For scheduled workflows
 }
 ```
 

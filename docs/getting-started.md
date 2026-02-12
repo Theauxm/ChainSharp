@@ -13,17 +13,15 @@ nav_order: 2
 For a typical setup with database persistence and workflow discovery:
 
 ```xml
+<PackageReference Include="Theauxm.ChainSharp" Version="5.*" />
 <PackageReference Include="Theauxm.ChainSharp.Effect" Version="5.*" />
-<PackageReference Include="Theauxm.ChainSharp.Effect.Data.Postgres" Version="5.*" />
-<PackageReference Include="Theauxm.ChainSharp.Effect.Orchestration.Mediator" Version="5.*" />
 ```
 
 Or via the .NET CLI:
 
 ```bash
+dotnet add package Theauxm.ChainSharp
 dotnet add package Theauxm.ChainSharp.Effect
-dotnet add package Theauxm.ChainSharp.Effect.Data.Postgres
-dotnet add package Theauxm.ChainSharp.Effect.Orchestration.Mediator
 ```
 
 ## Basic Configuration
@@ -36,17 +34,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Add ChainSharp services
 builder.Services.AddChainSharpEffects(o => o.AddEffectWorkflowBus(typeof(Program).Assembly));
 
-// Add the dashboard (optional)
-builder.Services.AddChainSharpDashboard();
-
 // Add your application services
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 var app = builder.Build();
-
-// Mount the dashboard at /chainsharp (optional)
-app.UseChainSharpDashboard("/chainsharp");
 
 app.Run();
 ```
@@ -168,7 +160,7 @@ public class UsersController(IWorkflowBus workflowBus) : ControllerBase
 
 ## Next Steps
 
-- [Dashboard](dashboard) - See your registered workflows in a web UI
 - [Core Concepts](concepts) - Learn the fundamental concepts behind ChainSharp
 - [Usage Guide](usage-guide) - Explore more advanced patterns and examples
 - [Architecture](architecture) - Understand the system architecture in detail
+- [Dashboard](dashboard) - Add a web UI for inspecting workflows (optional)

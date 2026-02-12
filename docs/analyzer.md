@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Analyzer
-nav_order: 8
+nav_order: 6
 ---
 
 # Analyzer

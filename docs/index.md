@@ -54,20 +54,24 @@ public class ProcessOrderWorkflow : EffectWorkflow<OrderRequest, OrderReceipt>
 
 If `CheckInventoryStep` throws, `ChargePaymentStep` never runs. The exception propagates automatically. Each step is a separate class with its own dependencies, easy to test in isolation.
 
+```
+Success Track:  Input → [Step 1] → [Step 2] → [Step 3] → Output
+                            ↓
+Failure Track:          Exception → [Skip] → [Skip] → Exception
+```
+
 Remove a step or reorder the chain incorrectly, and the built-in [Analyzer](analyzer.md) tells you at compile time—before you ever run the code.
 
 For more on how this works, see [Core Concepts](concepts.md).
 
-## Dashboard
+## IDE Extensions
 
-ChainSharp ships with a built-in web dashboard. Add two lines to your `Program.cs` and get a UI for inspecting every workflow registered in your application:
+Inlay hint extensions for VSCode and Rider/ReSharper. They show `TIn → TOut` types inline for each `.Chain<TStep>()` call.
 
-```csharp
-builder.Services.AddChainSharpDashboard();
-app.UseChainSharpDashboard("/chainsharp");
-```
+- **VSCode** — Install from the [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=ChainSharp.chainsharp-hints)
+- **Rider / ReSharper** — Search for **ChainSharp Chain Hints** in JetBrains Marketplace
 
-See [Dashboard](dashboard.md) for setup and configuration.
+See [IDE Extensions](ide-extensions.md) for details.
 
 ## Quick Start
 

@@ -43,6 +43,42 @@ public class CreateUserStep(IUserRepository UserRepository) : Step<CreateUserReq
 
 Steps use constructor injection for dependencies. When a step throws, the workflow stops and returns the exception.
 
+### EffectStep vs Step
+
+ChainSharp has two step base classes:
+
+**`Step<TIn, TOut>`** — The base class. Handles input/output and Railway error propagation. No metadata, no lifecycle hooks. Use this for lightweight steps or when running inside a plain `Workflow`.
+
+**`EffectStep<TIn, TOut>`** — Extends `Step` with per-step metadata tracking. When run inside an `EffectWorkflow`, it records a `StepMetadata` entry with the step's name, input/output types, start/end times, and Railway state. Step effect providers (like `AddStepLogger`) hook into `EffectStep`'s lifecycle—they fire before and after each step executes.
+
+```csharp
+// Base step — no metadata tracking
+public class ValidateEmailStep(IUserRepository repo) : Step<CreateUserRequest, Unit>
+{
+    public override async Task<Unit> Run(CreateUserRequest input)
+    {
+        if (await repo.GetByEmailAsync(input.Email) != null)
+            throw new ValidationException("Email already exists");
+        return Unit.Default;
+    }
+}
+
+// Effect step — tracked by step effect providers
+public class ValidateEmailStep(IUserRepository repo) : EffectStep<CreateUserRequest, Unit>
+{
+    public override async Task<Unit> Run(CreateUserRequest input)
+    {
+        if (await repo.GetByEmailAsync(input.Email) != null)
+            throw new ValidationException("Email already exists");
+        return Unit.Default;
+    }
+}
+```
+
+The implementation is identical—just swap the base class. `EffectStep` only adds metadata when running inside an `EffectWorkflow`. If you use `EffectStep` inside a plain `Workflow`, it throws at runtime.
+
+Use `EffectStep` when you want step-level observability (timing, logging via `AddStepLogger`). Use `Step` when you don't need it.
+
 ## Workflow Structure
 
 As your application grows, you'll want a consistent way to organize workflows. ChainSharp recommends grouping each workflow with its input, interface, and steps in a single folder:
@@ -506,15 +542,30 @@ services.AddChainSharpEffects(options =>
 
 Without this, the `Input` and `Output` columns in `Metadata` are null. With it, they contain JSON-serialized versions of your request and response objects.
 
+### Step Logger (`AddStepLogger`)
+
+**Use when:** You want structured logging for individual step executions inside a workflow.
+
+```csharp
+services.AddChainSharpEffects(options =>
+    options.AddStepLogger(serializeStepData: true)
+);
+```
+
+This hooks into `EffectStep` (not base `Step`) lifecycle events. Before and after each step runs, it logs structured `StepMetadata` containing the step name, input/output types, timing, and Railway state (`Right`/`Left`). When `serializeStepData` is `true`, the step's output is also serialized to JSON in the log entry.
+
+Requires steps to inherit from `EffectStep<TIn, TOut>` instead of `Step<TIn, TOut>`. See [EffectStep vs Step](#effectstep-vs-step) below.
+
 ### Combining Providers
 
 Providers compose. A typical production setup:
 
 ```csharp
-services.AddChainSharpEffects(options => 
+services.AddChainSharpEffects(options =>
     options
         .AddPostgresEffect(connectionString)   // Persist metadata
         .SaveWorkflowParameters()              // Include input/output in metadata
+        .AddStepLogger(serializeStepData: true) // Log individual step executions
         .AddEffectWorkflowBus(assemblies)      // Enable workflow discovery
 );
 ```
@@ -522,10 +573,11 @@ services.AddChainSharpEffects(options =>
 A typical development setup:
 
 ```csharp
-services.AddChainSharpEffects(options => 
+services.AddChainSharpEffects(options =>
     options
         .AddInMemoryEffect()                   // Fast, no database needed
         .AddJsonEffect()                       // Log state changes
+        .AddStepLogger()                       // Log step executions
         .AddEffectWorkflowBus(assemblies)
 );
 ```

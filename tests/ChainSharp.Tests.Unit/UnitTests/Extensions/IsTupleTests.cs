@@ -125,7 +125,7 @@ public class IsTupleTests : TestSetup
 
     private class ClassWithTupleField
     {
-        public (int, string) TupleField;
+        public (int, string) TupleField = default;
     }
 
     [Theory]

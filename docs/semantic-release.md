@@ -60,10 +60,6 @@ When you push a commit to `main`, GitHub Actions runs the release workflow:
 
 All of this happens in the `.github/workflows/nuget_release.yml` workflow. The configuration lives in `.releaserc.json`.
 
-## Setup
-
-One GitHub secret is required: `NUGET_API_KEY`. Get your NuGet.org API key at https://www.nuget.org/account/apikeys, then add it to repository settings (Settings → Secrets and variables → Actions).
-
 ## Examples
 
 A feature and a bug fix in one push:

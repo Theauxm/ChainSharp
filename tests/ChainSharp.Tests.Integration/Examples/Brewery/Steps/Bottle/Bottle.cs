@@ -5,7 +5,7 @@ using ChainSharp.Tests.Integration.Examples.Brewery.Steps.Prepare;
 
 namespace ChainSharp.Tests.Integration.Examples.Brewery.Steps.Bottle;
 
-public class Bottle(IFerment ferment) : Step<BrewingJug, List<GlassBottle>>, IBottle
+public class Bottle(IFerment _ferment) : Step<BrewingJug, List<GlassBottle>>, IBottle
 {
     public override async Task<List<GlassBottle>> Run(BrewingJug input)
     {

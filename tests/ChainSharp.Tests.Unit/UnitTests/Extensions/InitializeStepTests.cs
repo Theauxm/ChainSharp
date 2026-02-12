@@ -53,5 +53,5 @@ public class InitializeStepTests : TestSetup
         }
     }
 
-    private class TestInvalidStep(int intInput, string stringInput) { }
+    private class TestInvalidStep(int _intInput, string _stringInput) { }
 }

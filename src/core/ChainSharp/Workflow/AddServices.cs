@@ -1,3 +1,4 @@
+using System.Runtime.Serialization;
 using ChainSharp.Exceptions;
 using ChainSharp.Extensions;
 using LanguageExt;
@@ -20,6 +21,9 @@ public partial class Workflow<TInput, TReturn>
     {
         Type[] typeArray = [typeof(T1)];
 
+        if (service is null)
+            throw new Exception($"({service}) cannot be null");
+
         return AddServices([service], typeArray);
     }
 
@@ -34,6 +38,13 @@ public partial class Workflow<TInput, TReturn>
     public Workflow<TInput, TReturn> AddServices<T1, T2>(T1 service1, T2 service2)
     {
         Type[] typeArray = [typeof(T1), typeof(T2)];
+
+        if (service1 is null)
+            throw new Exception($"({service1}) cannot be null");
+
+        if (service2 is null)
+            throw new Exception($"({service2}) cannot be null");
+
         object[] services = [service1, service2];
 
         return AddServices(services, typeArray);
@@ -52,6 +63,15 @@ public partial class Workflow<TInput, TReturn>
     public Workflow<TInput, TReturn> AddServices<T1, T2, T3>(T1 service1, T2 service2, T3 service3)
     {
         Type[] typeArray = [typeof(T1), typeof(T2), typeof(T3)];
+        if (service1 is null)
+            throw new Exception($"({service1}) cannot be null");
+
+        if (service2 is null)
+            throw new Exception($"({service2}) cannot be null");
+
+        if (service3 is null)
+            throw new Exception($"({service3}) cannot be null");
+
         object[] services = [service1, service2, service3];
 
         return AddServices(services, typeArray);
@@ -77,6 +97,18 @@ public partial class Workflow<TInput, TReturn>
     )
     {
         Type[] typeArray = [typeof(T1), typeof(T2), typeof(T3), typeof(T4)];
+        if (service1 is null)
+            throw new Exception($"({service1}) cannot be null");
+
+        if (service2 is null)
+            throw new Exception($"({service2}) cannot be null");
+
+        if (service3 is null)
+            throw new Exception($"({service3}) cannot be null");
+
+        if (service4 is null)
+            throw new Exception($"({service4}) cannot be null");
+
         object[] services = [service1, service2, service3, service4];
 
         return AddServices(services, typeArray);
@@ -105,6 +137,21 @@ public partial class Workflow<TInput, TReturn>
     )
     {
         Type[] typeArray = [typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5)];
+        if (service1 is null)
+            throw new Exception($"({service1}) cannot be null");
+
+        if (service2 is null)
+            throw new Exception($"({service1}) cannot be null");
+
+        if (service3 is null)
+            throw new Exception($"({service1}) cannot be null");
+
+        if (service4 is null)
+            throw new Exception($"({service1}) cannot be null");
+
+        if (service5 is null)
+            throw new Exception($"({service1}) cannot be null");
+
         object[] services = [service1, service2, service3, service4, service5];
 
         return AddServices(services, typeArray);
@@ -136,6 +183,24 @@ public partial class Workflow<TInput, TReturn>
     )
     {
         Type[] typeArray = [typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6)];
+        if (service1 is null)
+            throw new Exception($"({service1}) cannot be null");
+
+        if (service2 is null)
+            throw new Exception($"({service2}) cannot be null");
+
+        if (service3 is null)
+            throw new Exception($"({service3}) cannot be null");
+
+        if (service4 is null)
+            throw new Exception($"({service4}) cannot be null");
+
+        if (service5 is null)
+            throw new Exception($"({service5}) cannot be null");
+
+        if (service6 is null)
+            throw new Exception($"({service6}) cannot be null");
+
         object[] services = [service1, service2, service3, service4, service5, service6];
 
         return AddServices(services, typeArray);
@@ -179,6 +244,27 @@ public partial class Workflow<TInput, TReturn>
             typeof(T6),
             typeof(T7)
         ];
+        if (service1 is null)
+            throw new Exception($"({service1}) cannot be null");
+
+        if (service2 is null)
+            throw new Exception($"({service2}) cannot be null");
+
+        if (service3 is null)
+            throw new Exception($"({service3}) cannot be null");
+
+        if (service4 is null)
+            throw new Exception($"({service4}) cannot be null");
+
+        if (service5 is null)
+            throw new Exception($"({service5}) cannot be null");
+
+        if (service6 is null)
+            throw new Exception($"({service6}) cannot be null");
+
+        if (service7 is null)
+            throw new Exception($"({service7}) cannot be null");
+
         object[] services = [service1, service2, service3, service4, service5, service6, service7];
 
         return AddServices(services, typeArray);

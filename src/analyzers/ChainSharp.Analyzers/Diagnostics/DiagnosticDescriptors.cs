@@ -19,7 +19,7 @@ internal static class DiagnosticDescriptors
 
     /// <summary>
     /// Resolve return type not found in Memory.
-    /// Warning because ShortCircuit could provide it outside the analyzer's visibility.
+    /// Error because the analyzer now tracks ShortCircuit steps alongside Chain steps.
     /// </summary>
     public static readonly DiagnosticDescriptor ResolveTypeNotInMemory =
         new(
@@ -27,7 +27,7 @@ internal static class DiagnosticDescriptors
             title: "Workflow return type not available in memory",
             messageFormat: "Workflow return type '{0}' has not been produced by any step. Available: [{1}].",
             category: "ChainSharp.Workflow",
-            defaultSeverity: DiagnosticSeverity.Warning,
+            defaultSeverity: DiagnosticSeverity.Error,
             isEnabledByDefault: true
         );
 }

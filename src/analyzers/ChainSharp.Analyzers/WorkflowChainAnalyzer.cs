@@ -79,6 +79,7 @@ public sealed class WorkflowChainAnalyzer : DiagnosticAnalyzer
                     break;
 
                 case "Chain":
+                case "ShortCircuit":
                     AnalyzeChainCall(context, call, memory);
                     break;
 

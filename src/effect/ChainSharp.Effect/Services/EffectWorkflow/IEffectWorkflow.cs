@@ -34,5 +34,5 @@ public interface IEffectWorkflow<in TIn, TOut> : IWorkflow<TIn, TOut>, IDisposab
     /// This property provides access to the database record that tracks this workflow execution.
     /// It can be used to query the current state of the workflow or to access execution details.
     /// </remarks>
-    public Metadata Metadata { get; }
+    public Metadata? Metadata { get; }
 }

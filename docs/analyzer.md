@@ -40,10 +40,11 @@ Activate(input)       → Memory = { TInput, Unit }
 |--------|----------------------|
 | `Activate(input)` | Seeds Memory with `TInput` and `Unit` |
 | `.Chain<TStep>()` | Checks `TIn ∈ Memory`, then adds `TOut` |
+| `.ShortCircuit<TStep>()` | Same as `Chain` — checks `TIn ∈ Memory`, adds `TOut` |
 | `.AddServices<T1, T2>()` | Adds each type argument to Memory |
 | `.IChain<TStep>()` | Resolves step types, adds `TOut` to Memory |
 | `.Extract<TIn, TOut>()` | Adds `TOut` to Memory |
-| `.Resolve()` | Checks `TReturn ∈ Memory` (warning, not error) |
+| `.Resolve()` | Checks `TReturn ∈ Memory` |
 
 ## Diagnostics
 
@@ -68,9 +69,9 @@ error CHAIN001: Step 'LogGreetingStep' requires input type 'HelloWorldInput'
 which has not been produced by a previous step. Available: [string, Unit].
 ```
 
-### CHAIN002: Workflow return type not available (Warning)
+### CHAIN002: Workflow return type not available (Error)
 
-Fires when `Resolve()` needs a type that hasn't been produced. This is a warning rather than an error because `ShortCircuit` steps can provide the return type outside the analyzer's visibility.
+Fires when `Resolve()` needs a type that hasn't been produced. The analyzer tracks all chain methods including `ShortCircuit`, so a missing return type is always an error.
 
 ```csharp
 public class MissingReturnWorkflow : EffectWorkflow<OrderRequest, Receipt>
@@ -95,8 +96,6 @@ The analyzer mirrors the runtime's Memory behavior:
 ## Known Limitations
 
 **Sibling interface inputs.** When the workflow's `TInput` is an interface (e.g., `Workflow<IFoo, Unit>`) and a step requires a different interface that the runtime concrete type also implements, the analyzer can't verify this. Suppress with `#pragma warning disable CHAIN001`.
-
-**ShortCircuit steps.** `ShortCircuit<TStep>()` conditionally provides the return type. The analyzer doesn't track this, which is why CHAIN002 is a warning instead of an error.
 
 **Cross-method chains.** The analyzer only looks within a single method body. If you build a chain across helper methods, it won't follow the calls.
 

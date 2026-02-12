@@ -42,6 +42,7 @@ namespace ChainSharp.Workflow
         public Workflow<TInput, TReturn> AddServices<T1>() => this;
         public Workflow<TInput, TReturn> AddServices<T1, T2>() => this;
         public Workflow<TInput, TReturn> IChain<TStep>() where TStep : class => this;
+        public Workflow<TInput, TReturn> ShortCircuit<TStep>() where TStep : class => this;
         public Workflow<TInput, TReturn> Extract<TIn, TOut>() => this;
         public TReturn Resolve() => default!;
     }
@@ -155,7 +156,7 @@ namespace TestApp
     }
 }";
 
-        var expected = new DiagnosticResult("CHAIN002", DiagnosticSeverity.Warning)
+        var expected = new DiagnosticResult("CHAIN002", DiagnosticSeverity.Error)
             .WithLocation(0)
             .WithArguments("Receipt", "Unit, OrderRequest, Validated");
 
@@ -398,7 +399,7 @@ namespace TestApp
     }
 }";
 
-        var expected = new DiagnosticResult("CHAIN002", DiagnosticSeverity.Warning)
+        var expected = new DiagnosticResult("CHAIN002", DiagnosticSeverity.Error)
             .WithLocation(0)
             .WithArguments("(User, Order)", "Unit, MyInput, User");
 
@@ -490,6 +491,196 @@ namespace TestApp
                 .Chain<ProduceContainerStep>()
                 .Extract<Container, Inner>()
                 .Chain<ConsumeInnerStep>()
+                .Resolve();
+        }
+    }
+}";
+
+        var test = CreateTest(source);
+        await test.RunAsync();
+    }
+
+    // ──────────────────────────────────────────────
+    // Phase 3: ShortCircuit tracking
+    // ──────────────────────────────────────────────
+
+    [Test]
+    public async Task ShortCircuit_TypesFlowCorrectly_NoDiagnostics()
+    {
+        var source =
+            StubTypes
+            + @"
+namespace TestApp
+{
+    public class OrderRequest { }
+    public class OrderResult { }
+
+    public class ProcessOrderStep : ChainSharp.Step.IStep<OrderRequest, OrderResult> { }
+
+    public class TestWorkflow : ChainSharp.Workflow.Workflow<OrderRequest, OrderResult>
+    {
+        public void Run(OrderRequest input)
+        {
+            Activate(input)
+                .ShortCircuit<ProcessOrderStep>()
+                .Resolve();
+        }
+    }
+}";
+
+        var test = CreateTest(source);
+        await test.RunAsync();
+    }
+
+    [Test]
+    public async Task ShortCircuit_MissingInputType_Reports_CHAIN001()
+    {
+        var source =
+            StubTypes
+            + @"
+namespace TestApp
+{
+    public class MyInput { }
+    public class NeedsSpecial { }
+    public class Result { }
+
+    public class BadStep : ChainSharp.Step.IStep<NeedsSpecial, Result> { }
+
+    public class TestWorkflow : ChainSharp.Workflow.Workflow<MyInput, Result>
+    {
+        public void Run(MyInput input)
+        {
+            Activate(input)
+                .{|#0:ShortCircuit<BadStep>()|}
+                .Resolve();
+        }
+    }
+}";
+
+        var expected = new DiagnosticResult("CHAIN001", DiagnosticSeverity.Error)
+            .WithLocation(0)
+            .WithArguments("BadStep", "NeedsSpecial", "Unit, MyInput");
+
+        var test = CreateTest(source, expected);
+        await test.RunAsync();
+    }
+
+    [Test]
+    public async Task ShortCircuit_ProvidesTReturn_NoDiagnostics()
+    {
+        var source =
+            StubTypes
+            + @"
+namespace TestApp
+{
+    public class OrderRequest { }
+    public class Validated { }
+    public class Receipt { }
+
+    public class ValidateStep : ChainSharp.Step.IStep<OrderRequest, Validated> { }
+    public class CacheCheckStep : ChainSharp.Step.IStep<OrderRequest, Receipt> { }
+
+    public class TestWorkflow : ChainSharp.Workflow.Workflow<OrderRequest, Receipt>
+    {
+        public void Run(OrderRequest input)
+        {
+            Activate(input)
+                .ShortCircuit<CacheCheckStep>()
+                .Chain<ValidateStep>()
+                .Resolve();
+        }
+    }
+}";
+
+        var test = CreateTest(source);
+        await test.RunAsync();
+    }
+
+    [Test]
+    public async Task ShortCircuit_DoesNotProvideTReturn_Reports_CHAIN002()
+    {
+        var source =
+            StubTypes
+            + @"
+namespace TestApp
+{
+    public class OrderRequest { }
+    public class Intermediate { }
+    public class Receipt { }
+
+    public class MissStep : ChainSharp.Step.IStep<OrderRequest, Intermediate> { }
+
+    public class TestWorkflow : ChainSharp.Workflow.Workflow<OrderRequest, Receipt>
+    {
+        public void Run(OrderRequest input)
+        {
+            Activate(input)
+                .ShortCircuit<MissStep>()
+                .{|#0:Resolve()|};
+        }
+    }
+}";
+
+        var expected = new DiagnosticResult("CHAIN002", DiagnosticSeverity.Error)
+            .WithLocation(0)
+            .WithArguments("Receipt", "Unit, OrderRequest, Intermediate");
+
+        var test = CreateTest(source, expected);
+        await test.RunAsync();
+    }
+
+    [Test]
+    public async Task ShortCircuit_TOutAvailableForDownstreamChain_NoDiagnostics()
+    {
+        var source =
+            StubTypes
+            + @"
+namespace TestApp
+{
+    public class OrderRequest { }
+    public class CachedData { }
+    public class FinalResult { }
+
+    public class CacheStep : ChainSharp.Step.IStep<OrderRequest, CachedData> { }
+    public class ProcessStep : ChainSharp.Step.IStep<CachedData, FinalResult> { }
+
+    public class TestWorkflow : ChainSharp.Workflow.Workflow<OrderRequest, FinalResult>
+    {
+        public void Run(OrderRequest input)
+        {
+            Activate(input)
+                .ShortCircuit<CacheStep>()
+                .Chain<ProcessStep>()
+                .Resolve();
+        }
+    }
+}";
+
+        var test = CreateTest(source);
+        await test.RunAsync();
+    }
+
+    [Test]
+    public async Task ShortCircuit_WithTupleOutput_DecomposesComponents()
+    {
+        var source =
+            StubTypes
+            + @"
+namespace TestApp
+{
+    public class User { }
+    public class Order { }
+
+    public class ProducePairStep : ChainSharp.Step.IStep<string, (User, Order)> { }
+    public class ConsumeUserStep : ChainSharp.Step.IStep<User, LanguageExt.Unit> { }
+
+    public class TestWorkflow : ChainSharp.Workflow.Workflow<string, LanguageExt.Unit>
+    {
+        public void Run(string input)
+        {
+            Activate(input)
+                .ShortCircuit<ProducePairStep>()
+                .Chain<ConsumeUserStep>()
                 .Resolve();
         }
     }

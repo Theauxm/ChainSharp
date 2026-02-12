@@ -504,7 +504,7 @@ public class WorkflowTests : TestSetup
 
     private class TestService : ITestService { }
 
-    private class LoggerTest(ILogger<LoggerTest> logger, ITestService testService)
+    private class LoggerTest(ILogger<LoggerTest> logger, ITestService _testService)
         : Step<Unit, Unit>
     {
         public override async Task<Unit> Run(Unit input)

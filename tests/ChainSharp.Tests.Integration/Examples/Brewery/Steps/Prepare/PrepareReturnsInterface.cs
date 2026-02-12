@@ -6,7 +6,7 @@ using LanguageExt.UnsafeValueAccess;
 
 namespace ChainSharp.Tests.Integration.Examples.Brewery.Steps.Prepare;
 
-public class PrepareWithInterface(IFerment ferment) : Step<Ingredients, IBrewingJug>
+public class PrepareWithInterface(IFerment _ferment) : Step<Ingredients, IBrewingJug>
 {
     public override async Task<IBrewingJug> Run(Ingredients input)
     {

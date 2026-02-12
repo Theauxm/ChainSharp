@@ -11,11 +11,18 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\effect\ChainSharp.Effect\ChainSharp.Effect.csproj" />
+        <ProjectReference Include="..\..\data\ChainSharp.Effect.Data\ChainSharp.Effect.Data.csproj" />
     </ItemGroup>
 
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
-        <PackageReference Include="Radzen.Blazor" Version="5.*" />
+        <PackageReference Include="Radzen.Blazor" Version="6.*" />
+    </ItemGroup>
+
+    <!-- Propagate RequiresAspNetWebAssets to NuGet consumers so blazor.web.js is resolved -->
+    <ItemGroup>
+        <None Include="build\**" Pack="true" PackagePath="build\" />
+        <None Include="buildTransitive\**" Pack="true" PackagePath="buildTransitive\" />
     </ItemGroup>
 
 </Project>

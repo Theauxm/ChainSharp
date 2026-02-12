@@ -1,9 +1,52 @@
-/* ChainSharp Dashboard - minimal overrides on top of Radzen material theme */
+/* ChainSharp Dashboard — custom variables bridging Radzen theme tokens.
+   --cs-* variables reference --rz-* tokens so they auto-cascade on theme change.
+   The .cs-dashboard wrapper scopes Radzen variable overrides to this dashboard. */
 
-.rz-layout {
+:root {
+    --cs-header-bg: #1B5E20;
+    --cs-header-text: #ffffff;
+    --cs-primary: #2E7D32;
+    --cs-primary-lighter: #388E3C;
+    --cs-grid-row-selected-bg: var(--rz-secondary-lighter, rgba(255, 255, 255, 0.1));
+    --cs-grid-row-hover-bg: var(--rz-base-background-color-hover, rgba(255, 255, 255, 0.18));
+}
+
+/* Override Radzen's panel menu active-state variables within our scope.
+   --rz-text-contrast-color resolves to black in light mode and white in dark mode,
+   so the active item text automatically matches the theme. */
+.cs-dashboard {
+    --rz-panel-menu-item-active-background-color: var(--cs-primary);
+    --rz-panel-menu-item-active-color: var(--rz-text-contrast-color);
+    --rz-panel-menu-item-active-indicator: var(--cs-primary-lighter);
+    --rz-panel-menu-item-2nd-level-active-background-color: var(--cs-primary-lighter);
+    --rz-panel-menu-item-2nd-level-active-color: var(--rz-text-contrast-color);
+}
+
+/* Layout structure */
+.cs-dashboard .rz-layout {
     min-height: 100vh;
 }
 
-.rz-sidebar {
+.cs-dashboard .rz-sidebar {
     width: 250px;
+}
+
+/* Header: forest green background, white text */
+.cs-dashboard .rz-header {
+    background-color: var(--cs-header-bg);
+}
+
+.cs-dashboard .rz-header,
+.cs-dashboard .rz-header * {
+    color: var(--cs-header-text);
+}
+
+/* Ensure nested panel menu items are not greyed out */
+.cs-dashboard .rz-panel-menu .rz-navigation-item .rz-navigation-item .rz-navigation-item-link {
+    opacity: 1;
+    color: var(--rz-text-color);
+}
+
+.cs-dashboard .rz-panel-menu .rz-navigation-item .rz-navigation-item .rz-navigation-item-icon {
+    color: var(--rz-text-color);
 }

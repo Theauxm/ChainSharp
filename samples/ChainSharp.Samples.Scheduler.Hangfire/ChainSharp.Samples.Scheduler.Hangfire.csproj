@@ -6,6 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
+        <RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>
     </PropertyGroup>
 
     <ItemGroup>

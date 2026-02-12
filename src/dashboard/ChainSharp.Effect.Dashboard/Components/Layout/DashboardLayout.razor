@@ -1,31 +1,22 @@
+@* Components/Layout/DashboardLayout.razor *@
 @inherits LayoutComponentBase
-@inject DashboardOptions Options
 
-<RadzenLayout>
-    <RadzenHeader>
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0">
-            <RadzenSidebarToggle Click="@(() => _sidebarExpanded = !_sidebarExpanded)" />
-            <RadzenText TextStyle="TextStyle.H6" class="rz-m-0 rz-p-2">
-                @Options.Title Dashboard
-            </RadzenText>
-        </RadzenStack>
-    </RadzenHeader>
+<RadzenTheme Theme="@ThemeStateService.Theme" />
 
-    <RadzenSidebar @bind-Expanded="_sidebarExpanded">
-        <RadzenPanelMenu>
-            <RadzenPanelMenuItem Text="Workflows"
-                                Path="@($"{Options.RoutePrefix.TrimStart('/')}/workflows")"
-                                Icon="account_tree" />
-        </RadzenPanelMenu>
-    </RadzenSidebar>
+<div class="cs-dashboard">
+    <RadzenLayout>
+        <DashboardHeader OnToggleSidebar="@ToggleSidebar"
+                         OnToggleTheme="@ToggleTheme"
+                         IsDarkMode="@ThemeStateService.IsDarkMode"
+                         Title="@($"{Options.Title} Dashboard")" />
+        <DashboardSidebar Expanded="@SidebarExpanded" />
+        <RadzenBody>
+            <div class="rz-p-4">
+                @Body
+            </div>
+        </RadzenBody>
+        <DashboardFooter />
+    </RadzenLayout>
+</div>
 
-    <RadzenBody>
-        <div class="rz-p-4">
-            @Body
-        </div>
-    </RadzenBody>
-</RadzenLayout>
-
-@code {
-    private bool _sidebarExpanded = true;
-}
+<RadzenComponents />

@@ -82,13 +82,19 @@ public class MissingReturnWorkflow : EffectWorkflow<OrderRequest, Receipt>
 }
 ```
 
-## What It Doesn't Check (Yet)
+## Tuple and Interface Handling
 
-The analyzer has a few known blind spots. These are areas where the runtime does something the analyzer can't verify statically:
+The analyzer mirrors the runtime's Memory behavior:
 
-**Tuple inputs.** When a step takes `(User, Order)` as input, the runtime constructs the tuple from individual Memory entries. The analyzer skips the check for tuple input types entirely—it won't false-positive, but it also won't catch a missing component.
+**Tuple outputs are decomposed.** When a step produces `(User, Order)`, the analyzer adds `User` and `Order` to Memory individually (not the tuple itself). This matches how the runtime stores tuple elements.
 
-**Interface inputs.** When a step takes `IEntity` and Memory has a concrete `User` that implements `IEntity`, the runtime matches them. The analyzer can't verify interface assignability, so it skips the check for interface input types.
+**Tuple inputs are validated component-by-component.** When a step takes `(User, Order)`, the analyzer checks that both `User` and `Order` are individually available in Memory.
+
+**Interface resolution works through concrete types.** When a step produces `ConcreteUser` (which implements `IUser`), the analyzer adds both `ConcreteUser` and `IUser` to Memory. A subsequent step requiring `IUser` will pass validation.
+
+## Known Limitations
+
+**Sibling interface inputs.** When the workflow's `TInput` is an interface (e.g., `Workflow<IFoo, Unit>`) and a step requires a different interface that the runtime concrete type also implements, the analyzer can't verify this. Suppress with `#pragma warning disable CHAIN001`.
 
 **ShortCircuit steps.** `ShortCircuit<TStep>()` conditionally provides the return type. The analyzer doesn't track this, which is why CHAIN002 is a warning instead of an error.
 

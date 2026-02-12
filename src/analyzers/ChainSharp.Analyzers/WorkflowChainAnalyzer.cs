@@ -88,14 +88,12 @@ public sealed class WorkflowChainAnalyzer : DiagnosticAnalyzer
 
                 case "IChain":
                     // Interface-based chaining resolves the step from Memory.
-                    // Phase 1 can't fully simulate this, so attempt to resolve
-                    // and track the output type if possible.
+                    // Track the output type if possible.
                     HandleIChain(call, memory);
                     break;
 
                 case "Extract":
                     // Extract<TIn, TOut>() — adds TOut to Memory.
-                    // Phase 1 doesn't validate TIn presence, just tracks the output.
                     HandleExtract(call, memory);
                     break;
 
@@ -127,15 +125,31 @@ public sealed class WorkflowChainAnalyzer : DiagnosticAnalyzer
         var (tIn, tOut) = stepTypes.Value;
 
         // Check that TIn is available in Memory
-        // Skip check for ValueTuple types — the runtime assembles tuples from individual
-        // Memory entries, but Phase 1 doesn't simulate this.
-        // Skip check for interface types — the runtime stores types by all their interfaces,
-        // but Phase 1 doesn't track interface assignability.
-        if (!memory.Contains(tIn) && !IsValueTuple(tIn) && tIn.TypeKind != TypeKind.Interface)
+        if (IsValueTuple(tIn))
         {
+            // Tuple input: verify each component type is in Memory
+            var tupleType = (INamedTypeSymbol)tIn;
+            var missing = memory.GetMissingTupleComponents(tupleType);
+
+            if (missing.Count > 0)
+            {
+                var diagnostic = Diagnostic.Create(
+                    DiagnosticDescriptors.StepInputNotInMemory,
+                    GetPreciseLocation(call.Invocation),
+                    stepType.Name,
+                    tIn.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
+                    memory.GetAvailableTypesString()
+                );
+                context.ReportDiagnostic(diagnostic);
+            }
+        }
+        else if (!memory.Contains(tIn))
+        {
+            // Non-tuple: direct check. Interface inputs work automatically
+            // because AddType now stores all interfaces alongside concrete types.
             var diagnostic = Diagnostic.Create(
                 DiagnosticDescriptors.StepInputNotInMemory,
-                call.Invocation.GetLocation(),
+                GetPreciseLocation(call.Invocation),
                 stepType.Name,
                 tIn.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
                 memory.GetAvailableTypesString()
@@ -159,15 +173,31 @@ public sealed class WorkflowChainAnalyzer : DiagnosticAnalyzer
         if (unitType != null && SymbolEqualityComparer.Default.Equals(tReturn, unitType))
             return;
 
-        // Skip tuple return types — Phase 1 doesn't simulate tuple assembly from components
+        // Tuple return types: check each component is in Memory
         if (IsValueTuple(tReturn))
+        {
+            var tupleType = (INamedTypeSymbol)tReturn;
+            var missing = memory.GetMissingTupleComponents(tupleType);
+
+            if (missing.Count > 0)
+            {
+                var diagnostic = Diagnostic.Create(
+                    DiagnosticDescriptors.ResolveTypeNotInMemory,
+                    GetPreciseLocation(call.Invocation),
+                    tReturn.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
+                    memory.GetAvailableTypesString()
+                );
+                context.ReportDiagnostic(diagnostic);
+            }
+
             return;
+        }
 
         if (!memory.Contains(tReturn))
         {
             var diagnostic = Diagnostic.Create(
                 DiagnosticDescriptors.ResolveTypeNotInMemory,
-                call.Invocation.GetLocation(),
+                GetPreciseLocation(call.Invocation),
                 tReturn.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
                 memory.GetAvailableTypesString()
             );
@@ -294,5 +324,24 @@ public sealed class WorkflowChainAnalyzer : DiagnosticAnalyzer
             IdentifierNameSyntax identifier => identifier.Identifier.Text,
             _ => null
         };
+    }
+
+    /// <summary>
+    /// Gets a precise diagnostic location for a chained invocation.
+    /// For member access calls like .Chain&lt;StepB&gt;(), returns the span of just
+    /// "Chain&lt;StepB&gt;()" rather than the entire chain from Activate().
+    /// </summary>
+    private static Location GetPreciseLocation(InvocationExpressionSyntax invocation)
+    {
+        if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
+        {
+            var span = Microsoft.CodeAnalysis.Text.TextSpan.FromBounds(
+                memberAccess.Name.SpanStart,
+                invocation.Span.End
+            );
+            return Location.Create(invocation.SyntaxTree, span);
+        }
+
+        return invocation.GetLocation();
     }
 }

@@ -3,6 +3,9 @@
 
 <RadzenSidebar Expanded="@Expanded">
     <RadzenPanelMenu>
+        <RadzenPanelMenuItem Text="Home"
+                            Path="@($"{Options.RoutePrefix.TrimStart('/')}")"
+                            Icon="home" />
         <RadzenPanelMenuItem Text="Workflows"
                             Path="@($"{Options.RoutePrefix.TrimStart('/')}/workflows")"
                             Icon="account_tree" />
@@ -19,6 +22,14 @@
             <RadzenPanelMenuItem Text="Dead Letters"
                                 Path="@($"{Options.RoutePrefix.TrimStart('/')}/data/dead-letters")"
                                 Icon="error_outline" />
+        </RadzenPanelMenuItem>
+        <RadzenPanelMenuItem Text="Settings" Icon="settings" @bind-Expanded="_settingsExpanded">
+            <RadzenPanelMenuItem Text="Scheduler"
+                                Path="@($"{Options.RoutePrefix.TrimStart('/')}/settings/scheduler")"
+                                Icon="schedule" />
+            <RadzenPanelMenuItem Text="Effects"
+                                Path="@($"{Options.RoutePrefix.TrimStart('/')}/settings/effects")"
+                                Icon="tune" />
         </RadzenPanelMenuItem>
     </RadzenPanelMenu>
 </RadzenSidebar>

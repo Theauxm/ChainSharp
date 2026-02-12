@@ -1,0 +1,65 @@
+@page "/chainsharp/settings/effects"
+
+<RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Effect Settings</RadzenText>
+
+@if (!_available)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Warning" Shade="Shade.Lighter" AllowClose="false">
+        Effect Registry is not available. Ensure <code>.AddChainSharpEffects()</code> is configured in your service registration.
+    </RadzenAlert>
+    return;
+}
+
+@if (_effects.Count == 0)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" AllowClose="false">
+        No toggleable effects are registered. Effects registered with <code>toggleable: false</code> are infrastructure effects and cannot be disabled.
+    </RadzenAlert>
+    return;
+}
+
+<RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" AllowClose="true" class="rz-mb-4">
+    Changes take effect on the next workflow execution scope. Running workflows are not affected.
+</RadzenAlert>
+
+<RadzenStack Gap="1rem">
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+        <RadzenButton Text="Enable All"
+                      Icon="toggle_on"
+                      ButtonStyle="ButtonStyle.Success"
+                      Size="ButtonSize.Small"
+                      Click="EnableAll" />
+        <RadzenButton Text="Disable All"
+                      Icon="toggle_off"
+                      ButtonStyle="ButtonStyle.Danger"
+                      Size="ButtonSize.Small"
+                      Click="DisableAll" />
+    </RadzenStack>
+
+    <RadzenDataGrid Data="@_effects"
+                    TItem="EffectEntry"
+                    AllowSorting="true"
+                    AllowColumnResize="true"
+                    class="rz-datatable-striped">
+        <Columns>
+            <RadzenDataGridColumn TItem="EffectEntry"
+                                  Property="Name"
+                                  Title="Effect Factory"
+                                  Width="250px" />
+            <RadzenDataGridColumn TItem="EffectEntry"
+                                  Property="FullName"
+                                  Title="Full Type Name" />
+            <RadzenDataGridColumn TItem="EffectEntry"
+                                  Title="Status"
+                                  Width="120px"
+                                  Sortable="false">
+                <Template Context="entry">
+                    <RadzenSwitch @bind-Value="entry.Enabled"
+                                  Change="@(() => OnToggle(entry))" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+
+</RadzenStack>

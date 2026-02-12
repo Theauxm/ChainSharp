@@ -8,4 +8,5 @@ public partial class DashboardSidebar
     public bool Expanded { get; set; } = true;
 
     private bool _dataExpanded = true;
+    private bool _settingsExpanded = true;
 }

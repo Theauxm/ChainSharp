@@ -70,6 +70,7 @@ public class ManifestScheduler(
         Func<TSource, (string ExternalId, TInput Input)> map,
         Schedule schedule,
         Action<TSource, ManifestOptions>? configure = null,
+        string? prunePrefix = null,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -108,6 +109,46 @@ public class ManifestScheduler(
             }
 
             await context.SaveChanges(ct);
+
+            if (prunePrefix is not null)
+            {
+                var keepIds = results.Select(m => m.ExternalId).ToHashSet();
+
+                // Collect the manifest IDs to prune
+                var staleManifestIds = await context
+                    .Manifests.Where(
+                        m => m.ExternalId.StartsWith(prunePrefix) && !keepIds.Contains(m.ExternalId)
+                    )
+                    .Select(m => m.Id)
+                    .ToListAsync(ct);
+
+                if (staleManifestIds.Count > 0)
+                {
+                    // Delete in FK-dependency order: dead_letters → metadata → manifests
+                    await context
+                        .DeadLetters.Where(d => staleManifestIds.Contains(d.ManifestId))
+                        .ExecuteDeleteAsync(ct);
+
+                    await context
+                        .Metadatas.Where(
+                            m =>
+                                m.ManifestId.HasValue
+                                && staleManifestIds.Contains(m.ManifestId.Value)
+                        )
+                        .ExecuteDeleteAsync(ct);
+
+                    var pruned = await context
+                        .Manifests.Where(m => staleManifestIds.Contains(m.Id))
+                        .ExecuteDeleteAsync(ct);
+
+                    logger.LogInformation(
+                        "Pruned {Count} stale manifests with prefix '{Prefix}'",
+                        pruned,
+                        prunePrefix
+                    );
+                }
+            }
+
             await context.CommitTransaction();
 
             logger.LogInformation(

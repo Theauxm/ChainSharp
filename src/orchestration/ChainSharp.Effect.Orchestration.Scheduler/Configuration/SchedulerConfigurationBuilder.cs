@@ -258,7 +258,8 @@ public class SchedulerConfigurationBuilder
         IEnumerable<TSource> sources,
         Func<TSource, (string ExternalId, TInput Input)> map,
         Schedule schedule,
-        Action<TSource, ManifestOptions>? configure = null
+        Action<TSource, ManifestOptions>? configure = null,
+        string? prunePrefix = null
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
@@ -278,7 +279,8 @@ public class SchedulerConfigurationBuilder
                         map,
                         schedule,
                         configure,
-                        ct
+                        prunePrefix: prunePrefix,
+                        ct: ct
                     );
                     return results.FirstOrDefault()!;
                 }

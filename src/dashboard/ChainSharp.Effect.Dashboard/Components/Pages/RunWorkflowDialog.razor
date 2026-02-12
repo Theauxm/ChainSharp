@@ -1,0 +1,98 @@
+@using ChainSharp.Effect.Orchestration.Mediator.Services.WorkflowBus
+@inject IServiceScopeFactory ScopeFactory
+@inject DialogService DialogService
+
+<RadzenStack Gap="1rem">
+    <RadzenText TextStyle="TextStyle.Subtitle1">
+        Input Type: <strong>@Registration.InputTypeName</strong>
+    </RadzenText>
+
+    <RadzenTextArea @bind-Value="_jsonInput"
+                    Placeholder="@($"Enter JSON for {Registration.InputTypeName}")"
+                    Rows="10"
+                    class="rz-w-100"
+                    ReadOnly="@_running" />
+
+    @if (_result is not null)
+    {
+        <RadzenCard>
+            <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mb-2">Output</RadzenText>
+            <pre style="white-space: pre-wrap; word-break: break-word; max-height: 300px; overflow-y: auto;">@_result</pre>
+        </RadzenCard>
+    }
+
+    @if (_error is not null)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" Variant="Variant.Flat">
+            @_error
+        </RadzenAlert>
+    }
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Text="Cancel"
+                      ButtonStyle="ButtonStyle.Light"
+                      Click="@(() => DialogService.Close())"
+                      Disabled="@_running" />
+        <RadzenButton Text="Run"
+                      Icon="play_arrow"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Click="@RunWorkflow"
+                      IsBusy="@_running"
+                      Disabled="@_running" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public required WorkflowRegistration Registration { get; set; }
+
+    private static readonly MethodInfo RunAsyncMethod =
+        typeof(IWorkflowBus).GetMethod(nameof(IWorkflowBus.RunAsync), 1, [typeof(object), typeof(Metadata)])!;
+
+    private string _jsonInput = "";
+    private string? _result;
+    private string? _error;
+    private bool _running;
+
+    private async Task RunWorkflow()
+    {
+        _error = null;
+        _result = null;
+        _running = true;
+
+        try
+        {
+            var input = JsonSerializer.Deserialize(_jsonInput, Registration.InputType);
+            if (input is null)
+            {
+                _error = $"Deserialization returned null. Ensure the JSON matches {Registration.InputTypeName}.";
+                return;
+            }
+
+            await using var scope = ScopeFactory.CreateAsyncScope();
+            var workflowBus = scope.ServiceProvider.GetRequiredService<IWorkflowBus>();
+
+            var genericMethod = RunAsyncMethod.MakeGenericMethod(Registration.OutputType);
+            var task = (Task)genericMethod.Invoke(workflowBus, [input, null])!;
+            await task;
+
+            var output = task.GetType().GetProperty("Result")!.GetValue(task);
+            _result = JsonSerializer.Serialize(output, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (TargetInvocationException tie) when (tie.InnerException is not null)
+        {
+            _error = tie.InnerException.Message;
+        }
+        catch (JsonException je)
+        {
+            _error = $"Invalid JSON: {je.Message}";
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _running = false;
+        }
+    }
+}

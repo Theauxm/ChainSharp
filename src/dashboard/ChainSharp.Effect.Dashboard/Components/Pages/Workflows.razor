@@ -1,5 +1,6 @@
 @page "/chainsharp/workflows"
 @inject IWorkflowDiscoveryService WorkflowDiscovery
+@inject DialogService DialogService
 
 <RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Registered Workflows</RadzenText>
 
@@ -10,7 +11,8 @@
                 AllowPaging="true"
                 PageSize="20"
                 PagerHorizontalAlign="HorizontalAlign.Center"
-                FilterMode="FilterMode.Simple"
+                AllowColumnResize="true"
+                FilterMode="FilterMode.CheckBoxList"
                 class="rz-datatable-striped">
     <Columns>
         <RadzenDataGridColumn TItem="WorkflowRegistration"
@@ -33,6 +35,19 @@
                               Property="Lifetime"
                               Title="Lifetime"
                               Width="120px" />
+        <RadzenDataGridColumn TItem="WorkflowRegistration"
+                              Title="Actions"
+                              Width="100px"
+                              Filterable="false"
+                              Sortable="false">
+            <Template Context="registration">
+                <RadzenButton Text="Run"
+                              Icon="play_arrow"
+                              ButtonStyle="ButtonStyle.Primary"
+                              Size="ButtonSize.Small"
+                              Click="@(() => OpenRunDialog(registration))" />
+            </Template>
+        </RadzenDataGridColumn>
     </Columns>
 </RadzenDataGrid>
 
@@ -42,5 +57,19 @@
     protected override void OnInitialized()
     {
         _workflows = WorkflowDiscovery.DiscoverWorkflows();
+    }
+
+    private async Task OpenRunDialog(WorkflowRegistration registration)
+    {
+        await DialogService.OpenAsync<RunWorkflowDialog>(
+            $"Run {registration.ServiceTypeName}",
+            new Dictionary<string, object> { ["Registration"] = registration },
+            new DialogOptions
+            {
+                Width = "600px",
+                Resizable = true,
+                Draggable = true,
+            }
+        );
     }
 }

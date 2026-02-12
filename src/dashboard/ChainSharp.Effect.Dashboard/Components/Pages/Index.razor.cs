@@ -1,10 +1,10 @@
+using ChainSharp.Effect.Dashboard.Services.WorkflowDiscovery;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.DeadLetter;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Services.EffectRegistry;
-using ChainSharp.Effect.Dashboard.Services.WorkflowDiscovery;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -57,8 +57,8 @@ public partial class Index
         _executionsToday = todayMetadata.Count;
 
         var completed = todayMetadata.Count(m => m.WorkflowState == WorkflowState.Completed);
-        var terminal = todayMetadata.Count(m =>
-            m.WorkflowState is WorkflowState.Completed or WorkflowState.Failed
+        var terminal = todayMetadata.Count(
+            m => m.WorkflowState is WorkflowState.Completed or WorkflowState.Failed
         );
         _successRate = terminal > 0 ? Math.Round(100.0 * completed / terminal, 1) : 0;
 
@@ -70,9 +70,7 @@ public partial class Index
             .DeadLetters.AsNoTracking()
             .CountAsync(d => d.Status == DeadLetterStatus.AwaitingIntervention);
 
-        _activeManifests = await context
-            .Manifests.AsNoTracking()
-            .CountAsync(m => m.IsEnabled);
+        _activeManifests = await context.Manifests.AsNoTracking().CountAsync(m => m.IsEnabled);
 
         _registeredWorkflows = WorkflowDiscovery.DiscoverWorkflows().Count;
 
@@ -90,8 +88,8 @@ public partial class Index
             {
                 var hourStart = now.AddHours(-23 + i).Date.AddHours(now.AddHours(-23 + i).Hour);
                 var hourEnd = hourStart.AddHours(1);
-                var inHour = recentMetadata.Where(m =>
-                    m.StartTime >= hourStart && m.StartTime < hourEnd
+                var inHour = recentMetadata.Where(
+                    m => m.StartTime >= hourStart && m.StartTime < hourEnd
                 );
                 return new ExecutionTimePoint
                 {
@@ -145,30 +143,37 @@ public partial class Index
         // Average duration by workflow (completed in last 7 days)
         var completedRecent = await context
             .Metadatas.AsNoTracking()
-            .Where(m =>
-                m.WorkflowState == WorkflowState.Completed
-                && m.EndTime != null
-                && m.StartTime >= last7d
-                && m.ParentId == null
+            .Where(
+                m =>
+                    m.WorkflowState == WorkflowState.Completed
+                    && m.EndTime != null
+                    && m.StartTime >= last7d
+                    && m.ParentId == null
             )
-            .Select(m => new
-            {
-                m.Name,
-                m.StartTime,
-                m.EndTime,
-            })
+            .Select(
+                m =>
+                    new
+                    {
+                        m.Name,
+                        m.StartTime,
+                        m.EndTime,
+                    }
+            )
             .ToListAsync();
 
         _avgDurations = completedRecent
             .GroupBy(m => m.Name)
-            .Select(g => new WorkflowDuration
-            {
-                Name = ShortName(g.Key),
-                AvgMs = Math.Round(
-                    g.Average(m => (m.EndTime!.Value - m.StartTime).TotalMilliseconds),
-                    0
-                ),
-            })
+            .Select(
+                g =>
+                    new WorkflowDuration
+                    {
+                        Name = ShortName(g.Key),
+                        AvgMs = Math.Round(
+                            g.Average(m => (m.EndTime!.Value - m.StartTime).TotalMilliseconds),
+                            0
+                        ),
+                    }
+            )
             .OrderByDescending(x => x.AvgMs)
             .Take(10)
             .ToList();

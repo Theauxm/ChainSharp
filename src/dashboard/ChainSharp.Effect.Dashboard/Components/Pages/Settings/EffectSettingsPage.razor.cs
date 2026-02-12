@@ -30,13 +30,16 @@ public partial class EffectSettingsPage
     {
         _effects = _registry!
             .GetAll()
-            .Select(kvp => new EffectEntry
-            {
-                FactoryType = kvp.Key,
-                Name = kvp.Key.Name,
-                FullName = kvp.Key.FullName ?? kvp.Key.Name,
-                Enabled = kvp.Value,
-            })
+            .Select(
+                kvp =>
+                    new EffectEntry
+                    {
+                        FactoryType = kvp.Key,
+                        Name = kvp.Key.Name,
+                        FullName = kvp.Key.FullName ?? kvp.Key.Name,
+                        Enabled = kvp.Value,
+                    }
+            )
             .OrderBy(e => e.Name)
             .ToList();
     }

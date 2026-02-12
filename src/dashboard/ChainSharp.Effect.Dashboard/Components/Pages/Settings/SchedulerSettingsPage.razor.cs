@@ -78,7 +78,8 @@ public partial class SchedulerSettingsPage
             {
                 Severity = NotificationSeverity.Success,
                 Summary = "Settings Saved",
-                Detail = "Scheduler configuration updated. Most changes take effect on the next polling cycle.",
+                Detail =
+                    "Scheduler configuration updated. Most changes take effect on the next polling cycle.",
                 Duration = 4000,
             }
         );

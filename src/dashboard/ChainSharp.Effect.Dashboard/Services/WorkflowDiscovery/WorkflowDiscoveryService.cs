@@ -74,12 +74,14 @@ public class WorkflowDiscoveryService : IWorkflowDiscoveryService
                 return new WorkflowRegistration
                 {
                     ServiceType = preferred.ServiceType,
-                    ImplementationType = concreteReg?.ImplementationType ?? preferred.ImplementationType,
+                    ImplementationType =
+                        concreteReg?.ImplementationType ?? preferred.ImplementationType,
                     InputType = preferred.InputType,
                     OutputType = preferred.OutputType,
                     Lifetime = preferred.Lifetime,
                     ServiceTypeName = preferred.ServiceTypeName,
-                    ImplementationTypeName = concreteReg?.ImplementationTypeName ?? preferred.ImplementationTypeName,
+                    ImplementationTypeName =
+                        concreteReg?.ImplementationTypeName ?? preferred.ImplementationTypeName,
                     InputTypeName = preferred.InputTypeName,
                     OutputTypeName = preferred.OutputTypeName,
                 };

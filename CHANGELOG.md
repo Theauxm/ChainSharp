@@ -1,3 +1,10 @@
+# [5.6.0](https://github.com/Theauxm/ChainSharp/compare/v5.5.1...v5.6.0) (2026-02-12)
+
+
+### Features
+
+* dashboard data visual ([#122](https://github.com/Theauxm/ChainSharp/issues/122)) ([884e6ee](https://github.com/Theauxm/ChainSharp/commit/884e6ee6b51b8ad042f991d5e0056205f0600e82))
+
 ## [5.5.1](https://github.com/Theauxm/ChainSharp/compare/v5.5.0...v5.5.1) (2026-02-11)
 
 

@@ -26,4 +26,5 @@
     <Build Project="false" />
   </Project>
   <Project Path="src/core/ChainSharp/ChainSharp.csproj" />
+  <Project Path="src/analyzers/ChainSharp.Analyzers/ChainSharp.Analyzers.csproj" />
 </Solution>

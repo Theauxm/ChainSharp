@@ -54,6 +54,8 @@ public class ProcessOrderWorkflow : EffectWorkflow<OrderRequest, OrderReceipt>
 
 If `CheckInventoryStep` throws, `ChargePaymentStep` never runs. The exception propagates automatically. Each step is a separate class with its own dependencies, easy to test in isolation.
 
+Remove a step or reorder the chain incorrectly, and the built-in [Analyzer](analyzer.md) tells you at compile time—before you ever run the code.
+
 For more on how this works, see [Core Concepts](concepts.md).
 
 ## Dashboard

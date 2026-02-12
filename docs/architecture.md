@@ -63,6 +63,8 @@ How ChainSharp's components fit together.
 ```
 ChainSharp (Core)
     │
+    ├─── ChainSharp.Analyzers (Compile-Time Chain Validation)
+    │
     └─── ChainSharp.Effect (Enhanced Workflows)
               │
               ├─── ChainSharp.Effect.Dashboard (Web UI)

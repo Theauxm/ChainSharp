@@ -1,0 +1,127 @@
+---
+layout: default
+title: Analyzer
+nav_order: 8
+---
+
+# Analyzer
+
+ChainSharp includes a Roslyn analyzer that validates your workflow chains at compile time. When you chain steps via `.Chain<TStep>()`, the analyzer simulates the runtime Memory dictionary to verify that each step's input type is available before that step executes.
+
+## The Problem
+
+Consider this workflow:
+
+```csharp
+Activate(input)                          // input: ExecuteManifestRequest
+    .Chain<LoadMetadataStep>()           // TIn=ExecuteManifestRequest → TOut=Metadata
+    .Chain<ValidateMetadataStateStep>()  // TIn=Metadata → TOut=Unit
+    .Chain<ExecuteScheduledWorkflowStep>()
+    .Chain<UpdateManifestSuccessStep>()
+    .Resolve();
+```
+
+If someone removes `LoadMetadataStep`, `ValidateMetadataStateStep` expects `Metadata` in Memory but nothing produces it. Today this is a runtime error—the workflow fails when it tries to find `Metadata` in the dictionary. You won't discover this until the code actually runs.
+
+The analyzer makes it a compile-time error. You see the problem immediately in your IDE, before you even build.
+
+## What It Checks
+
+The analyzer triggers on every `.Resolve()` call in a `Workflow<,>` or `EffectWorkflow<,>` subclass. It walks backward through the fluent chain to `Activate()`, then simulates Memory forward:
+
+```
+Activate(input)       → Memory = { TInput, Unit }
+.Chain<StepA>()       → Check: is StepA's TIn in Memory? Add StepA's TOut.
+.Chain<StepB>()       → Check: is StepB's TIn in Memory? Add StepB's TOut.
+.Resolve()            → Check: is TReturn in Memory?
+```
+
+| Method | What the analyzer does |
+|--------|----------------------|
+| `Activate(input)` | Seeds Memory with `TInput` and `Unit` |
+| `.Chain<TStep>()` | Checks `TIn ∈ Memory`, then adds `TOut` |
+| `.AddServices<T1, T2>()` | Adds each type argument to Memory |
+| `.IChain<TStep>()` | Resolves step types, adds `TOut` to Memory |
+| `.Extract<TIn, TOut>()` | Adds `TOut` to Memory |
+| `.Resolve()` | Checks `TReturn ∈ Memory` (warning, not error) |
+
+## Diagnostics
+
+### CHAIN001: Step input type not available (Error)
+
+Fires when a step needs a type that no previous step has produced.
+
+```csharp
+public class BrokenWorkflow : EffectWorkflow<string, Unit>
+{
+    protected override async Task<Either<Exception, Unit>> RunInternal(string input) =>
+        Activate(input)
+            .Chain<LogGreetingStep>()  // ← CHAIN001: LogGreetingStep requires HelloWorldInput,
+            .Resolve();               //   but Memory only has [string, Unit]
+}
+```
+
+The message tells you exactly what's missing and what's available:
+
+```
+error CHAIN001: Step 'LogGreetingStep' requires input type 'HelloWorldInput'
+which has not been produced by a previous step. Available: [string, Unit].
+```
+
+### CHAIN002: Workflow return type not available (Warning)
+
+Fires when `Resolve()` needs a type that hasn't been produced. This is a warning rather than an error because `ShortCircuit` steps can provide the return type outside the analyzer's visibility.
+
+```csharp
+public class MissingReturnWorkflow : EffectWorkflow<OrderRequest, Receipt>
+{
+    protected override async Task<Either<Exception, Receipt>> RunInternal(OrderRequest input) =>
+        Activate(input)
+            .Chain<ValidateOrderStep>()  // Returns Unit
+            .Resolve();                  // ← CHAIN002: Receipt not in Memory
+}
+```
+
+## What It Doesn't Check (Yet)
+
+The analyzer has a few known blind spots. These are areas where the runtime does something the analyzer can't verify statically:
+
+**Tuple inputs.** When a step takes `(User, Order)` as input, the runtime constructs the tuple from individual Memory entries. The analyzer skips the check for tuple input types entirely—it won't false-positive, but it also won't catch a missing component.
+
+**Interface inputs.** When a step takes `IEntity` and Memory has a concrete `User` that implements `IEntity`, the runtime matches them. The analyzer can't verify interface assignability, so it skips the check for interface input types.
+
+**ShortCircuit steps.** `ShortCircuit<TStep>()` conditionally provides the return type. The analyzer doesn't track this, which is why CHAIN002 is a warning instead of an error.
+
+**Cross-method chains.** The analyzer only looks within a single method body. If you build a chain across helper methods, it won't follow the calls.
+
+## Setup
+
+The analyzer ships with the ChainSharp NuGet package. If you're referencing ChainSharp, you already have it—no additional setup required.
+
+For development within the ChainSharp solution itself, the analyzer is propagated to all projects via `Directory.Build.props`:
+
+```xml
+<ItemGroup Condition="'$(MSBuildProjectName)' != 'ChainSharp.Analyzers'">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)src/analyzers/ChainSharp.Analyzers/ChainSharp.Analyzers.csproj"
+                      ReferenceOutputAssembly="false"
+                      OutputItemType="Analyzer" />
+</ItemGroup>
+```
+
+## Suppressing Diagnostics
+
+If the analyzer fires on a chain that you know is correct (interface patterns, dynamic Memory seeding, etc.), suppress it with a pragma:
+
+```csharp
+#pragma warning disable CHAIN001
+    .Chain<MyDynamicStep>()
+#pragma warning restore CHAIN001
+```
+
+Or suppress at the project level in your `.csproj`:
+
+```xml
+<PropertyGroup>
+    <NoWarn>$(NoWarn);CHAIN001</NoWarn>
+</PropertyGroup>
+```

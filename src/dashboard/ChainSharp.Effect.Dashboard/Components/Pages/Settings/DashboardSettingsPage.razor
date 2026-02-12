@@ -1,0 +1,63 @@
+@page "/chainsharp/settings/dashboard"
+
+<RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Dashboard Settings</RadzenText>
+
+<RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" AllowClose="true" class="rz-mb-4">
+    Changes take effect on the next polling cycle. This setting is stored in your browser.
+</RadzenAlert>
+
+<RadzenStack Gap="1.5rem">
+
+    <RadzenFieldset Text="Data Refresh">
+        <RadzenStack Gap="1rem">
+            <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenColumn Size="4">
+                    <RadzenLabel Text="Polling Interval (seconds)" Component="PollingInterval" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenNumeric @bind-Value="_pollingIntervalSeconds"
+                                   TValue="int"
+                                   Min="1"
+                                   Max="300"
+                                   Style="width: 100%"
+                                   Name="PollingInterval" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                        How often dashboard pages re-query for fresh data.
+                    </RadzenText>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenFieldset>
+
+    <RadzenFieldset Text="Administration Workflows">
+        <RadzenStack Gap="1rem">
+            <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenColumn Size="4">
+                    <RadzenLabel Text="Hide Administration Workflows" Component="HideAdminWorkflows" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenSwitch @bind-Value="_hideAdminWorkflows" Name="HideAdminWorkflows" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                        Exclude scheduler internals (ManifestManager, ManifestExecutor, MetadataCleanup) from dashboard statistics and charts.
+                    </RadzenText>
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenFieldset>
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+        <RadzenButton Text="Reset Default"
+                      Icon="restart_alt"
+                      ButtonStyle="ButtonStyle.Light"
+                      Click="ResetDefault" />
+        <RadzenButton Text="Save"
+                      Icon="save"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Click="Save" />
+    </RadzenStack>
+
+</RadzenStack>

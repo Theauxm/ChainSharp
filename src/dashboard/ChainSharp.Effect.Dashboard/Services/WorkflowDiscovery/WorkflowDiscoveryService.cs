@@ -61,10 +61,31 @@ public class WorkflowDiscoveryService : IWorkflowDiscoveryService
             );
         }
 
-        // Deduplicate: prefer interface registrations over concrete type registrations
+        // Deduplicate: each InputType maps to one workflow in the registry.
+        // Prefer the interface for ServiceType and the concrete class for ImplementationType.
         _cachedRegistrations = registrations
-            .GroupBy(r => r.ImplementationType)
-            .Select(g => g.FirstOrDefault(r => r.ServiceType.IsInterface) ?? g.First())
+            .GroupBy(r => r.InputType)
+            .Select(g =>
+            {
+                var interfaceReg = g.FirstOrDefault(r => r.ServiceType.IsInterface);
+                var concreteReg = g.FirstOrDefault(r => !r.ServiceType.IsInterface);
+                var preferred = interfaceReg ?? concreteReg ?? g.First();
+
+                return new WorkflowRegistration
+                {
+                    ServiceType = preferred.ServiceType,
+                    ImplementationType =
+                        concreteReg?.ImplementationType ?? preferred.ImplementationType,
+                    InputType = preferred.InputType,
+                    OutputType = preferred.OutputType,
+                    Lifetime = preferred.Lifetime,
+                    ServiceTypeName = preferred.ServiceTypeName,
+                    ImplementationTypeName =
+                        concreteReg?.ImplementationTypeName ?? preferred.ImplementationTypeName,
+                    InputTypeName = preferred.InputTypeName,
+                    OutputTypeName = preferred.OutputTypeName,
+                };
+            })
             .ToList()
             .AsReadOnly();
 

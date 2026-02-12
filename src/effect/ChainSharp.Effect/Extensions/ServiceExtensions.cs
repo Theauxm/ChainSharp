@@ -108,8 +108,7 @@ public static class ServiceExtensions
                 sp => sp.GetRequiredService<TEffectProviderFactory>()
             );
 
-        if (toggleable)
-            builder.EffectRegistry?.Register(typeof(TEffectProviderFactory));
+        builder.EffectRegistry?.Register(typeof(TEffectProviderFactory), toggleable: toggleable);
 
         return builder;
     }
@@ -126,8 +125,7 @@ public static class ServiceExtensions
                 sp => sp.GetRequiredService<TEffectProviderFactory>()
             );
 
-        if (toggleable)
-            builder.EffectRegistry?.Register(typeof(TEffectProviderFactory));
+        builder.EffectRegistry?.Register(typeof(TEffectProviderFactory), toggleable: toggleable);
 
         return builder;
     }
@@ -148,8 +146,7 @@ public static class ServiceExtensions
                 sp => sp.GetRequiredService<TEffectProviderFactory>()
             );
 
-        if (toggleable)
-            builder.EffectRegistry?.Register(typeof(TEffectProviderFactory));
+        builder.EffectRegistry?.Register(typeof(TEffectProviderFactory), toggleable: toggleable);
 
         return builder;
     }
@@ -163,8 +160,7 @@ public static class ServiceExtensions
     {
         builder.ServiceCollection.AddSingleton<IEffectProviderFactory>(factory);
 
-        if (toggleable)
-            builder.EffectRegistry?.Register(typeof(TEffectProviderFactory));
+        builder.EffectRegistry?.Register(typeof(TEffectProviderFactory), toggleable: toggleable);
 
         return builder;
     }
@@ -193,8 +189,10 @@ public static class ServiceExtensions
                 sp => sp.GetRequiredService<TStepEffectProviderFactory>()
             );
 
-        if (toggleable)
-            builder.EffectRegistry?.Register(typeof(TStepEffectProviderFactory));
+        builder.EffectRegistry?.Register(
+            typeof(TStepEffectProviderFactory),
+            toggleable: toggleable
+        );
 
         return builder;
     }
@@ -211,8 +209,10 @@ public static class ServiceExtensions
                 sp => sp.GetRequiredService<TStepEffectProviderFactory>()
             );
 
-        if (toggleable)
-            builder.EffectRegistry?.Register(typeof(TStepEffectProviderFactory));
+        builder.EffectRegistry?.Register(
+            typeof(TStepEffectProviderFactory),
+            toggleable: toggleable
+        );
 
         return builder;
     }
@@ -226,8 +226,10 @@ public static class ServiceExtensions
     {
         builder.ServiceCollection.AddSingleton<IStepEffectProviderFactory>(factory);
 
-        if (toggleable)
-            builder.EffectRegistry?.Register(typeof(TStepEffectProviderFactory));
+        builder.EffectRegistry?.Register(
+            typeof(TStepEffectProviderFactory),
+            toggleable: toggleable
+        );
 
         return builder;
     }

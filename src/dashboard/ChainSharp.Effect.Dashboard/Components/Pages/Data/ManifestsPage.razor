@@ -1,17 +1,19 @@
 @page "/chainsharp/data/manifests"
+@inherits PollingComponentBase
 @inject IDataContextProviderFactory DataContextFactory
 
 <RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Manifests</RadzenText>
 
 <RadzenDataGrid Data="@_items"
                 TItem="Manifest"
-                IsLoading="@_loading"
+                IsLoading="@IsLoading"
                 AllowFiltering="true"
                 AllowSorting="true"
                 AllowPaging="true"
                 PageSize="20"
                 PagerHorizontalAlign="HorizontalAlign.Center"
-                FilterMode="FilterMode.Simple"
+                AllowColumnResize="true"
+                FilterMode="FilterMode.CheckBoxList"
                 class="rz-datatable-striped">
     <Columns>
         <RadzenDataGridColumn TItem="Manifest"
@@ -60,12 +62,10 @@
 
 @code {
     private List<Manifest> _items = [];
-    private bool _loading = true;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task LoadDataAsync(CancellationToken cancellationToken)
     {
-        using var context = await DataContextFactory.CreateDbContextAsync(CancellationToken.None);
-        _items = await context.Manifests.AsNoTracking().ToListAsync();
-        _loading = false;
+        using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
+        _items = await context.Manifests.AsNoTracking().ToListAsync(cancellationToken);
     }
 }

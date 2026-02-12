@@ -95,6 +95,147 @@ public class EffectRegistryTests
         _registry.IsEnabled(typeof(FakeFactory)).Should().BeFalse();
     }
 
+    [Test]
+    public void Enable_NonToggleable_DoesNotChangeState()
+    {
+        _registry.Register(typeof(FakeFactory), enabled: false, toggleable: false);
+        _registry.IsEnabled(typeof(FakeFactory)).Should().BeFalse();
+
+        _registry.Enable(typeof(FakeFactory));
+
+        // Should remain unchanged since it's not toggleable
+        _registry.IsEnabled(typeof(FakeFactory)).Should().BeFalse();
+    }
+
+    [Test]
+    public void Disable_NonToggleable_DoesNotChangeState()
+    {
+        _registry.Register(typeof(FakeFactory), enabled: true, toggleable: false);
+        _registry.IsEnabled(typeof(FakeFactory)).Should().BeTrue();
+
+        _registry.Disable(typeof(FakeFactory));
+
+        // Should remain unchanged since it's not toggleable
+        _registry.IsEnabled(typeof(FakeFactory)).Should().BeTrue();
+    }
+
+    #endregion
+
+    #region IsToggleable
+
+    [Test]
+    public void IsToggleable_UntrackedType_ReturnsFalse()
+    {
+        _registry.IsToggleable(typeof(UntrackedFactory)).Should().BeFalse();
+    }
+
+    [Test]
+    public void IsToggleable_RegisteredToggleable_ReturnsTrue()
+    {
+        _registry.Register(typeof(FakeFactory), toggleable: true);
+
+        _registry.IsToggleable(typeof(FakeFactory)).Should().BeTrue();
+    }
+
+    [Test]
+    public void IsToggleable_RegisteredNotToggleable_ReturnsFalse()
+    {
+        _registry.Register(typeof(FakeFactory), toggleable: false);
+
+        _registry.IsToggleable(typeof(FakeFactory)).Should().BeFalse();
+    }
+
+    [Test]
+    public void IsToggleable_Generic_MatchesNonGeneric()
+    {
+        _registry.Register(typeof(FakeFactory), toggleable: true);
+
+        _registry
+            .IsToggleable<FakeFactory>()
+            .Should()
+            .Be(_registry.IsToggleable(typeof(FakeFactory)));
+    }
+
+    #endregion
+
+    #region GetAll
+
+    [Test]
+    public void GetAll_ReturnsAllTrackedTypes()
+    {
+        _registry.Register(typeof(FakeFactory), enabled: true);
+        _registry.Register(typeof(AnotherFakeFactory), enabled: false);
+
+        var all = _registry.GetAll();
+
+        all.Should().HaveCount(2);
+        all[typeof(FakeFactory)].Should().BeTrue();
+        all[typeof(AnotherFakeFactory)].Should().BeFalse();
+    }
+
+    [Test]
+    public void GetAll_IncludesToggleableAndNonToggleable()
+    {
+        _registry.Register(typeof(FakeFactory), enabled: true, toggleable: true);
+        _registry.Register(typeof(AnotherFakeFactory), enabled: true, toggleable: false);
+
+        var all = _registry.GetAll();
+
+        all.Should().HaveCount(2);
+        all.Should().ContainKey(typeof(FakeFactory));
+        all.Should().ContainKey(typeof(AnotherFakeFactory));
+    }
+
+    [Test]
+    public void GetAll_EmptyRegistry_ReturnsEmpty()
+    {
+        _registry.GetAll().Should().BeEmpty();
+    }
+
+    [Test]
+    public void GetAll_ReturnsSnapshot_MutationsDoNotAffectResult()
+    {
+        _registry.Register(typeof(FakeFactory), enabled: true);
+        var snapshot = _registry.GetAll();
+
+        _registry.Disable(typeof(FakeFactory));
+
+        // The snapshot should still show the original state
+        snapshot[typeof(FakeFactory)].Should().BeTrue();
+    }
+
+    #endregion
+
+    #region GetToggleable
+
+    [Test]
+    public void GetToggleable_ReturnsOnlyToggleableEffects()
+    {
+        _registry.Register(typeof(FakeFactory), enabled: true, toggleable: true);
+        _registry.Register(typeof(AnotherFakeFactory), enabled: true, toggleable: false);
+
+        var toggleable = _registry.GetToggleable();
+
+        toggleable.Should().HaveCount(1);
+        toggleable.Should().ContainKey(typeof(FakeFactory));
+        toggleable.Should().NotContainKey(typeof(AnotherFakeFactory));
+    }
+
+    [Test]
+    public void GetToggleable_EmptyRegistry_ReturnsEmpty()
+    {
+        _registry.GetToggleable().Should().BeEmpty();
+    }
+
+    [Test]
+    public void GetToggleable_AllNonToggleable_ReturnsEmpty()
+    {
+        _registry.Register(typeof(FakeFactory), enabled: true, toggleable: false);
+        _registry.Register(typeof(AnotherFakeFactory), enabled: true, toggleable: false);
+
+        _registry.GetToggleable().Should().BeEmpty();
+    }
+
     #endregion
 
     #region Register
@@ -119,39 +260,12 @@ public class EffectRegistryTests
         _registry.IsEnabled(typeof(FakeFactory)).Should().BeTrue();
     }
 
-    #endregion
-
-    #region GetAll
-
     [Test]
-    public void GetAll_ReturnsAllTrackedTypes()
+    public void Register_DefaultToggleable_IsTrue()
     {
-        _registry.Register(typeof(FakeFactory), enabled: true);
-        _registry.Register(typeof(AnotherFakeFactory), enabled: false);
+        _registry.Register(typeof(FakeFactory));
 
-        var all = _registry.GetAll();
-
-        all.Should().HaveCount(2);
-        all[typeof(FakeFactory)].Should().BeTrue();
-        all[typeof(AnotherFakeFactory)].Should().BeFalse();
-    }
-
-    [Test]
-    public void GetAll_EmptyRegistry_ReturnsEmpty()
-    {
-        _registry.GetAll().Should().BeEmpty();
-    }
-
-    [Test]
-    public void GetAll_ReturnsSnapshot_MutationsDoNotAffectResult()
-    {
-        _registry.Register(typeof(FakeFactory), enabled: true);
-        var snapshot = _registry.GetAll();
-
-        _registry.Disable(typeof(FakeFactory));
-
-        // The snapshot should still show the original state
-        snapshot[typeof(FakeFactory)].Should().BeTrue();
+        _registry.IsToggleable(typeof(FakeFactory)).Should().BeTrue();
     }
 
     #endregion

@@ -1,0 +1,193 @@
+@page "/chainsharp/settings/scheduler"
+
+<RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Scheduler Settings</RadzenText>
+
+@if (!_available)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Warning" Shade="Shade.Lighter" AllowClose="false">
+        Scheduler is not configured. Add <code>.AddScheduler()</code> to your service registration to enable scheduler settings.
+    </RadzenAlert>
+    return;
+}
+
+<RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" AllowClose="true" class="rz-mb-4">
+    Changes take effect on the next polling cycle. <strong>Polling Interval</strong> changes require an application restart.
+</RadzenAlert>
+
+<RadzenStack Gap="1.5rem">
+
+    @* ── Polling & Queue ── *@
+    <RadzenFieldset Text="Polling & Queue">
+        <RadzenStack Gap="1rem">
+            <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenColumn Size="4">
+                    <RadzenLabel Text="Polling Interval" Component="PollingInterval" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenNumeric @bind-Value="_pollingInterval.Value" TValue="double" Min="1" Style="width: 100%" Name="PollingInterval" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenDropDown @bind-Value="_pollingInterval.Unit" Data="TimeUnits" Style="width: 100%" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenColumn Size="4">
+                    <RadzenLabel Text="Max Jobs Per Cycle" Component="MaxJobsPerCycle" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenNumeric @bind-Value="_config!.MaxJobsPerCycle" TValue="int" Min="1" Style="width: 100%" Name="MaxJobsPerCycle" />
+                </RadzenColumn>
+                <RadzenColumn Size="4" />
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenFieldset>
+
+    @* ── Retry Settings ── *@
+    <RadzenFieldset Text="Retry Settings">
+        <RadzenStack Gap="1rem">
+            <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenColumn Size="4">
+                    <RadzenLabel Text="Default Max Retries" Component="DefaultMaxRetries" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenNumeric @bind-Value="_config!.DefaultMaxRetries" TValue="int" Min="0" Style="width: 100%" Name="DefaultMaxRetries" />
+                </RadzenColumn>
+                <RadzenColumn Size="4" />
+            </RadzenRow>
+
+            <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenColumn Size="4">
+                    <RadzenLabel Text="Default Retry Delay" Component="DefaultRetryDelay" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenNumeric @bind-Value="_defaultRetryDelay.Value" TValue="double" Min="0" Style="width: 100%" Name="DefaultRetryDelay" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenDropDown @bind-Value="_defaultRetryDelay.Unit" Data="TimeUnits" Style="width: 100%" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenColumn Size="4">
+                    <RadzenLabel Text="Backoff Multiplier" Component="RetryBackoffMultiplier" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenNumeric @bind-Value="_config!.RetryBackoffMultiplier" TValue="double" Min="1" Step="0.1" Format="0.0" Style="width: 100%" Name="RetryBackoffMultiplier" />
+                </RadzenColumn>
+                <RadzenColumn Size="4" />
+            </RadzenRow>
+
+            <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenColumn Size="4">
+                    <RadzenLabel Text="Max Retry Delay" Component="MaxRetryDelay" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenNumeric @bind-Value="_maxRetryDelay.Value" TValue="double" Min="0" Style="width: 100%" Name="MaxRetryDelay" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenDropDown @bind-Value="_maxRetryDelay.Unit" Data="TimeUnits" Style="width: 100%" />
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenFieldset>
+
+    @* ── Job Settings ── *@
+    <RadzenFieldset Text="Job Settings">
+        <RadzenStack Gap="1rem">
+            <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenColumn Size="4">
+                    <RadzenLabel Text="Default Job Timeout" Component="DefaultJobTimeout" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenNumeric @bind-Value="_defaultJobTimeout.Value" TValue="double" Min="1" Style="width: 100%" Name="DefaultJobTimeout" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenDropDown @bind-Value="_defaultJobTimeout.Unit" Data="TimeUnits" Style="width: 100%" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenColumn Size="4">
+                    <RadzenLabel Text="Recover Stuck Jobs on Startup" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenSwitch @bind-Value="_config!.RecoverStuckJobsOnStartup" />
+                </RadzenColumn>
+                <RadzenColumn Size="4" />
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenFieldset>
+
+    @* ── Dead Letter Settings ── *@
+    <RadzenFieldset Text="Dead Letter Settings">
+        <RadzenStack Gap="1rem">
+            <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenColumn Size="4">
+                    <RadzenLabel Text="Retention Period" Component="DeadLetterRetention" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenNumeric @bind-Value="_deadLetterRetentionPeriod.Value" TValue="double" Min="0" Style="width: 100%" Name="DeadLetterRetention" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenDropDown @bind-Value="_deadLetterRetentionPeriod.Unit" Data="TimeUnits" Style="width: 100%" />
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenColumn Size="4">
+                    <RadzenLabel Text="Auto Purge Dead Letters" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenSwitch @bind-Value="_config!.AutoPurgeDeadLetters" />
+                </RadzenColumn>
+                <RadzenColumn Size="4" />
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenFieldset>
+
+    @* ── Metadata Cleanup (conditional) ── *@
+    @if (_config!.MetadataCleanup is not null)
+    {
+        <RadzenFieldset Text="Metadata Cleanup">
+            <RadzenStack Gap="1rem">
+                <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenColumn Size="4">
+                        <RadzenLabel Text="Cleanup Interval" Component="CleanupInterval" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="4">
+                        <RadzenNumeric @bind-Value="_cleanupInterval.Value" TValue="double" Min="1" Style="width: 100%" Name="CleanupInterval" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="4">
+                        <RadzenDropDown @bind-Value="_cleanupInterval.Unit" Data="TimeUnits" Style="width: 100%" />
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenColumn Size="4">
+                        <RadzenLabel Text="Retention Period" Component="CleanupRetention" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="4">
+                        <RadzenNumeric @bind-Value="_cleanupRetentionPeriod.Value" TValue="double" Min="1" Style="width: 100%" Name="CleanupRetention" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="4">
+                        <RadzenDropDown @bind-Value="_cleanupRetentionPeriod.Unit" Data="TimeUnits" Style="width: 100%" />
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenStack>
+        </RadzenFieldset>
+    }
+
+    @* ── Actions ── *@
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+        <RadzenButton Text="Reset Defaults"
+                      Icon="restart_alt"
+                      ButtonStyle="ButtonStyle.Light"
+                      Click="ResetDefaults" />
+        <RadzenButton Text="Save"
+                      Icon="save"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Click="Save" />
+    </RadzenStack>
+
+</RadzenStack>

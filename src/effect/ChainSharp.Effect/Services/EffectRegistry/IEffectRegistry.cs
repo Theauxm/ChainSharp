@@ -43,13 +43,30 @@ public interface IEffectRegistry
     void Disable<TFactory>();
 
     /// <summary>
+    /// Returns whether the given factory type is toggleable.
+    /// Returns false if the type is not tracked by the registry.
+    /// </summary>
+    bool IsToggleable(Type factoryType);
+
+    /// <summary>
+    /// Returns whether the given factory type is toggleable.
+    /// Returns false if the type is not tracked by the registry.
+    /// </summary>
+    bool IsToggleable<TFactory>();
+
+    /// <summary>
     /// Returns all tracked factory types and their enabled/disabled status.
     /// </summary>
     IReadOnlyDictionary<Type, bool> GetAll();
 
     /// <summary>
-    /// Registers a factory type as toggleable in the registry.
+    /// Returns all tracked factory types that are toggleable and their enabled/disabled status.
+    /// </summary>
+    IReadOnlyDictionary<Type, bool> GetToggleable();
+
+    /// <summary>
+    /// Registers a factory type in the registry.
     /// Called internally during service configuration.
     /// </summary>
-    void Register(Type factoryType, bool enabled = true);
+    void Register(Type factoryType, bool enabled = true, bool toggleable = true);
 }

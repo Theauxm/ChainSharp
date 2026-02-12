@@ -86,6 +86,24 @@ public class EffectRunnerRegistryTests
         disabledFactory.CreateCalled.Should().BeFalse();
     }
 
+    [Test]
+    public void EffectRunner_NonToggleableFactory_CannotBeDisabled()
+    {
+        // Arrange - register as non-toggleable, then try to disable
+        var registry = new EffectRegistry();
+        var factory = new EnabledEffectFactory();
+        registry.Register(typeof(EnabledEffectFactory), enabled: true, toggleable: false);
+
+        // Attempt to disable should be a no-op
+        registry.Disable(typeof(EnabledEffectFactory));
+
+        // Act
+        using var runner = new EffectRunner([factory], registry);
+
+        // Assert - factory should still run because it can't be disabled
+        factory.CreateCalled.Should().BeTrue();
+    }
+
     #endregion
 
     #region StepEffectRunner
@@ -156,6 +174,24 @@ public class EffectRunnerRegistryTests
         // Assert
         enabledFactory.CreateCalled.Should().BeTrue();
         disabledFactory.CreateCalled.Should().BeFalse();
+    }
+
+    [Test]
+    public void StepEffectRunner_NonToggleableFactory_CannotBeDisabled()
+    {
+        // Arrange - register as non-toggleable, then try to disable
+        var registry = new EffectRegistry();
+        var factory = new EnabledStepEffectFactory();
+        registry.Register(typeof(EnabledStepEffectFactory), enabled: true, toggleable: false);
+
+        // Attempt to disable should be a no-op
+        registry.Disable(typeof(EnabledStepEffectFactory));
+
+        // Act
+        using var runner = new StepEffectRunner([factory], registry);
+
+        // Assert - factory should still run because it can't be disabled
+        factory.CreateCalled.Should().BeTrue();
     }
 
     #endregion

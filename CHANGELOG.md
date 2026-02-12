@@ -1,3 +1,10 @@
+## [5.7.1](https://github.com/Theauxm/ChainSharp/compare/v5.7.0...v5.7.1) (2026-02-12)
+
+
+### Bug Fixes
+
+* Build warnings ([#125](https://github.com/Theauxm/ChainSharp/issues/125)) ([d066d25](https://github.com/Theauxm/ChainSharp/commit/d066d252efb6bfb858e147fbd775262aefad76d4))
+
 # [5.7.0](https://github.com/Theauxm/ChainSharp/compare/v5.6.0...v5.7.0) (2026-02-12)
 
 

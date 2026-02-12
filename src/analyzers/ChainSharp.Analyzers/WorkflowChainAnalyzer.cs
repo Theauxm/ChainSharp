@@ -75,7 +75,9 @@ public sealed class WorkflowChainAnalyzer : DiagnosticAnalyzer
             switch (call.MethodName)
             {
                 case "Activate":
-                    // Already handled above — Memory is seeded
+                    // Memory is already seeded with TInput and Unit.
+                    // Also add types from any additional arguments (params object[] otherInputs).
+                    HandleActivateOtherInputs(context, call, memory);
                     break;
 
                 case "Chain":
@@ -203,6 +205,25 @@ public sealed class WorkflowChainAnalyzer : DiagnosticAnalyzer
                 memory.GetAvailableTypesString()
             );
             context.ReportDiagnostic(diagnostic);
+        }
+    }
+
+    private static void HandleActivateOtherInputs(
+        SyntaxNodeAnalysisContext context,
+        ChainCall call,
+        MemorySimulator memory
+    )
+    {
+        var arguments = call.Invocation.ArgumentList.Arguments;
+
+        // Skip the first argument (TInput, already seeded via Initialize)
+        for (var i = 1; i < arguments.Count; i++)
+        {
+            var typeInfo = context.SemanticModel.GetTypeInfo(arguments[i].Expression);
+            if (typeInfo.Type != null)
+            {
+                memory.AddType(typeInfo.Type);
+            }
         }
     }
 

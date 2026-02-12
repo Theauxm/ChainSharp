@@ -1,7 +1,7 @@
 # ChainSharp
 
-[![Build Status](https://github.com/Theauxm/ChainSharp/workflows/Release%20NuGet%20Package/badge.svg)](https://github.com/Theauxm/ChainSharp/actions)
-[![Test Status](https://github.com/Theauxm/ChainSharp/workflows/ChainSharp:%20Run%20CI/CD%20Test%20Suite/badge.svg)](https://github.com/Theauxm/ChainSharp/actions)
+[![Build Status](https://github.com/Theauxm/ChainSharp/workflows/Release%20NuGet%20Package/badge.svg?branch=main)](https://github.com/Theauxm/ChainSharp/actions)
+[![Test Status](https://github.com/Theauxm/ChainSharp/workflows/ChainSharp:%20Run%20CI/CD%20Test%20Suite/badge.svg?branch=main)](https://github.com/Theauxm/ChainSharp/actions)
 
 A .NET workflow engine built on Railway Oriented Programming. Each workflow is a chain of discrete steps with automatic error propagation—if a step fails, the rest are skipped.
 

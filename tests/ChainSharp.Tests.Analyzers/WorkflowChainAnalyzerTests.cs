@@ -36,7 +36,7 @@ namespace ChainSharp.Workflow
 {
     public class Workflow<TInput, TReturn>
     {
-        public Workflow<TInput, TReturn> Activate(TInput input) => this;
+        public Workflow<TInput, TReturn> Activate(TInput input, params object[] otherInputs) => this;
         public Workflow<TInput, TReturn> Chain<TStep>() where TStep : class => this;
         public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>() where TStep : ChainSharp.Step.IStep<TIn, TOut> => this;
         public Workflow<TInput, TReturn> AddServices<T1>() => this;
@@ -687,6 +687,152 @@ namespace TestApp
 }";
 
         var test = CreateTest(source);
+        await test.RunAsync();
+    }
+
+    // ──────────────────────────────────────────────
+    // Activate other inputs
+    // ──────────────────────────────────────────────
+
+    [Test]
+    public async Task Activate_OtherInputs_TypeAvailableForResolve_NoDiagnostics()
+    {
+        var source =
+            StubTypes
+            + @"
+namespace TestApp
+{
+    public class MyInput { }
+
+    public class TestWorkflow : ChainSharp.Workflow.Workflow<MyInput, TestWorkflow>
+    {
+        public void Run(MyInput input)
+        {
+            Activate(input, this)
+                .Resolve();
+        }
+    }
+}";
+
+        var test = CreateTest(source);
+        await test.RunAsync();
+    }
+
+    [Test]
+    public async Task Activate_OtherInputs_SatisfiesStepInput_NoDiagnostics()
+    {
+        var source =
+            StubTypes
+            + @"
+namespace TestApp
+{
+    public class MyInput { }
+    public class ExtraService { }
+    public class Result { }
+
+    public class NeedsServiceStep : ChainSharp.Step.IStep<ExtraService, Result> { }
+
+    public class TestWorkflow : ChainSharp.Workflow.Workflow<MyInput, Result>
+    {
+        public void Run(MyInput input, ExtraService svc)
+        {
+            Activate(input, svc)
+                .Chain<NeedsServiceStep>()
+                .Resolve();
+        }
+    }
+}";
+
+        var test = CreateTest(source);
+        await test.RunAsync();
+    }
+
+    [Test]
+    public async Task Activate_OtherInputs_InterfacesTracked_NoDiagnostics()
+    {
+        var source =
+            StubTypes
+            + @"
+namespace TestApp
+{
+    public class MyInput { }
+    public interface IService { }
+    public class ConcreteService : IService { }
+    public class Result { }
+
+    public class NeedsInterfaceStep : ChainSharp.Step.IStep<IService, Result> { }
+
+    public class TestWorkflow : ChainSharp.Workflow.Workflow<MyInput, Result>
+    {
+        public void Run(MyInput input, ConcreteService svc)
+        {
+            Activate(input, svc)
+                .Chain<NeedsInterfaceStep>()
+                .Resolve();
+        }
+    }
+}";
+
+        var test = CreateTest(source);
+        await test.RunAsync();
+    }
+
+    [Test]
+    public async Task Activate_MultipleOtherInputs_AllTracked_NoDiagnostics()
+    {
+        var source =
+            StubTypes
+            + @"
+namespace TestApp
+{
+    public class MyInput { }
+    public class ServiceA { }
+    public class ServiceB { }
+    public class Result { }
+
+    public class NeedsBothStep : ChainSharp.Step.IStep<(ServiceA, ServiceB), Result> { }
+
+    public class TestWorkflow : ChainSharp.Workflow.Workflow<MyInput, Result>
+    {
+        public void Run(MyInput input, ServiceA a, ServiceB b)
+        {
+            Activate(input, a, b)
+                .Chain<NeedsBothStep>()
+                .Resolve();
+        }
+    }
+}";
+
+        var test = CreateTest(source);
+        await test.RunAsync();
+    }
+
+    [Test]
+    public async Task Activate_NoOtherInputs_MissingType_StillReports_CHAIN002()
+    {
+        var source =
+            StubTypes
+            + @"
+namespace TestApp
+{
+    public class MyInput { }
+    public class MissingType { }
+
+    public class TestWorkflow : ChainSharp.Workflow.Workflow<MyInput, MissingType>
+    {
+        public void Run(MyInput input)
+        {
+            Activate(input)
+                .{|#0:Resolve()|};
+        }
+    }
+}";
+
+        var expected = new DiagnosticResult("CHAIN002", DiagnosticSeverity.Error)
+            .WithLocation(0)
+            .WithArguments("MissingType", "Unit, MyInput");
+
+        var test = CreateTest(source, expected);
         await test.RunAsync();
     }
 }

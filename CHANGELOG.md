@@ -1,3 +1,10 @@
+# [5.7.0](https://github.com/Theauxm/ChainSharp/compare/v5.6.0...v5.7.0) (2026-02-12)
+
+
+### Features
+
+* Roslyn ([#123](https://github.com/Theauxm/ChainSharp/issues/123)) ([88696cf](https://github.com/Theauxm/ChainSharp/commit/88696cf33ca1c4a041815022e88a4e254749a3be))
+
 # [5.6.0](https://github.com/Theauxm/ChainSharp/compare/v5.5.1...v5.6.0) (2026-02-12)
 
 

@@ -1,14 +1,6 @@
 @page "/chainsharp/data/metadata/{MetadataId:int}"
 @inherits PollingComponentBase
-@inject IDataContextProviderFactory DataContextFactory
-@inject NavigationManager Navigation
-@inject IBackgroundTaskServer BackgroundTaskServer
-@inject IWorkflowDiscoveryService WorkflowDiscovery
-@inject NotificationService NotificationService
-@using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration
 @using Microsoft.Extensions.Logging
-@using ChainSharp.Effect.Orchestration.Scheduler.Services.BackgroundTaskServer
-@using ChainSharp.Effect.Models.Metadata.DTOs
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" class="rz-mb-4">
     <RadzenButton Icon="arrow_back"
@@ -64,25 +56,25 @@
     <RadzenRow Gap="1rem">
         <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
             <RadzenStack Gap="0.75rem">
-                @Field("ID", _metadata.Id.ToString())
-                @Field("Name", ShortName(_metadata.Name))
-                @Field("External ID", _metadata.ExternalId)
-                @Field("State", _metadata.WorkflowState.ToString())
+                <FieldDisplay Label="ID" Value="@_metadata.Id.ToString()" />
+                <FieldDisplay Label="Name" Value="@ShortName(_metadata.Name)" />
+                <FieldDisplay Label="External ID" Value="@_metadata.ExternalId" />
+                <FieldDisplay Label="State" Value="@_metadata.WorkflowState.ToString()" />
             </RadzenStack>
         </RadzenColumn>
         <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
             <RadzenStack Gap="0.75rem">
-                @Field("Start Time", _metadata.StartTime.ToString("yyyy-MM-dd HH:mm:ss"))
-                @Field("End Time", _metadata.EndTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "—")
-                @Field("Duration", FormatDuration(_metadata))
-                @Field("Scheduled Time", _metadata.ScheduledTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "—")
+                <FieldDisplay Label="Start Time" Value="@_metadata.StartTime.ToString("yyyy-MM-dd HH:mm:ss")" />
+                <FieldDisplay Label="End Time" Value="@(_metadata.EndTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "—")" />
+                <FieldDisplay Label="Duration" Value="@FormatDuration(_metadata)" />
+                <FieldDisplay Label="Scheduled Time" Value="@(_metadata.ScheduledTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "—")" />
             </RadzenStack>
         </RadzenColumn>
         <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
             <RadzenStack Gap="0.75rem">
-                @Field("Manifest ID", _metadata.ManifestId?.ToString() ?? "—")
-                @Field("Parent ID", _metadata.ParentId?.ToString() ?? "—")
-                @Field("Executor", _metadata.Executor ?? "—")
+                <FieldDisplay Label="Manifest ID" Value="@(_metadata.ManifestId?.ToString() ?? "—")" />
+                <FieldDisplay Label="Parent ID" Value="@(_metadata.ParentId?.ToString() ?? "—")" />
+                <FieldDisplay Label="Executor" Value="@(_metadata.Executor ?? "—")" />
             </RadzenStack>
         </RadzenColumn>
     </RadzenRow>
@@ -96,9 +88,9 @@
         <RadzenRow Gap="1rem">
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenStack Gap="0.75rem">
-                    @Field("Failure Step", _metadata.FailureStep ?? "—")
-                    @Field("Exception", _metadata.FailureException ?? "—")
-                    @Field("Reason", _metadata.FailureReason ?? "—")
+                    <FieldDisplay Label="Failure Step" Value="@(_metadata.FailureStep ?? "—")" />
+                    <FieldDisplay Label="Exception" Value="@(_metadata.FailureException ?? "—")" />
+                    <FieldDisplay Label="Reason" Value="@(_metadata.FailureReason ?? "—")" />
                 </RadzenStack>
             </RadzenColumn>
             <RadzenColumn Size="12" SizeMD="6">
@@ -184,158 +176,3 @@
         </RadzenText>
     }
 </RadzenCard>
-
-@code {
-    [Parameter]
-    public int MetadataId { get; set; }
-
-    private Metadata? _metadata;
-    private List<Log> _logs = [];
-    private bool _rerunning;
-    private string? _rerunError;
-    private int _previousMetadataId;
-
-    protected override async Task OnParametersSetAsync()
-    {
-        if (_previousMetadataId != 0 && _previousMetadataId != MetadataId)
-        {
-            IsLoading = true;
-            await LoadDataAsync(CancellationToken.None);
-            IsLoading = false;
-            StateHasChanged();
-        }
-
-        _previousMetadataId = MetadataId;
-    }
-
-    protected override async Task LoadDataAsync(CancellationToken cancellationToken)
-    {
-        using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
-
-        _metadata = await context.Metadatas
-            .AsNoTracking()
-            .FirstOrDefaultAsync(m => m.Id == MetadataId, cancellationToken);
-
-        if (_metadata is not null)
-        {
-            _logs = await context.Logs
-                .AsNoTracking()
-                .Where(l => l.MetadataId == MetadataId)
-                .ToListAsync(cancellationToken);
-        }
-    }
-
-    private async Task RerunWorkflow()
-    {
-        if (_metadata is null || string.IsNullOrWhiteSpace(_metadata.Input))
-            return;
-
-        _rerunError = null;
-        _rerunning = true;
-
-        try
-        {
-            var registration = WorkflowDiscovery.DiscoverWorkflows()
-                .FirstOrDefault(r =>
-                    r.ServiceType.FullName == _metadata.Name
-                    || r.ImplementationType.FullName == _metadata.Name);
-
-            if (registration is null)
-            {
-                _rerunError = $"No workflow registration found for '{ShortName(_metadata.Name)}'. Is the workflow still registered?";
-                return;
-            }
-
-            var input = JsonSerializer.Deserialize(_metadata.Input, registration.InputType,             ChainSharpEffectConfiguration.StaticSystemJsonSerializerOptions);
-
-            if (input is null)
-            {
-                _rerunError = "Failed to deserialize the saved input.";
-                return;
-            }
-
-            var metadata = Metadata.Create(new CreateMetadata
-            {
-                Name = registration.ServiceType.FullName!,
-                ExternalId = Guid.NewGuid().ToString("N"),
-                Input = null,
-            });
-
-            using var dataContext = await DataContextFactory.CreateDbContextAsync(CancellationToken.None);
-            await dataContext.Track(metadata);
-            await dataContext.SaveChanges(CancellationToken.None);
-
-            await BackgroundTaskServer.EnqueueAsync(metadata.Id, input);
-
-            NotificationService.Notify(NotificationSeverity.Success,
-                "Workflow Queued",
-                $"{ShortName(_metadata.Name)} has been re-queued (ID {metadata.Id}).",
-                duration: 4000);
-
-            Navigation.NavigateTo($"chainsharp/data/metadata/{metadata.Id}");
-        }
-        catch (JsonException je)
-        {
-            _rerunError = $"Invalid saved input JSON: {je.Message}";
-        }
-        catch (Exception ex)
-        {
-            _rerunError = ex.Message;
-        }
-        finally
-        {
-            _rerunning = false;
-        }
-    }
-
-    private static BadgeStyle GetLogLevelBadgeStyle(LogLevel level) => level switch
-    {
-        LogLevel.Critical => BadgeStyle.Danger,
-        LogLevel.Error => BadgeStyle.Danger,
-        LogLevel.Warning => BadgeStyle.Warning,
-        LogLevel.Information => BadgeStyle.Info,
-        LogLevel.Debug => BadgeStyle.Light,
-        LogLevel.Trace => BadgeStyle.Light,
-        _ => BadgeStyle.Light,
-    };
-
-    private static string FormatDuration(Metadata m)
-    {
-        if (m.EndTime is null)
-            return "—";
-
-        var duration = m.EndTime.Value - m.StartTime;
-        if (duration.TotalMilliseconds < 1000)
-            return $"{duration.TotalMilliseconds:F0}ms";
-        if (duration.TotalSeconds < 60)
-            return $"{duration.TotalSeconds:F1}s";
-        return $"{duration.TotalMinutes:F1}m";
-    }
-
-    private static string FormatJson(string json)
-    {
-        try
-        {
-            using var doc = JsonDocument.Parse(json);
-            return JsonSerializer.Serialize(doc, new JsonSerializerOptions { WriteIndented = true });
-        }
-        catch
-        {
-            return json;
-        }
-    }
-
-    private static string ShortName(string fullName)
-    {
-        var lastDot = fullName.LastIndexOf('.');
-        return lastDot >= 0 ? fullName[(lastDot + 1)..] : fullName;
-    }
-
-    private RenderFragment Field(string label, string value) => __builder =>
-    {
-        <RadzenStack Gap="0">
-            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color); margin: 0;">@label</RadzenText>
-            <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0;">@value</RadzenText>
-        </RadzenStack>
-    };
-}

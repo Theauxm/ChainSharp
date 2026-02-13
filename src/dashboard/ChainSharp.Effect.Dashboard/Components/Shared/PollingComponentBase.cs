@@ -1,7 +1,7 @@
 using ChainSharp.Effect.Dashboard.Services.DashboardSettings;
 using Microsoft.AspNetCore.Components;
 
-namespace ChainSharp.Effect.Dashboard.Components;
+namespace ChainSharp.Effect.Dashboard.Components.Shared;
 
 /// <summary>
 /// Base component that polls for data on a configurable interval.

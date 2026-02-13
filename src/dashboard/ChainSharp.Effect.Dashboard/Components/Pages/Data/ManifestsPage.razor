@@ -67,8 +67,7 @@
         IQueryable<Manifest> query = context.Manifests.AsNoTracking();
 
         if (DashboardSettings.HideAdminWorkflows)
-            foreach (var name in DashboardSettings.AdminWorkflowNames)
-                query = query.Where(m => !m.Name.EndsWith(name));
+            query = query.ExcludeAdmin(DashboardSettings.AdminWorkflowNames);
 
         _items = await query.ToListAsync(cancellationToken);
     }
@@ -76,11 +75,5 @@
     private void OnRowClick(DataGridRowMouseEventArgs<Manifest> args)
     {
         Navigation.NavigateTo($"chainsharp/data/manifests/{args.Data.Id}");
-    }
-
-    private static string ShortName(string fullName)
-    {
-        var lastDot = fullName.LastIndexOf('.');
-        return lastDot >= 0 ? fullName[(lastDot + 1)..] : fullName;
     }
 }

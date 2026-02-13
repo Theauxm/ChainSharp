@@ -1,4 +1,4 @@
-using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestExecutor;
+using ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor;
 
 namespace ChainSharp.Effect.Orchestration.Scheduler.Services.BackgroundTaskServer;
 
@@ -16,8 +16,8 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Services.BackgroundTaskServe
 /// - HangfireTaskServer (in ChainSharp.Effect.Orchestration.Scheduler.Hangfire)
 /// - QuartzTaskServer (in ChainSharp.Effect.Orchestration.Scheduler.Quartz)
 ///
-/// Implementations should resolve <see cref="IManifestExecutorWorkflow"/> from the DI container
-/// and call <see cref="IManifestExecutorWorkflow.Run"/> with an <see cref="ExecuteManifestRequest"/>.
+/// Implementations should resolve <see cref="ITaskServerExecutorWorkflow"/> from the DI container
+/// and call <see cref="ITaskServerExecutorWorkflow.Run"/> with an <see cref="ExecuteManifestRequest"/>.
 /// </remarks>
 public interface IBackgroundTaskServer
 {
@@ -31,10 +31,22 @@ public interface IBackgroundTaskServer
     /// The returned identifier is provider-specific (e.g., Hangfire job ID) and can be
     /// stored for later correlation with the background task server's native tracking system.
     ///
-    /// Implementations should enqueue a call to <see cref="IManifestExecutorWorkflow.Run"/>
+    /// Implementations should enqueue a call to <see cref="ITaskServerExecutorWorkflow.Run"/>
     /// with an <see cref="ExecuteManifestRequest"/> containing the provided metadata ID.
     /// </remarks>
     Task<string> EnqueueAsync(int metadataId);
+
+    /// <summary>
+    /// Enqueues a job for immediate execution with an in-memory workflow input.
+    /// </summary>
+    /// <param name="metadataId">The ID of the Metadata record representing this job execution</param>
+    /// <param name="input">The workflow input object to pass to the executor</param>
+    /// <returns>A background task identifier for correlation/tracking (provider-specific)</returns>
+    /// <remarks>
+    /// Used for ad-hoc workflow executions (e.g., from the dashboard) where the input
+    /// is provided directly rather than resolved from a Manifest's properties.
+    /// </remarks>
+    Task<string> EnqueueAsync(int metadataId, object input);
 
     /// <summary>
     /// Schedules a job for execution at a specified time.

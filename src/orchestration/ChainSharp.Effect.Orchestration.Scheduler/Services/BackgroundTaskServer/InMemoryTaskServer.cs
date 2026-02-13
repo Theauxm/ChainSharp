@@ -1,4 +1,4 @@
-using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestExecutor;
+using ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor;
 
 namespace ChainSharp.Effect.Orchestration.Scheduler.Services.BackgroundTaskServer;
 
@@ -22,7 +22,7 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Services.BackgroundTaskServe
 /// );
 /// ```
 /// </remarks>
-public class InMemoryTaskServer(IManifestExecutorWorkflow manifestExecutorWorkflow)
+public class InMemoryTaskServer(ITaskServerExecutorWorkflow taskServerExecutorWorkflow)
     : IBackgroundTaskServer
 {
     private int _jobCounter;
@@ -36,7 +36,17 @@ public class InMemoryTaskServer(IManifestExecutorWorkflow manifestExecutorWorkfl
     {
         var jobId = $"inmemory-{Interlocked.Increment(ref _jobCounter)}";
 
-        await manifestExecutorWorkflow.Run(new ExecuteManifestRequest(metadataId));
+        await taskServerExecutorWorkflow.Run(new ExecuteManifestRequest(metadataId));
+
+        return jobId;
+    }
+
+    /// <inheritdoc />
+    public async Task<string> EnqueueAsync(int metadataId, object input)
+    {
+        var jobId = $"inmemory-{Interlocked.Increment(ref _jobCounter)}";
+
+        await taskServerExecutorWorkflow.Run(new ExecuteManifestRequest(metadataId, input));
 
         return jobId;
     }

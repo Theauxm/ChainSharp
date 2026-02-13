@@ -28,7 +28,7 @@ var connectionString = builder.Configuration.GetConnectionString("Database");
 builder.Services.AddChainSharpEffects(options => options
     .AddEffectWorkflowBus(
         typeof(Program).Assembly,
-        typeof(ManifestExecutorWorkflow).Assembly
+        typeof(TaskServerExecutorWorkflow).Assembly
     )
     .AddPostgresEffect(connectionString)
     .AddScheduler(scheduler => scheduler

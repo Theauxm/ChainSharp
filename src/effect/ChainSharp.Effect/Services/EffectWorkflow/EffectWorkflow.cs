@@ -63,9 +63,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     [JsonIgnore]
     public IEffectRunner? EffectRunner { get; set; }
 
-    [Inject]
-    [JsonIgnore]
-    public IStepEffectRunner? StepEffectRunner { get; set; }
+    [Inject] [JsonIgnore] public IStepEffectRunner? StepEffectRunner { get; set; }
 
     /// <summary>
     /// Logger specific to this workflow type, used for recording diagnostic information
@@ -145,7 +143,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
         if (ServiceProvider == null)
         {
             EffectLogger?.LogCritical(
-                "Could not find injected IServiceProvider on {WorkflowName}. Is it being injected into the ServiceCollection?",
+                "Could not find injected IServiceProvider on ({WorkflowName}). Is it being injected into the ServiceCollection?",
                 WorkflowName
             );
             throw new WorkflowException(
@@ -160,6 +158,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
 
         try
         {
+            Metadata.SetInputObject(input);
             var result = await base.Run(input, ServiceProvider);
             EffectLogger?.LogTrace("({WorkflowName}) completed successfully.", WorkflowName);
             Metadata.SetOutputObject(result);

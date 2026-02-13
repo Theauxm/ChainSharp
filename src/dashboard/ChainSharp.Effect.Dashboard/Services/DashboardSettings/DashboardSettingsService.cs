@@ -11,7 +11,7 @@ public class DashboardSettingsService(ILocalStorageService localStorage) : IDash
     public static readonly IReadOnlyList<string> DefaultAdminWorkflowNames =
     [
         "ManifestManagerWorkflow",
-        "ManifestExecutorWorkflow",
+        "TaskServerExecutorWorkflow",
         "MetadataCleanupWorkflow",
     ];
 

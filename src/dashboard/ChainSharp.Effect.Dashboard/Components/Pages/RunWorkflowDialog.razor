@@ -1,7 +1,12 @@
-@using ChainSharp.Effect.Orchestration.Mediator.Services.WorkflowBus
 @using System.Text.Json.Nodes
 @using System.Text.RegularExpressions
-@inject IServiceScopeFactory ScopeFactory
+@using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration
+@using ChainSharp.Effect.Models.Metadata
+@using ChainSharp.Effect.Models.Metadata.DTOs
+@using ChainSharp.Effect.Orchestration.Scheduler.Services.BackgroundTaskServer
+@inject IDataContextProviderFactory DataContextFactory
+@inject IBackgroundTaskServer BackgroundTaskServer
+@inject NavigationManager Navigation
 @inject DialogService DialogService
 
 <RadzenStack Gap="1rem">
@@ -57,14 +62,6 @@
         </Tabs>
     </RadzenTabs>
 
-    @if (_result is not null)
-    {
-        <RadzenCard>
-            <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mb-2">Output</RadzenText>
-            <pre style="white-space: pre-wrap; word-break: break-word; max-height: 300px; overflow-y: auto;">@_result</pre>
-        </RadzenCard>
-    }
-
     @if (_error is not null)
     {
         <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" Variant="Variant.Flat">
@@ -77,10 +74,10 @@
                       ButtonStyle="ButtonStyle.Light"
                       Click="@(() => DialogService.Close())"
                       Disabled="@_running" />
-        <RadzenButton Text="Run"
+        <RadzenButton Text="Enqueue"
                       Icon="play_arrow"
                       ButtonStyle="ButtonStyle.Primary"
-                      Click="@RunWorkflow"
+                      Click="@EnqueueWorkflow"
                       IsBusy="@_running"
                       Disabled="@_running" />
     </RadzenStack>
@@ -89,12 +86,8 @@
 @code {
     [Parameter] public required WorkflowRegistration Registration { get; set; }
 
-    private static readonly MethodInfo RunAsyncMethod =
-        typeof(IWorkflowBus).GetMethod(nameof(IWorkflowBus.RunAsync), 1, [typeof(object), typeof(Metadata)])!;
-
     private int _selectedTab;
     private string _jsonInput = "";
-    private string? _result;
     private string? _error;
     private bool _running;
 
@@ -127,17 +120,17 @@
     private void SetFormValue(string name, object? value) =>
         _formValues[name] = value;
 
-    private async Task RunWorkflow()
+    private async Task EnqueueWorkflow()
     {
         _error = null;
-        _result = null;
         _running = true;
 
         try
         {
             var input = _selectedTab == 0
                 ? BuildInputFromForm()
-                : JsonSerializer.Deserialize(_jsonInput, Registration.InputType);
+                : JsonSerializer.Deserialize(_jsonInput, Registration.InputType,
+                                ChainSharpEffectConfiguration.StaticSystemJsonSerializerOptions);
 
             if (input is null)
             {
@@ -145,19 +138,23 @@
                 return;
             }
 
-            await using var scope = ScopeFactory.CreateAsyncScope();
-            var workflowBus = scope.ServiceProvider.GetRequiredService<IWorkflowBus>();
+            var metadata = Metadata.Create(new CreateMetadata
+            {
+                Name = Registration.ServiceType.FullName!,
+                ExternalId = Guid.NewGuid().ToString("N"),
+                Input = input,
+            });
+            metadata.Input = JsonSerializer.Serialize(input, Registration.InputType,
+                ChainSharpEffectConfiguration.StaticSystemJsonSerializerOptions);
 
-            var genericMethod = RunAsyncMethod.MakeGenericMethod(Registration.OutputType);
-            var task = (Task)genericMethod.Invoke(workflowBus, [input, null])!;
-            await task;
+            using var dataContext = await DataContextFactory.CreateDbContextAsync(CancellationToken.None);
+            await dataContext.Track(metadata);
+            await dataContext.SaveChanges(CancellationToken.None);
 
-            var output = task.GetType().GetProperty("Result")!.GetValue(task);
-            _result = JsonSerializer.Serialize(output, new JsonSerializerOptions { WriteIndented = true });
-        }
-        catch (TargetInvocationException tie) when (tie.InnerException is not null)
-        {
-            _error = tie.InnerException.Message;
+            await BackgroundTaskServer.EnqueueAsync(metadata.Id, input);
+
+            DialogService.Close();
+            Navigation.NavigateTo($"chainsharp/data/metadata/{metadata.Id}");
         }
         catch (JsonException je)
         {

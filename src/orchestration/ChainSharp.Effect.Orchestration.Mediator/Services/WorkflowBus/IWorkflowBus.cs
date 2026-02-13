@@ -58,5 +58,5 @@ public interface IWorkflowBus
 
     public Task RunAsync(object workflowInput, Metadata? metadata = null);
 
-    public object InitializeWorkflow(object workflowInput, Metadata? metadata = null);
+    public object InitializeWorkflow(object workflowInput);
 }

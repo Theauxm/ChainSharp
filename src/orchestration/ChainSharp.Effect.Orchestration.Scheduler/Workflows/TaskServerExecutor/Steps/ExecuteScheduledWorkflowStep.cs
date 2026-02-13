@@ -4,33 +4,32 @@ using ChainSharp.Effect.Services.EffectStep;
 using LanguageExt;
 using Microsoft.Extensions.Logging;
 
-namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestExecutor.Steps;
+namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor.Steps;
 
 /// <summary>
-/// Executes the scheduled workflow using the WorkflowBus.
+/// Executes the target workflow using the WorkflowBus with the resolved input.
 /// </summary>
 internal class ExecuteScheduledWorkflowStep(
     IWorkflowBus workflowBus,
     ILogger<ExecuteScheduledWorkflowStep> logger
-) : EffectStep<Metadata, Unit>
+) : EffectStep<(Metadata, ResolvedWorkflowInput), Unit>
 {
-    public override async Task<Unit> Run(Metadata input)
+    public override async Task<Unit> Run((Metadata, ResolvedWorkflowInput) input)
     {
-        var inputType = input.Manifest!.PropertyType;
-        var workflowInput = input.Manifest.GetProperties(inputType);
+        var (metadata, resolvedInput) = input;
 
         logger.LogDebug(
             "Executing workflow {WorkflowName} for Metadata {MetadataId}",
-            input.Name,
-            input.Id
+            metadata.Name,
+            metadata.Id
         );
 
-        await workflowBus.RunAsync(workflowInput, input);
+        await workflowBus.RunAsync(resolvedInput.Value, metadata);
 
         logger.LogDebug(
             "Successfully executed workflow {WorkflowName} for Metadata {MetadataId}",
-            input.Name,
-            input.Id
+            metadata.Name,
+            metadata.Id
         );
 
         return Unit.Default;

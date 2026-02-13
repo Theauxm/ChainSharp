@@ -77,7 +77,7 @@ Operators can retry (which creates a new execution) or acknowledge (mark as hand
                                   │ Enqueues jobs to Hangfire
                                   ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                  ManifestExecutorWorkflow                        │
+│                  TaskServerExecutorWorkflow                        │
 │                  (runs on Hangfire workers)                       │
 │                                                                  │
 │  LoadMetadata → ValidateState → ExecuteWorkflow →               │
@@ -95,4 +95,4 @@ The **ManifestPollingService** is a .NET `BackgroundService` that runs the Manif
 
 The **ManifestManagerWorkflow** loads enabled manifests, dead-letters any that have exceeded their retry limit, determines which are due for execution, and enqueues them to the background task server (Hangfire).
 
-The **ManifestExecutorWorkflow** runs on Hangfire workers for each enqueued job. It loads the Metadata and Manifest, validates the job is still pending, executes the target workflow via `IWorkflowBus`, and updates `LastSuccessfulRun` on success.
+The **TaskServerExecutorWorkflow** runs on Hangfire workers for each enqueued job. It loads the Metadata and Manifest, validates the job is still pending, executes the target workflow via `IWorkflowBus`, and updates `LastSuccessfulRun` on success.

@@ -6,7 +6,7 @@ using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Orchestration.Mediator.Extensions;
 using ChainSharp.Effect.Orchestration.Mediator.Services.WorkflowBus;
 using ChainSharp.Effect.Orchestration.Scheduler.Extensions;
-using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestExecutor;
+using ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor;
 using ChainSharp.Effect.Provider.Json.Extensions;
 using ChainSharp.Effect.Provider.Parameter.Extensions;
 using ChainSharp.Effect.StepProvider.Logging.Extensions;
@@ -26,7 +26,7 @@ public abstract class TestSetup
 
     public IWorkflowBus WorkflowBus { get; private set; } = null!;
 
-    public IManifestExecutorWorkflow ManifestExecutor { get; private set; } = null!;
+    public ITaskServerExecutorWorkflow TaskServerExecutor { get; private set; } = null!;
 
     public IDataContext DataContext { get; private set; } = null!;
 
@@ -54,7 +54,7 @@ public abstract class TestSetup
                             assemblies:
                             [
                                 typeof(AssemblyMarker).Assembly,
-                                typeof(ManifestExecutorWorkflow).Assembly,
+                                typeof(TaskServerExecutorWorkflow).Assembly,
                             ]
                         )
                         .SetEffectLogLevel(LogLevel.Information)
@@ -87,15 +87,15 @@ public abstract class TestSetup
     {
         Scope = ServiceProvider.CreateScope();
         WorkflowBus = Scope.ServiceProvider.GetRequiredService<IWorkflowBus>();
-        ManifestExecutor = Scope.ServiceProvider.GetRequiredService<IManifestExecutorWorkflow>();
+        TaskServerExecutor = Scope.ServiceProvider.GetRequiredService<ITaskServerExecutorWorkflow>();
         DataContext = Scope.ServiceProvider.GetRequiredService<IDataContext>();
     }
 
     [TearDown]
     public async Task TestTearDown()
     {
-        if (ManifestExecutor is IDisposable manifestDisposable)
-            manifestDisposable.Dispose();
+        if (TaskServerExecutor is IDisposable taskServerDisposable)
+            taskServerDisposable.Dispose();
 
         if (DataContext is IDisposable disposable)
             disposable.Dispose();

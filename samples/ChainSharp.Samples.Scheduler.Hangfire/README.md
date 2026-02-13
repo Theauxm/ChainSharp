@@ -49,7 +49,7 @@ The sample seeds a "HelloWorld" manifest that runs every 60 seconds. The manifes
 | `HelloWorldInput` | Workflow input implementing `IManifestProperties` |
 | `LogGreetingStep` | Step that performs the greeting logic |
 | `ManifestManagerWorkflow` | Built-in workflow that polls for scheduled jobs |
-| `ManifestExecutorWorkflow` | Built-in workflow that executes individual jobs |
+| `TaskServerExecutorWorkflow` | Built-in workflow that executes individual jobs |
 
 ### Hangfire Integration
 
@@ -130,7 +130,7 @@ Edit `appsettings.json` to customize:
                                   │ Enqueues
                                   ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                  ManifestExecutorWorkflow                        │
+│                  TaskServerExecutorWorkflow                        │
 │             Executes individual workflow from Manifest          │
 └─────────────────────────────────┬───────────────────────────────┘
                                   │

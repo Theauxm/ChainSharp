@@ -2,7 +2,12 @@
 @inherits PollingComponentBase
 @inject IDataContextProviderFactory DataContextFactory
 @inject NavigationManager Navigation
+@inject IBackgroundTaskServer BackgroundTaskServer
+@inject IWorkflowDiscoveryService WorkflowDiscovery
+@using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration
 @using Microsoft.Extensions.Logging
+@using ChainSharp.Effect.Orchestration.Scheduler.Services.BackgroundTaskServer
+@using ChainSharp.Effect.Models.Metadata.DTOs
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" class="rz-mb-4">
     <RadzenButton Icon="arrow_back"
@@ -18,6 +23,19 @@
             <text>Metadata Not Found</text>
         }
     </RadzenText>
+
+    @if (_metadata is not null && !string.IsNullOrWhiteSpace(_metadata.Input))
+    {
+        <RadzenButton Text="Re-run"
+                      Icon="replay"
+                      ButtonStyle="ButtonStyle.Secondary"
+                      Variant="Variant.Outlined"
+                      Size="ButtonSize.Small"
+                      Click="@RerunWorkflow"
+                      IsBusy="@_rerunning"
+                      Disabled="@_rerunning"
+                      Style="margin-left: auto;" />
+    }
 </RadzenStack>
 
 @if (IsLoading)
@@ -30,6 +48,13 @@
 {
     <RadzenText TextStyle="TextStyle.Body1">No metadata found with ID @MetadataId.</RadzenText>
     return;
+}
+
+@if (_rerunError is not null)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" Variant="Variant.Flat" class="rz-mb-4">
+        @_rerunError
+    </RadzenAlert>
 }
 
 @* ── Metadata Details ── *@
@@ -172,6 +197,8 @@
 
     private Metadata? _metadata;
     private List<Log> _logs = [];
+    private bool _rerunning;
+    private string? _rerunError;
 
     protected override async Task LoadDataAsync(CancellationToken cancellationToken)
     {
@@ -187,6 +214,66 @@
                 .AsNoTracking()
                 .Where(l => l.MetadataId == MetadataId)
                 .ToListAsync(cancellationToken);
+        }
+    }
+
+    private async Task RerunWorkflow()
+    {
+        if (_metadata is null || string.IsNullOrWhiteSpace(_metadata.Input))
+            return;
+
+        _rerunError = null;
+        _rerunning = true;
+
+        try
+        {
+            var registration = WorkflowDiscovery.DiscoverWorkflows()
+                .FirstOrDefault(r =>
+                    r.ServiceType.FullName == _metadata.Name
+                    || r.ImplementationType.FullName == _metadata.Name);
+
+            if (registration is null)
+            {
+                _rerunError = $"No workflow registration found for '{ShortName(_metadata.Name)}'. Is the workflow still registered?";
+                return;
+            }
+
+            var input = JsonSerializer.Deserialize(_metadata.Input, registration.InputType,             ChainSharpEffectConfiguration.StaticSystemJsonSerializerOptions);
+
+            if (input is null)
+            {
+                _rerunError = "Failed to deserialize the saved input.";
+                return;
+            }
+
+            var metadata = Metadata.Create(new CreateMetadata
+            {
+                Name = registration.ServiceType.FullName!,
+                ExternalId = Guid.NewGuid().ToString("N"),
+                Input = input,
+            });
+            metadata.Input = JsonSerializer.Serialize(input, registration.InputType,
+                ChainSharpEffectConfiguration.StaticSystemJsonSerializerOptions);
+
+            using var dataContext = await DataContextFactory.CreateDbContextAsync(CancellationToken.None);
+            await dataContext.Track(metadata);
+            await dataContext.SaveChanges(CancellationToken.None);
+
+            await BackgroundTaskServer.EnqueueAsync(metadata.Id, input);
+
+            Navigation.NavigateTo($"chainsharp/data/metadata/{metadata.Id}");
+        }
+        catch (JsonException je)
+        {
+            _rerunError = $"Invalid saved input JSON: {je.Message}";
+        }
+        catch (Exception ex)
+        {
+            _rerunError = ex.Message;
+        }
+        finally
+        {
+            _rerunning = false;
         }
     }
 

@@ -1,0 +1,21 @@
+using ChainSharp.Effect.Data.Services.DataContext;
+using ChainSharp.Effect.Services.EffectStep;
+using LanguageExt;
+using Microsoft.Extensions.Logging;
+
+namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor.Steps;
+
+/// <summary>
+/// Updates the Manifest's LastSuccessfulRun timestamp after successful workflow execution.
+/// </summary>
+internal class SaveDatabaseChangesStep(
+    IDataContext dataContext
+) : EffectStep<Unit, Unit>
+{
+    public override async Task<Unit> Run(Unit input)
+    {
+        await dataContext.SaveChanges(CancellationToken.None);
+
+        return Unit.Default;
+    }
+}

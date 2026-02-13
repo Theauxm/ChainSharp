@@ -1,8 +1,12 @@
 @typeparam TItem
+@using System.Linq.Dynamic.Core
 
-<RadzenDataGrid Data="@Data"
+<RadzenDataGrid @ref="_grid"
                 TItem="TItem"
+                Data="@_view"
+                Count="@_count"
                 IsLoading="@IsLoading"
+                LoadData="@OnLoadData"
                 AllowFiltering="@AllowFiltering"
                 AllowSorting="@AllowSorting"
                 AllowPaging="@AllowPaging"
@@ -19,6 +23,11 @@
 </RadzenDataGrid>
 
 @code {
+    private RadzenDataGrid<TItem> _grid = default!;
+    private IEnumerable<TItem> _view = [];
+    private int _count;
+    private IEnumerable<TItem>? _previousData;
+
     [Parameter, EditorRequired]
     public IEnumerable<TItem>? Data { get; set; }
 
@@ -45,4 +54,42 @@
 
     [Parameter]
     public string? Style { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!ReferenceEquals(Data, _previousData))
+        {
+            _previousData = Data;
+
+            // Eagerly sync _view and _count so the grid always has data,
+            // even if RadzenDataGrid hasn't fired LoadData yet.
+            var items = (Data ?? []).ToList();
+            _view = items;
+            _count = items.Count;
+
+            if (_grid is not null)
+                await _grid.Reload();
+        }
+    }
+
+    private void OnLoadData(LoadDataArgs args)
+    {
+        var query = (Data ?? []).AsQueryable();
+
+        if (!string.IsNullOrEmpty(args.Filter))
+            query = query.Where(args.Filter);
+
+        if (!string.IsNullOrEmpty(args.OrderBy))
+            query = query.OrderBy(args.OrderBy);
+
+        _count = query.Count();
+
+        if (args.Skip.HasValue)
+            query = query.Skip(args.Skip.Value);
+
+        if (args.Top.HasValue)
+            query = query.Take(args.Top.Value);
+
+        _view = query.ToList();
+    }
 }

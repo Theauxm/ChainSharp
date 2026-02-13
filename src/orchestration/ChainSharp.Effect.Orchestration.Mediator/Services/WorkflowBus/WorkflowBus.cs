@@ -152,7 +152,8 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
         {
             if (metadata.WorkflowState != WorkflowState.Pending)
                 throw new WorkflowException(
-                    $"WorkflowBus will not run a passed Metadata with state ({metadata.WorkflowState}), Must be Pending");
+                    $"WorkflowBus will not run a passed Metadata with state ({metadata.WorkflowState}), Must be Pending"
+                );
 
             var runWithMetadataMethod = RunWithMetadataMethodCache.GetOrAdd(
                 workflowType,
@@ -162,7 +163,8 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
                         .Where(x => x.Name == "Run")
                         // Run(input, metadata) has 2 parameters
                         .Where(x => x.GetParameters().Length == 2)
-                        .FirstOrDefault(x => x.GetParameters()[1].ParameterType == typeof(Metadata)
+                        .FirstOrDefault(
+                            x => x.GetParameters()[1].ParameterType == typeof(Metadata)
                         );
 
                     if (method == null)

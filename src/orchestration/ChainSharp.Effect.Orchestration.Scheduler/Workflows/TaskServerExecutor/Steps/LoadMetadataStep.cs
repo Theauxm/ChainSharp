@@ -19,9 +19,7 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor
 internal class LoadMetadataStep(IDataContext dataContext, ILogger<LoadMetadataStep> logger)
     : EffectStep<ExecuteManifestRequest, (Metadata, ResolvedWorkflowInput)>
 {
-    public override async Task<(Metadata, ResolvedWorkflowInput)> Run(
-        ExecuteManifestRequest input
-    )
+    public override async Task<(Metadata, ResolvedWorkflowInput)> Run(ExecuteManifestRequest input)
     {
         logger.LogDebug(
             "Loading metadata for job execution (MetadataId: {MetadataId}, AdHoc: {IsAdHoc})",
@@ -32,14 +30,12 @@ internal class LoadMetadataStep(IDataContext dataContext, ILogger<LoadMetadataSt
         if (input.Input is not null)
         {
             // Ad-hoc execution: load metadata without manifest
-            var metadata = await dataContext.Metadatas.FirstOrDefaultAsync(x =>
-                x.Id == input.MetadataId
-            );
+            var metadata = await dataContext
+                .Metadatas.AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == input.MetadataId);
 
             if (metadata is null)
-                throw new WorkflowException(
-                    $"Metadata with ID {input.MetadataId} not found"
-                );
+                throw new WorkflowException($"Metadata with ID {input.MetadataId} not found");
 
             logger.LogDebug(
                 "Loaded ad-hoc metadata for workflow {WorkflowName} (MetadataId: {MetadataId})",
@@ -51,15 +47,14 @@ internal class LoadMetadataStep(IDataContext dataContext, ILogger<LoadMetadataSt
         }
         else
         {
-            // Manifest-based execution: load metadata with manifest
+            // Manifest-based execution: load metadata with manifest (tracked so
+            // UpdateManifestSuccessStep can persist LastSuccessfulRun via SaveChanges)
             var metadata = await dataContext
                 .Metadatas.Include(x => x.Manifest)
                 .FirstOrDefaultAsync(x => x.Id == input.MetadataId);
 
             if (metadata is null)
-                throw new WorkflowException(
-                    $"Metadata with ID {input.MetadataId} not found"
-                );
+                throw new WorkflowException($"Metadata with ID {input.MetadataId} not found");
 
             if (metadata.Manifest is null)
                 throw new WorkflowException(

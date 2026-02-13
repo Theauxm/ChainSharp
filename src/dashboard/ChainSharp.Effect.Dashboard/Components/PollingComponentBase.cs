@@ -17,7 +17,7 @@ public abstract class PollingComponentBase : ComponentBase, IAsyncDisposable
 
     private CancellationTokenSource? _cts;
 
-    protected bool IsLoading { get; private set; } = true;
+    protected bool IsLoading { get; set; } = true;
 
     protected abstract Task LoadDataAsync(CancellationToken cancellationToken);
 

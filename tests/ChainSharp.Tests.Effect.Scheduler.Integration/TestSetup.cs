@@ -87,7 +87,8 @@ public abstract class TestSetup
     {
         Scope = ServiceProvider.CreateScope();
         WorkflowBus = Scope.ServiceProvider.GetRequiredService<IWorkflowBus>();
-        TaskServerExecutor = Scope.ServiceProvider.GetRequiredService<ITaskServerExecutorWorkflow>();
+        TaskServerExecutor =
+            Scope.ServiceProvider.GetRequiredService<ITaskServerExecutorWorkflow>();
         DataContext = Scope.ServiceProvider.GetRequiredService<IDataContext>();
     }
 

@@ -129,6 +129,7 @@ public interface IEffectProvider : IDisposable
 {
     Task SaveChanges(CancellationToken cancellationToken);
     Task Track(IModel model);
+    Task Update(IModel model);
 }
 ```
 
@@ -161,26 +162,33 @@ The full lifecycle of an `EffectWorkflow` execution, corresponding to the `Run` 
 [Inject Dependencies]
        │
        ▼
-[Initialize Metadata]
+[Initialize Metadata] → Track → Update (InProgress)
+       │
+       ▼
+[Set Input] → Update
        │
        ▼
 [Execute Workflow Chain]
        │
        ▼
-   Success? ──No──► [Update Metadata: Failed]
+[Set Output] → Update
+       │
+       ▼
+   Success? ──No──► [FinishWorkflow: Failed] → Update
        │                      │
       Yes                     │
        │                      │
        ▼                      ▼
-[Update Metadata: Completed]  │
+[FinishWorkflow: Completed]   │
+  → Update                    │
        │                      │
        └──────────┬───────────┘
                   │
                   ▼
-       [SaveChanges - Execute Effects]
+       [SaveChanges - Persist All Effects]
                   │
                   ▼
            [Return Result]
 ```
 
-Steps execute inside the "Execute Workflow Chain" box. The `SaveChanges` call at the end triggers all registered effect providers—database persistence, JSON logging, parameter serialization—to execute their accumulated side effects. Both success and failure paths call `SaveChanges`, so metadata is always persisted regardless of outcome.
+Steps execute inside the "Execute Workflow Chain" box. Each mutation to the workflow's `Metadata` is followed by an `Update` call that notifies all registered effect providers—allowing them to react immediately (e.g., `ParameterEffect` re-serializes input/output parameters). The final `SaveChanges` call persists all accumulated side effects. Both success and failure paths call `SaveChanges`, so metadata is always persisted regardless of outcome.

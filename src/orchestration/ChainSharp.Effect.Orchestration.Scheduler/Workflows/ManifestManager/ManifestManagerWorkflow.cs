@@ -9,11 +9,11 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager;
 /// </summary>
 public class ManifestManagerWorkflow : EffectWorkflow<Unit, Unit>, IManifestManagerWorkflow
 {
-  protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
-    Activate(input)
-      .Chain<LoadManifestsStep>()
-      .Chain<ReapFailedJobsStep>()
-      .Chain<DetermineJobsToQueueStep>()
-      .Chain<EnqueueJobsStep>()
-      .Resolve();
+    protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
+        Activate(input)
+            .Chain<LoadManifestsStep>()
+            .Chain<ReapFailedJobsStep>()
+            .Chain<DetermineJobsToQueueStep>()
+            .Chain<EnqueueJobsStep>()
+            .Resolve();
 }

@@ -104,6 +104,12 @@ public class EffectRunner : IEffectRunner
         ActiveEffectProviders.RunAll(provider => provider.Track(model));
     }
 
+    /// <inheritdoc />
+    public async Task Update(IModel model)
+    {
+        ActiveEffectProviders.RunAll(provider => provider.Update(model));
+    }
+
     /// <summary>
     /// Disposes of all active effect providers and clears the collection.
     /// </summary>

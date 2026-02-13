@@ -207,6 +207,8 @@ public class EffectRunnerRegistryTests
 
         public Task Track(IModel model) => Task.CompletedTask;
 
+        public Task Update(IModel model) => Task.CompletedTask;
+
         public void Dispose() { }
     }
 

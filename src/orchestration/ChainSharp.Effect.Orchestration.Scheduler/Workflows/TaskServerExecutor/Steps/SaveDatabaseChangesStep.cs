@@ -8,9 +8,7 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor
 /// <summary>
 /// Updates the Manifest's LastSuccessfulRun timestamp after successful workflow execution.
 /// </summary>
-internal class SaveDatabaseChangesStep(
-    IDataContext dataContext
-) : EffectStep<Unit, Unit>
+internal class SaveDatabaseChangesStep(IDataContext dataContext) : EffectStep<Unit, Unit>
 {
     public override async Task<Unit> Run(Unit input)
     {

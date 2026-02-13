@@ -142,10 +142,8 @@
             {
                 Name = Registration.ServiceType.FullName!,
                 ExternalId = Guid.NewGuid().ToString("N"),
-                Input = input,
+                Input = null,
             });
-            metadata.Input = JsonSerializer.Serialize(input, Registration.InputType,
-                ChainSharpEffectConfiguration.StaticSystemJsonSerializerOptions);
 
             using var dataContext = await DataContextFactory.CreateDbContextAsync(CancellationToken.None);
             await dataContext.Track(metadata);

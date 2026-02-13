@@ -4,6 +4,7 @@
 @inject NavigationManager Navigation
 @inject IBackgroundTaskServer BackgroundTaskServer
 @inject IWorkflowDiscoveryService WorkflowDiscovery
+@inject NotificationService NotificationService
 @using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration
 @using Microsoft.Extensions.Logging
 @using ChainSharp.Effect.Orchestration.Scheduler.Services.BackgroundTaskServer
@@ -199,6 +200,20 @@
     private List<Log> _logs = [];
     private bool _rerunning;
     private string? _rerunError;
+    private int _previousMetadataId;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_previousMetadataId != 0 && _previousMetadataId != MetadataId)
+        {
+            IsLoading = true;
+            await LoadDataAsync(CancellationToken.None);
+            IsLoading = false;
+            StateHasChanged();
+        }
+
+        _previousMetadataId = MetadataId;
+    }
 
     protected override async Task LoadDataAsync(CancellationToken cancellationToken)
     {
@@ -250,16 +265,19 @@
             {
                 Name = registration.ServiceType.FullName!,
                 ExternalId = Guid.NewGuid().ToString("N"),
-                Input = input,
+                Input = null,
             });
-            metadata.Input = JsonSerializer.Serialize(input, registration.InputType,
-                ChainSharpEffectConfiguration.StaticSystemJsonSerializerOptions);
 
             using var dataContext = await DataContextFactory.CreateDbContextAsync(CancellationToken.None);
             await dataContext.Track(metadata);
             await dataContext.SaveChanges(CancellationToken.None);
 
             await BackgroundTaskServer.EnqueueAsync(metadata.Id, input);
+
+            NotificationService.Notify(NotificationSeverity.Success,
+                "Workflow Queued",
+                $"{ShortName(_metadata.Name)} has been re-queued (ID {metadata.Id}).",
+                duration: 4000);
 
             Navigation.NavigateTo($"chainsharp/data/metadata/{metadata.Id}");
         }

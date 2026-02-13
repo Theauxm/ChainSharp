@@ -81,6 +81,21 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
         }
     }
 
+    /// <inheritdoc />
+    public Task Update(IModel model)
+    {
+        if (model is Metadata metadata)
+        {
+            lock (_lock)
+            {
+                if (_trackedMetadatas.Contains(metadata))
+                    SerializeParameters(metadata);
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
     /// <summary>
     /// Serializes the input and output parameters of a metadata object to JSON format.
     /// </summary>

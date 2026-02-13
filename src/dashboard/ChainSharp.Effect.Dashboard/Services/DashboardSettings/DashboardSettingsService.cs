@@ -11,7 +11,7 @@ public class DashboardSettingsService(ILocalStorageService localStorage) : IDash
     public static readonly IReadOnlyList<string> DefaultAdminWorkflowNames =
     [
         "ManifestManagerWorkflow",
-        "ManifestExecutorWorkflow",
+        "TaskServerExecutorWorkflow",
         "MetadataCleanupWorkflow",
     ];
 
@@ -77,13 +77,27 @@ public class DashboardSettingsService(ILocalStorageService localStorage) : IDash
     {
         switch (key)
         {
-            case StorageKeys.ShowSummaryCards: ShowSummaryCards = visible; break;
-            case StorageKeys.ShowExecutionsChart: ShowExecutionsChart = visible; break;
-            case StorageKeys.ShowStatusBreakdown: ShowStatusBreakdown = visible; break;
-            case StorageKeys.ShowTopFailures: ShowTopFailures = visible; break;
-            case StorageKeys.ShowAvgDuration: ShowAvgDuration = visible; break;
-            case StorageKeys.ShowRecentFailures: ShowRecentFailures = visible; break;
-            case StorageKeys.ShowActiveManifests: ShowActiveManifests = visible; break;
+            case StorageKeys.ShowSummaryCards:
+                ShowSummaryCards = visible;
+                break;
+            case StorageKeys.ShowExecutionsChart:
+                ShowExecutionsChart = visible;
+                break;
+            case StorageKeys.ShowStatusBreakdown:
+                ShowStatusBreakdown = visible;
+                break;
+            case StorageKeys.ShowTopFailures:
+                ShowTopFailures = visible;
+                break;
+            case StorageKeys.ShowAvgDuration:
+                ShowAvgDuration = visible;
+                break;
+            case StorageKeys.ShowRecentFailures:
+                ShowRecentFailures = visible;
+                break;
+            case StorageKeys.ShowActiveManifests:
+                ShowActiveManifests = visible;
+                break;
         }
 
         await localStorage.SetAsync(key, visible);

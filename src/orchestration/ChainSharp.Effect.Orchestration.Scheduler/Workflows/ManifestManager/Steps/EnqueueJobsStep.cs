@@ -39,7 +39,7 @@ internal class EnqueueJobsStep(
             try
             {
                 // Create a new Metadata record for this execution
-                var metadata = ChainSharp.Effect.Models.Metadata.Metadata.Create(
+                var metadata = Models.Metadata.Metadata.Create(
                     new CreateMetadata
                     {
                         Name = manifest.Name,

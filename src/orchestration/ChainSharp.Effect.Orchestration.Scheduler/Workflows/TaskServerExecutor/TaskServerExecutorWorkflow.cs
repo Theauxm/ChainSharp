@@ -1,8 +1,8 @@
-using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestExecutor.Steps;
+using ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor.Steps;
 using ChainSharp.Effect.Services.EffectWorkflow;
 using LanguageExt;
 
-namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestExecutor;
+namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor;
 
 /// <summary>
 /// Executes workflow jobs that have been scheduled via the manifest system.
@@ -14,9 +14,9 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestExecutor;
 /// 3. Executes the scheduled workflow via WorkflowBus
 /// 4. Updates the manifest's LastSuccessfulRun timestamp
 /// </remarks>
-public class ManifestExecutorWorkflow
+public class TaskServerExecutorWorkflow
     : EffectWorkflow<ExecuteManifestRequest, Unit>,
-        IManifestExecutorWorkflow
+        ITaskServerExecutorWorkflow
 {
     protected override async Task<Either<Exception, Unit>> RunInternal(
         ExecuteManifestRequest input
@@ -26,5 +26,6 @@ public class ManifestExecutorWorkflow
             .Chain<ValidateMetadataStateStep>()
             .Chain<ExecuteScheduledWorkflowStep>()
             .Chain<UpdateManifestSuccessStep>()
+            .Chain<SaveDatabaseChangesStep>()
             .Resolve();
 }

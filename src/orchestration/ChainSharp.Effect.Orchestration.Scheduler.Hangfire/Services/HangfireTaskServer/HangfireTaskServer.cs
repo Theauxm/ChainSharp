@@ -1,5 +1,5 @@
 using ChainSharp.Effect.Orchestration.Scheduler.Services.BackgroundTaskServer;
-using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestExecutor;
+using ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor;
 using Hangfire;
 
 namespace ChainSharp.Effect.Orchestration.Scheduler.Hangfire.Services.HangfireTaskServer;
@@ -11,8 +11,8 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Hangfire.Services.HangfireTa
 /// This implementation wraps Hangfire's <see cref="IBackgroundJobClient"/>
 /// to provide background job execution for ChainSharp.Effect.Orchestration.Scheduler.
 ///
-/// Jobs are enqueued to Hangfire which resolves <see cref="IManifestExecutorWorkflow"/> from the DI container
-/// and calls <see cref="IManifestExecutorWorkflow.Run"/> with the metadata ID.
+/// Jobs are enqueued to Hangfire which resolves <see cref="ITaskServerExecutorWorkflow"/> from the DI container
+/// and calls <see cref="ITaskServerExecutorWorkflow.Run"/> with the metadata ID.
 ///
 /// Example usage:
 /// ```csharp
@@ -29,8 +29,18 @@ public class HangfireTaskServer(IBackgroundJobClient backgroundJobClient) : IBac
     public Task<string> EnqueueAsync(int metadataId)
     {
         // Use the async overload explicitly via Expression<Func<T, Task>>
-        var jobId = backgroundJobClient.Enqueue<IManifestExecutorWorkflow>(
+        var jobId = backgroundJobClient.Enqueue<ITaskServerExecutorWorkflow>(
             workflow => workflow.Run(new ExecuteManifestRequest(metadataId))
+        );
+
+        return Task.FromResult(jobId);
+    }
+
+    /// <inheritdoc />
+    public Task<string> EnqueueAsync(int metadataId, object input)
+    {
+        var jobId = backgroundJobClient.Enqueue<ITaskServerExecutorWorkflow>(
+            workflow => workflow.Run(new ExecuteManifestRequest(metadataId, input))
         );
 
         return Task.FromResult(jobId);
@@ -40,7 +50,7 @@ public class HangfireTaskServer(IBackgroundJobClient backgroundJobClient) : IBac
     public Task<string> ScheduleAsync(int metadataId, DateTimeOffset scheduledTime)
     {
         // Use the async overload explicitly via Expression<Func<T, Task>>
-        var jobId = backgroundJobClient.Schedule<IManifestExecutorWorkflow>(
+        var jobId = backgroundJobClient.Schedule<ITaskServerExecutorWorkflow>(
             workflow => workflow.Run(new ExecuteManifestRequest(metadataId)),
             scheduledTime
         );

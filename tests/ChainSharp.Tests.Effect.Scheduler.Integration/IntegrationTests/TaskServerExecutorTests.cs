@@ -3,7 +3,7 @@ using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.Manifest.DTOs;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.Metadata.DTOs;
-using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestExecutor;
+using ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor;
 using ChainSharp.Exceptions;
 using ChainSharp.Tests.Effect.Scheduler.Integration.Examples.Workflows;
 using FluentAssertions;
@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 namespace ChainSharp.Tests.Effect.Scheduler.Integration.IntegrationTests;
 
 [TestFixture]
-public class ManifestExecutorTests : TestSetup
+public class TaskServerExecutorTests : TestSetup
 {
     #region Run - Null Metadata Tests
 
@@ -24,7 +24,7 @@ public class ManifestExecutorTests : TestSetup
 
         // Act
         var act = async () =>
-            await ManifestExecutor.Run(new ExecuteManifestRequest(nonExistentMetadataId));
+            await TaskServerExecutor.Run(new ExecuteManifestRequest(nonExistentMetadataId));
 
         // Assert
         await act.Should().ThrowAsync<WorkflowException>().WithMessage("*not found*");
@@ -42,7 +42,7 @@ public class ManifestExecutorTests : TestSetup
         var metadata = await CreateAndSaveMetadata(manifest, WorkflowState.Completed);
 
         // Act
-        var act = async () => await ManifestExecutor.Run(new ExecuteManifestRequest(metadata.Id));
+        var act = async () => await TaskServerExecutor.Run(new ExecuteManifestRequest(metadata.Id));
 
         // Assert
         await act.Should()
@@ -58,7 +58,7 @@ public class ManifestExecutorTests : TestSetup
         var metadata = await CreateAndSaveMetadata(manifest, WorkflowState.Failed);
 
         // Act
-        var act = async () => await ManifestExecutor.Run(new ExecuteManifestRequest(metadata.Id));
+        var act = async () => await TaskServerExecutor.Run(new ExecuteManifestRequest(metadata.Id));
 
         // Assert
         await act.Should()
@@ -74,7 +74,7 @@ public class ManifestExecutorTests : TestSetup
         var metadata = await CreateAndSaveMetadata(manifest, WorkflowState.InProgress);
 
         // Act
-        var act = async () => await ManifestExecutor.Run(new ExecuteManifestRequest(metadata.Id));
+        var act = async () => await TaskServerExecutor.Run(new ExecuteManifestRequest(metadata.Id));
 
         // Assert
         await act.Should()
@@ -105,7 +105,7 @@ public class ManifestExecutorTests : TestSetup
         DataContext.Reset();
 
         // Act
-        var act = async () => await ManifestExecutor.Run(new ExecuteManifestRequest(metadata.Id));
+        var act = async () => await TaskServerExecutor.Run(new ExecuteManifestRequest(metadata.Id));
 
         // Assert
         await act.Should().ThrowAsync<WorkflowException>().WithMessage("*Manifest not loaded*");
@@ -124,7 +124,7 @@ public class ManifestExecutorTests : TestSetup
         var metadataId = metadata.Id;
 
         // Act
-        await ManifestExecutor.Run(new ExecuteManifestRequest(metadataId));
+        await TaskServerExecutor.Run(new ExecuteManifestRequest(metadataId));
 
         // Assert - Verify execution happened (LastSuccessfulRun updated)
         DataContext.Reset();
@@ -148,7 +148,7 @@ public class ManifestExecutorTests : TestSetup
         var metadata = await CreateAndSaveMetadata(manifest, WorkflowState.Pending);
 
         // Act
-        await ManifestExecutor.Run(new ExecuteManifestRequest(metadata.Id));
+        await TaskServerExecutor.Run(new ExecuteManifestRequest(metadata.Id));
         var afterExecution = DateTime.UtcNow;
 
         // Assert
@@ -172,7 +172,7 @@ public class ManifestExecutorTests : TestSetup
         var metadata = await CreateAndSaveMetadata(manifest, WorkflowState.Pending);
 
         // Act
-        await ManifestExecutor.Run(new ExecuteManifestRequest(metadata.Id));
+        await TaskServerExecutor.Run(new ExecuteManifestRequest(metadata.Id));
 
         // Assert
         DataContext.Reset();

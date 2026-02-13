@@ -16,7 +16,7 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestPollingServ
 /// polling intervals via <see cref="PeriodicTimer"/>. On startup, it seeds any pending
 /// manifests configured via <see cref="SchedulerConfigurationBuilder.Schedule{TWorkflow,TInput}"/>.
 ///
-/// ManifestExecutor jobs are still enqueued to the configured <see cref="BackgroundTaskServer.IBackgroundTaskServer"/>
+/// TaskServerExecutor jobs are still enqueued to the configured <see cref="BackgroundTaskServer.IBackgroundTaskServer"/>
 /// (e.g., Hangfire) for execution — this service only handles the polling trigger.
 /// </remarks>
 internal class ManifestPollingService(

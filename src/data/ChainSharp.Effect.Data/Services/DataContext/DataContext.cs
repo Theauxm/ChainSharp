@@ -214,7 +214,12 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
     /// </remarks>
     public async Task Track(IModel model)
     {
-        Add(model);
+        base.Update(model);
+    }
+
+    public async Task Update(IModel model)
+    {
+        base.Update(model);
     }
 
     /// <summary>

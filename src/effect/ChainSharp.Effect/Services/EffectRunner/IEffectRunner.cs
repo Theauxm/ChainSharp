@@ -44,4 +44,16 @@ public interface IEffectRunner : IDisposable
     /// inputs, outputs, and error information.
     /// </remarks>
     Task Track(IModel model);
+
+    /// <summary>
+    /// Notifies all managed effect providers that a previously tracked model has been mutated.
+    /// </summary>
+    /// <param name="model">The model that was updated</param>
+    /// <returns>A task representing the asynchronous operation</returns>
+    /// <remarks>
+    /// This method distributes the update notification to all registered providers,
+    /// allowing each to react to the model mutation. This is called after the caller
+    /// has directly modified the model's properties.
+    /// </remarks>
+    Task Update(IModel model);
 }

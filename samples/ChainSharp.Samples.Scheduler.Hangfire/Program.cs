@@ -5,7 +5,8 @@ using ChainSharp.Effect.Orchestration.Mediator.Extensions;
 using ChainSharp.Effect.Orchestration.Scheduler.Extensions;
 using ChainSharp.Effect.Orchestration.Scheduler.Hangfire.Extensions;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling;
-using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestExecutor;
+using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager;
+using ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor;
 using ChainSharp.Effect.Provider.Json.Extensions;
 using ChainSharp.Effect.Provider.Parameter.Extensions;
 using ChainSharp.Samples.Scheduler.Hangfire.Workflows.ExtractImport;
@@ -37,7 +38,7 @@ builder.Services.AddChainSharpEffects(
                 assemblies:
                 [
                     typeof(Program).Assembly, // Sample workflows
-                    typeof(ManifestExecutorWorkflow).Assembly, // Scheduler workflows
+                    typeof(ManifestManagerWorkflow).Assembly, // Scheduler workflows
                 ]
             )
             // Add Postgres for workflow metadata persistence

@@ -5,7 +5,7 @@ using Radzen;
 
 namespace ChainSharp.Effect.Dashboard.Components.Pages.Settings;
 
-public partial class DashboardSettingsPage
+public partial class UserSettingsPage
 {
     [Inject]
     private IDashboardSettingsService DashboardSettings { get; set; } = default!;
@@ -71,13 +71,34 @@ public partial class DashboardSettingsPage
         await DashboardSettings.SetPollingIntervalAsync(_pollingIntervalSeconds);
         await DashboardSettings.SetHideAdminWorkflowsAsync(_hideAdminWorkflows);
 
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowSummaryCards, _showSummaryCards);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowExecutionsChart, _showExecutionsChart);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowStatusBreakdown, _showStatusBreakdown);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowTopFailures, _showTopFailures);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowAvgDuration, _showAvgDuration);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowRecentFailures, _showRecentFailures);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowActiveManifests, _showActiveManifests);
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowSummaryCards,
+            _showSummaryCards
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowExecutionsChart,
+            _showExecutionsChart
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowStatusBreakdown,
+            _showStatusBreakdown
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowTopFailures,
+            _showTopFailures
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowAvgDuration,
+            _showAvgDuration
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowRecentFailures,
+            _showRecentFailures
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowActiveManifests,
+            _showActiveManifests
+        );
 
         SnapshotSavedState();
 
@@ -86,7 +107,7 @@ public partial class DashboardSettingsPage
             {
                 Severity = NotificationSeverity.Success,
                 Summary = "Settings Saved",
-                Detail = "Dashboard settings updated. Changes take effect on the next polling cycle.",
+                Detail = "User settings updated. Changes take effect on the next polling cycle.",
                 Duration = 4000,
             }
         );
@@ -107,13 +128,34 @@ public partial class DashboardSettingsPage
         _showRecentFailures = DashboardSettingsService.DefaultComponentVisibility;
         _showActiveManifests = DashboardSettingsService.DefaultComponentVisibility;
 
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowSummaryCards, _showSummaryCards);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowExecutionsChart, _showExecutionsChart);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowStatusBreakdown, _showStatusBreakdown);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowTopFailures, _showTopFailures);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowAvgDuration, _showAvgDuration);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowRecentFailures, _showRecentFailures);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowActiveManifests, _showActiveManifests);
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowSummaryCards,
+            _showSummaryCards
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowExecutionsChart,
+            _showExecutionsChart
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowStatusBreakdown,
+            _showStatusBreakdown
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowTopFailures,
+            _showTopFailures
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowAvgDuration,
+            _showAvgDuration
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowRecentFailures,
+            _showRecentFailures
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowActiveManifests,
+            _showActiveManifests
+        );
 
         SnapshotSavedState();
 
@@ -122,7 +164,7 @@ public partial class DashboardSettingsPage
             {
                 Severity = NotificationSeverity.Info,
                 Summary = "Default Restored",
-                Detail = "All dashboard settings have been reset to their default values.",
+                Detail = "All user settings have been reset to their default values.",
                 Duration = 4000,
             }
         );

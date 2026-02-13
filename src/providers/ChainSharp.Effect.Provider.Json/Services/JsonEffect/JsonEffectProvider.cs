@@ -128,4 +128,7 @@ public class JsonEffectProvider(
             }
         }
     }
+
+    /// <inheritdoc />
+    public Task Update(IModel model) => Task.CompletedTask;
 }

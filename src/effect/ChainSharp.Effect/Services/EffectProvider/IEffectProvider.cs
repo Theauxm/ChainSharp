@@ -35,7 +35,7 @@ public interface IEffectProvider : IDisposable
     Task SaveChanges(CancellationToken cancellationToken);
 
     /// <summary>
-    /// Registers a model to be tracked by this provider.
+    /// Registers a NEW model to be tracked by this provider.
     /// </summary>
     /// <param name="model">The model to track</param>
     /// <returns>A task representing the asynchronous operation</returns>
@@ -48,4 +48,20 @@ public interface IEffectProvider : IDisposable
     /// inputs, outputs, and error information.
     /// </remarks>
     Task Track(IModel model);
+
+    /// <summary>
+    /// Notifies this provider that a previously tracked model has been mutated.
+    /// </summary>
+    /// <param name="model">The model that was updated</param>
+    /// <returns>A task representing the asynchronous operation</returns>
+    /// <remarks>
+    /// This method is called after a tracked model's properties have been changed.
+    /// Providers can use this notification to react to changes, such as re-serializing
+    /// parameters or snapshotting state. The model passed here should have been
+    /// previously registered via the Track method.
+    ///
+    /// The typical pattern is mutate-then-notify: the caller modifies the model's
+    /// properties directly, then calls Update to notify all providers of the change.
+    /// </remarks>
+    Task Update(IModel model);
 }

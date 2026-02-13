@@ -1,7 +1,7 @@
 using ChainSharp.Effect.Dashboard.Services.DashboardSettings;
 using Microsoft.AspNetCore.Components;
 
-namespace ChainSharp.Effect.Dashboard.Components;
+namespace ChainSharp.Effect.Dashboard.Components.Shared;
 
 /// <summary>
 /// Base component that polls for data on a configurable interval.
@@ -13,11 +13,11 @@ namespace ChainSharp.Effect.Dashboard.Components;
 public abstract class PollingComponentBase : ComponentBase, IAsyncDisposable
 {
     [Inject]
-    private IDashboardSettingsService DashboardSettings { get; set; } = default!;
+    protected IDashboardSettingsService DashboardSettings { get; set; } = default!;
 
     private CancellationTokenSource? _cts;
 
-    protected bool IsLoading { get; private set; } = true;
+    protected bool IsLoading { get; set; } = true;
 
     protected abstract Task LoadDataAsync(CancellationToken cancellationToken);
 

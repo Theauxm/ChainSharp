@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using ChainSharp.Effect.Attributes;
 using ChainSharp.Effect.Enums;
+using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.Metadata.DTOs;
 using ChainSharp.Effect.Models.StepMetadata;
@@ -38,7 +39,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// throughout the workflow lifecycle to record execution details.
     /// </remarks>
     [JsonIgnore]
-    public Metadata? Metadata { get; private set; }
+    public Metadata? Metadata { get; internal set; }
 
     /// <summary>
     /// ParentId for the workflow, used to establish parent-child relationships between workflows.
@@ -63,7 +64,9 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     [JsonIgnore]
     public IEffectRunner? EffectRunner { get; set; }
 
-    [Inject] [JsonIgnore] public IStepEffectRunner? StepEffectRunner { get; set; }
+    [Inject]
+    [JsonIgnore]
+    public IStepEffectRunner? StepEffectRunner { get; set; }
 
     /// <summary>
     /// Logger specific to this workflow type, used for recording diagnostic information
@@ -74,7 +77,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// </remarks>
     [Inject]
     [JsonIgnore]
-    public ILogger<EffectWorkflow<TIn, TOut>>? EffectLogger { get; set; }
+    public ILogger<EffectWorkflow<TIn, TOut>>? Logger { get; set; }
 
     /// <summary>
     /// The service provider used to resolve dependencies within the workflow.
@@ -93,8 +96,9 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// <remarks>
     /// This is used for logging and metadata purposes to identify the specific workflow type.
     /// </remarks>
-    private string WorkflowName => GetType().FullName ??
-                                   throw new WorkflowException($"Could not find FullName for ({GetType().Name})");
+    internal string WorkflowName =>
+        GetType().FullName
+        ?? throw new WorkflowException($"Could not find FullName for ({GetType().Name})");
 
     /// <summary>
     /// Overrides the base Workflow Run method to add database tracking and logging capabilities.
@@ -117,64 +121,40 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// </remarks>
     public new virtual async Task<TOut> Run(TIn input)
     {
-        if (EffectRunner == null)
-        {
-            EffectLogger?.LogCritical(
-                "EffectRunner for {WorkflowName} is null. Ensure services.AddChainSharpEffects() is being added to your Dependency Injection Container.",
-                WorkflowName
-            );
-            throw new WorkflowException(
-                "EffectRunner is null. Ensure services.AddChainSharpEffects() is being added to your Dependency Injection Container."
-            );
-        }
+        EffectRunner.AssertLoaded();
+        StepEffectRunner.AssertLoaded();
+        ServiceProvider.AssertLoaded();
 
-        if (StepEffectRunner == null)
-        {
-            EffectLogger?.LogCritical(
-                "StepEffectRunner for {WorkflowName} is null. Ensure services.AddChainSharpEffects() is being added to your Dependency Injection Container.",
-                WorkflowName
-            );
-            throw new WorkflowException(
-                "StepEffectRunner is null. Ensure services.AddChainSharpEffects() is being added to your Dependency Injection Container."
-            );
-        }
+        if (Metadata == null)
+            await this.InitializeWorkflow();
 
-        if (ServiceProvider == null)
-        {
-            EffectLogger?.LogCritical(
-                "Could not find injected IServiceProvider on {WorkflowName}. Is it being injected into the ServiceCollection?",
-                WorkflowName
-            );
-            throw new WorkflowException(
-                "Could not find injected IServiceProvider. Is it being injected into the ServiceCollection?"
-            );
-        }
-
-        EffectLogger?.LogTrace("Running Workflow: ({WorkflowName})", WorkflowName);
-
-        Metadata ??= await InitializeWorkflow(input);
+        Metadata.AssertLoaded();
         await EffectRunner.SaveChanges(CancellationToken.None);
 
         try
         {
+            Logger?.LogTrace("Running Workflow: ({WorkflowName})", WorkflowName);
+            Metadata.SetInputObject(input);
             var result = await base.Run(input, ServiceProvider);
-            EffectLogger?.LogTrace("({WorkflowName}) completed successfully.", WorkflowName);
+            Logger?.LogTrace("({WorkflowName}) completed successfully.", WorkflowName);
             Metadata.SetOutputObject(result);
 
-            await FinishWorkflow(result);
+            await EffectRunner.Update(Metadata);
+
+            await this.FinishWorkflow(result);
             await EffectRunner.SaveChanges(CancellationToken.None);
 
             return result;
         }
         catch (Exception e)
         {
-            EffectLogger?.LogError(
+            Logger?.LogError(
                 "Caught Exception ({Type}) with Message ({Message}).",
                 e.GetType(),
                 e.Message
             );
 
-            await FinishWorkflow(e);
+            await this.FinishWorkflow(e);
             await EffectRunner.SaveChanges(CancellationToken.None);
 
             throw;
@@ -183,93 +163,8 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
 
     public virtual async Task<TOut> Run(TIn input, Metadata metadata)
     {
-        if (metadata.WorkflowState != WorkflowState.Pending)
-            throw new WorkflowException(
-                $"Cannot start a workflow with state ({metadata.WorkflowState}), must be Pending."
-            );
-
-        Metadata = metadata;
+        await this.InitializeWorkflow(metadata);
         return await Run(input);
-    }
-
-    /// <summary>
-    /// Initializes the workflow metadata in the database and sets the initial state.
-    /// </summary>
-    /// <param name="input">The input data for the workflow</param>
-    /// <returns>The created metadata object that will track this workflow execution</returns>
-    /// <exception cref="WorkflowException">Thrown if the EffectRunner is not available</exception>
-    /// <remarks>
-    /// This method:
-    /// 1. Creates a new metadata record with the workflow name, input data, and parent ID (if any)
-    /// 2. Tracks the metadata using the EffectRunner
-    /// 3. Sets the workflow state to InProgress
-    ///
-    /// The metadata record serves as the primary tracking mechanism for the workflow execution.
-    /// </remarks>
-    private async Task<Metadata> InitializeWorkflow(TIn input)
-    {
-        if (EffectRunner == null)
-            throw new WorkflowException(
-                "EffectLogger is null. Something has gone horribly wrong. Ensure services.AddChainSharpEffects() is being added to your Dependency Injection Container."
-            );
-
-        EffectLogger?.LogTrace("Initializing ({WorkflowName})", WorkflowName);
-
-        var metadata = Metadata.Create(
-            new CreateMetadata
-            {
-                Name = WorkflowName,
-                ExternalId = ExternalId,
-                Input = input,
-                ParentId = ParentId
-            }
-        );
-        await EffectRunner.Track(metadata);
-
-        EffectLogger?.LogTrace("Setting ({WorkflowName}) to In Progress.", WorkflowName);
-        metadata.WorkflowState = WorkflowState.InProgress;
-
-        return metadata;
-    }
-
-    /// <summary>
-    /// Updates the workflow metadata to reflect the final state of the workflow execution.
-    /// </summary>
-    /// <param name="result">The Either containing either an Exception (Left) or the workflow result (Right)</param>
-    /// <returns>A Unit value (similar to void, but functional)</returns>
-    /// <exception cref="WorkflowException">Thrown if the Metadata object is not available</exception>
-    /// <remarks>
-    /// This method:
-    /// 1. Determines if the workflow completed successfully or failed based on the Either result
-    /// 2. Updates the workflow state accordingly (Completed or Failed)
-    /// 3. Records the end time of the workflow
-    /// 4. If the workflow failed, adds the exception details to the metadata
-    ///
-    /// The Railway-oriented programming pattern is used here, where the Either type
-    /// represents either success (Right) or failure (Left).
-    /// </remarks>
-    private async Task<Unit> FinishWorkflow(Either<Exception, TOut> result)
-    {
-        if (Metadata == null)
-            throw new WorkflowException(
-                "Metadata object has not been set. Was Run() called initially? If so, please submit a ticket on the ChainSharp GitHub repository. Something has gone horribly wrong."
-            );
-
-        var failureReason = result.IsRight ? null : result.Swap().ValueUnsafe();
-
-        var resultState = result.IsRight ? WorkflowState.Completed : WorkflowState.Failed;
-        EffectLogger?.LogTrace(
-            "Setting ({WorkflowName}) to ({ResultState}).",
-            WorkflowName,
-            resultState.ToString()
-        );
-        Metadata.WorkflowState = resultState;
-        Metadata.EndTime = DateTime.UtcNow;
-
-        if (failureReason != null)
-            Metadata.AddException(failureReason);
-
-        return Unit.Default;
     }
 
     /// <summary>
@@ -306,7 +201,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
         StepEffectRunner?.Dispose();
         Metadata?.Dispose();
 
-        EffectLogger = null;
+        Logger = null;
         ServiceProvider = null;
     }
 }

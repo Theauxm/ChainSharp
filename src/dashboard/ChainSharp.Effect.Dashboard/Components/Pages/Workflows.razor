@@ -1,19 +1,12 @@
 @page "/chainsharp/workflows"
 @inject IWorkflowDiscoveryService WorkflowDiscovery
+@inject IDashboardSettingsService DashboardSettings
 @inject DialogService DialogService
 
 <RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Registered Workflows</RadzenText>
 
-<RadzenDataGrid Data="@_workflows"
-                TItem="WorkflowRegistration"
-                AllowFiltering="true"
-                AllowSorting="true"
-                AllowPaging="true"
-                PageSize="20"
-                PagerHorizontalAlign="HorizontalAlign.Center"
-                AllowColumnResize="true"
-                FilterMode="FilterMode.CheckBoxList"
-                class="rz-datatable-striped">
+<ChainSharpDataGrid Data="@_workflows"
+                    TItem="WorkflowRegistration">
     <Columns>
         <RadzenDataGridColumn TItem="WorkflowRegistration"
                               Property="ServiceTypeName"
@@ -49,14 +42,26 @@
             </Template>
         </RadzenDataGridColumn>
     </Columns>
-</RadzenDataGrid>
+</ChainSharpDataGrid>
 
 @code {
     private IReadOnlyList<WorkflowRegistration> _workflows = [];
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        _workflows = WorkflowDiscovery.DiscoverWorkflows();
+        await DashboardSettings.InitializeAsync();
+
+        var all = WorkflowDiscovery.DiscoverWorkflows();
+
+        if (DashboardSettings.HideAdminWorkflows)
+        {
+            var adminNames = DashboardSettings.AdminWorkflowNames;
+            _workflows = all.Where(w => !adminNames.Contains(w.ImplementationTypeName)).ToList();
+        }
+        else
+        {
+            _workflows = all;
+        }
     }
 
     private async Task OpenRunDialog(WorkflowRegistration registration)

@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Reflection;
+using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Orchestration.Mediator.Services.WorkflowRegistry;
@@ -81,7 +82,7 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
         return RunMethodCache.Count + RunWithMetadataMethodCache.Count;
     }
 
-    public object InitializeWorkflow(object workflowInput, Metadata? metadata = null)
+    public object InitializeWorkflow(object workflowInput)
     {
         if (workflowInput == null)
             throw new WorkflowException(
@@ -103,20 +104,6 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
 
         var workflowService = serviceProvider.GetRequiredService(correctWorkflow);
         serviceProvider.InjectProperties(workflowService);
-
-        // When metadata is provided WITHOUT a ManifestId, it's from a parent workflow
-        // calling a child workflow. Set ParentId to establish the parent-child relationship.
-        // When metadata HAS a ManifestId, it's from the scheduler and should be passed
-        // directly to the Run(input, metadata) overload instead.
-        if (metadata != null && metadata.ManifestId == null)
-        {
-            var parentIdProperty = workflowService
-                .GetType()
-                .GetProperties(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
-                .First(x => x.Name == "ParentId");
-
-            parentIdProperty.SetValue(workflowService, metadata.Id);
-        }
 
         return workflowService;
     }
@@ -155,14 +142,19 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
     /// </remarks>
     public Task<TOut> RunAsync<TOut>(object workflowInput, Metadata? metadata = null)
     {
-        var workflowService = InitializeWorkflow(workflowInput, metadata);
+        var workflowService = InitializeWorkflow(workflowInput);
         var workflowType = workflowService.GetType();
 
-        // When metadata has a ManifestId, it's scheduler-created metadata.
-        // Use the 2-param Run(input, metadata) method so the workflow uses this
+        // When metadata is pre-created and Pending (from the scheduler or ad-hoc dashboard execution),
+        // use the 2-param Run(input, metadata) method so the workflow uses this
         // pre-created metadata instead of creating a new one.
-        if (metadata?.ManifestId != null)
+        if (metadata != null)
         {
+            if (metadata.WorkflowState != WorkflowState.Pending)
+                throw new WorkflowException(
+                    $"WorkflowBus will not run a passed Metadata with state ({metadata.WorkflowState}), Must be Pending"
+                );
+
             var runWithMetadataMethod = RunWithMetadataMethodCache.GetOrAdd(
                 workflowType,
                 type =>

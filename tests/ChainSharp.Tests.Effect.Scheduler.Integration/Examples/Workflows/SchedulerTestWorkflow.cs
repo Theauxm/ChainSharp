@@ -6,7 +6,7 @@ namespace ChainSharp.Tests.Effect.Scheduler.Integration.Examples.Workflows;
 
 /// <summary>
 /// A simple test workflow for scheduler integration tests.
-/// Returns Unit since ManifestExecutor uses the non-generic RunAsync which expects Unit output.
+/// Returns Unit since TaskServerExecutor uses the non-generic RunAsync which expects Unit output.
 /// </summary>
 public class SchedulerTestWorkflow
     : EffectWorkflow<SchedulerTestInput, Unit>,

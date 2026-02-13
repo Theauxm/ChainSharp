@@ -1,25 +1,21 @@
 @page "/chainsharp/data/metadata"
 @inherits PollingComponentBase
 @inject IDataContextProviderFactory DataContextFactory
+@inject NavigationManager Navigation
 
 <RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Metadata</RadzenText>
 
-<RadzenDataGrid Data="@_items"
-                TItem="Metadata"
-                IsLoading="@IsLoading"
-                AllowFiltering="true"
-                AllowSorting="true"
-                AllowPaging="true"
-                PageSize="20"
-                PagerHorizontalAlign="HorizontalAlign.Center"
-                AllowColumnResize="true"
-                FilterMode="FilterMode.CheckBoxList"
-                class="rz-datatable-striped">
+<ChainSharpDataGrid Data="@_items"
+                    TItem="Metadata"
+                    IsLoading="@IsLoading"
+                    RowClick="@OnRowClick"
+                    Style="cursor: pointer;">
     <Columns>
         <RadzenDataGridColumn TItem="Metadata"
                               Property="Id"
                               Title="Id"
-                              Width="80px" />
+                              Width="80px"
+                              SortOrder="SortOrder.Descending" />
         <RadzenDataGridColumn TItem="Metadata"
                               Property="Name"
                               Title="Name"
@@ -61,7 +57,7 @@
                               Title="Manifest Id"
                               Width="110px" />
     </Columns>
-</RadzenDataGrid>
+</ChainSharpDataGrid>
 
 @code {
     private List<Metadata> _items = [];
@@ -69,12 +65,16 @@
     protected override async Task LoadDataAsync(CancellationToken cancellationToken)
     {
         using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
-        _items = await context.Metadatas.AsNoTracking().ToListAsync(cancellationToken);
+        IQueryable<Metadata> query = context.Metadatas.AsNoTracking();
+
+        if (DashboardSettings.HideAdminWorkflows)
+            query = query.ExcludeAdmin(DashboardSettings.AdminWorkflowNames);
+
+        _items = await query.ToListAsync(cancellationToken);
     }
 
-    private static string ShortName(string fullName)
+    private void OnRowClick(DataGridRowMouseEventArgs<Metadata> args)
     {
-        var lastDot = fullName.LastIndexOf('.');
-        return lastDot >= 0 ? fullName[(lastDot + 1)..] : fullName;
+        Navigation.NavigateTo($"chainsharp/data/metadata/{args.Data.Id}");
     }
 }

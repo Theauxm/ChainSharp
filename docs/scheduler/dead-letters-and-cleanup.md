@@ -30,7 +30,7 @@ await context.SaveChanges(ct);
 
 ## Monitoring
 
-The Hangfire Dashboard at `/hangfire` shows enqueued ManifestExecutor jobs, failures, and worker health. The ManifestManager polling itself runs as a .NET `BackgroundService` outside of Hangfire, so it won't appear in the dashboard. Configure authorization for production.
+The Hangfire Dashboard at `/hangfire` shows enqueued TaskServerExecutor jobs, failures, and worker health. The ManifestManager polling itself runs as a .NET `BackgroundService` outside of Hangfire, so it won't appear in the dashboard. Configure authorization for production.
 
 For workflow-level details, query the `Metadata` table:
 

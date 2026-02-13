@@ -28,7 +28,7 @@ public class JsonEffectProviderTests : TestSetup
         await workflowTwo.Run(Unit.Default);
 
         // Assert
-        workflow.Metadata.Name.Should().Be("TestWorkflow");
+        workflow.Metadata.Name.Should().Be(typeof(TestWorkflow).FullName);
         workflow.Metadata.FailureException.Should().BeNullOrEmpty();
         workflow.Metadata.FailureReason.Should().BeNullOrEmpty();
         workflow.Metadata.FailureStep.Should().BeNullOrEmpty();

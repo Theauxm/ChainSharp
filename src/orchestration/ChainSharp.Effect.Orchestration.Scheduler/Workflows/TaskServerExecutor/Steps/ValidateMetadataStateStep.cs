@@ -5,7 +5,7 @@ using ChainSharp.Exceptions;
 using LanguageExt;
 using Microsoft.Extensions.Logging;
 
-namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestExecutor.Steps;
+namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor.Steps;
 
 /// <summary>
 /// Validates that the Metadata record is in the Pending state before execution.

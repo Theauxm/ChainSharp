@@ -1,14 +1,14 @@
-using ChainSharp.Effect.Dashboard.Services.DashboardSettings;
+using ChainSharp.Effect.Dashboard.Components.Shared;
+using ChainSharp.Effect.Dashboard.Models;
 using ChainSharp.Effect.Dashboard.Services.WorkflowDiscovery;
+using ChainSharp.Effect.Dashboard.Utilities;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Enums;
-using ChainSharp.Effect.Models.DeadLetter;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.Metadata;
-using ChainSharp.Effect.Services.EffectRegistry;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+using static ChainSharp.Effect.Dashboard.Utilities.DashboardFormatters;
 
 namespace ChainSharp.Effect.Dashboard.Components.Pages;
 
@@ -22,9 +22,6 @@ public partial class Index
 
     [Inject]
     private IServiceProvider ServiceProvider { get; set; } = default!;
-
-    [Inject]
-    private IDashboardSettingsService DashboardSettings { get; set; } = default!;
 
     // Summary card values
     private int _executionsToday;
@@ -59,7 +56,7 @@ public partial class Index
         var todayQuery = context.Metadatas.AsNoTracking().Where(m => m.StartTime >= todayStart);
 
         if (hideAdmin)
-            todayQuery = todayQuery.Where(m => !adminNames.Contains(m.Name));
+            todayQuery = todayQuery.ExcludeAdmin(adminNames);
 
         var todayMetadata = await todayQuery.ToListAsync(cancellationToken);
 
@@ -76,7 +73,7 @@ public partial class Index
             .Where(m => m.WorkflowState == WorkflowState.InProgress);
 
         if (hideAdmin)
-            runningQuery = runningQuery.Where(m => !adminNames.Contains(m.Name));
+            runningQuery = runningQuery.ExcludeAdmin(adminNames);
 
         _currentlyRunning = await runningQuery.CountAsync(cancellationToken);
 
@@ -84,18 +81,24 @@ public partial class Index
             .DeadLetters.AsNoTracking()
             .CountAsync(d => d.Status == DeadLetterStatus.AwaitingIntervention, cancellationToken);
 
-        _activeManifests = await context
-            .Manifests.AsNoTracking()
-            .CountAsync(m => m.IsEnabled, cancellationToken);
+        var activeManifestsQuery = context.Manifests.AsNoTracking().Where(m => m.IsEnabled);
 
-        _registeredWorkflows = WorkflowDiscovery.DiscoverWorkflows().Count;
+        if (hideAdmin)
+            activeManifestsQuery = activeManifestsQuery.ExcludeAdmin(adminNames);
+
+        _activeManifests = await activeManifestsQuery.CountAsync(cancellationToken);
+
+        var allWorkflows = WorkflowDiscovery.DiscoverWorkflows();
+        _registeredWorkflows = hideAdmin
+            ? allWorkflows.Count(w => !adminNames.Contains(w.ImplementationTypeName))
+            : allWorkflows.Count;
 
         // Executions over time (last 24h, grouped by hour)
         var last24h = now.AddHours(-24);
         var recentQuery = context.Metadatas.AsNoTracking().Where(m => m.StartTime >= last24h);
 
         if (hideAdmin)
-            recentQuery = recentQuery.Where(m => !adminNames.Contains(m.Name));
+            recentQuery = recentQuery.ExcludeAdmin(adminNames);
 
         var recentMetadata = await recentQuery
             .Select(m => new { m.StartTime, m.WorkflowState })
@@ -151,7 +154,7 @@ public partial class Index
             .Where(m => m.WorkflowState == WorkflowState.Failed && m.StartTime >= last7d);
 
         if (hideAdmin)
-            failuresQuery = failuresQuery.Where(m => !adminNames.Contains(m.Name));
+            failuresQuery = failuresQuery.ExcludeAdmin(adminNames);
 
         _topFailures = (
             await failuresQuery
@@ -176,7 +179,7 @@ public partial class Index
             );
 
         if (hideAdmin)
-            durationsQuery = durationsQuery.Where(m => !adminNames.Contains(m.Name));
+            durationsQuery = durationsQuery.ExcludeAdmin(adminNames);
 
         var completedRecent = await durationsQuery
             .Select(
@@ -213,7 +216,7 @@ public partial class Index
             .Where(m => m.WorkflowState == WorkflowState.Failed);
 
         if (hideAdmin)
-            recentFailuresQuery = recentFailuresQuery.Where(m => !adminNames.Contains(m.Name));
+            recentFailuresQuery = recentFailuresQuery.ExcludeAdmin(adminNames);
 
         _recentFailures = await recentFailuresQuery
             .OrderByDescending(m => m.StartTime)
@@ -221,66 +224,16 @@ public partial class Index
             .ToListAsync(cancellationToken);
 
         // Active scheduled manifests
-        _activeManifestList = await context
+        var activeManifestListQuery = context
             .Manifests.AsNoTracking()
-            .Where(m => m.IsEnabled && m.ScheduleType != ScheduleType.None)
+            .Where(m => m.IsEnabled && m.ScheduleType != ScheduleType.None);
+
+        if (hideAdmin)
+            activeManifestListQuery = activeManifestListQuery.ExcludeAdmin(adminNames);
+
+        _activeManifestList = await activeManifestListQuery
             .OrderBy(m => m.Name)
             .Take(20)
             .ToListAsync(cancellationToken);
-    }
-
-    private static string ShortName(string fullName)
-    {
-        var lastDot = fullName.LastIndexOf('.');
-        return lastDot >= 0 ? fullName[(lastDot + 1)..] : fullName;
-    }
-
-    private static string FormatDuration(double ms)
-    {
-        if (ms < 1000)
-            return $"{ms:F0}ms";
-        if (ms < 60_000)
-            return $"{ms / 1000:F1}s";
-        return $"{ms / 60_000:F1}m";
-    }
-
-    private static string FormatSchedule(Manifest manifest) =>
-        manifest.ScheduleType switch
-        {
-            ScheduleType.Cron => manifest.CronExpression ?? "—",
-            ScheduleType.Interval
-                => manifest.IntervalSeconds switch
-                {
-                    null => "—",
-                    < 60 => $"Every {manifest.IntervalSeconds}s",
-                    < 3600 => $"Every {manifest.IntervalSeconds / 60}m",
-                    _ => $"Every {manifest.IntervalSeconds / 3600}h",
-                },
-            _ => manifest.ScheduleType.ToString(),
-        };
-
-    public class ExecutionTimePoint
-    {
-        public string Hour { get; init; } = "";
-        public int Completed { get; init; }
-        public int Failed { get; init; }
-    }
-
-    public class StateCount
-    {
-        public string State { get; init; } = "";
-        public int Count { get; init; }
-    }
-
-    public class WorkflowFailureCount
-    {
-        public string Name { get; init; } = "";
-        public int Count { get; init; }
-    }
-
-    public class WorkflowDuration
-    {
-        public string Name { get; init; } = "";
-        public double AvgMs { get; init; }
     }
 }

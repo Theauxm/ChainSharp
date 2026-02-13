@@ -4,12 +4,15 @@
 @using Microsoft.EntityFrameworkCore
 @using Radzen
 @using Radzen.Blazor
-@using ChainSharp.Effect.Dashboard.Components
+@using ChainSharp.Effect.Dashboard.Components.Shared
+@using ChainSharp.Effect.Dashboard.Components.Dialogs
 @using ChainSharp.Effect.Dashboard.Configuration
+@using ChainSharp.Effect.Dashboard.Models
 @using ChainSharp.Effect.Dashboard.Services.LocalStorage
 @using ChainSharp.Effect.Dashboard.Services.DashboardSettings
 @using ChainSharp.Effect.Dashboard.Services.ThemeState
 @using ChainSharp.Effect.Dashboard.Services.WorkflowDiscovery
+@using ChainSharp.Effect.Dashboard.Utilities
 @using ChainSharp.Effect.Dashboard.Components.Layout
 @using ChainSharp.Effect.Dashboard.Components.Layout.Header
 @using ChainSharp.Effect.Dashboard.Components.Layout.Sidebar
@@ -25,3 +28,4 @@
 @using Microsoft.Extensions.DependencyInjection
 @using ChainSharp.Effect.Orchestration.Scheduler.Configuration
 @using ChainSharp.Effect.Services.EffectRegistry
+@using static ChainSharp.Effect.Dashboard.Utilities.DashboardFormatters

@@ -1,3 +1,10 @@
+# [5.9.0](https://github.com/Theauxm/ChainSharp/compare/v5.8.0...v5.9.0) (2026-02-13)
+
+
+### Features
+
+* Settings QoL ([11e04f8](https://github.com/Theauxm/ChainSharp/commit/11e04f8516b8534f46c20772e34ee52a5a71b6ac))
+
 # [5.8.0](https://github.com/Theauxm/ChainSharp/compare/v5.7.1...v5.8.0) (2026-02-12)
 
 

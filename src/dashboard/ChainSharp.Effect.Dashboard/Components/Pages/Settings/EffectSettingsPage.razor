@@ -22,51 +22,65 @@
     Changes take effect on the next workflow execution scope. Running workflows are not affected.
 </RadzenAlert>
 
-<RadzenStack Gap="1rem">
+<RadzenStack Gap="1.5rem" class="cs-settings-page">
 
-    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
-        <RadzenButton Text="Enable All"
-                      Icon="toggle_on"
-                      ButtonStyle="ButtonStyle.Success"
-                      Size="ButtonSize.Small"
-                      Click="EnableAll" />
-        <RadzenButton Text="Disable All"
-                      Icon="toggle_off"
-                      ButtonStyle="ButtonStyle.Danger"
-                      Size="ButtonSize.Small"
-                      Click="DisableAll" />
+    <RadzenFieldset Text="Registered Effects" class="@(IsDirty ? "cs-fieldset-dirty" : "")">
+        <RadzenStack Gap="1rem">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
+                <RadzenButton Text="Enable All"
+                              Icon="toggle_on"
+                              ButtonStyle="ButtonStyle.Success"
+                              Size="ButtonSize.Small"
+                              Click="EnableAll" />
+                <RadzenButton Text="Disable All"
+                              Icon="toggle_off"
+                              ButtonStyle="ButtonStyle.Danger"
+                              Size="ButtonSize.Small"
+                              Click="DisableAll" />
+            </RadzenStack>
+
+            <RadzenDataGrid Data="@_effects"
+                            TItem="EffectEntry"
+                            AllowSorting="true"
+                            AllowColumnResize="true"
+                            class="rz-datatable-striped">
+                <Columns>
+                    <RadzenDataGridColumn TItem="EffectEntry"
+                                          Property="Name"
+                                          Title="Effect Factory"
+                                          Width="250px" />
+                    <RadzenDataGridColumn TItem="EffectEntry"
+                                          Property="FullName"
+                                          Title="Full Type Name" />
+                    <RadzenDataGridColumn TItem="EffectEntry"
+                                          Title="Status"
+                                          Width="150px"
+                                          Sortable="false">
+                        <Template Context="entry">
+                            @if (entry.Toggleable)
+                            {
+                                <RadzenSwitch @bind-Value="entry.Enabled" />
+                            }
+                            else
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Always On" />
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenStack>
+    </RadzenFieldset>
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" class="cs-settings-actions">
+        <RadzenButton Text="Reset Default"
+                      Icon="restart_alt"
+                      ButtonStyle="ButtonStyle.Light"
+                      Click="ResetDefaults" />
+        <RadzenButton Text="Save"
+                      Icon="save"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Click="Save" />
     </RadzenStack>
-
-    <RadzenDataGrid Data="@_effects"
-                    TItem="EffectEntry"
-                    AllowSorting="true"
-                    AllowColumnResize="true"
-                    class="rz-datatable-striped">
-        <Columns>
-            <RadzenDataGridColumn TItem="EffectEntry"
-                                  Property="Name"
-                                  Title="Effect Factory"
-                                  Width="250px" />
-            <RadzenDataGridColumn TItem="EffectEntry"
-                                  Property="FullName"
-                                  Title="Full Type Name" />
-            <RadzenDataGridColumn TItem="EffectEntry"
-                                  Title="Status"
-                                  Width="150px"
-                                  Sortable="false">
-                <Template Context="entry">
-                    @if (entry.Toggleable)
-                    {
-                        <RadzenSwitch @bind-Value="entry.Enabled"
-                                      Change="@(() => OnToggle(entry))" />
-                    }
-                    else
-                    {
-                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Always On" />
-                    }
-                </Template>
-            </RadzenDataGridColumn>
-        </Columns>
-    </RadzenDataGrid>
 
 </RadzenStack>

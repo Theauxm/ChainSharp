@@ -63,9 +63,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     [JsonIgnore]
     public IEffectRunner? EffectRunner { get; set; }
 
-    [Inject]
-    [JsonIgnore]
-    public IStepEffectRunner? StepEffectRunner { get; set; }
+    [Inject] [JsonIgnore] public IStepEffectRunner? StepEffectRunner { get; set; }
 
     /// <summary>
     /// Logger specific to this workflow type, used for recording diagnostic information
@@ -95,7 +93,8 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// <remarks>
     /// This is used for logging and metadata purposes to identify the specific workflow type.
     /// </remarks>
-    private string WorkflowName => GetType().Name;
+    private string WorkflowName => GetType().FullName ??
+                                   throw new WorkflowException($"Could not find FullName for ({GetType().Name})");
 
     /// <summary>
     /// Overrides the base Workflow Run method to add database tracking and logging capabilities.

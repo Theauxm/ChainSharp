@@ -6,6 +6,7 @@ public class DashboardSettingsService(ILocalStorageService localStorage) : IDash
 {
     public const int DefaultPollingIntervalSeconds = 15;
     public const bool DefaultHideAdminWorkflows = false;
+    public const bool DefaultComponentVisibility = true;
 
     public static readonly IReadOnlyList<string> DefaultAdminWorkflowNames =
     [
@@ -25,6 +26,15 @@ public class DashboardSettingsService(ILocalStorageService localStorage) : IDash
 
     public IReadOnlyList<string> AdminWorkflowNames => DefaultAdminWorkflowNames;
 
+    // Dashboard component visibility (all default to true)
+    public bool ShowSummaryCards { get; private set; } = DefaultComponentVisibility;
+    public bool ShowExecutionsChart { get; private set; } = DefaultComponentVisibility;
+    public bool ShowStatusBreakdown { get; private set; } = DefaultComponentVisibility;
+    public bool ShowTopFailures { get; private set; } = DefaultComponentVisibility;
+    public bool ShowAvgDuration { get; private set; } = DefaultComponentVisibility;
+    public bool ShowRecentFailures { get; private set; } = DefaultComponentVisibility;
+    public bool ShowActiveManifests { get; private set; } = DefaultComponentVisibility;
+
     public async Task InitializeAsync()
     {
         if (_isInitialized)
@@ -37,6 +47,15 @@ public class DashboardSettingsService(ILocalStorageService localStorage) : IDash
         var hideAdmin = await localStorage.GetAsync<bool?>(StorageKeys.HideAdminWorkflows);
         if (hideAdmin.HasValue)
             HideAdminWorkflows = hideAdmin.Value;
+
+        // Component visibility
+        ShowSummaryCards = await LoadVisibilityAsync(StorageKeys.ShowSummaryCards);
+        ShowExecutionsChart = await LoadVisibilityAsync(StorageKeys.ShowExecutionsChart);
+        ShowStatusBreakdown = await LoadVisibilityAsync(StorageKeys.ShowStatusBreakdown);
+        ShowTopFailures = await LoadVisibilityAsync(StorageKeys.ShowTopFailures);
+        ShowAvgDuration = await LoadVisibilityAsync(StorageKeys.ShowAvgDuration);
+        ShowRecentFailures = await LoadVisibilityAsync(StorageKeys.ShowRecentFailures);
+        ShowActiveManifests = await LoadVisibilityAsync(StorageKeys.ShowActiveManifests);
 
         _isInitialized = true;
     }
@@ -54,8 +73,30 @@ public class DashboardSettingsService(ILocalStorageService localStorage) : IDash
         await localStorage.SetAsync(StorageKeys.HideAdminWorkflows, hide);
     }
 
+    public async Task SetComponentVisibilityAsync(string key, bool visible)
+    {
+        switch (key)
+        {
+            case StorageKeys.ShowSummaryCards: ShowSummaryCards = visible; break;
+            case StorageKeys.ShowExecutionsChart: ShowExecutionsChart = visible; break;
+            case StorageKeys.ShowStatusBreakdown: ShowStatusBreakdown = visible; break;
+            case StorageKeys.ShowTopFailures: ShowTopFailures = visible; break;
+            case StorageKeys.ShowAvgDuration: ShowAvgDuration = visible; break;
+            case StorageKeys.ShowRecentFailures: ShowRecentFailures = visible; break;
+            case StorageKeys.ShowActiveManifests: ShowActiveManifests = visible; break;
+        }
+
+        await localStorage.SetAsync(key, visible);
+    }
+
     public void NotifyPolled()
     {
         LastPollTime = DateTime.UtcNow;
+    }
+
+    private async Task<bool> LoadVisibilityAsync(string key)
+    {
+        var stored = await localStorage.GetAsync<bool?>(key);
+        return stored ?? DefaultComponentVisibility;
     }
 }

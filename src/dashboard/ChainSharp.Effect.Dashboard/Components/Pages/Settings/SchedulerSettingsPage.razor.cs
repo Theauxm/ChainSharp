@@ -27,13 +27,53 @@ public partial class SchedulerSettingsPage
 
     private static readonly List<string> TimeUnits = ["seconds", "minutes", "hours", "days"];
 
+    // Saved-state snapshots for dirty tracking
+    private TimeSpan _savedPollingInterval;
+    private int _savedMaxJobsPerCycle;
+    private int _savedDefaultMaxRetries;
+    private TimeSpan _savedDefaultRetryDelay;
+    private double _savedRetryBackoffMultiplier;
+    private TimeSpan _savedMaxRetryDelay;
+    private TimeSpan _savedDefaultJobTimeout;
+    private bool _savedRecoverStuckJobsOnStartup;
+    private TimeSpan _savedDeadLetterRetentionPeriod;
+    private bool _savedAutoPurgeDeadLetters;
+    private TimeSpan _savedCleanupInterval;
+    private TimeSpan _savedCleanupRetentionPeriod;
+
+    private bool IsPollingQueueDirty =>
+        _pollingInterval.ToTimeSpan() != _savedPollingInterval
+        || _config!.MaxJobsPerCycle != _savedMaxJobsPerCycle;
+
+    private bool IsRetryDirty =>
+        _config!.DefaultMaxRetries != _savedDefaultMaxRetries
+        || _defaultRetryDelay.ToTimeSpan() != _savedDefaultRetryDelay
+        || _config.RetryBackoffMultiplier != _savedRetryBackoffMultiplier
+        || _maxRetryDelay.ToTimeSpan() != _savedMaxRetryDelay;
+
+    private bool IsJobSettingsDirty =>
+        _defaultJobTimeout.ToTimeSpan() != _savedDefaultJobTimeout
+        || _config!.RecoverStuckJobsOnStartup != _savedRecoverStuckJobsOnStartup;
+
+    private bool IsDeadLetterDirty =>
+        _deadLetterRetentionPeriod.ToTimeSpan() != _savedDeadLetterRetentionPeriod
+        || _config!.AutoPurgeDeadLetters != _savedAutoPurgeDeadLetters;
+
+    private bool IsMetadataCleanupDirty =>
+        _config?.MetadataCleanup is not null
+        && (_cleanupInterval.ToTimeSpan() != _savedCleanupInterval
+            || _cleanupRetentionPeriod.ToTimeSpan() != _savedCleanupRetentionPeriod);
+
     protected override void OnInitialized()
     {
         _config = ServiceProvider.GetService<SchedulerConfiguration>();
         _available = _config is not null;
 
         if (_available)
+        {
             LoadFromConfig();
+            SnapshotSavedState();
+        }
     }
 
     private void LoadFromConfig()
@@ -73,6 +113,8 @@ public partial class SchedulerSettingsPage
             _config.MetadataCleanup.RetentionPeriod = _cleanupRetentionPeriod.ToTimeSpan();
         }
 
+        SnapshotSavedState();
+
         NotificationService.Notify(
             new NotificationMessage
             {
@@ -108,6 +150,7 @@ public partial class SchedulerSettingsPage
         }
 
         LoadFromConfig();
+        SnapshotSavedState();
 
         NotificationService.Notify(
             new NotificationMessage
@@ -118,6 +161,26 @@ public partial class SchedulerSettingsPage
                 Duration = 4000,
             }
         );
+    }
+
+    private void SnapshotSavedState()
+    {
+        _savedPollingInterval = _config!.PollingInterval;
+        _savedMaxJobsPerCycle = _config.MaxJobsPerCycle;
+        _savedDefaultMaxRetries = _config.DefaultMaxRetries;
+        _savedDefaultRetryDelay = _config.DefaultRetryDelay;
+        _savedRetryBackoffMultiplier = _config.RetryBackoffMultiplier;
+        _savedMaxRetryDelay = _config.MaxRetryDelay;
+        _savedDefaultJobTimeout = _config.DefaultJobTimeout;
+        _savedRecoverStuckJobsOnStartup = _config.RecoverStuckJobsOnStartup;
+        _savedDeadLetterRetentionPeriod = _config.DeadLetterRetentionPeriod;
+        _savedAutoPurgeDeadLetters = _config.AutoPurgeDeadLetters;
+
+        if (_config.MetadataCleanup is not null)
+        {
+            _savedCleanupInterval = _config.MetadataCleanup.CleanupInterval;
+            _savedCleanupRetentionPeriod = _config.MetadataCleanup.RetentionPeriod;
+        }
     }
 
     private class TimeSpanField

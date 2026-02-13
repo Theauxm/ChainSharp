@@ -23,7 +23,9 @@
         <RadzenDataGridColumn TItem="Manifest"
                               Property="Name"
                               Title="Name"
-                              Width="250px" />
+                              Width="250px">
+            <Template Context="m">@ShortName(m.Name)</Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Manifest"
                               Property="ExternalId"
                               Title="External Id"
@@ -67,5 +69,11 @@
     {
         using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
         _items = await context.Manifests.AsNoTracking().ToListAsync(cancellationToken);
+    }
+
+    private static string ShortName(string fullName)
+    {
+        var lastDot = fullName.LastIndexOf('.');
+        return lastDot >= 0 ? fullName[(lastDot + 1)..] : fullName;
     }
 }

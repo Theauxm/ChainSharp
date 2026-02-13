@@ -10,4 +10,14 @@ public interface IDashboardSettingsService
     Task SetPollingIntervalAsync(int seconds);
     Task SetHideAdminWorkflowsAsync(bool hide);
     void NotifyPolled();
+
+    // Dashboard component visibility
+    bool ShowSummaryCards { get; }
+    bool ShowExecutionsChart { get; }
+    bool ShowStatusBreakdown { get; }
+    bool ShowTopFailures { get; }
+    bool ShowAvgDuration { get; }
+    bool ShowRecentFailures { get; }
+    bool ShowActiveManifests { get; }
+    Task SetComponentVisibilityAsync(string key, bool visible);
 }

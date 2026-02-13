@@ -23,7 +23,9 @@
         <RadzenDataGridColumn TItem="Metadata"
                               Property="Name"
                               Title="Name"
-                              Width="200px" />
+                              Width="200px">
+            <Template Context="m">@ShortName(m.Name)</Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Metadata"
                               Property="WorkflowState"
                               Title="State"
@@ -68,5 +70,11 @@
     {
         using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
         _items = await context.Metadatas.AsNoTracking().ToListAsync(cancellationToken);
+    }
+
+    private static string ShortName(string fullName)
+    {
+        var lastDot = fullName.LastIndexOf('.');
+        return lastDot >= 0 ? fullName[(lastDot + 1)..] : fullName;
     }
 }

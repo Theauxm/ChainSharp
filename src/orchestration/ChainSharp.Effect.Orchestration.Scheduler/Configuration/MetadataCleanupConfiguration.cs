@@ -34,7 +34,7 @@ public class MetadataCleanupConfiguration
     /// </summary>
     /// <remarks>
     /// Names are matched against the <c>name</c> column in the metadata table,
-    /// which stores <c>GetType().Name</c> of the workflow class.
+    /// which stores <c>GetType().FullName</c> of the workflow class.
     /// </remarks>
     internal List<string> WorkflowTypeWhitelist { get; } = [];
 
@@ -45,7 +45,7 @@ public class MetadataCleanupConfiguration
     public void AddWorkflowType<TWorkflow>()
         where TWorkflow : class
     {
-        WorkflowTypeWhitelist.Add(typeof(TWorkflow).Name);
+        WorkflowTypeWhitelist.Add(typeof(TWorkflow).FullName!);
     }
 
     /// <summary>

@@ -9,7 +9,11 @@
         <RadzenStack Orientation="Orientation.Horizontal"
                      AlignItems="AlignItems.Center" Gap="0.75rem">
             <RadzenSidebarToggle Click="@OnToggleSidebar" />
-            <RadzenText Text="@Title" Style="font-weight: 600;" />
+            <RadzenText Text="@Title" Style="font-weight: 600; font-size: 1.15rem; margin: 0;" />
+            @if (!string.IsNullOrEmpty(EnvironmentName))
+            {
+                <span class="cs-env-badge" style="background-color: @EnvironmentBadgeColor;">Environment: @EnvironmentName</span>
+            }
         </RadzenStack>
         <RadzenStack Orientation="Orientation.Horizontal"
                      AlignItems="AlignItems.Center" Gap="0.75rem">

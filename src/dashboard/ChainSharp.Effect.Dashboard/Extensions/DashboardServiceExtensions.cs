@@ -52,6 +52,7 @@ public static class DashboardServiceExtensions
 
         var options = app.Services.GetRequiredService<DashboardOptions>();
         options.RoutePrefix = routePrefix;
+        options.EnvironmentName = app.Environment.EnvironmentName;
 
         app.UseStaticFiles();
         app.UseAntiforgery();

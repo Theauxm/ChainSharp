@@ -20,6 +20,16 @@ public partial class DashboardHeader : IAsyncDisposable
     [Parameter]
     public string Title { get; set; } = "ChainSharp Dashboard";
 
+    [Parameter]
+    public string EnvironmentName { get; set; } = "";
+
+    private string EnvironmentBadgeColor =>
+        EnvironmentName.Equals("Development", StringComparison.OrdinalIgnoreCase)
+            ? "#1976D2"
+            : EnvironmentName.Equals("Production", StringComparison.OrdinalIgnoreCase)
+                ? "#D32F2F"
+                : "#757575";
+
     private PeriodicTimer? _uiTimer;
     private CancellationTokenSource? _cts;
     private int _secondsRemaining;

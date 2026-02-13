@@ -20,25 +20,35 @@
     <RadzenFieldset Text="Polling & Queue">
         <RadzenStack Gap="1rem">
             <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="3">
                     <RadzenLabel Text="Polling Interval" Component="PollingInterval" />
                 </RadzenColumn>
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="3">
                     <RadzenNumeric @bind-Value="_pollingInterval.Value" TValue="double" Min="1" Style="width: 100%" Name="PollingInterval" />
                 </RadzenColumn>
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="2">
                     <RadzenDropDown @bind-Value="_pollingInterval.Unit" Data="TimeUnits" Style="width: 100%" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                        How often the ManifestManager polls for pending jobs. Requires an application restart to take effect.
+                    </RadzenText>
                 </RadzenColumn>
             </RadzenRow>
 
             <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="3">
                     <RadzenLabel Text="Max Jobs Per Cycle" Component="MaxJobsPerCycle" />
                 </RadzenColumn>
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="3">
                     <RadzenNumeric @bind-Value="_config!.MaxJobsPerCycle" TValue="int" Min="1" Style="width: 100%" Name="MaxJobsPerCycle" />
                 </RadzenColumn>
-                <RadzenColumn Size="4" />
+                <RadzenColumn Size="2" />
+                <RadzenColumn Size="4">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                        Maximum number of jobs enqueued per polling cycle. Excess jobs are picked up in the next cycle.
+                    </RadzenText>
+                </RadzenColumn>
             </RadzenRow>
         </RadzenStack>
     </RadzenFieldset>
@@ -47,46 +57,66 @@
     <RadzenFieldset Text="Retry Settings">
         <RadzenStack Gap="1rem">
             <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="3">
                     <RadzenLabel Text="Default Max Retries" Component="DefaultMaxRetries" />
                 </RadzenColumn>
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="3">
                     <RadzenNumeric @bind-Value="_config!.DefaultMaxRetries" TValue="int" Min="0" Style="width: 100%" Name="DefaultMaxRetries" />
                 </RadzenColumn>
-                <RadzenColumn Size="4" />
+                <RadzenColumn Size="2" />
+                <RadzenColumn Size="4">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                        Number of retry attempts before a job is dead-lettered. Can be overridden per-manifest.
+                    </RadzenText>
+                </RadzenColumn>
             </RadzenRow>
 
             <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="3">
                     <RadzenLabel Text="Default Retry Delay" Component="DefaultRetryDelay" />
                 </RadzenColumn>
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="3">
                     <RadzenNumeric @bind-Value="_defaultRetryDelay.Value" TValue="double" Min="0" Style="width: 100%" Name="DefaultRetryDelay" />
                 </RadzenColumn>
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="2">
                     <RadzenDropDown @bind-Value="_defaultRetryDelay.Unit" Data="TimeUnits" Style="width: 100%" />
                 </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                        Base delay between retry attempts. Combined with the backoff multiplier for exponential backoff.
+                    </RadzenText>
+                </RadzenColumn>
             </RadzenRow>
 
             <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="3">
                     <RadzenLabel Text="Backoff Multiplier" Component="RetryBackoffMultiplier" />
                 </RadzenColumn>
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="3">
                     <RadzenNumeric @bind-Value="_config!.RetryBackoffMultiplier" TValue="double" Min="1" Step="0.1" Format="0.0" Style="width: 100%" Name="RetryBackoffMultiplier" />
                 </RadzenColumn>
-                <RadzenColumn Size="4" />
+                <RadzenColumn Size="2" />
+                <RadzenColumn Size="4">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                        Multiplier applied to retry delay on each subsequent attempt. Set to 1.0 for constant delay.
+                    </RadzenText>
+                </RadzenColumn>
             </RadzenRow>
 
             <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="3">
                     <RadzenLabel Text="Max Retry Delay" Component="MaxRetryDelay" />
                 </RadzenColumn>
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="3">
                     <RadzenNumeric @bind-Value="_maxRetryDelay.Value" TValue="double" Min="0" Style="width: 100%" Name="MaxRetryDelay" />
                 </RadzenColumn>
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="2">
                     <RadzenDropDown @bind-Value="_maxRetryDelay.Unit" Data="TimeUnits" Style="width: 100%" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                        Upper bound on retry delay to prevent unbounded backoff growth.
+                    </RadzenText>
                 </RadzenColumn>
             </RadzenRow>
         </RadzenStack>
@@ -96,25 +126,35 @@
     <RadzenFieldset Text="Job Settings">
         <RadzenStack Gap="1rem">
             <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="3">
                     <RadzenLabel Text="Default Job Timeout" Component="DefaultJobTimeout" />
                 </RadzenColumn>
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="3">
                     <RadzenNumeric @bind-Value="_defaultJobTimeout.Value" TValue="double" Min="1" Style="width: 100%" Name="DefaultJobTimeout" />
                 </RadzenColumn>
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="2">
                     <RadzenDropDown @bind-Value="_defaultJobTimeout.Unit" Data="TimeUnits" Style="width: 100%" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                        Duration after which a running job is considered stuck and may be failed or retried.
+                    </RadzenText>
                 </RadzenColumn>
             </RadzenRow>
 
             <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="3">
                     <RadzenLabel Text="Recover Stuck Jobs on Startup" />
                 </RadzenColumn>
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="3">
                     <RadzenSwitch @bind-Value="_config!.RecoverStuckJobsOnStartup" />
                 </RadzenColumn>
-                <RadzenColumn Size="4" />
+                <RadzenColumn Size="2" />
+                <RadzenColumn Size="4">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                        Re-evaluate and requeue jobs that were still in-progress when the application last shut down.
+                    </RadzenText>
+                </RadzenColumn>
             </RadzenRow>
         </RadzenStack>
     </RadzenFieldset>
@@ -123,25 +163,35 @@
     <RadzenFieldset Text="Dead Letter Settings">
         <RadzenStack Gap="1rem">
             <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="3">
                     <RadzenLabel Text="Retention Period" Component="DeadLetterRetention" />
                 </RadzenColumn>
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="3">
                     <RadzenNumeric @bind-Value="_deadLetterRetentionPeriod.Value" TValue="double" Min="0" Style="width: 100%" Name="DeadLetterRetention" />
                 </RadzenColumn>
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="2">
                     <RadzenDropDown @bind-Value="_deadLetterRetentionPeriod.Unit" Data="TimeUnits" Style="width: 100%" />
+                </RadzenColumn>
+                <RadzenColumn Size="4">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                        How long resolved dead letter records are kept before being eligible for purge.
+                    </RadzenText>
                 </RadzenColumn>
             </RadzenRow>
 
             <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="3">
                     <RadzenLabel Text="Auto Purge Dead Letters" />
                 </RadzenColumn>
-                <RadzenColumn Size="4">
+                <RadzenColumn Size="3">
                     <RadzenSwitch @bind-Value="_config!.AutoPurgeDeadLetters" />
                 </RadzenColumn>
-                <RadzenColumn Size="4" />
+                <RadzenColumn Size="2" />
+                <RadzenColumn Size="4">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                        Automatically delete dead letter records that exceed the retention period.
+                    </RadzenText>
+                </RadzenColumn>
             </RadzenRow>
         </RadzenStack>
     </RadzenFieldset>
@@ -152,26 +202,36 @@
         <RadzenFieldset Text="Metadata Cleanup">
             <RadzenStack Gap="1rem">
                 <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenColumn Size="4">
+                    <RadzenColumn Size="3">
                         <RadzenLabel Text="Cleanup Interval" Component="CleanupInterval" />
                     </RadzenColumn>
-                    <RadzenColumn Size="4">
+                    <RadzenColumn Size="3">
                         <RadzenNumeric @bind-Value="_cleanupInterval.Value" TValue="double" Min="1" Style="width: 100%" Name="CleanupInterval" />
                     </RadzenColumn>
-                    <RadzenColumn Size="4">
+                    <RadzenColumn Size="2">
                         <RadzenDropDown @bind-Value="_cleanupInterval.Unit" Data="TimeUnits" Style="width: 100%" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="4">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                            How often the background service runs to delete old metadata entries.
+                        </RadzenText>
                     </RadzenColumn>
                 </RadzenRow>
 
                 <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenColumn Size="4">
+                    <RadzenColumn Size="3">
                         <RadzenLabel Text="Retention Period" Component="CleanupRetention" />
                     </RadzenColumn>
-                    <RadzenColumn Size="4">
+                    <RadzenColumn Size="3">
                         <RadzenNumeric @bind-Value="_cleanupRetentionPeriod.Value" TValue="double" Min="1" Style="width: 100%" Name="CleanupRetention" />
                     </RadzenColumn>
-                    <RadzenColumn Size="4">
+                    <RadzenColumn Size="2">
                         <RadzenDropDown @bind-Value="_cleanupRetentionPeriod.Unit" Data="TimeUnits" Style="width: 100%" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="4">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                            Only terminal metadata (Completed/Failed) older than this is deleted. Pending or InProgress metadata is never cleaned up.
+                        </RadzenText>
                     </RadzenColumn>
                 </RadzenRow>
             </RadzenStack>

@@ -217,7 +217,7 @@ public partial class Index
 
         _recentFailures = await recentFailuresQuery
             .OrderByDescending(m => m.StartTime)
-            .Take(10)
+            .Take(20)
             .ToListAsync(cancellationToken);
 
         // Active scheduled manifests
@@ -225,6 +225,7 @@ public partial class Index
             .Manifests.AsNoTracking()
             .Where(m => m.IsEnabled && m.ScheduleType != ScheduleType.None)
             .OrderBy(m => m.Name)
+            .Take(20)
             .ToListAsync(cancellationToken);
     }
 

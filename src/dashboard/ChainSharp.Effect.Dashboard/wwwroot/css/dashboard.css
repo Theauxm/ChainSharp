@@ -41,6 +41,19 @@
     color: var(--cs-header-text);
 }
 
+/* Environment badge in header */
+.cs-dashboard .cs-env-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    color: #ffffff;
+    line-height: 1;
+    white-space: nowrap;
+}
+
 /* Ensure nested panel menu items are not greyed out */
 .cs-dashboard .rz-panel-menu .rz-navigation-item .rz-navigation-item .rz-navigation-item-link {
     opacity: 1;

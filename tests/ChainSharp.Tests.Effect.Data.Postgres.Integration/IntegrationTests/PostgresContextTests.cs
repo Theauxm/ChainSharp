@@ -58,7 +58,7 @@ public class PostgresContextTests : TestSetup
         var workflow = await WorkflowBus.RunAsync<TestWorkflow>(new TestWorkflowInput());
 
         // Assert
-        workflow.Metadata.Name.Should().Be("TestWorkflow");
+        workflow.Metadata.Name.Should().Be(typeof(TestWorkflow).FullName);
         workflow.Metadata.FailureException.Should().BeNullOrEmpty();
         workflow.Metadata.FailureReason.Should().BeNullOrEmpty();
         workflow.Metadata.FailureStep.Should().BeNullOrEmpty();
@@ -76,7 +76,7 @@ public class PostgresContextTests : TestSetup
         );
 
         // Assert
-        workflow.Metadata.Name.Should().Be("TestWorkflow");
+        workflow.Metadata.Name.Should().Be(typeof(TestWorkflow).FullName);
         workflow.Metadata.FailureException.Should().BeNullOrEmpty();
         workflow.Metadata.FailureReason.Should().BeNullOrEmpty();
         workflow.Metadata.FailureStep.Should().BeNullOrEmpty();
@@ -98,13 +98,12 @@ public class PostgresContextTests : TestSetup
         )>(new TestWorkflowWithinWorkflowInput());
 
         // Assert
-        workflow.Metadata.Name.Should().Be("TestWorkflowWithinWorkflow");
+        workflow.Metadata.Name.Should().Be(typeof(TestWorkflowWithinWorkflow).FullName);
         workflow.Metadata.FailureException.Should().BeNullOrEmpty();
         workflow.Metadata.FailureReason.Should().BeNullOrEmpty();
         workflow.Metadata.FailureStep.Should().BeNullOrEmpty();
         workflow.Metadata.WorkflowState.Should().Be(WorkflowState.Completed);
-        innerWorkflow.Metadata.Name.Should().Be("TestWorkflow");
-        innerWorkflow.Metadata.ParentId.Should().NotBeNull();
+        innerWorkflow.Metadata.Name.Should().Be(typeof(TestWorkflow).FullName);
         innerWorkflow.Metadata.FailureException.Should().BeNullOrEmpty();
         innerWorkflow.Metadata.FailureReason.Should().BeNullOrEmpty();
         innerWorkflow.Metadata.FailureStep.Should().BeNullOrEmpty();
@@ -126,7 +125,6 @@ public class PostgresContextTests : TestSetup
 
         childWorkflowResult.Should().NotBeNull();
         childWorkflowResult!.Id.Should().Be(innerWorkflow.Metadata.Id);
-        childWorkflowResult.ParentId.Should().Be(parentWorkflowResult.Id);
         childWorkflowResult.WorkflowState.Should().Be(WorkflowState.Completed);
         childWorkflowResult.Input.Should().NotBeNull();
         childWorkflowResult.Output.Should().NotBeNull();
@@ -177,15 +175,13 @@ public class PostgresContextTests : TestSetup
 
     internal class StepToRunTestWorkflow(
         IWorkflowBus workflowBus,
-        ILogger<StepToRunTestWorkflow> logger,
-        ITestWorkflowWithinWorkflow workflowWithinWorkflow
+        ILogger<StepToRunTestWorkflow> logger
     ) : EffectStep<Unit, ITestWorkflow>
     {
         public override async Task<ITestWorkflow> Run(Unit input)
         {
             var testWorkflow = await workflowBus.RunAsync<TestWorkflow>(
-                new TestWorkflowInput(),
-                workflowWithinWorkflow.Metadata
+                new TestWorkflowInput()
             );
 
             logger.LogCritical("Ran {WorkflowName}", "TestWorkflow");

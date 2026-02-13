@@ -1,3 +1,10 @@
+# [5.10.0](https://github.com/Theauxm/ChainSharp/compare/v5.9.0...v5.10.0) (2026-02-13)
+
+
+### Features
+
+* Dashboard Updates ([#147](https://github.com/Theauxm/ChainSharp/issues/147)) ([fa04965](https://github.com/Theauxm/ChainSharp/commit/fa04965d37fdab9212fa8db1185bfdab49068998))
+
 # [5.9.0](https://github.com/Theauxm/ChainSharp/compare/v5.8.0...v5.9.0) (2026-02-13)
 
 

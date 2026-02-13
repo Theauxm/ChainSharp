@@ -162,6 +162,6 @@ public class UsersController(IWorkflowBus workflowBus) : ControllerBase
 
 - [Core Concepts](concepts.md) - Understand the ideas behind ChainSharp
 - [Usage Guide](usage-guide.md) - Patterns and examples for building workflows
-- [Mediator](mediator.md) - Dispatch workflows with the WorkflowBus
+- [Mediator](usage-guide/mediator.md) - Dispatch workflows with the WorkflowBus
 - [Architecture](architecture.md) - How the system is built internally
 - [Dashboard](dashboard.md) - Add a web UI for inspecting workflows (optional)

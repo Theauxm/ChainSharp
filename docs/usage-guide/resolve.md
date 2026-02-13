@@ -1,0 +1,59 @@
+---
+layout: default
+title: Resolve
+parent: Usage Guide
+nav_order: 4
+---
+
+# Resolve
+
+`.Resolve()` terminates the chain and returns `Either<Exception, TReturn>`. Every workflow's `RunInternal` ends with a call to `Resolve`.
+
+```csharp
+protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
+    => Activate(input)
+        .Chain<ValidateEmailStep>()
+        .Chain<CreateUserStep>()
+        .Chain<SendEmailStep>()
+        .Resolve();
+```
+
+## How It Works
+
+`Resolve` checks three things in order:
+
+1. **Exception** — If any step in the chain threw, the exception was captured. `Resolve` returns `Left(exception)` and skips everything else.
+2. **Short-circuit** — If a [ShortCircuit](short-circuit.md) step returned a value, that becomes the result. `Resolve` returns `Right(shortCircuitValue)`.
+3. **Memory** — If neither of the above, `Resolve` looks up `TReturn` in [Memory](../concepts/memory.md). If found, it returns `Right(value)`.
+
+If `TReturn` isn't in Memory and there's no exception or short-circuit value, `Resolve` returns a `WorkflowException`:
+
+```
+WorkflowException: Could not find type: (User).
+```
+
+The [Analyzer](../analyzer.md) catches this at compile time with **CHAIN002** before you ever run the code.
+
+## The Parameterized Overload
+
+There's a second overload that takes an `Either<Exception, TReturn>` directly:
+
+```csharp
+protected override async Task<Either<Exception, ParentResult>> RunInternal(ParentRequest input)
+{
+    var childResult = await WorkflowBus.RunAsync<ChildResult>(
+        new ChildRequest { Data = input.ChildData },
+        Metadata
+    );
+
+    return Activate(input)
+        .Chain<ValidateStep>()
+        .Resolve(new ParentResult
+        {
+            ParentData = input.ParentData,
+            ChildResult = childResult
+        });
+}
+```
+
+This skips the Memory lookup—you're providing the result directly. If an exception exists from the chain, it still takes precedence and the provided value is ignored. This is useful when you need to construct the return value manually, like combining results from nested workflows with the chain's output.

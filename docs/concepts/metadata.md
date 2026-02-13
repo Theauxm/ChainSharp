@@ -36,44 +36,8 @@ The `WorkflowState` tracks progress: `Pending` → `InProgress` → `Completed` 
 
 Workflows can run other workflows by injecting `IWorkflowBus`. Pass the current `Metadata` to the child workflow to establish a parent-child relationship—this creates a tree of metadata records you can query to trace execution across workflows.
 
-See [Nested Workflows](../mediator.md#nested-workflows) for implementation details.
+See [Nested Workflows](../usage-guide/mediator.md#nested-workflows) for implementation details.
 
-## Execution Flow (EffectWorkflow)
+## Execution Flow
 
-```
-[Client Request]
-       │
-       ▼
-[WorkflowBus.RunAsync]
-       │
-       ▼
-[Find Workflow by Input Type]
-       │
-       ▼
-[Create Workflow Instance]
-       │
-       ▼
-[Inject Dependencies]
-       │
-       ▼
-[Initialize Metadata]
-       │
-       ▼
-[Execute Workflow Chain]
-       │
-       ▼
-   Success? ──No──► [Update Metadata: Failed]
-       │                      │
-      Yes                     │
-       │                      │
-       ▼                      ▼
-[Update Metadata: Completed]  │
-       │                      │
-       └──────────┬───────────┘
-                  │
-                  ▼
-       [SaveChanges - Execute Effects]
-                  │
-                  ▼
-           [Return Result]
-```
+For a diagram of the full EffectWorkflow lifecycle—from client request through metadata initialization to SaveChanges—see [Core & Effects: Execution Flow](../architecture/core-and-effects.md#execution-flow).

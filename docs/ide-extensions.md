@@ -1,7 +1,7 @@
 ---
 layout: default
 title: IDE Extensions
-nav_order: 8
+nav_order: 9
 ---
 
 # IDE Extensions

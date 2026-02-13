@@ -140,3 +140,47 @@ public interface IEffectProvider : IDisposable
 | **JsonEffect** | ChainSharp.Effect.Provider.Json | Debug logging | Low - JSON serialization |
 | **ParameterEffect** | ChainSharp.Effect.Provider.Parameter | Parameter serialization | Medium - JSON + Storage |
 | **Custom Providers** | User-defined | Application-specific | Varies |
+
+## Execution Flow
+
+The full lifecycle of an `EffectWorkflow` execution, corresponding to the `Run` method shown above:
+
+```
+[Client Request]
+       │
+       ▼
+[WorkflowBus.RunAsync]
+       │
+       ▼
+[Find Workflow by Input Type]
+       │
+       ▼
+[Create Workflow Instance]
+       │
+       ▼
+[Inject Dependencies]
+       │
+       ▼
+[Initialize Metadata]
+       │
+       ▼
+[Execute Workflow Chain]
+       │
+       ▼
+   Success? ──No──► [Update Metadata: Failed]
+       │                      │
+      Yes                     │
+       │                      │
+       ▼                      ▼
+[Update Metadata: Completed]  │
+       │                      │
+       └──────────┬───────────┘
+                  │
+                  ▼
+       [SaveChanges - Execute Effects]
+                  │
+                  ▼
+           [Return Result]
+```
+
+Steps execute inside the "Execute Workflow Chain" box. The `SaveChanges` call at the end triggers all registered effect providers—database persistence, JSON logging, parameter serialization—to execute their accumulated side effects. Both success and failure paths call `SaveChanges`, so metadata is always persisted regardless of outcome.

@@ -7,6 +7,8 @@ nav_order: 3
 
 # Workflow Discovery & Routing
 
+This page covers the internal implementation of workflow discovery and routing. For the user-facing explanation of how to use the `WorkflowBus`, see [Mediator](../usage-guide/mediator.md).
+
 ## WorkflowRegistry
 
 ```csharp
@@ -58,19 +60,9 @@ public class WorkflowBus : IWorkflowBus
 
 ## Key Constraints and Design Decisions
 
-### Input Type Uniqueness Constraint
+### Input Type Uniqueness
 
-**Critical:** Each input type can only map to ONE workflow.
-
-```csharp
-// ❌ This will cause conflicts
-public class CreateUserWorkflow : EffectWorkflow<UserRequest, User> { }
-public class UpdateUserWorkflow : EffectWorkflow<UserRequest, User> { }
-
-// ✅ This works correctly
-public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User> { }
-public class UpdateUserWorkflow : EffectWorkflow<UpdateUserRequest, User> { }
-```
+Each input type maps to exactly one workflow. This is enforced at startup by the `WorkflowRegistry`'s `ToDictionary` call—duplicate input types cause an exception. See [Mediator: Input Type Uniqueness](../usage-guide/mediator.md#input-type-uniqueness) for examples and the user-facing explanation.
 
 ### Workflow Discovery Rules
 

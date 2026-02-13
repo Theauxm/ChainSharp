@@ -1,7 +1,8 @@
 ---
 layout: default
 title: Mediator
-nav_order: 5
+parent: Usage Guide
+nav_order: 8
 ---
 
 # Mediator & WorkflowBus

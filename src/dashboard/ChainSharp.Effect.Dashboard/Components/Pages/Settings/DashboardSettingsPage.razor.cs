@@ -71,13 +71,34 @@ public partial class DashboardSettingsPage
         await DashboardSettings.SetPollingIntervalAsync(_pollingIntervalSeconds);
         await DashboardSettings.SetHideAdminWorkflowsAsync(_hideAdminWorkflows);
 
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowSummaryCards, _showSummaryCards);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowExecutionsChart, _showExecutionsChart);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowStatusBreakdown, _showStatusBreakdown);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowTopFailures, _showTopFailures);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowAvgDuration, _showAvgDuration);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowRecentFailures, _showRecentFailures);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowActiveManifests, _showActiveManifests);
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowSummaryCards,
+            _showSummaryCards
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowExecutionsChart,
+            _showExecutionsChart
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowStatusBreakdown,
+            _showStatusBreakdown
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowTopFailures,
+            _showTopFailures
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowAvgDuration,
+            _showAvgDuration
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowRecentFailures,
+            _showRecentFailures
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowActiveManifests,
+            _showActiveManifests
+        );
 
         SnapshotSavedState();
 
@@ -86,7 +107,8 @@ public partial class DashboardSettingsPage
             {
                 Severity = NotificationSeverity.Success,
                 Summary = "Settings Saved",
-                Detail = "Dashboard settings updated. Changes take effect on the next polling cycle.",
+                Detail =
+                    "Dashboard settings updated. Changes take effect on the next polling cycle.",
                 Duration = 4000,
             }
         );
@@ -107,13 +129,34 @@ public partial class DashboardSettingsPage
         _showRecentFailures = DashboardSettingsService.DefaultComponentVisibility;
         _showActiveManifests = DashboardSettingsService.DefaultComponentVisibility;
 
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowSummaryCards, _showSummaryCards);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowExecutionsChart, _showExecutionsChart);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowStatusBreakdown, _showStatusBreakdown);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowTopFailures, _showTopFailures);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowAvgDuration, _showAvgDuration);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowRecentFailures, _showRecentFailures);
-        await DashboardSettings.SetComponentVisibilityAsync(StorageKeys.ShowActiveManifests, _showActiveManifests);
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowSummaryCards,
+            _showSummaryCards
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowExecutionsChart,
+            _showExecutionsChart
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowStatusBreakdown,
+            _showStatusBreakdown
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowTopFailures,
+            _showTopFailures
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowAvgDuration,
+            _showAvgDuration
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowRecentFailures,
+            _showRecentFailures
+        );
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowActiveManifests,
+            _showActiveManifests
+        );
 
         SnapshotSavedState();
 

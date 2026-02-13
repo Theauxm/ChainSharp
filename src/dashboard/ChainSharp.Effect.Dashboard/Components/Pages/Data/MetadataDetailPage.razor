@@ -1,0 +1,243 @@
+@page "/chainsharp/data/metadata/{MetadataId:int}"
+@inherits PollingComponentBase
+@inject IDataContextProviderFactory DataContextFactory
+@inject NavigationManager Navigation
+@using Microsoft.Extensions.Logging
+
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" class="rz-mb-4">
+    <RadzenButton Icon="arrow_back"
+                  Variant="Variant.Text"
+                  Click="@(() => Navigation.NavigateTo("chainsharp/data/metadata"))" />
+    <RadzenText TextStyle="TextStyle.H4" Style="margin: 0;">
+        @if (_metadata is not null)
+        {
+            @ShortName(_metadata.Name)
+        }
+        else if (!IsLoading)
+        {
+            <text>Metadata Not Found</text>
+        }
+    </RadzenText>
+</RadzenStack>
+
+@if (IsLoading)
+{
+    <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+    return;
+}
+
+@if (_metadata is null)
+{
+    <RadzenText TextStyle="TextStyle.Body1">No metadata found with ID @MetadataId.</RadzenText>
+    return;
+}
+
+@* ── Metadata Details ── *@
+<RadzenCard class="rz-mb-4">
+    <RadzenText TextStyle="TextStyle.H6" class="rz-mb-2">Details</RadzenText>
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+            <RadzenStack Gap="0.75rem">
+                @Field("ID", _metadata.Id.ToString())
+                @Field("Name", ShortName(_metadata.Name))
+                @Field("External ID", _metadata.ExternalId)
+                @Field("State", _metadata.WorkflowState.ToString())
+            </RadzenStack>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+            <RadzenStack Gap="0.75rem">
+                @Field("Start Time", _metadata.StartTime.ToString("yyyy-MM-dd HH:mm:ss"))
+                @Field("End Time", _metadata.EndTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "—")
+                @Field("Duration", FormatDuration(_metadata))
+                @Field("Scheduled Time", _metadata.ScheduledTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "—")
+            </RadzenStack>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+            <RadzenStack Gap="0.75rem">
+                @Field("Manifest ID", _metadata.ManifestId?.ToString() ?? "—")
+                @Field("Parent ID", _metadata.ParentId?.ToString() ?? "—")
+                @Field("Executor", _metadata.Executor ?? "—")
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenCard>
+
+@* ── Failure Details (only if failed) ── *@
+@if (_metadata.WorkflowState == WorkflowState.Failed)
+{
+    <RadzenCard class="rz-mb-4" Style="border-left: 4px solid var(--rz-danger);">
+        <RadzenText TextStyle="TextStyle.H6" class="rz-mb-2" Style="color: var(--rz-danger);">Failure Details</RadzenText>
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenStack Gap="0.75rem">
+                    @Field("Failure Step", _metadata.FailureStep ?? "—")
+                    @Field("Exception", _metadata.FailureException ?? "—")
+                    @Field("Reason", _metadata.FailureReason ?? "—")
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                @if (!string.IsNullOrWhiteSpace(_metadata.StackTrace))
+                {
+                    <RadzenStack Gap="0">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color); margin: 0;">Stack Trace</RadzenText>
+                        <pre style="font-size: 0.75rem; max-height: 200px; overflow: auto; margin: 0; white-space: pre-wrap; word-break: break-all;">@_metadata.StackTrace</pre>
+                    </RadzenStack>
+                }
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+}
+
+@* ── Input / Output ── *@
+@if (!string.IsNullOrWhiteSpace(_metadata.Input) || !string.IsNullOrWhiteSpace(_metadata.Output))
+{
+    <RadzenRow Gap="1rem" class="rz-mb-4">
+        @if (!string.IsNullOrWhiteSpace(_metadata.Input))
+        {
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenCard>
+                    <RadzenText TextStyle="TextStyle.H6" class="rz-mb-2">Input</RadzenText>
+                    <pre style="font-size: 0.75rem; max-height: 300px; overflow: auto; margin: 0; white-space: pre-wrap; word-break: break-all;">@FormatJson(_metadata.Input)</pre>
+                </RadzenCard>
+            </RadzenColumn>
+        }
+        @if (!string.IsNullOrWhiteSpace(_metadata.Output))
+        {
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenCard>
+                    <RadzenText TextStyle="TextStyle.H6" class="rz-mb-2">Output</RadzenText>
+                    <pre style="font-size: 0.75rem; max-height: 300px; overflow: auto; margin: 0; white-space: pre-wrap; word-break: break-all;">@FormatJson(_metadata.Output)</pre>
+                </RadzenCard>
+            </RadzenColumn>
+        }
+    </RadzenRow>
+}
+
+@* ── Logs ── *@
+<RadzenCard>
+    <RadzenText TextStyle="TextStyle.H6" class="rz-mb-2">Logs</RadzenText>
+    @if (_logs.Count > 0)
+    {
+        <RadzenDataGrid Data="@_logs"
+                        TItem="Log"
+                        AllowFiltering="true"
+                        AllowSorting="true"
+                        AllowPaging="true"
+                        PageSize="20"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        AllowColumnResize="true"
+                        FilterMode="FilterMode.CheckBoxList"
+                        class="rz-datatable-striped">
+            <Columns>
+                <RadzenDataGridColumn TItem="Log"
+                                      Property="Id"
+                                      Title="Id"
+                                      Width="80px" />
+                <RadzenDataGridColumn TItem="Log"
+                                      Property="Level"
+                                      Title="Level"
+                                      Width="120px">
+                    <Template Context="l">
+                        <RadzenBadge BadgeStyle="@GetLogLevelBadgeStyle(l.Level)"
+                                     Text="@l.Level.ToString()" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Log"
+                                      Property="Category"
+                                      Title="Category"
+                                      Width="200px">
+                    <Template Context="l">@ShortName(l.Category)</Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Log"
+                                      Property="Message"
+                                      Title="Message" />
+                <RadzenDataGridColumn TItem="Log"
+                                      Property="Exception"
+                                      Title="Exception"
+                                      Width="250px" />
+            </Columns>
+        </RadzenDataGrid>
+    }
+    else
+    {
+        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-disabled-color); text-align: center; padding: 2rem;">
+            No logs found for this execution.
+        </RadzenText>
+    }
+</RadzenCard>
+
+@code {
+    [Parameter]
+    public int MetadataId { get; set; }
+
+    private Metadata? _metadata;
+    private List<Log> _logs = [];
+
+    protected override async Task LoadDataAsync(CancellationToken cancellationToken)
+    {
+        using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
+
+        _metadata = await context.Metadatas
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.Id == MetadataId, cancellationToken);
+
+        if (_metadata is not null)
+        {
+            _logs = await context.Logs
+                .AsNoTracking()
+                .Where(l => l.MetadataId == MetadataId)
+                .ToListAsync(cancellationToken);
+        }
+    }
+
+    private static BadgeStyle GetLogLevelBadgeStyle(LogLevel level) => level switch
+    {
+        LogLevel.Critical => BadgeStyle.Danger,
+        LogLevel.Error => BadgeStyle.Danger,
+        LogLevel.Warning => BadgeStyle.Warning,
+        LogLevel.Information => BadgeStyle.Info,
+        LogLevel.Debug => BadgeStyle.Light,
+        LogLevel.Trace => BadgeStyle.Light,
+        _ => BadgeStyle.Light,
+    };
+
+    private static string FormatDuration(Metadata m)
+    {
+        if (m.EndTime is null)
+            return "—";
+
+        var duration = m.EndTime.Value - m.StartTime;
+        if (duration.TotalMilliseconds < 1000)
+            return $"{duration.TotalMilliseconds:F0}ms";
+        if (duration.TotalSeconds < 60)
+            return $"{duration.TotalSeconds:F1}s";
+        return $"{duration.TotalMinutes:F1}m";
+    }
+
+    private static string FormatJson(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            return JsonSerializer.Serialize(doc, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch
+        {
+            return json;
+        }
+    }
+
+    private static string ShortName(string fullName)
+    {
+        var lastDot = fullName.LastIndexOf('.');
+        return lastDot >= 0 ? fullName[(lastDot + 1)..] : fullName;
+    }
+
+    private RenderFragment Field(string label, string value) => __builder =>
+    {
+        <RadzenStack Gap="0">
+            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color); margin: 0;">@label</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0;">@value</RadzenText>
+        </RadzenStack>
+    };
+}

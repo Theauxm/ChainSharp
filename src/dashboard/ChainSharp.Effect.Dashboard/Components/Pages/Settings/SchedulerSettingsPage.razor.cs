@@ -61,8 +61,10 @@ public partial class SchedulerSettingsPage
 
     private bool IsMetadataCleanupDirty =>
         _config?.MetadataCleanup is not null
-        && (_cleanupInterval.ToTimeSpan() != _savedCleanupInterval
-            || _cleanupRetentionPeriod.ToTimeSpan() != _savedCleanupRetentionPeriod);
+        && (
+            _cleanupInterval.ToTimeSpan() != _savedCleanupInterval
+            || _cleanupRetentionPeriod.ToTimeSpan() != _savedCleanupRetentionPeriod
+        );
 
     protected override void OnInitialized()
     {

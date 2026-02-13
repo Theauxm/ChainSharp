@@ -21,7 +21,9 @@ public partial class EffectSettingsPage
     private Dictionary<Type, bool> _savedStates = new();
 
     private bool IsDirty =>
-        _effects.Any(e => e.Toggleable && e.Enabled != _savedStates.GetValueOrDefault(e.FactoryType));
+        _effects.Any(
+            e => e.Toggleable && e.Enabled != _savedStates.GetValueOrDefault(e.FactoryType)
+        );
 
     protected override void OnInitialized()
     {

@@ -1,6 +1,7 @@
 @page "/chainsharp/data/manifests"
 @inherits PollingComponentBase
 @inject IDataContextProviderFactory DataContextFactory
+@inject NavigationManager Navigation
 
 <RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Manifests</RadzenText>
 
@@ -14,6 +15,9 @@
                 PagerHorizontalAlign="HorizontalAlign.Center"
                 AllowColumnResize="true"
                 FilterMode="FilterMode.CheckBoxList"
+                RowClick="@OnRowClick"
+                @ref="_grid"
+                Style="cursor: pointer;"
                 class="rz-datatable-striped">
     <Columns>
         <RadzenDataGridColumn TItem="Manifest"
@@ -64,11 +68,17 @@
 
 @code {
     private List<Manifest> _items = [];
+    private RadzenDataGrid<Manifest> _grid = default!;
 
     protected override async Task LoadDataAsync(CancellationToken cancellationToken)
     {
         using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
         _items = await context.Manifests.AsNoTracking().ToListAsync(cancellationToken);
+    }
+
+    private void OnRowClick(DataGridRowMouseEventArgs<Manifest> args)
+    {
+        Navigation.NavigateTo($"chainsharp/data/manifests/{args.Data.Id}");
     }
 
     private static string ShortName(string fullName)

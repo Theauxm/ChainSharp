@@ -1,6 +1,7 @@
 @page "/chainsharp/data/metadata"
 @inherits PollingComponentBase
 @inject IDataContextProviderFactory DataContextFactory
+@inject NavigationManager Navigation
 
 <RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Metadata</RadzenText>
 
@@ -14,6 +15,8 @@
                 PagerHorizontalAlign="HorizontalAlign.Center"
                 AllowColumnResize="true"
                 FilterMode="FilterMode.CheckBoxList"
+                RowClick="@OnRowClick"
+                Style="cursor: pointer;"
                 class="rz-datatable-striped">
     <Columns>
         <RadzenDataGridColumn TItem="Metadata"
@@ -70,6 +73,11 @@
     {
         using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
         _items = await context.Metadatas.AsNoTracking().ToListAsync(cancellationToken);
+    }
+
+    private void OnRowClick(DataGridRowMouseEventArgs<Metadata> args)
+    {
+        Navigation.NavigateTo($"chainsharp/data/metadata/{args.Data.Id}");
     }
 
     private static string ShortName(string fullName)

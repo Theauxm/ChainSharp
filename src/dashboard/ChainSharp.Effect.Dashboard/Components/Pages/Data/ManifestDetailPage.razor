@@ -1,0 +1,244 @@
+@page "/chainsharp/data/manifests/{ManifestId:int}"
+@inherits PollingComponentBase
+@inject IDataContextProviderFactory DataContextFactory
+@inject NavigationManager Navigation
+
+<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" class="rz-mb-4">
+    <RadzenButton Icon="arrow_back"
+                  Variant="Variant.Text"
+                  Click="@(() => Navigation.NavigateTo("chainsharp/data/manifests"))" />
+    <RadzenText TextStyle="TextStyle.H4" Style="margin: 0;">
+        @if (_manifest is not null)
+        {
+            @ShortName(_manifest.Name)
+        }
+        else if (!IsLoading)
+        {
+            <text>Manifest Not Found</text>
+        }
+    </RadzenText>
+</RadzenStack>
+
+@if (IsLoading)
+{
+    <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+    return;
+}
+
+@if (_manifest is null)
+{
+    <RadzenText TextStyle="TextStyle.Body1">No manifest found with ID @ManifestId.</RadzenText>
+    return;
+}
+
+@* ── Manifest Details ── *@
+<RadzenCard class="rz-mb-4">
+    <RadzenText TextStyle="TextStyle.H6" class="rz-mb-2">Details</RadzenText>
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+            <RadzenStack Gap="0.75rem">
+                @Field("ID", _manifest.Id.ToString())
+                @Field("Name", ShortName(_manifest.Name))
+                @Field("External ID", _manifest.ExternalId)
+                @Field("Enabled", _manifest.IsEnabled ? "Yes" : "No")
+            </RadzenStack>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+            <RadzenStack Gap="0.75rem">
+                @Field("Schedule Type", _manifest.ScheduleType.ToString())
+                @Field("Cron Expression", _manifest.CronExpression ?? "—")
+                @Field("Interval (s)", _manifest.IntervalSeconds?.ToString() ?? "—")
+            </RadzenStack>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+            <RadzenStack Gap="0.75rem">
+                @Field("Max Retries", _manifest.MaxRetries.ToString())
+                @Field("Timeout (s)", _manifest.TimeoutSeconds?.ToString() ?? "—")
+                @Field("Last Successful Run", _manifest.LastSuccessfulRun?.ToString("yyyy-MM-dd HH:mm:ss") ?? "Never")
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenCard>
+
+@* ── Summary Cards ── *@
+<RadzenRow Gap="1rem" class="rz-mb-4">
+    <RadzenColumn Size="6" SizeMD="3">
+        <RadzenCard>
+            <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                <RadzenIcon Icon="bar_chart" Style="font-size: 2rem; color: var(--rz-primary);" />
+                <RadzenText TextStyle="TextStyle.H3" Style="margin: 0;">@_metadataItems.Count</RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Style="text-align: center;">Total Runs</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+    <RadzenColumn Size="6" SizeMD="3">
+        <RadzenCard>
+            <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                <RadzenIcon Icon="check_circle" Style="font-size: 2rem; color: var(--rz-success);" />
+                <RadzenText TextStyle="TextStyle.H3" Style="margin: 0;">@_metadataItems.Count(m => m.WorkflowState == WorkflowState.Completed)</RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Style="text-align: center;">Completed</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+    <RadzenColumn Size="6" SizeMD="3">
+        <RadzenCard>
+            <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                <RadzenIcon Icon="error" Style="font-size: 2rem; color: var(--rz-danger);" />
+                <RadzenText TextStyle="TextStyle.H3" Style="margin: 0;">@_metadataItems.Count(m => m.WorkflowState == WorkflowState.Failed)</RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Style="text-align: center;">Failed</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+    <RadzenColumn Size="6" SizeMD="3">
+        <RadzenCard>
+            <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                <RadzenIcon Icon="sync" Style="font-size: 2rem; color: var(--rz-info);" />
+                <RadzenText TextStyle="TextStyle.H3" Style="margin: 0;">@_metadataItems.Count(m => m.WorkflowState == WorkflowState.InProgress)</RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Style="text-align: center;">In Progress</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>
+
+@* ── Metadata Runs ── *@
+<RadzenCard>
+    <RadzenText TextStyle="TextStyle.H6" class="rz-mb-2">Execution History</RadzenText>
+    @if (_metadataItems.Count > 0)
+    {
+        <RadzenDataGrid Data="@_metadataItems"
+                        TItem="Metadata"
+                        AllowFiltering="true"
+                        AllowSorting="true"
+                        AllowPaging="true"
+                        PageSize="20"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        AllowColumnResize="true"
+                        FilterMode="FilterMode.CheckBoxList"
+                        RowClick="@OnMetadataRowClick"
+                        Style="cursor: pointer;"
+                        class="rz-datatable-striped">
+            <Columns>
+                <RadzenDataGridColumn TItem="Metadata"
+                                      Property="Id"
+                                      Title="Id"
+                                      Width="80px" />
+                <RadzenDataGridColumn TItem="Metadata"
+                                      Property="WorkflowState"
+                                      Title="State"
+                                      Width="120px">
+                    <Template Context="m">
+                        <RadzenBadge BadgeStyle="@GetStateBadgeStyle(m.WorkflowState)"
+                                     Text="@m.WorkflowState.ToString()" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Metadata"
+                                      Property="ExternalId"
+                                      Title="External Id"
+                                      Width="200px" />
+                <RadzenDataGridColumn TItem="Metadata"
+                                      Property="StartTime"
+                                      Title="Start Time"
+                                      Width="180px"
+                                      FormatString="{0:yyyy-MM-dd HH:mm:ss}"
+                                      SortOrder="SortOrder.Descending" />
+                <RadzenDataGridColumn TItem="Metadata"
+                                      Property="EndTime"
+                                      Title="End Time"
+                                      Width="180px"
+                                      FormatString="{0:yyyy-MM-dd HH:mm:ss}" />
+                <RadzenDataGridColumn TItem="Metadata"
+                                      Title="Duration"
+                                      Width="120px"
+                                      Sortable="false"
+                                      Filterable="false">
+                    <Template Context="m">@FormatDuration(m)</Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Metadata"
+                                      Property="FailureStep"
+                                      Title="Failure Step"
+                                      Width="150px" />
+                <RadzenDataGridColumn TItem="Metadata"
+                                      Property="FailureReason"
+                                      Title="Failure Reason"
+                                      Width="250px" />
+                <RadzenDataGridColumn TItem="Metadata"
+                                      Property="ParentId"
+                                      Title="Parent Id"
+                                      Width="100px" />
+            </Columns>
+        </RadzenDataGrid>
+    }
+    else
+    {
+        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-disabled-color); text-align: center; padding: 2rem;">
+            No executions found for this manifest.
+        </RadzenText>
+    }
+</RadzenCard>
+
+@code {
+    [Parameter]
+    public int ManifestId { get; set; }
+
+    private Manifest? _manifest;
+    private List<Metadata> _metadataItems = [];
+
+    protected override async Task LoadDataAsync(CancellationToken cancellationToken)
+    {
+        using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
+
+        _manifest = await context.Manifests
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.Id == ManifestId, cancellationToken);
+
+        if (_manifest is not null)
+        {
+            _metadataItems = await context.Metadatas
+                .AsNoTracking()
+                .Where(m => m.ManifestId == ManifestId)
+                .OrderByDescending(m => m.StartTime)
+                .ToListAsync(cancellationToken);
+        }
+    }
+
+    private void OnMetadataRowClick(DataGridRowMouseEventArgs<Metadata> args)
+    {
+        Navigation.NavigateTo($"chainsharp/data/metadata/{args.Data.Id}");
+    }
+
+    private static BadgeStyle GetStateBadgeStyle(WorkflowState state) => state switch
+    {
+        WorkflowState.Completed => BadgeStyle.Success,
+        WorkflowState.Failed => BadgeStyle.Danger,
+        WorkflowState.InProgress => BadgeStyle.Info,
+        WorkflowState.Pending => BadgeStyle.Warning,
+        _ => BadgeStyle.Light,
+    };
+
+    private static string FormatDuration(Metadata m)
+    {
+        if (m.EndTime is null)
+            return "—";
+
+        var duration = m.EndTime.Value - m.StartTime;
+        if (duration.TotalMilliseconds < 1000)
+            return $"{duration.TotalMilliseconds:F0}ms";
+        if (duration.TotalSeconds < 60)
+            return $"{duration.TotalSeconds:F1}s";
+        return $"{duration.TotalMinutes:F1}m";
+    }
+
+    private static string ShortName(string fullName)
+    {
+        var lastDot = fullName.LastIndexOf('.');
+        return lastDot >= 0 ? fullName[(lastDot + 1)..] : fullName;
+    }
+
+    private RenderFragment Field(string label, string value) => __builder =>
+    {
+        <RadzenStack Gap="0">
+            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color); margin: 0;">@label</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0;">@value</RadzenText>
+        </RadzenStack>
+    };
+}

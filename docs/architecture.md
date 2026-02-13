@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Architecture
-nav_order: 5
+nav_order: 6
 has_children: true
 ---
 
@@ -17,25 +17,17 @@ How ChainSharp's components fit together.
 │    [CLI Applications]  [Web Applications]  [API Controllers]        │
 └─────────────────────────────────┬───────────────────────────────────┘
                                   │
-                                  ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│              ChainSharp.Effect.Dashboard (Optional)                  │
-│         [Blazor Server UI] ────► [WorkflowDiscovery]                │
-└─────────────────────────────────┬───────────────────────────────────┘
-                                  │
-                                  ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│           ChainSharp.Effect.Orchestration.Scheduler (Optional)      │
-│    [ManifestManager] ───► [ManifestExecutor] ───► [DeadLetter]     │
-└─────────────────────────────────┬───────────────────────────────────┘
-                                  │
-                                  ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│           ChainSharp.Effect.Orchestration.Mediator                  │
-│         [WorkflowBus] ────────► [WorkflowRegistry]                  │
-└─────────────────────────────────┬───────────────────────────────────┘
-                                  │
-                                  ▼
+          ┌───────────────────────┼───────────────────────┐
+          ▼                       ▼                       ▼
+┌──────────────────┐  ┌────────────────────┐  ┌──────────────────────┐
+│ Dashboard (Opt.) │  │     Mediator       │  │  Scheduler (Opt.)    │
+│ [Blazor Server]  │  │  [WorkflowBus]     │  │  [ManifestManager]   │
+└────────┬─────────┘  └─────────┬──────────┘  └──────────┬───────────┘
+         │                      │                        │
+         │                      │◄───────────────────────┘
+         │                      │  (Scheduler uses WorkflowBus)
+         └──────────┬───────────┘
+                    ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     ChainSharp.Effect                               │
 │    [EffectWorkflow] ────► [EffectRunner] ────► [EffectProviders]   │

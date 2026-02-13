@@ -2,7 +2,7 @@
 layout: default
 title: Troubleshooting
 parent: Usage Guide
-nav_order: 7
+nav_order: 10
 ---
 
 # Troubleshooting
@@ -52,7 +52,7 @@ Activate(input)                    // Memory: CreateUserRequest
     .Resolve();
 ```
 
-The [Analyzer](../analyzer) catches most of these issues at compile time—if you see CHAIN001, the message tells you exactly which type is missing and what's available.
+The [Analyzer](../analyzer.md) catches most of these issues at compile time—if you see CHAIN001, the message tells you exactly which type is missing and what's available.
 
 ## Workflow completes but metadata shows "Failed"
 
@@ -62,4 +62,4 @@ Check `FailureException` and `FailureReason` in the metadata record for details.
 
 ## Steps execute out of order or skip unexpectedly
 
-If you're using `ShortCircuit`, remember that throwing an exception means "continue" not "stop." See [Short-Circuiting](advanced-patterns.md#short-circuiting) for details.
+If you're using `ShortCircuit`, remember that throwing an exception means "continue" not "stop." See [ShortCircuit](short-circuit.md) for details.

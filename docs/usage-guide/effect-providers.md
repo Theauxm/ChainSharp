@@ -2,7 +2,7 @@
 layout: default
 title: Effect Providers
 parent: Usage Guide
-nav_order: 5
+nav_order: 3
 ---
 
 # Configuring Effect Providers

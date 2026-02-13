@@ -7,7 +7,7 @@ has_children: true
 
 # Core Concepts
 
-The foundational ideas behind ChainSharp.
+ChainSharp borrows concepts from functional programming and applies them to workflow orchestration in .NET.
 
 ## Workflows, Steps, and Effects
 
@@ -34,4 +34,4 @@ A **workflow** is a sequence of steps that accomplish a business operation. `Cre
 
 A **step** does one thing. `ValidateEmailStep` checks if an email is valid. `CreateUserInDatabaseStep` inserts a record. Steps are easy to test in isolation because they have a single responsibility.
 
-**Effects** are cross-cutting concerns that happen as a result of steps running—database writes, log entries, serialized parameters. Effect providers collect these during workflow execution and apply them atomically at the end.
+**Effects** are side effects that happen as a result of steps running—database writes, log entries, serialized parameters. Effect providers track these during workflow execution and save them atomically at the end.

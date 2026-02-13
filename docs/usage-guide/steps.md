@@ -75,3 +75,26 @@ public class ValidateEmailStep(IUserRepository repo) : EffectStep<CreateUserRequ
 The implementation is identical—just swap the base class. `EffectStep` only adds metadata when running inside an `EffectWorkflow`. If you use `EffectStep` inside a plain `Workflow`, it throws at runtime.
 
 Use `EffectStep` when you want step-level observability (timing, logging via `AddStepLogger`). Use `Step` when you don't need it.
+
+## Dependency Injection in Steps
+
+Steps use standard constructor injection for their dependencies. Do **not** use the `[Inject]` attribute—that's used internally by the `EffectWorkflow` base class for its own framework-level services.
+
+```csharp
+// ❌ Don't use [Inject] in your steps
+public class MyStep : Step<Input, Output>
+{
+    [Inject]
+    public IMyService MyService { get; set; }
+}
+
+// ✅ Use constructor injection
+public class MyStep(IMyService MyService) : Step<Input, Output>
+{
+    public override async Task<Output> Run(Input input)
+    {
+        var result = await MyService.DoSomethingAsync(input);
+        return result;
+    }
+}
+```

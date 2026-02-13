@@ -2,7 +2,7 @@
 layout: default
 title: Railway Programming
 parent: Core Concepts
-nav_order: 1
+nav_order: 2
 ---
 
 # Railway Oriented Programming
@@ -52,7 +52,7 @@ This gives you atomic workflows—either everything succeeds and all effects are
 
 ChainSharp has two base classes for workflows:
 
-**`Workflow<TIn, TOut>`** — The core class. Handles chaining, Memory, and error propagation. No metadata, no effects, no automatic dependency injection from an `IServiceProvider`. Use this when:
+**`Workflow<TIn, TOut>`** — The core class. Handles chaining, [Memory](memory.md), and error propagation. No metadata, no effects, no automatic dependency injection from an `IServiceProvider`. Use this when:
 - You want a lightweight workflow without persistence
 - You're composing steps inside a larger system that handles its own concerns
 - Testing or prototyping

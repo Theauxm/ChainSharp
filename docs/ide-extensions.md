@@ -1,7 +1,7 @@
 ---
 layout: default
 title: IDE Extensions
-nav_order: 7
+nav_order: 8
 ---
 
 # IDE Extensions
@@ -33,7 +33,6 @@ The extensions annotate each step with its resolved types:
 
 - `.Chain<TStep>()`
 - `.ShortCircuit<TStep>()`
-- `.IChain<TStep>()`
 
 ### Type Resolution
 
@@ -78,7 +77,7 @@ Output is in `build/distributions/`.
 
 Uses JetBrains' PSI (Program Structure Interface) for type resolution. A daemon analyzer (`ElementProblemAnalyzer<IInvocationExpression>`) fires on each invocation expression and:
 
-1. Checks if the method name is `Chain`, `ShortCircuit`, or `IChain`
+1. Checks if the method name is `Chain` or `ShortCircuit`
 2. Extracts the type argument from the generic call
 3. Walks the step's super-type hierarchy to find `IStep<TIn, TOut>`
 4. Places a `TIn → TOut` hint after the closing parenthesis

@@ -2,7 +2,7 @@
 layout: default
 title: Metadata
 parent: Core Concepts
-nav_order: 3
+nav_order: 4
 ---
 
 # Metadata
@@ -36,7 +36,7 @@ The `WorkflowState` tracks progress: `Pending` → `InProgress` → `Completed` 
 
 Workflows can run other workflows by injecting `IWorkflowBus`. Pass the current `Metadata` to the child workflow to establish a parent-child relationship—this creates a tree of metadata records you can query to trace execution across workflows.
 
-See [Nested Workflows in the Usage Guide](../usage-guide/advanced-patterns.md#nested-workflows) for implementation details.
+See [Nested Workflows](../mediator.md#nested-workflows) for implementation details.
 
 ## Execution Flow (EffectWorkflow)
 

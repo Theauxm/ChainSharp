@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Analyzer
-nav_order: 6
+nav_order: 7
 ---
 
 # Analyzer
@@ -42,7 +42,6 @@ Activate(input)       → Memory = { TInput, Unit }
 | `.Chain<TStep>()` | Checks `TIn ∈ Memory`, then adds `TOut` |
 | `.ShortCircuit<TStep>()` | Same as `Chain` — checks `TIn ∈ Memory`, adds `TOut` |
 | `.AddServices<T1, T2>()` | Adds each type argument to Memory |
-| `.IChain<TStep>()` | Resolves step types, adds `TOut` to Memory |
 | `.Extract<TIn, TOut>()` | Adds `TOut` to Memory |
 | `.Resolve()` | Checks `TReturn ∈ Memory` |
 

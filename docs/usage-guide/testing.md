@@ -2,7 +2,7 @@
 layout: default
 title: Testing
 parent: Usage Guide
-nav_order: 6
+nav_order: 9
 ---
 
 # Testing
@@ -127,44 +127,5 @@ public async Task Workflow_PersistsMetadata()
     var metadata = await context.Metadatas.FirstOrDefaultAsync();
     Assert.NotNull(metadata);
     Assert.Equal(WorkflowState.Completed, metadata.WorkflowState);
-}
-```
-
-## Testing with AddServices and IChain
-
-You can use `AddServices` to inject fake step implementations and `IChain` to run them by interface:
-
-```csharp
-public class FakeEmailService : IEmailService
-{
-    public List<string> SentEmails { get; } = [];
-
-    public Task SendWelcomeEmailAsync(string email, string name)
-    {
-        SentEmails.Add(email);
-        return Task.CompletedTask;
-    }
-}
-
-[Test]
-public async Task Workflow_UsesFakeStep()
-{
-    var fakeEmail = new FakeEmailService();
-    var workflow = new TestWorkflow(fakeEmail);
-
-    var result = await workflow.Run(new CreateUserRequest { Email = "test@example.com" });
-
-    Assert.True(result.IsRight);
-    Assert.Contains("test@example.com", fakeEmail.SentEmails);
-}
-
-public class TestWorkflow(IEmailService emailService) : Workflow<CreateUserRequest, User>
-{
-    protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
-        => Activate(input)
-            .AddServices(emailService)
-            .Chain<CreateUserStep>()
-            .IChain<IEmailService>()  // Runs the fake
-            .Resolve();
 }
 ```

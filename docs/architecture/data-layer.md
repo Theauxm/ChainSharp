@@ -134,7 +134,7 @@ public class PostgresContext : DataContext<PostgresContext>
 ```
 
 **Features:**
-- Production-ready with ACID transactions
+- ACID transactions via PostgreSQL
 - JSON column support for input/output parameters
 - Automatic schema migration
 - PostgreSQL-specific optimizations (enums, JSON queries)

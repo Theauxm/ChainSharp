@@ -7,4 +7,4 @@ has_children: true
 
 # Usage Guide
 
-Practical examples and patterns for building workflows.
+How to build workflows, configure providers, and use the chain methods available in ChainSharp.

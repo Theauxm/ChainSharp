@@ -5,24 +5,17 @@
 
 <RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Metadata</RadzenText>
 
-<RadzenDataGrid Data="@_items"
-                TItem="Metadata"
-                IsLoading="@IsLoading"
-                AllowFiltering="true"
-                AllowSorting="true"
-                AllowPaging="true"
-                PageSize="20"
-                PagerHorizontalAlign="HorizontalAlign.Center"
-                AllowColumnResize="true"
-                FilterMode="FilterMode.CheckBoxList"
-                RowClick="@OnRowClick"
-                Style="cursor: pointer;"
-                class="rz-datatable-striped">
+<ChainSharpDataGrid Data="@_items"
+                    TItem="Metadata"
+                    IsLoading="@IsLoading"
+                    RowClick="@OnRowClick"
+                    Style="cursor: pointer;">
     <Columns>
         <RadzenDataGridColumn TItem="Metadata"
                               Property="Id"
                               Title="Id"
-                              Width="80px" />
+                              Width="80px"
+                              SortOrder="SortOrder.Descending" />
         <RadzenDataGridColumn TItem="Metadata"
                               Property="Name"
                               Title="Name"
@@ -64,7 +57,7 @@
                               Title="Manifest Id"
                               Width="110px" />
     </Columns>
-</RadzenDataGrid>
+</ChainSharpDataGrid>
 
 @code {
     private List<Metadata> _items = [];

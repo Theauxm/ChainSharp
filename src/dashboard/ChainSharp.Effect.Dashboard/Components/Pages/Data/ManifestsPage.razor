@@ -5,25 +5,17 @@
 
 <RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Manifests</RadzenText>
 
-<RadzenDataGrid Data="@_items"
-                TItem="Manifest"
-                IsLoading="@IsLoading"
-                AllowFiltering="true"
-                AllowSorting="true"
-                AllowPaging="true"
-                PageSize="20"
-                PagerHorizontalAlign="HorizontalAlign.Center"
-                AllowColumnResize="true"
-                FilterMode="FilterMode.CheckBoxList"
-                RowClick="@OnRowClick"
-                @ref="_grid"
-                Style="cursor: pointer;"
-                class="rz-datatable-striped">
+<ChainSharpDataGrid Data="@_items"
+                    TItem="Manifest"
+                    IsLoading="@IsLoading"
+                    RowClick="@OnRowClick"
+                    Style="cursor: pointer;">
     <Columns>
         <RadzenDataGridColumn TItem="Manifest"
                               Property="Id"
                               Title="Id"
-                              Width="80px" />
+                              Width="80px"
+                              SortOrder="SortOrder.Descending" />
         <RadzenDataGridColumn TItem="Manifest"
                               Property="Name"
                               Title="Name"
@@ -64,11 +56,10 @@
                               Width="180px"
                               FormatString="{0:yyyy-MM-dd HH:mm:ss}" />
     </Columns>
-</RadzenDataGrid>
+</ChainSharpDataGrid>
 
 @code {
     private List<Manifest> _items = [];
-    private RadzenDataGrid<Manifest> _grid = default!;
 
     protected override async Task LoadDataAsync(CancellationToken cancellationToken)
     {

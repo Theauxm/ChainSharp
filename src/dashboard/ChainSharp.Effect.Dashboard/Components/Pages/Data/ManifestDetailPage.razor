@@ -105,23 +105,16 @@
     <RadzenText TextStyle="TextStyle.H6" class="rz-mb-2">Execution History</RadzenText>
     @if (_metadataItems.Count > 0)
     {
-        <RadzenDataGrid Data="@_metadataItems"
-                        TItem="Metadata"
-                        AllowFiltering="true"
-                        AllowSorting="true"
-                        AllowPaging="true"
-                        PageSize="20"
-                        PagerHorizontalAlign="HorizontalAlign.Center"
-                        AllowColumnResize="true"
-                        FilterMode="FilterMode.CheckBoxList"
-                        RowClick="@OnMetadataRowClick"
-                        Style="cursor: pointer;"
-                        class="rz-datatable-striped">
+        <ChainSharpDataGrid Data="@_metadataItems"
+                            TItem="Metadata"
+                            RowClick="@OnMetadataRowClick"
+                            Style="cursor: pointer;">
             <Columns>
                 <RadzenDataGridColumn TItem="Metadata"
                                       Property="Id"
                                       Title="Id"
-                                      Width="80px" />
+                                      Width="80px"
+                                      SortOrder="SortOrder.Descending" />
                 <RadzenDataGridColumn TItem="Metadata"
                                       Property="WorkflowState"
                                       Title="State"
@@ -139,8 +132,7 @@
                                       Property="StartTime"
                                       Title="Start Time"
                                       Width="180px"
-                                      FormatString="{0:yyyy-MM-dd HH:mm:ss}"
-                                      SortOrder="SortOrder.Descending" />
+                                      FormatString="{0:yyyy-MM-dd HH:mm:ss}" />
                 <RadzenDataGridColumn TItem="Metadata"
                                       Property="EndTime"
                                       Title="End Time"
@@ -166,7 +158,7 @@
                                       Title="Parent Id"
                                       Width="100px" />
             </Columns>
-        </RadzenDataGrid>
+        </ChainSharpDataGrid>
     }
     else
     {

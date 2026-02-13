@@ -4,22 +4,15 @@
 
 <RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Logs</RadzenText>
 
-<RadzenDataGrid Data="@_items"
-                TItem="Log"
-                IsLoading="@IsLoading"
-                AllowFiltering="true"
-                AllowSorting="true"
-                AllowPaging="true"
-                PageSize="20"
-                PagerHorizontalAlign="HorizontalAlign.Center"
-                AllowColumnResize="true"
-                FilterMode="FilterMode.CheckBoxList"
-                class="rz-datatable-striped">
+<ChainSharpDataGrid Data="@_items"
+                    TItem="Log"
+                    IsLoading="@IsLoading">
     <Columns>
         <RadzenDataGridColumn TItem="Log"
                               Property="Id"
                               Title="Id"
-                              Width="80px" />
+                              Width="80px"
+                              SortOrder="SortOrder.Descending" />
         <RadzenDataGridColumn TItem="Log"
                               Property="MetadataId"
                               Title="Metadata Id"
@@ -41,7 +34,7 @@
                               Title="Exception"
                               Width="250px" />
     </Columns>
-</RadzenDataGrid>
+</ChainSharpDataGrid>
 
 @code {
     private List<Log> _items = [];

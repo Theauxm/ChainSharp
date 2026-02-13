@@ -144,21 +144,14 @@
     <RadzenText TextStyle="TextStyle.H6" class="rz-mb-2">Logs</RadzenText>
     @if (_logs.Count > 0)
     {
-        <RadzenDataGrid Data="@_logs"
-                        TItem="Log"
-                        AllowFiltering="true"
-                        AllowSorting="true"
-                        AllowPaging="true"
-                        PageSize="20"
-                        PagerHorizontalAlign="HorizontalAlign.Center"
-                        AllowColumnResize="true"
-                        FilterMode="FilterMode.CheckBoxList"
-                        class="rz-datatable-striped">
+        <ChainSharpDataGrid Data="@_logs"
+                            TItem="Log">
             <Columns>
                 <RadzenDataGridColumn TItem="Log"
                                       Property="Id"
                                       Title="Id"
-                                      Width="80px" />
+                                      Width="80px"
+                                      SortOrder="SortOrder.Descending" />
                 <RadzenDataGridColumn TItem="Log"
                                       Property="Level"
                                       Title="Level"
@@ -182,7 +175,7 @@
                                       Title="Exception"
                                       Width="250px" />
             </Columns>
-        </RadzenDataGrid>
+        </ChainSharpDataGrid>
     }
     else
     {

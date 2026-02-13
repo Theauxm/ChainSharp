@@ -1,0 +1,48 @@
+@typeparam TItem
+
+<RadzenDataGrid Data="@Data"
+                TItem="TItem"
+                IsLoading="@IsLoading"
+                AllowFiltering="@AllowFiltering"
+                AllowSorting="@AllowSorting"
+                AllowPaging="@AllowPaging"
+                PageSize="@PageSize"
+                PagerHorizontalAlign="HorizontalAlign.Center"
+                AllowColumnResize="true"
+                FilterMode="FilterMode.CheckBoxList"
+                RowClick="@RowClick"
+                Style="@Style"
+                class="rz-datatable-striped">
+    <Columns>
+        @Columns
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    [Parameter, EditorRequired]
+    public IEnumerable<TItem>? Data { get; set; }
+
+    [Parameter]
+    public RenderFragment? Columns { get; set; }
+
+    [Parameter]
+    public bool IsLoading { get; set; }
+
+    [Parameter]
+    public bool AllowFiltering { get; set; } = true;
+
+    [Parameter]
+    public bool AllowSorting { get; set; } = true;
+
+    [Parameter]
+    public bool AllowPaging { get; set; } = true;
+
+    [Parameter]
+    public int PageSize { get; set; } = 20;
+
+    [Parameter]
+    public EventCallback<DataGridRowMouseEventArgs<TItem>> RowClick { get; set; }
+
+    [Parameter]
+    public string? Style { get; set; }
+}

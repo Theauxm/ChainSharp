@@ -8,7 +8,7 @@ nav_order: 8
 
 ChainSharp.Effect.Dashboard adds a web UI to your application for inspecting registered workflows. It mounts as a Blazor Server app at a route you choose—similar to how Hangfire's dashboard works at `/hangfire`.
 
-The dashboard only requires `ChainSharp.Effect`. As you add more Effect packages (Data, Scheduler, etc.), the dashboard gains access to more information. Start with workflow discovery, and the rest follows naturally as your setup grows.
+The dashboard only requires `ChainSharp.Effect`. As you add more Effect packages (Data, Scheduler, etc.), the dashboard gains access to more information. Start with workflow discovery, and add more as your setup grows.
 
 ## Quick Setup
 

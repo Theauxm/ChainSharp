@@ -24,15 +24,12 @@
                                 Icon="error_outline" />
         </RadzenPanelMenuItem>
         <RadzenPanelMenuItem Text="Settings" Icon="settings" @bind-Expanded="_settingsExpanded">
-            <RadzenPanelMenuItem Text="Dashboard"
-                                Path="@($"{Options.RoutePrefix.TrimStart('/')}/settings/dashboard")"
-                                Icon="dashboard_customize" />
-            <RadzenPanelMenuItem Text="Scheduler"
-                                Path="@($"{Options.RoutePrefix.TrimStart('/')}/settings/scheduler")"
-                                Icon="schedule" />
-            <RadzenPanelMenuItem Text="Effects"
-                                Path="@($"{Options.RoutePrefix.TrimStart('/')}/settings/effects")"
-                                Icon="tune" />
+            <RadzenPanelMenuItem Text="User"
+                                Path="@($"{Options.RoutePrefix.TrimStart('/')}/settings/user")"
+                                Icon="person" />
+            <RadzenPanelMenuItem Text="Server"
+                                Path="@($"{Options.RoutePrefix.TrimStart('/')}/settings/server")"
+                                Icon="dns" />
         </RadzenPanelMenuItem>
     </RadzenPanelMenu>
 </RadzenSidebar>

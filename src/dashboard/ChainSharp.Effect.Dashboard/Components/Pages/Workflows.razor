@@ -1,5 +1,6 @@
 @page "/chainsharp/workflows"
 @inject IWorkflowDiscoveryService WorkflowDiscovery
+@inject IDashboardSettingsService DashboardSettings
 @inject DialogService DialogService
 
 <RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Registered Workflows</RadzenText>
@@ -54,9 +55,21 @@
 @code {
     private IReadOnlyList<WorkflowRegistration> _workflows = [];
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        _workflows = WorkflowDiscovery.DiscoverWorkflows();
+        await DashboardSettings.InitializeAsync();
+
+        var all = WorkflowDiscovery.DiscoverWorkflows();
+
+        if (DashboardSettings.HideAdminWorkflows)
+        {
+            var adminNames = DashboardSettings.AdminWorkflowNames;
+            _workflows = all.Where(w => !adminNames.Contains(w.ImplementationTypeName)).ToList();
+        }
+        else
+        {
+            _workflows = all;
+        }
     }
 
     private async Task OpenRunDialog(WorkflowRegistration registration)

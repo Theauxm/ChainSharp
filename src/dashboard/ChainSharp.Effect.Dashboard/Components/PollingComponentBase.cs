@@ -13,7 +13,7 @@ namespace ChainSharp.Effect.Dashboard.Components;
 public abstract class PollingComponentBase : ComponentBase, IAsyncDisposable
 {
     [Inject]
-    private IDashboardSettingsService DashboardSettings { get; set; } = default!;
+    protected IDashboardSettingsService DashboardSettings { get; set; } = default!;
 
     private CancellationTokenSource? _cts;
 

@@ -72,7 +72,13 @@
     protected override async Task LoadDataAsync(CancellationToken cancellationToken)
     {
         using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
-        _items = await context.Metadatas.AsNoTracking().ToListAsync(cancellationToken);
+        IQueryable<Metadata> query = context.Metadatas.AsNoTracking();
+
+        if (DashboardSettings.HideAdminWorkflows)
+            foreach (var name in DashboardSettings.AdminWorkflowNames)
+                query = query.Where(m => !m.Name.EndsWith(name));
+
+        _items = await query.ToListAsync(cancellationToken);
     }
 
     private void OnRowClick(DataGridRowMouseEventArgs<Metadata> args)

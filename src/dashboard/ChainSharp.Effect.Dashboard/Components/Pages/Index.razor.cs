@@ -1,14 +1,10 @@
-using ChainSharp.Effect.Dashboard.Services.DashboardSettings;
 using ChainSharp.Effect.Dashboard.Services.WorkflowDiscovery;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Enums;
-using ChainSharp.Effect.Models.DeadLetter;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.Metadata;
-using ChainSharp.Effect.Services.EffectRegistry;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace ChainSharp.Effect.Dashboard.Components.Pages;
 
@@ -22,9 +18,6 @@ public partial class Index
 
     [Inject]
     private IServiceProvider ServiceProvider { get; set; } = default!;
-
-    [Inject]
-    private IDashboardSettingsService DashboardSettings { get; set; } = default!;
 
     // Summary card values
     private int _executionsToday;
@@ -59,7 +52,7 @@ public partial class Index
         var todayQuery = context.Metadatas.AsNoTracking().Where(m => m.StartTime >= todayStart);
 
         if (hideAdmin)
-            todayQuery = todayQuery.Where(m => !adminNames.Contains(m.Name));
+            todayQuery = ExcludeAdmin(todayQuery, adminNames);
 
         var todayMetadata = await todayQuery.ToListAsync(cancellationToken);
 
@@ -76,7 +69,7 @@ public partial class Index
             .Where(m => m.WorkflowState == WorkflowState.InProgress);
 
         if (hideAdmin)
-            runningQuery = runningQuery.Where(m => !adminNames.Contains(m.Name));
+            runningQuery = ExcludeAdmin(runningQuery, adminNames);
 
         _currentlyRunning = await runningQuery.CountAsync(cancellationToken);
 
@@ -84,18 +77,24 @@ public partial class Index
             .DeadLetters.AsNoTracking()
             .CountAsync(d => d.Status == DeadLetterStatus.AwaitingIntervention, cancellationToken);
 
-        _activeManifests = await context
-            .Manifests.AsNoTracking()
-            .CountAsync(m => m.IsEnabled, cancellationToken);
+        var activeManifestsQuery = context.Manifests.AsNoTracking().Where(m => m.IsEnabled);
 
-        _registeredWorkflows = WorkflowDiscovery.DiscoverWorkflows().Count;
+        if (hideAdmin)
+            activeManifestsQuery = ExcludeAdminManifests(activeManifestsQuery, adminNames);
+
+        _activeManifests = await activeManifestsQuery.CountAsync(cancellationToken);
+
+        var allWorkflows = WorkflowDiscovery.DiscoverWorkflows();
+        _registeredWorkflows = hideAdmin
+            ? allWorkflows.Count(w => !adminNames.Contains(w.ImplementationTypeName))
+            : allWorkflows.Count;
 
         // Executions over time (last 24h, grouped by hour)
         var last24h = now.AddHours(-24);
         var recentQuery = context.Metadatas.AsNoTracking().Where(m => m.StartTime >= last24h);
 
         if (hideAdmin)
-            recentQuery = recentQuery.Where(m => !adminNames.Contains(m.Name));
+            recentQuery = ExcludeAdmin(recentQuery, adminNames);
 
         var recentMetadata = await recentQuery
             .Select(m => new { m.StartTime, m.WorkflowState })
@@ -151,7 +150,7 @@ public partial class Index
             .Where(m => m.WorkflowState == WorkflowState.Failed && m.StartTime >= last7d);
 
         if (hideAdmin)
-            failuresQuery = failuresQuery.Where(m => !adminNames.Contains(m.Name));
+            failuresQuery = ExcludeAdmin(failuresQuery, adminNames);
 
         _topFailures = (
             await failuresQuery
@@ -176,7 +175,7 @@ public partial class Index
             );
 
         if (hideAdmin)
-            durationsQuery = durationsQuery.Where(m => !adminNames.Contains(m.Name));
+            durationsQuery = ExcludeAdmin(durationsQuery, adminNames);
 
         var completedRecent = await durationsQuery
             .Select(
@@ -213,7 +212,7 @@ public partial class Index
             .Where(m => m.WorkflowState == WorkflowState.Failed);
 
         if (hideAdmin)
-            recentFailuresQuery = recentFailuresQuery.Where(m => !adminNames.Contains(m.Name));
+            recentFailuresQuery = ExcludeAdmin(recentFailuresQuery, adminNames);
 
         _recentFailures = await recentFailuresQuery
             .OrderByDescending(m => m.StartTime)
@@ -221,12 +220,37 @@ public partial class Index
             .ToListAsync(cancellationToken);
 
         // Active scheduled manifests
-        _activeManifestList = await context
+        var activeManifestListQuery = context
             .Manifests.AsNoTracking()
-            .Where(m => m.IsEnabled && m.ScheduleType != ScheduleType.None)
+            .Where(m => m.IsEnabled && m.ScheduleType != ScheduleType.None);
+
+        if (hideAdmin)
+            activeManifestListQuery = ExcludeAdminManifests(activeManifestListQuery, adminNames);
+
+        _activeManifestList = await activeManifestListQuery
             .OrderBy(m => m.Name)
             .Take(20)
             .ToListAsync(cancellationToken);
+    }
+
+    private static IQueryable<Metadata> ExcludeAdmin(
+        IQueryable<Metadata> query,
+        IReadOnlyList<string> adminNames
+    )
+    {
+        foreach (var name in adminNames)
+            query = query.Where(m => !m.Name.EndsWith(name));
+        return query;
+    }
+
+    private static IQueryable<Manifest> ExcludeAdminManifests(
+        IQueryable<Manifest> query,
+        IReadOnlyList<string> adminNames
+    )
+    {
+        foreach (var name in adminNames)
+            query = query.Where(m => !m.Name.EndsWith(name));
+        return query;
     }
 
     private static string ShortName(string fullName)

@@ -5,7 +5,7 @@ using Radzen;
 
 namespace ChainSharp.Effect.Dashboard.Components.Pages.Settings;
 
-public partial class DashboardSettingsPage
+public partial class UserSettingsPage
 {
     [Inject]
     private IDashboardSettingsService DashboardSettings { get; set; } = default!;
@@ -107,8 +107,7 @@ public partial class DashboardSettingsPage
             {
                 Severity = NotificationSeverity.Success,
                 Summary = "Settings Saved",
-                Detail =
-                    "Dashboard settings updated. Changes take effect on the next polling cycle.",
+                Detail = "User settings updated. Changes take effect on the next polling cycle.",
                 Duration = 4000,
             }
         );
@@ -165,7 +164,7 @@ public partial class DashboardSettingsPage
             {
                 Severity = NotificationSeverity.Info,
                 Summary = "Default Restored",
-                Detail = "All dashboard settings have been reset to their default values.",
+                Detail = "All user settings have been reset to their default values.",
                 Duration = 4000,
             }
         );

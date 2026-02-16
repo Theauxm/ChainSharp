@@ -5,7 +5,9 @@ using ChainSharp.Effect.Dashboard.Services.LocalStorage;
 using ChainSharp.Effect.Dashboard.Services.ThemeState;
 using ChainSharp.Effect.Dashboard.Services.WorkflowDiscovery;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Radzen;
 
 namespace ChainSharp.Effect.Dashboard.Extensions;
@@ -14,6 +16,30 @@ public static class DashboardServiceExtensions
 {
     /// <summary>
     /// Registers ChainSharp Dashboard services including Radzen components and workflow discovery.
+    /// Also ensures static web assets (CSS, JS) from NuGet packages are available in all environments.
+    /// This is the recommended overload for dashboard consumers.
+    /// </summary>
+    public static WebApplicationBuilder AddChainSharpDashboard(
+        this WebApplicationBuilder builder,
+        Action<DashboardOptions>? configure = null
+    )
+    {
+        // UseStaticWebAssets is only called automatically in Development.
+        // The dashboard requires it in all environments to serve Radzen CSS/JS and
+        // dashboard assets from NuGet packages via _content/ paths.
+        // This is idempotent and no-ops when the manifest is absent (e.g. published apps).
+        if (!builder.Environment.IsDevelopment())
+            builder.WebHost.UseStaticWebAssets();
+
+        builder.Services.AddChainSharpDashboard(configure);
+        return builder;
+    }
+
+    /// <summary>
+    /// Registers ChainSharp Dashboard services including Radzen components and workflow discovery.
+    /// When using this overload, ensure static web assets are configured for non-Development environments
+    /// by calling <c>builder.WebHost.UseStaticWebAssets()</c> before <c>builder.Build()</c>.
+    /// Prefer the <see cref="AddChainSharpDashboard(WebApplicationBuilder, Action{DashboardOptions}?)"/> overload instead.
     /// </summary>
     public static IServiceCollection AddChainSharpDashboard(
         this IServiceCollection services,

@@ -28,7 +28,7 @@ builder.Services.AddLogging(logging =>
 });
 
 // Add ChainSharp Effects with Postgres persistence, Scheduler, and Hangfire in one fluent call
-builder.Services.AddChainSharpDashboard();
+builder.AddChainSharpDashboard();
 
 builder.Services.AddChainSharpEffects(
     options =>

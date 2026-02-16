@@ -1,3 +1,10 @@
+# [5.11.0](https://github.com/Theauxm/ChainSharp/compare/v5.10.1...v5.11.0) (2026-02-16)
+
+
+### Features
+
+* net10 dependency updates ([#149](https://github.com/Theauxm/ChainSharp/issues/149)) ([2e9f4c7](https://github.com/Theauxm/ChainSharp/commit/2e9f4c7b58ca9290aca323cc666cc7eb712b250c))
+
 ## [5.10.1](https://github.com/Theauxm/ChainSharp/compare/v5.10.0...v5.10.1) (2026-02-16)
 
 

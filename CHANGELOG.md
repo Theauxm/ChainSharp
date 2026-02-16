@@ -1,3 +1,10 @@
+## [5.10.1](https://github.com/Theauxm/ChainSharp/compare/v5.10.0...v5.10.1) (2026-02-16)
+
+
+### Bug Fixes
+
+* Hangfire Server Defaults ([#148](https://github.com/Theauxm/ChainSharp/issues/148)) ([39b6813](https://github.com/Theauxm/ChainSharp/commit/39b681366850ff474f5b04d3c7e7037f509474f6))
+
 # [5.10.0](https://github.com/Theauxm/ChainSharp/compare/v5.9.0...v5.10.0) (2026-02-13)
 
 

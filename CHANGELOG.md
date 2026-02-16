@@ -1,3 +1,10 @@
+## [5.11.5](https://github.com/Theauxm/ChainSharp/compare/v5.11.4...v5.11.5) (2026-02-16)
+
+
+### Bug Fixes
+
+* RequiresAspNetWebAssets ([3a0ec41](https://github.com/Theauxm/ChainSharp/commit/3a0ec417508c7c6262f9d4ccf2ebf3387c997634))
+
 ## [5.11.4](https://github.com/Theauxm/ChainSharp/compare/v5.11.3...v5.11.4) (2026-02-16)
 
 

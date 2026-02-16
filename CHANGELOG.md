@@ -1,3 +1,10 @@
+## [5.11.3](https://github.com/Theauxm/ChainSharp/compare/v5.11.2...v5.11.3) (2026-02-16)
+
+
+### Bug Fixes
+
+* Fixed manager to correctly use MaxActiveJobs ([#152](https://github.com/Theauxm/ChainSharp/issues/152)) ([850e415](https://github.com/Theauxm/ChainSharp/commit/850e415f0a0b0edf7a3ae98952773592160b92cf))
+
 ## [5.11.2](https://github.com/Theauxm/ChainSharp/compare/v5.11.1...v5.11.2) (2026-02-16)
 
 

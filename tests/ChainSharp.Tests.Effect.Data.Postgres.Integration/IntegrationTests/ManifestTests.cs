@@ -602,6 +602,137 @@ public class ManifestTests : TestSetup
 
     #endregion
 
+    #region Properties Serialization Tests
+
+    [Theory]
+    public async Task TestSetPropertiesProducesTypeDiscriminator()
+    {
+        // Arrange
+        var config = new TestManifestProperties
+        {
+            Name = "TypeDiscriminatorTest",
+            Value = 42,
+            Enabled = true
+        };
+
+        var manifest = Manifest.Create(
+            new CreateManifest { Name = typeof(Unit), Properties = config }
+        );
+
+        // Assert - JSON should contain $type and NOT contain $id/$values
+        manifest.Properties.Should().NotBeNull();
+        manifest.Properties.Should().Contain("\"$type\"");
+        manifest.Properties.Should().Contain(typeof(TestManifestProperties).FullName!);
+        manifest.Properties.Should().NotContain("\"$id\"");
+        manifest.Properties.Should().NotContain("\"$values\"");
+    }
+
+    [Theory]
+    public async Task TestGetPropertiesRoundTripsEnumValues()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var config = new TestManifestPropertiesWithEnum
+        {
+            Name = "EnumTest",
+            Category = TestCategory.Beta,
+            Values = [1, 2, 3]
+        };
+
+        var manifest = Manifest.Create(
+            new CreateManifest { Name = typeof(Unit), Properties = config }
+        );
+
+        await context.Track(manifest);
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        // Act
+        var foundManifest = await context.Manifests.FirstOrDefaultAsync(x => x.Id == manifest.Id);
+
+        // Assert
+        foundManifest.Should().NotBeNull();
+        var retrieved = foundManifest!.GetProperties<TestManifestPropertiesWithEnum>();
+        retrieved.Name.Should().Be("EnumTest");
+        retrieved.Category.Should().Be(TestCategory.Beta);
+        retrieved.Values.Should().BeEquivalentTo([1, 2, 3]);
+    }
+
+    [Theory]
+    public async Task TestGetPropertiesUntypedReturnsCorrectRuntimeType()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var config = new TestManifestPropertiesWithEnum
+        {
+            Name = "UntypedTest",
+            Category = TestCategory.Gamma,
+            Values = [10, 20]
+        };
+
+        var manifest = Manifest.Create(
+            new CreateManifest { Name = typeof(Unit), Properties = config }
+        );
+
+        await context.Track(manifest);
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        // Act
+        var foundManifest = await context.Manifests.FirstOrDefaultAsync(x => x.Id == manifest.Id);
+        var result = foundManifest!.GetPropertiesUntyped();
+
+        // Assert
+        result.Should().BeOfType<TestManifestPropertiesWithEnum>();
+        var typed = (TestManifestPropertiesWithEnum)result;
+        typed.Name.Should().Be("UntypedTest");
+        typed.Category.Should().Be(TestCategory.Gamma);
+        typed.Values.Should().BeEquivalentTo([10, 20]);
+    }
+
+    [Theory]
+    public async Task TestGetPropertiesRoundTripsListFields()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var config = new TestManifestPropertiesWithEnum
+        {
+            Name = "ListTest",
+            Category = TestCategory.Alpha,
+            Values = [100, 200, 300, 400, 500]
+        };
+
+        var manifest = Manifest.Create(
+            new CreateManifest { Name = typeof(Unit), Properties = config }
+        );
+
+        await context.Track(manifest);
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        // Act
+        var foundManifest = await context.Manifests.FirstOrDefaultAsync(x => x.Id == manifest.Id);
+        var retrieved = foundManifest!.GetProperties<TestManifestPropertiesWithEnum>();
+
+        // Assert - List should round-trip without $values wrapping issues
+        retrieved.Values.Should().HaveCount(5);
+        retrieved.Values.Should().BeEquivalentTo([100, 200, 300, 400, 500]);
+    }
+
+    #endregion
+
     /// <summary>
     /// Test configuration class used for Manifest property serialization tests.
     /// </summary>
@@ -610,5 +741,19 @@ public class ManifestTests : TestSetup
         public string Name { get; set; } = string.Empty;
         public int Value { get; set; }
         public bool Enabled { get; set; }
+    }
+
+    public enum TestCategory
+    {
+        Alpha,
+        Beta,
+        Gamma
+    }
+
+    public class TestManifestPropertiesWithEnum : IManifestProperties
+    {
+        public string Name { get; set; } = string.Empty;
+        public TestCategory Category { get; set; }
+        public List<int> Values { get; set; } = [];
     }
 }

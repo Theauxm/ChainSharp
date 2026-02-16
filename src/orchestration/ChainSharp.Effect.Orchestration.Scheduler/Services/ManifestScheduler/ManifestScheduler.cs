@@ -229,7 +229,7 @@ public class ManifestScheduler(
                 ExternalId = Guid.NewGuid().ToString("N"),
                 Input =
                     manifest.Properties != null
-                        ? System.Text.Json.JsonSerializer.Deserialize<object>(manifest.Properties)
+                        ? manifest.GetProperties(manifest.PropertyType)
                         : null,
                 ManifestId = manifest.Id
             }

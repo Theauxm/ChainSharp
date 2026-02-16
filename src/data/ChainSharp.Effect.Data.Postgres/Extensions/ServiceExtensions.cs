@@ -77,13 +77,16 @@ public static class ServiceExtensions
             (_, options) =>
             {
                 options
-                    .UseNpgsql(dataSource, o =>
-                    {
-                        o.MapEnum<WorkflowState>("workflow_state");
-                        o.MapEnum<LogLevel>("log_level");
-                        o.MapEnum<ScheduleType>("schedule_type");
-                        o.MapEnum<DeadLetterStatus>("dead_letter_status");
-                    })
+                    .UseNpgsql(
+                        dataSource,
+                        o =>
+                        {
+                            o.MapEnum<WorkflowState>("workflow_state");
+                            o.MapEnum<LogLevel>("log_level");
+                            o.MapEnum<ScheduleType>("schedule_type");
+                            o.MapEnum<DeadLetterStatus>("dead_letter_status");
+                        }
+                    )
                     .UseLoggerFactory(new NullLoggerFactory())
                     .ConfigureWarnings(x => x.Log(CoreEventId.ManyServiceProvidersCreatedWarning));
             }

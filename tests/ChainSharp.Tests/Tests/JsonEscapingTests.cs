@@ -16,9 +16,10 @@ public class JsonEscapingTests
 {
     private class DummyWorkflow : Workflow<string, string>
     {
-        protected override Task<Either<Exception, string>> RunInternal(string input)
-            => Task.FromResult(Either<Exception, string>.Right(input));
+        protected override Task<Either<Exception, string>> RunInternal(string input) =>
+            Task.FromResult(Either<Exception, string>.Right(input));
     }
+
     /// <summary>
     /// Test step that throws an exception with JSON content in the message.
     /// This simulates the scenario described in the issue where a CybersourcePaymentsException

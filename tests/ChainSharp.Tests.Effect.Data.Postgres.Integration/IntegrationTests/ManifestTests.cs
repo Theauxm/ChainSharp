@@ -92,12 +92,15 @@ public class ManifestTests : TestSetup
         await context.SaveChanges(CancellationToken.None);
         context.Reset();
 
-        // Act - Query using the context directly since ExternalId is private
-        var foundManifest = await context.Manifests.FirstOrDefaultAsync(x => x.Id == manifest.Id);
+        // Act - Query by ExternalId
+        var foundManifest = await context.Manifests.FirstOrDefaultAsync(
+            x => x.ExternalId == manifest.ExternalId
+        );
 
         // Assert
         foundManifest.Should().NotBeNull();
         foundManifest!.Id.Should().Be(manifest.Id);
+        foundManifest.ExternalId.Should().Be(manifest.ExternalId);
     }
 
     [Theory]
@@ -297,6 +300,94 @@ public class ManifestTests : TestSetup
         foundManifest!.Metadatas.Should().HaveCount(2);
         foundManifest.Metadatas.Should().Contain(m => m.Id == metadata1.Id);
         foundManifest.Metadatas.Should().Contain(m => m.Id == metadata2.Id);
+    }
+
+    [Theory]
+    public async Task TestPostgresProviderCanCreateManifestWithNonGuidExternalId()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var manifest = Manifest.Create(new CreateManifest { Name = typeof(Unit) });
+
+        // Override the auto-generated GUID with a non-GUID external ID
+        var customExternalId = "custom-external-id-that-is-not-a-guid";
+        manifest.ExternalId = customExternalId;
+
+        await context.Track(manifest);
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        // Act
+        var foundManifest = await context.Manifests.FirstOrDefaultAsync(
+            x => x.ExternalId == customExternalId
+        );
+
+        // Assert
+        foundManifest.Should().NotBeNull();
+        foundManifest!.ExternalId.Should().Be(customExternalId);
+    }
+
+    [Theory]
+    public async Task TestPostgresProviderCanCreateManifestWithLongExternalId()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var manifest = Manifest.Create(new CreateManifest { Name = typeof(Unit) });
+
+        // Override with an external ID longer than the previous char(32) limit
+        var longExternalId =
+            "this-is-a-very-long-external-id-that-exceeds-thirty-two-characters-easily";
+        manifest.ExternalId = longExternalId;
+
+        await context.Track(manifest);
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        // Act
+        var foundManifest = await context.Manifests.FirstOrDefaultAsync(
+            x => x.ExternalId == longExternalId
+        );
+
+        // Assert
+        foundManifest.Should().NotBeNull();
+        foundManifest!.ExternalId.Should().Be(longExternalId);
+    }
+
+    [Theory]
+    public async Task TestPostgresProviderCanCreateManifestWithShortExternalId()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var manifest = Manifest.Create(new CreateManifest { Name = typeof(Unit) });
+
+        // Override with a short external ID
+        var shortExternalId = "abc";
+        manifest.ExternalId = shortExternalId;
+
+        await context.Track(manifest);
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        // Act
+        var foundManifest = await context.Manifests.FirstOrDefaultAsync(
+            x => x.ExternalId == shortExternalId
+        );
+
+        // Assert
+        foundManifest.Should().NotBeNull();
+        foundManifest!.ExternalId.Should().Be(shortExternalId);
     }
 
     #region Scheduling Property Tests

@@ -6,7 +6,9 @@ using ChainSharp.Effect.Data.Postgres.Utils;
 using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Data.Services.DataContextLoggingProvider;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
+using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
+using ChainSharp.Effect.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
@@ -75,7 +77,13 @@ public static class ServiceExtensions
             (_, options) =>
             {
                 options
-                    .UseNpgsql(dataSource)
+                    .UseNpgsql(dataSource, o =>
+                    {
+                        o.MapEnum<WorkflowState>("workflow_state");
+                        o.MapEnum<LogLevel>("log_level");
+                        o.MapEnum<ScheduleType>("schedule_type");
+                        o.MapEnum<DeadLetterStatus>("dead_letter_status");
+                    })
                     .UseLoggerFactory(new NullLoggerFactory())
                     .ConfigureWarnings(x => x.Log(CoreEventId.ManyServiceProvidersCreatedWarning));
             }

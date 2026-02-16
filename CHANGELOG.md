@@ -1,3 +1,10 @@
+## [5.11.1](https://github.com/Theauxm/ChainSharp/compare/v5.11.0...v5.11.1) (2026-02-16)
+
+
+### Bug Fixes
+
+* Updated Manifest ExternalId to no longer be constrained to 32 ch… ([#150](https://github.com/Theauxm/ChainSharp/issues/150)) ([43c5b66](https://github.com/Theauxm/ChainSharp/commit/43c5b660271ace6edd58dc6149c601c7d9f90c34))
+
 # [5.11.0](https://github.com/Theauxm/ChainSharp/compare/v5.10.1...v5.11.0) (2026-02-16)
 
 

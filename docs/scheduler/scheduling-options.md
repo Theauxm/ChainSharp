@@ -167,7 +167,7 @@ await scheduler.ScheduleAsync<IMyWorkflow, MyInput>(
 | Option | Default | Description |
 |--------|---------|-------------|
 | `PollingInterval` | 5s | How often ManifestManager checks for pending jobs (supports sub-minute) |
-| `MaxJobsPerCycle` | 100 | Maximum jobs enqueued per poll (prevents overwhelming workers) |
+| `MaxActiveJobs` | 100 | Maximum active jobs (Pending + InProgress) allowed across all manifests. Set to null for unlimited |
 | `DefaultMaxRetries` | 3 | Retry attempts before dead-lettering |
 | `DefaultRetryDelay` | 5m | Delay between retries |
 | `RetryBackoffMultiplier` | 2.0 | Exponential backoff (delays of 5m, 10m, 20m...) |

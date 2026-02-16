@@ -24,7 +24,7 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Configuration;
 ///     .AddPostgresEffect(connectionString)
 ///     .AddScheduler(scheduler => scheduler
 ///         .PollingInterval(TimeSpan.FromSeconds(30))
-///         .MaxJobsPerCycle(100)
+///         .MaxActiveJobs(100)
 ///         .UseHangfire(config => config.UsePostgreSqlStorage(...))
 ///     )
 /// );
@@ -62,13 +62,17 @@ public class SchedulerConfigurationBuilder
     }
 
     /// <summary>
-    /// Sets the maximum number of jobs that can be enqueued in a single polling cycle.
+    /// Sets the maximum number of active jobs (Pending + InProgress) allowed across all manifests.
     /// </summary>
-    /// <param name="maxJobs">The maximum jobs per cycle (default: 100)</param>
+    /// <param name="maxJobs">The maximum active jobs (default: 100, null = unlimited)</param>
     /// <returns>The builder for method chaining</returns>
-    public SchedulerConfigurationBuilder MaxJobsPerCycle(int maxJobs)
+    /// <remarks>
+    /// When the total number of active jobs reaches this limit, no new jobs will be enqueued
+    /// until existing jobs complete.
+    /// </remarks>
+    public SchedulerConfigurationBuilder MaxActiveJobs(int? maxJobs)
     {
-        _configuration.MaxJobsPerCycle = maxJobs;
+        _configuration.MaxActiveJobs = maxJobs;
         return this;
     }
 

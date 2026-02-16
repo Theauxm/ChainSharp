@@ -23,7 +23,7 @@ public static class SchedulerExtensions
     ///     .AddPostgresEffect(connectionString)
     ///     .AddScheduler(scheduler => scheduler
     ///         .PollingInterval(TimeSpan.FromSeconds(30))
-    ///         .MaxJobsPerCycle(100)
+    ///         .MaxActiveJobs(100)
     ///         .DefaultMaxRetries(5)
     ///         .UseHangfire(
     ///             config => config.UsePostgreSqlStorage(...),

@@ -32,6 +32,36 @@ internal class DetermineJobsToQueueStep(
             .Select(dl => dl.ManifestId)
             .ToHashSet();
 
+        // Check global active job limit (Pending + InProgress across all manifests)
+        if (config.MaxActiveJobs.HasValue)
+        {
+            var totalActiveJobs = manifests
+                .SelectMany(m => m.Metadatas)
+                .Count(m =>
+                    m.WorkflowState == WorkflowState.Pending
+                    || m.WorkflowState == WorkflowState.InProgress
+                );
+
+            if (totalActiveJobs >= config.MaxActiveJobs.Value)
+            {
+                logger.LogInformation(
+                    "MaxActiveJobs limit reached ({TotalActiveJobs}/{MaxActiveJobs}). Skipping job enqueueing this cycle.",
+                    totalActiveJobs,
+                    config.MaxActiveJobs.Value
+                );
+                return manifestsToQueue;
+            }
+
+            // Calculate how many more jobs we can queue before hitting the global limit
+            var remainingCapacity = config.MaxActiveJobs.Value - totalActiveJobs;
+            logger.LogDebug(
+                "Active job capacity: {TotalActiveJobs}/{MaxActiveJobs} ({RemainingCapacity} remaining)",
+                totalActiveJobs,
+                config.MaxActiveJobs.Value,
+                remainingCapacity
+            );
+        }
+
         // Filter to only scheduled manifests (not manual-only)
         var scheduledManifests = manifests.Where(m => m.ScheduleType != ScheduleType.None).ToList();
 
@@ -92,13 +122,26 @@ internal class DetermineJobsToQueueStep(
                 );
                 manifestsToQueue.Add(manifest);
 
-                if (manifestsToQueue.Count >= config.MaxJobsPerCycle)
+                // Check MaxActiveJobs limit (current active + jobs we're about to queue)
+                if (config.MaxActiveJobs.HasValue)
                 {
-                    logger.LogInformation(
-                        "Reached MaxJobsPerCycle limit ({MaxJobs}), will queue remaining manifests in next poll cycle",
-                        config.MaxJobsPerCycle
-                    );
-                    break;
+                    var currentActiveJobs = manifests
+                        .SelectMany(m => m.Metadatas)
+                        .Count(m =>
+                            m.WorkflowState == WorkflowState.Pending
+                            || m.WorkflowState == WorkflowState.InProgress
+                        );
+
+                    if (currentActiveJobs + manifestsToQueue.Count >= config.MaxActiveJobs.Value)
+                    {
+                        logger.LogInformation(
+                            "Reached MaxActiveJobs limit ({CurrentActive} active + {ToQueue} to queue >= {MaxActiveJobs}), will queue remaining manifests in next poll cycle",
+                            currentActiveJobs,
+                            manifestsToQueue.Count,
+                            config.MaxActiveJobs.Value
+                        );
+                        break;
+                    }
                 }
             }
         }

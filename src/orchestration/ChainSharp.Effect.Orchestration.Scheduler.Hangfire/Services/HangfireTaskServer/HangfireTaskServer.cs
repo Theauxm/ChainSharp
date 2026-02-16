@@ -45,16 +45,4 @@ public class HangfireTaskServer(IBackgroundJobClient backgroundJobClient) : IBac
 
         return Task.FromResult(jobId);
     }
-
-    /// <inheritdoc />
-    public Task<string> ScheduleAsync(int metadataId, DateTimeOffset scheduledTime)
-    {
-        // Use the async overload explicitly via Expression<Func<T, Task>>
-        var jobId = backgroundJobClient.Schedule<ITaskServerExecutorWorkflow>(
-            workflow => workflow.Run(new ExecuteManifestRequest(metadataId)),
-            scheduledTime
-        );
-
-        return Task.FromResult(jobId);
-    }
 }

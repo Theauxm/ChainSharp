@@ -1,4 +1,5 @@
 using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
+using ChainSharp.Effect.Orchestration.Scheduler.Hangfire.Filters;
 using ChainSharp.Effect.Orchestration.Scheduler.Hangfire.Services.HangfireTaskServer;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.BackgroundTaskServer;
 using Hangfire;
@@ -40,22 +41,38 @@ public static class HangfireServiceExtensions
     {
         builder.UseTaskServer(services =>
         {
-            // Configure Hangfire with PostgreSQL storage and disable automatic retries
-            // ChainSharp.Effect.Orchestration.Scheduler manages retries through its own manifest system
+            // Configure Hangfire with PostgreSQL storage.
+            // Retries and job lifecycle are fully managed by ChainSharp's Scheduler,
+            // so we disable Hangfire's automatic retries and auto-delete completed jobs.
             services.AddHangfire(
                 config =>
                     config
                         .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
                         .UseSimpleAssemblyNameTypeSerializer()
                         .UseRecommendedSerializerSettings()
-                        .UsePostgreSqlStorage(opts => opts.UseNpgsqlConnection(connectionString))
+                        .UsePostgreSqlStorage(
+                            opts => opts.UseNpgsqlConnection(connectionString),
+                            new PostgreSqlStorageOptions
+                            {
+                                // Set above DefaultJobTimeout (20m) to prevent Hangfire from
+                                // re-enqueueing long-running jobs that ChainSharp is still tracking.
+                                InvisibilityTimeout = TimeSpan.FromMinutes(30)
+                            }
+                        )
                         .UseFilter(new AutomaticRetryAttribute { Attempts = 0 })
+                        .UseFilter(new AutoDeleteOnSuccessFilter())
             );
 
-            // Add Hangfire server with default settings
             services.AddHangfireServer(options =>
             {
                 options.Queues = ["default", "scheduler"];
+
+                // Allow slightly more than DefaultJobTimeout for Hangfire's own
+                // server heartbeat before it considers the server dead.
+                options.ServerTimeout = TimeSpan.FromMinutes(25);
+
+                // Give in-flight jobs time to finish gracefully on shutdown.
+                options.ShutdownTimeout = TimeSpan.FromSeconds(30);
             });
 
             // Register HangfireTaskServer as IBackgroundTaskServer

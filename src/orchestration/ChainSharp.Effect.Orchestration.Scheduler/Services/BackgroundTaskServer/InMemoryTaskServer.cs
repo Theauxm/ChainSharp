@@ -50,15 +50,4 @@ public class InMemoryTaskServer(ITaskServerExecutorWorkflow taskServerExecutorWo
 
         return jobId;
     }
-
-    /// <inheritdoc />
-    /// <remarks>
-    /// This implementation ignores the scheduled time and executes immediately.
-    /// For testing scenarios that need delayed execution, consider using a mock instead.
-    /// </remarks>
-    public async Task<string> ScheduleAsync(int metadataId, DateTimeOffset scheduledTime)
-    {
-        // For testing, just execute immediately (ignore scheduled time)
-        return await EnqueueAsync(metadataId);
-    }
 }

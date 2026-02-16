@@ -47,16 +47,4 @@ public interface IBackgroundTaskServer
     /// is provided directly rather than resolved from a Manifest's properties.
     /// </remarks>
     Task<string> EnqueueAsync(int metadataId, object input);
-
-    /// <summary>
-    /// Schedules a job for execution at a specified time.
-    /// </summary>
-    /// <param name="metadataId">The ID of the Metadata record representing this job execution</param>
-    /// <param name="scheduledTime">The time at which the job should execute</param>
-    /// <returns>A background task identifier for correlation/tracking (provider-specific)</returns>
-    /// <remarks>
-    /// The job will be picked up by a worker at or after the specified time.
-    /// Useful for delayed retries or scheduled execution.
-    /// </remarks>
-    Task<string> ScheduleAsync(int metadataId, DateTimeOffset scheduledTime);
 }

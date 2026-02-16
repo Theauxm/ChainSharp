@@ -1,6 +1,7 @@
 using System.Text.Json;
 using ChainSharp.Exceptions;
 using ChainSharp.Step;
+using ChainSharp.Workflow;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
 using NUnit.Framework;
@@ -13,6 +14,12 @@ namespace ChainSharp.Tests.Tests;
 /// </summary>
 public class JsonEscapingTests
 {
+    private class DummyWorkflow : Workflow<string, string>
+    {
+        protected override Task<Either<Exception, string>> RunInternal(string input) =>
+            Task.FromResult(Either<Exception, string>.Right(input));
+    }
+
     /// <summary>
     /// Test step that throws an exception with JSON content in the message.
     /// This simulates the scenario described in the issue where a CybersourcePaymentsException
@@ -36,9 +43,10 @@ public class JsonEscapingTests
         // Arrange
         var step = new TestStepWithJsonException();
         var input = Either<Exception, string>.Right("test input");
+        var workflow = new DummyWorkflow();
 
         // Act
-        var result = await step.RailwayStep(input);
+        var result = await step.RailwayStep(input, workflow);
 
         // Assert
         Assert.That(result.IsLeft, Is.True, "Expected the step to fail and return Left(Exception)");
@@ -70,9 +78,10 @@ public class JsonEscapingTests
         // Arrange
         var step = new TestStepWithSpecialCharacters();
         var input = Either<Exception, string>.Right("test input");
+        var workflow = new DummyWorkflow();
 
         // Act
-        var result = await step.RailwayStep(input);
+        var result = await step.RailwayStep(input, workflow);
 
         // Assert
         Assert.That(result.IsLeft, Is.True, "Expected the step to fail and return Left(Exception)");

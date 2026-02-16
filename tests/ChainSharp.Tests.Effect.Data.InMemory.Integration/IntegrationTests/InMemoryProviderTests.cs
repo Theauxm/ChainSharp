@@ -17,6 +17,7 @@ public class InMemoryProviderTests : TestSetup
     public override ServiceProvider ConfigureServices(IServiceCollection services) =>
         services.AddScopedChainSharpWorkflow<ITestWorkflow, TestWorkflow>().BuildServiceProvider();
 
+    [Test]
     [Ignore("Serialization Failing for Input/Output Objects.")]
     public async Task TestInMemoryProviderCanCreateMetadata()
     {
@@ -49,6 +50,7 @@ public class InMemoryProviderTests : TestSetup
         foundMetadata.Name.Should().Be(metadata.Name);
     }
 
+    [Test]
     [Ignore("Serialization Failing for Input/Output Objects.")]
     public async Task TestInMemoryProviderCanRunWorkflow()
     {

@@ -40,11 +40,66 @@ The `using` statements follow the new package names. Find-and-replace works for 
 | `ChainSharp.Effect.Mediator` | `ChainSharp.Effect.Orchestration.Mediator` |
 | `ChainSharp.Effect.Parameter` | `ChainSharp.Effect.Provider.Parameter` |
 
+## Dependency Updates
+
+ChainSharp 5.x aligns all dependencies with .NET 10. If your project pins any of these packages directly, update them:
+
+| Package | 4.x Version | 5.x Version |
+|---|---|---|
+| `Microsoft.EntityFrameworkCore` | 8.0.x | 10.0.3+ |
+| `Microsoft.EntityFrameworkCore.Relational` | 8.0.x | 10.0.3+ |
+| `Microsoft.EntityFrameworkCore.InMemory` | 8.0.x | 10.0.3+ |
+| `Npgsql` | 8.0.x | 10.0.1+ |
+| `Npgsql.EntityFrameworkCore.PostgreSQL` | 8.0.x | 10.0.0+ |
+| `EFCore.NamingConventions` | 8.0.x | 10.0.1+ |
+| `Microsoft.Extensions.*` | 8.0.x | 10.0.3+ |
+
+These are transitive dependencies—ChainSharp's NuGet packages pull in the correct versions automatically. You only need to act if your project has explicit `<PackageReference>` entries for any of these.
+
+## Npgsql Enum Mapping (Breaking Change)
+
+Npgsql 9.0+ changed how PostgreSQL enum types are registered with Entity Framework Core. If you have custom code that configures `NpgsqlDataSourceBuilder` or `UseNpgsql`, you need to add `MapEnum` calls inside the `UseNpgsql` options callback.
+
+**Before (4.x / Npgsql 8.x):**
+
+Registering enums only on the `NpgsqlDataSourceBuilder` was sufficient:
+
+```csharp
+var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+dataSourceBuilder.MapEnum<MyEnum>();
+var dataSource = dataSourceBuilder.Build();
+
+services.AddDbContext<MyContext>(options =>
+    options.UseNpgsql(dataSource));  // No MapEnum needed here
+```
+
+**After (5.x / Npgsql 10.x):**
+
+You must also register enums in the `UseNpgsql` options callback:
+
+```csharp
+var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+dataSourceBuilder.MapEnum<MyEnum>();
+var dataSource = dataSourceBuilder.Build();
+
+services.AddDbContext<MyContext>(options =>
+    options.UseNpgsql(dataSource, o =>
+    {
+        o.MapEnum<MyEnum>("my_enum");  // Now required
+    }));
+```
+
+Both registrations are necessary—the `NpgsqlDataSourceBuilder` mapping handles the ADO.NET layer, and the `UseNpgsql` callback mapping handles the EF Core model layer. Omitting the latter causes `column "x" is of type my_enum but expression is of type integer` errors at runtime.
+
+ChainSharp handles this internally for its own enum types (`WorkflowState`, `LogLevel`, `ScheduleType`, `DeadLetterStatus`). This only affects you if you've added custom PostgreSQL enum types to your own `DbContext` that extends `DataContext<T>`.
+
 ## Step-by-Step Upgrade
 
 1. **Update your TFM** to `net10.0` across all projects in the solution.
 2. **Replace package references.** Swap the old package names for the new ones in every `.csproj` file.
-3. **Update `using` statements.** A global find-and-replace across `.cs` files covers it.
-4. **Restore and build.** `dotnet restore && dotnet build` will surface anything you missed.
+3. **Update dependencies.** If you pin EF Core, Npgsql, or `Microsoft.Extensions.*` packages directly, bump them to the versions listed above.
+4. **Update enum mappings.** If you have custom PostgreSQL enum types, add `MapEnum` calls to your `UseNpgsql` callback (see above).
+5. **Update `using` statements.** A global find-and-replace across `.cs` files covers it.
+6. **Restore and build.** `dotnet restore && dotnet build` will surface anything you missed.
 
 If you hit unresolved types after the rename, check the [Namespace Reference](scheduler/setup.md#namespace-reference) for the full namespace of scheduler-related types—some live in unexpected packages.

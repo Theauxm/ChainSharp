@@ -45,7 +45,7 @@ public class MetadataCleanupWorkflowTests : TestSetup
         _config
             .MetadataCleanup!.WorkflowTypeWhitelist.Should()
             .Contain(
-                nameof(ManifestManagerWorkflow),
+                typeof(ManifestManagerWorkflow).FullName!,
                 "ManifestManagerWorkflow should be in the default whitelist"
             );
     }
@@ -56,7 +56,7 @@ public class MetadataCleanupWorkflowTests : TestSetup
         _config
             .MetadataCleanup!.WorkflowTypeWhitelist.Should()
             .Contain(
-                nameof(MetadataCleanupWorkflow),
+                typeof(MetadataCleanupWorkflow).FullName!,
                 "MetadataCleanupWorkflow should be in the default whitelist"
             );
     }
@@ -86,7 +86,7 @@ public class MetadataCleanupWorkflowTests : TestSetup
     {
         // Arrange - Create completed metadata older than retention period
         var metadata = await CreateAndSaveMetadata(
-            name: nameof(ManifestManagerWorkflow),
+            name: typeof(ManifestManagerWorkflow).FullName!,
             state: WorkflowState.Completed,
             startTime: DateTime.UtcNow.AddHours(-2)
         );
@@ -108,7 +108,7 @@ public class MetadataCleanupWorkflowTests : TestSetup
     {
         // Arrange - Create failed metadata older than retention period
         var metadata = await CreateAndSaveMetadata(
-            name: nameof(ManifestManagerWorkflow),
+            name: typeof(ManifestManagerWorkflow).FullName!,
             state: WorkflowState.Failed,
             startTime: DateTime.UtcNow.AddHours(-2)
         );
@@ -134,7 +134,7 @@ public class MetadataCleanupWorkflowTests : TestSetup
     {
         // Arrange - Create completed metadata within retention period
         var metadata = await CreateAndSaveMetadata(
-            name: nameof(ManifestManagerWorkflow),
+            name: typeof(ManifestManagerWorkflow).FullName!,
             state: WorkflowState.Completed,
             startTime: DateTime.UtcNow.AddMinutes(-30) // 30 min ago, within 1 hour retention
         );
@@ -186,13 +186,13 @@ public class MetadataCleanupWorkflowTests : TestSetup
     {
         // Arrange - Create expired metadata for both default whitelisted types
         var managerMetadata = await CreateAndSaveMetadata(
-            name: nameof(ManifestManagerWorkflow),
+            name: typeof(ManifestManagerWorkflow).FullName!,
             state: WorkflowState.Completed,
             startTime: DateTime.UtcNow.AddHours(-2)
         );
 
         var cleanupMetadata = await CreateAndSaveMetadata(
-            name: nameof(MetadataCleanupWorkflow),
+            name: typeof(MetadataCleanupWorkflow).FullName!,
             state: WorkflowState.Completed,
             startTime: DateTime.UtcNow.AddHours(-2)
         );
@@ -226,7 +226,7 @@ public class MetadataCleanupWorkflowTests : TestSetup
     {
         // Arrange - Create old pending metadata (non-terminal state)
         var metadata = await CreateAndSaveMetadata(
-            name: nameof(ManifestManagerWorkflow),
+            name: typeof(ManifestManagerWorkflow).FullName!,
             state: WorkflowState.Pending,
             startTime: DateTime.UtcNow.AddHours(-2)
         );
@@ -248,7 +248,7 @@ public class MetadataCleanupWorkflowTests : TestSetup
     {
         // Arrange - Create old in-progress metadata (non-terminal state)
         var metadata = await CreateAndSaveMetadata(
-            name: nameof(ManifestManagerWorkflow),
+            name: typeof(ManifestManagerWorkflow).FullName!,
             state: WorkflowState.InProgress,
             startTime: DateTime.UtcNow.AddHours(-2)
         );
@@ -276,7 +276,7 @@ public class MetadataCleanupWorkflowTests : TestSetup
     {
         // Arrange - Create expired metadata with associated logs
         var metadata = await CreateAndSaveMetadata(
-            name: nameof(ManifestManagerWorkflow),
+            name: typeof(ManifestManagerWorkflow).FullName!,
             state: WorkflowState.Completed,
             startTime: DateTime.UtcNow.AddHours(-2)
         );
@@ -337,13 +337,13 @@ public class MetadataCleanupWorkflowTests : TestSetup
     {
         // Arrange
         var expiredWhitelisted = await CreateAndSaveMetadata(
-            name: nameof(ManifestManagerWorkflow),
+            name: typeof(ManifestManagerWorkflow).FullName!,
             state: WorkflowState.Completed,
             startTime: DateTime.UtcNow.AddHours(-2)
         );
 
         var recentWhitelisted = await CreateAndSaveMetadata(
-            name: nameof(ManifestManagerWorkflow),
+            name: typeof(ManifestManagerWorkflow).FullName!,
             state: WorkflowState.Completed,
             startTime: DateTime.UtcNow.AddMinutes(-10)
         );
@@ -355,7 +355,7 @@ public class MetadataCleanupWorkflowTests : TestSetup
         );
 
         var expiredPending = await CreateAndSaveMetadata(
-            name: nameof(ManifestManagerWorkflow),
+            name: typeof(ManifestManagerWorkflow).FullName!,
             state: WorkflowState.Pending,
             startTime: DateTime.UtcNow.AddHours(-2)
         );
@@ -397,7 +397,7 @@ public class MetadataCleanupWorkflowTests : TestSetup
         var config = new MetadataCleanupConfiguration();
         config.AddWorkflowType<ManifestManagerWorkflow>();
 
-        config.WorkflowTypeWhitelist.Should().Contain(nameof(ManifestManagerWorkflow));
+        config.WorkflowTypeWhitelist.Should().Contain(typeof(ManifestManagerWorkflow).FullName!);
     }
 
     [Test]
@@ -420,8 +420,8 @@ public class MetadataCleanupWorkflowTests : TestSetup
         config
             .WorkflowTypeWhitelist.Should()
             .HaveCount(3)
-            .And.Contain(nameof(ManifestManagerWorkflow))
-            .And.Contain(nameof(MetadataCleanupWorkflow))
+            .And.Contain(typeof(ManifestManagerWorkflow).FullName!)
+            .And.Contain(typeof(MetadataCleanupWorkflow).FullName!)
             .And.Contain("ThirdWorkflow");
     }
 

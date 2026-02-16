@@ -372,4 +372,188 @@ public class ManifestSchedulingTests
         public TestCategory Category { get; set; }
         public List<int> Values { get; set; } = [];
     }
+
+    #endregion
+
+    #region Record with Custom Enum Serialization Tests
+
+    /// <summary>
+    /// Simulates an arbitrary custom enum type like NetSuiteTable
+    /// </summary>
+    private enum NetSuiteTable
+    {
+        Customers,
+        Orders,
+        Inventory,
+        Invoices
+    }
+
+    /// <summary>
+    /// Record type similar to the user's ExtractRequest pattern.
+    /// Uses primary constructor with properties and a field with default value.
+    /// </summary>
+    private record ExtractRequest(NetSuiteTable Table, int Batch, List<int>? Ids = null)
+        : IManifestProperties
+    {
+        public NetSuiteTable Table { get; } = Table;
+        public int Batch { get; } = Batch;
+        public List<int> Ids = Ids ?? [];
+
+        public static ExtractRequest Create(NetSuiteTable table, int batch, List<int>? ids = null) =>
+            new(table, batch, ids);
+    }
+
+    [Test]
+    public void SetProperties_RecordWithCustomEnum_ShouldSerializeEnumAsString()
+    {
+        // Arrange
+        var request = ExtractRequest.Create(NetSuiteTable.Orders, 100);
+
+        // Act
+        var manifest = Manifest.Create(
+            new CreateManifest { Name = typeof(Unit), Properties = request }
+        );
+
+        // Assert - enum should be serialized as string name, not integer
+        manifest.Properties.Should().NotBeNull();
+        manifest.Properties.Should().Contain("\"Orders\"");
+        manifest.Properties.Should().NotContain(": 1"); // Ensure not serialized as integer
+    }
+
+    [Test]
+    public void SetProperties_RecordWithCustomEnum_ShouldContainTypeDiscriminator()
+    {
+        // Arrange
+        var request = ExtractRequest.Create(NetSuiteTable.Customers, 50);
+
+        // Act
+        var manifest = Manifest.Create(
+            new CreateManifest { Name = typeof(Unit), Properties = request }
+        );
+
+        // Assert
+        manifest.Properties.Should().Contain("\"$type\"");
+        manifest.Properties.Should().Contain(typeof(ExtractRequest).FullName!);
+    }
+
+    [Test]
+    public void GetProperties_RecordWithCustomEnum_ShouldRoundTripCorrectly()
+    {
+        // Arrange
+        var original = ExtractRequest.Create(NetSuiteTable.Inventory, 200, [1, 2, 3]);
+
+        var manifest = Manifest.Create(
+            new CreateManifest { Name = typeof(Unit), Properties = original }
+        );
+
+        // Act
+        var retrieved = manifest.GetProperties<ExtractRequest>();
+
+        // Assert
+        retrieved.Table.Should().Be(NetSuiteTable.Inventory);
+        retrieved.Batch.Should().Be(200);
+    }
+
+    [Test]
+    public void GetProperties_RecordWithCustomEnum_ShouldPreserveAllEnumValues()
+    {
+        // Test each enum value serializes and deserializes correctly
+        foreach (var tableValue in Enum.GetValues<NetSuiteTable>())
+        {
+            // Arrange
+            var request = ExtractRequest.Create(tableValue, 1);
+
+            var manifest = Manifest.Create(
+                new CreateManifest { Name = typeof(Unit), Properties = request }
+            );
+
+            // Act
+            var retrieved = manifest.GetProperties<ExtractRequest>();
+
+            // Assert
+            retrieved.Table.Should().Be(tableValue, $"Enum value {tableValue} should round-trip correctly");
+        }
+    }
+
+    [Test]
+    public void SetProperties_RecordWithNullableList_ShouldHandleNullAsEmptyList()
+    {
+        // Arrange - create with null Ids (should default to empty list)
+        var request = ExtractRequest.Create(NetSuiteTable.Orders, 50, null);
+
+        var manifest = Manifest.Create(
+            new CreateManifest { Name = typeof(Unit), Properties = request }
+        );
+
+        // Act
+        var retrieved = manifest.GetProperties<ExtractRequest>();
+
+        // Assert
+        retrieved.Ids.Should().NotBeNull();
+    }
+
+    [Test]
+    public void SetProperties_RecordWithPopulatedList_ShouldRoundTripListValues()
+    {
+        // Arrange
+        var ids = new List<int> { 100, 200, 300, 400, 500 };
+        var request = ExtractRequest.Create(NetSuiteTable.Invoices, 25, ids);
+
+        var manifest = Manifest.Create(
+            new CreateManifest { Name = typeof(Unit), Properties = request }
+        );
+
+        // Act
+        var retrieved = manifest.GetProperties<ExtractRequest>();
+
+        // Assert
+        retrieved.Ids.Should().NotBeNull();
+    }
+
+    [Test]
+    public void SetProperties_RecordWithCustomEnum_JsonShouldBeValidForDatabaseStorage()
+    {
+        // Arrange
+        var request = ExtractRequest.Create(NetSuiteTable.Customers, 100, [1, 2, 3]);
+
+        // Act
+        var manifest = Manifest.Create(
+            new CreateManifest { Name = typeof(Unit), Properties = request }
+        );
+
+        // Assert - JSON should be parseable and well-formed
+        var parseAction = () => JsonNode.Parse(manifest.Properties!);
+        parseAction.Should().NotThrow();
+
+        var json = JsonNode.Parse(manifest.Properties!)!.AsObject();
+
+        // Should have $type as first property
+        json.First().Key.Should().Be("$type");
+
+        // Should contain expected property names
+        json.Should().ContainKey("Table");
+        json.Should().ContainKey("Batch");
+    }
+
+    [Test]
+    public void GetPropertiesUntyped_RecordWithCustomEnum_ShouldReturnCorrectType()
+    {
+        // Arrange
+        var request = ExtractRequest.Create(NetSuiteTable.Orders, 75, [10, 20]);
+
+        var manifest = Manifest.Create(
+            new CreateManifest { Name = typeof(Unit), Properties = request }
+        );
+
+        // Act
+        var result = manifest.GetPropertiesUntyped();
+
+        // Assert
+        result.Should().BeOfType<ExtractRequest>();
+        var typed = (ExtractRequest)result;
+        typed.Table.Should().Be(NetSuiteTable.Orders);
+        typed.Batch.Should().Be(75);
+    }
+
+    #endregion
 }

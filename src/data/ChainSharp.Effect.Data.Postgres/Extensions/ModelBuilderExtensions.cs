@@ -42,10 +42,10 @@ public static class ModelBuilderExtensions
     /// </remarks>
     public static ModelBuilder AddPostgresEnums(this ModelBuilder modelBuilder)
     {
-        modelBuilder.HasPostgresEnum<WorkflowState>();
-        modelBuilder.HasPostgresEnum<LogLevel>();
-        modelBuilder.HasPostgresEnum<ScheduleType>();
-        modelBuilder.HasPostgresEnum<DeadLetterStatus>();
+        modelBuilder.HasPostgresEnum<WorkflowState>(schema: "chain_sharp");
+        modelBuilder.HasPostgresEnum<LogLevel>(schema: "chain_sharp");
+        modelBuilder.HasPostgresEnum<ScheduleType>(schema: "chain_sharp");
+        modelBuilder.HasPostgresEnum<DeadLetterStatus>(schema: "chain_sharp");
 
         return modelBuilder;
     }
@@ -69,10 +69,10 @@ public static class ModelBuilderExtensions
     {
         var npgsqlDataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
 
-        npgsqlDataSourceBuilder.MapEnum<WorkflowState>();
-        npgsqlDataSourceBuilder.MapEnum<LogLevel>();
-        npgsqlDataSourceBuilder.MapEnum<ScheduleType>();
-        npgsqlDataSourceBuilder.MapEnum<DeadLetterStatus>();
+        npgsqlDataSourceBuilder.MapEnum<WorkflowState>("chain_sharp.workflow_state");
+        npgsqlDataSourceBuilder.MapEnum<LogLevel>("chain_sharp.log_level");
+        npgsqlDataSourceBuilder.MapEnum<ScheduleType>("chain_sharp.schedule_type");
+        npgsqlDataSourceBuilder.MapEnum<DeadLetterStatus>("chain_sharp.dead_letter_status");
 
         return npgsqlDataSourceBuilder.Build();
     }

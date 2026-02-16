@@ -35,11 +35,11 @@
                 </RadzenStack>
 
                 <RadzenStack Gap="0.25rem">
-                    <RadzenLabel Text="Max Jobs Per Cycle" Component="MaxJobsPerCycle" />
+                    <RadzenLabel Text="Max Active Jobs" Component="MaxActiveJobs" />
                     <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
-                        Maximum number of jobs enqueued per polling cycle. Excess jobs are picked up in the next cycle.
+                        Maximum number of active jobs (Pending + InProgress) allowed. Leave empty for unlimited.
                     </RadzenText>
-                    <RadzenNumeric @bind-Value="_schedulerConfig!.MaxJobsPerCycle" TValue="int" Min="1" Style="max-width: 400px;" Name="MaxJobsPerCycle" />
+                    <RadzenNumeric @bind-Value="_schedulerConfig!.MaxActiveJobs" TValue="int?" Min="1" Style="max-width: 400px;" Name="MaxActiveJobs" />
                 </RadzenStack>
             </RadzenStack>
         </RadzenFieldset>

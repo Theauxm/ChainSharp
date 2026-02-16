@@ -30,7 +30,7 @@ public partial class ServerSettingsPage
 
     // Scheduler saved-state snapshots
     private TimeSpan _savedPollingInterval;
-    private int _savedMaxJobsPerCycle;
+    private int? _savedMaxActiveJobs;
     private int _savedDefaultMaxRetries;
     private TimeSpan _savedDefaultRetryDelay;
     private double _savedRetryBackoffMultiplier;
@@ -53,7 +53,7 @@ public partial class ServerSettingsPage
         _schedulerAvailable
         && (
             _pollingInterval.ToTimeSpan() != _savedPollingInterval
-            || _schedulerConfig!.MaxJobsPerCycle != _savedMaxJobsPerCycle
+            || _schedulerConfig!.MaxActiveJobs != _savedMaxActiveJobs
         );
 
     private bool IsRetryDirty =>
@@ -165,7 +165,7 @@ public partial class ServerSettingsPage
             return;
 
         _schedulerConfig.PollingInterval = TimeSpan.FromSeconds(5);
-        _schedulerConfig.MaxJobsPerCycle = 100;
+        _schedulerConfig.MaxActiveJobs = 10;
         _schedulerConfig.DefaultMaxRetries = 3;
         _schedulerConfig.DefaultRetryDelay = TimeSpan.FromMinutes(5);
         _schedulerConfig.RetryBackoffMultiplier = 2.0;
@@ -188,7 +188,7 @@ public partial class ServerSettingsPage
     private void SnapshotSchedulerState()
     {
         _savedPollingInterval = _schedulerConfig!.PollingInterval;
-        _savedMaxJobsPerCycle = _schedulerConfig.MaxJobsPerCycle;
+        _savedMaxActiveJobs = _schedulerConfig.MaxActiveJobs;
         _savedDefaultMaxRetries = _schedulerConfig.DefaultMaxRetries;
         _savedDefaultRetryDelay = _schedulerConfig.DefaultRetryDelay;
         _savedRetryBackoffMultiplier = _schedulerConfig.RetryBackoffMultiplier;

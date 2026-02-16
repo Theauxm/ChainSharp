@@ -70,7 +70,7 @@ Edit `appsettings.json` to customize:
   },
   "Scheduler": {
     "PollingIntervalSeconds": 30,
-    "MaxJobsPerCycle": 50,
+    "MaxActiveJobs": 50,
     "DefaultMaxRetries": 3
   }
 }

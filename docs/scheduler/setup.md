@@ -38,7 +38,7 @@ builder.Services.AddChainSharpEffects(options => options
     .AddPostgresEffect(connectionString)
     .AddScheduler(scheduler => scheduler
         .PollingInterval(TimeSpan.FromSeconds(5))
-        .MaxJobsPerCycle(100)
+        .MaxActiveJobs(100)
         .DefaultMaxRetries(3)
         .UseHangfire(connectionString)
 

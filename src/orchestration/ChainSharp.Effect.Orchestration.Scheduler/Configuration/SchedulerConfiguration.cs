@@ -21,14 +21,13 @@ public class SchedulerConfiguration
     public TimeSpan PollingInterval { get; set; } = TimeSpan.FromSeconds(5);
 
     /// <summary>
-    /// The maximum number of jobs that can be enqueued in a single polling cycle.
+    /// The maximum number of active jobs (Pending + InProgress) allowed across all manifests.
     /// </summary>
     /// <remarks>
-    /// This prevents the scheduler from overwhelming the background task server
-    /// with too many jobs at once. Jobs exceeding this limit will be picked up
-    /// in the next polling cycle.
+    /// When the total number of active jobs reaches this limit, no new jobs will be enqueued
+    /// until existing jobs complete. Set to null to disable this limit (unlimited).
     /// </remarks>
-    public int MaxJobsPerCycle { get; set; } = 100;
+    public int? MaxActiveJobs { get; set; } = 10;
 
     /// <summary>
     /// The default number of retry attempts before a job is dead-lettered.

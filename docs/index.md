@@ -75,7 +75,7 @@ See [IDE Extensions](ide-extensions.md) for details.
 
 ## Quick Start
 
-See [Getting Started](getting-started.md) for installation and your first workflow.
+ChainSharp 5.x requires `net10.0`. See [Getting Started](getting-started.md) for installation and your first workflow.
 
 ## Available NuGet Packages
 

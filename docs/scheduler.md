@@ -96,3 +96,7 @@ The **ManifestPollingService** is a .NET `BackgroundService` that runs the Manif
 The **ManifestManagerWorkflow** loads enabled manifests, dead-letters any that have exceeded their retry limit, determines which are due for execution, and enqueues them to the background task server (Hangfire).
 
 The **TaskServerExecutorWorkflow** runs on Hangfire workers for each enqueued job. It loads the Metadata and Manifest, validates the job is still pending, executes the target workflow via `IWorkflowBus`, and updates `LastSuccessfulRun` on success.
+
+## Sample Project
+
+A working example with Hangfire, bulk scheduling, metadata cleanup, and the dashboard is in [`samples/ChainSharp.Samples.Scheduler.Hangfire`](https://github.com/Theauxm/ChainSharp/tree/main/samples/ChainSharp.Samples.Scheduler.Hangfire).

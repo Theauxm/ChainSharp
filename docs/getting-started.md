@@ -6,6 +6,16 @@ nav_order: 2
 
 # Getting Started
 
+## Prerequisites
+
+ChainSharp 5.x targets `net10.0` exclusively. Make sure your project's target framework is set accordingly:
+
+```xml
+<TargetFramework>net10.0</TargetFramework>
+```
+
+If you're upgrading from 4.x, see [Migration (4.x → 5.x)](migration.md).
+
 ## Installation
 
 ### Install NuGet Packages
@@ -163,5 +173,6 @@ public class UsersController(IWorkflowBus workflowBus) : ControllerBase
 - [Core Concepts](concepts.md) - Understand the ideas behind ChainSharp
 - [Usage Guide](usage-guide.md) - Patterns and examples for building workflows
 - [Mediator](usage-guide/mediator.md) - Dispatch workflows with the WorkflowBus
+- [Scheduling](scheduler.md) - Background job orchestration with retries and dead-lettering
 - [Architecture](architecture.md) - How the system is built internally
 - [Dashboard](dashboard.md) - Add a web UI for inspecting workflows (optional)

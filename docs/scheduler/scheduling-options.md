@@ -9,9 +9,32 @@ nav_order: 2
 
 ## Bulk Scheduling
 
-`ScheduleManyAsync` creates multiple manifests in a single transaction. If any fails, the entire batch rolls back.
+### Startup Configuration: ScheduleMany
 
-### Simple List
+For static bulk jobs, use the builder-time `ScheduleMany` during DI configuration. No async startup code or service resolution needed:
+
+```csharp
+var tables = new[] { "users", "orders", "products", "inventory" };
+
+services.AddChainSharpEffects(options => options
+    .AddScheduler(scheduler => scheduler
+        .UseHangfire(connectionString)
+        .ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
+            tables,
+            tableName => (
+                ExternalId: $"sync-{tableName}",
+                Input: new SyncTableInput { TableName = tableName }
+            ),
+            Every.Minutes(5))
+    )
+);
+```
+
+The builder captures the manifests and seeds them when the `BackgroundService` starts—same upsert semantics as `Schedule`.
+
+### Runtime: ScheduleManyAsync
+
+`ScheduleManyAsync` creates multiple manifests in a single transaction at runtime. If any fails, the entire batch rolls back.
 
 ```csharp
 var tables = new[] { "users", "orders", "products", "inventory" };
@@ -24,6 +47,8 @@ await scheduler.ScheduleManyAsync<ISyncTableWorkflow, SyncTableInput, string>(
     ),
     Every.Minutes(5));
 ```
+
+Use the builder approach for jobs known at compile time. Use `ScheduleManyAsync` when the set of jobs is determined at runtime (loaded from a database, config file, or external API).
 
 ### Configuration Per Item
 
@@ -72,6 +97,28 @@ await scheduler.ScheduleManyAsync<ISyncTableWorkflow, SyncTableInput, (string Ta
     ),
     Every.Minutes(5));
 ```
+
+### Pruning Stale Manifests
+
+When the source collection shrinks between deployments—tables removed, slices reduced—old manifests stick around in the database. The `prunePrefix` parameter handles this automatically:
+
+```csharp
+// If "partner" was removed from this list since the last deployment,
+// its manifests will be deleted because they start with "sync-"
+// but weren't included in the current batch.
+var tables = new[] { "customer", "user" };
+
+scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
+    tables,
+    table => (
+        ExternalId: $"sync-{table}",
+        Input: new SyncTableInput { TableName = table }
+    ),
+    Every.Minutes(5),
+    prunePrefix: "sync-");
+```
+
+When `prunePrefix` is specified, after creating or updating the manifests in the batch, the scheduler deletes any existing manifests whose `ExternalId` starts with the prefix but weren't part of the current call. This keeps the manifest table in sync with your source data without manual cleanup.
 
 ## Management Operations
 

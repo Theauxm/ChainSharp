@@ -63,3 +63,44 @@ Check `FailureException` and `FailureReason` in the metadata record for details.
 ## Steps execute out of order or skip unexpectedly
 
 If you're using `ShortCircuit`, remember that throwing an exception means "continue" not "stop." See [ShortCircuit](short-circuit.md) for details.
+
+## Scheduled jobs don't execute (no errors)
+
+The most common cause: `TaskServerExecutorWorkflow.Assembly` isn't registered with the `WorkflowBus`. The ManifestManager enqueues jobs to Hangfire, but Hangfire can't resolve the executor workflow.
+
+**Fix:**
+```csharp
+.AddEffectWorkflowBus(
+    typeof(Program).Assembly,
+    typeof(TaskServerExecutorWorkflow).Assembly  // Don't forget this
+)
+```
+
+Other causes:
+- The manifest's `IsEnabled` is `false`—check via `IManifestScheduler` or the database
+- `PollingInterval` is set too high and the job hasn't been picked up yet
+- The workflow's input type doesn't implement `IManifestProperties`
+
+## "Ambiguous reference" between Cron types
+
+Both ChainSharp and Hangfire define a `Cron` class. If you're importing both namespaces, the compiler can't tell which one you mean.
+
+**Fix:** Use a namespace alias:
+```csharp
+using Cron = ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling.Cron;
+```
+
+## "IManifestProperties" not found
+
+`IManifestProperties` lives in the `Theauxm.ChainSharp.Effect` package, not in the Scheduler package. Namespace: `ChainSharp.Effect.Models.Manifest`.
+
+**Fix:**
+```csharp
+using ChainSharp.Effect.Models.Manifest;
+```
+
+## NuGet restore fails with NU1107 for Hangfire
+
+The Scheduler.Hangfire package requires `Hangfire.Core >= 1.8` and `Hangfire.PostgreSql >= 1.20`. If your project pins an older version, NuGet can't resolve the dependency.
+
+**Fix:** Update your Hangfire packages to match or exceed the minimum versions.

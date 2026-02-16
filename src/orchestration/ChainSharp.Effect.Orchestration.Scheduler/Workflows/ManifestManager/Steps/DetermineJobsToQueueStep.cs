@@ -37,9 +37,10 @@ internal class DetermineJobsToQueueStep(
         {
             var totalActiveJobs = manifests
                 .SelectMany(m => m.Metadatas)
-                .Count(m =>
-                    m.WorkflowState == WorkflowState.Pending
-                    || m.WorkflowState == WorkflowState.InProgress
+                .Count(
+                    m =>
+                        m.WorkflowState == WorkflowState.Pending
+                        || m.WorkflowState == WorkflowState.InProgress
                 );
 
             if (totalActiveJobs >= config.MaxActiveJobs.Value)
@@ -127,9 +128,10 @@ internal class DetermineJobsToQueueStep(
                 {
                     var currentActiveJobs = manifests
                         .SelectMany(m => m.Metadatas)
-                        .Count(m =>
-                            m.WorkflowState == WorkflowState.Pending
-                            || m.WorkflowState == WorkflowState.InProgress
+                        .Count(
+                            m =>
+                                m.WorkflowState == WorkflowState.Pending
+                                || m.WorkflowState == WorkflowState.InProgress
                         );
 
                     if (currentActiveJobs + manifestsToQueue.Count >= config.MaxActiveJobs.Value)

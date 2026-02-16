@@ -8,9 +8,11 @@ namespace ChainSharp.Effect.Dashboard.Components.Pages.Settings;
 
 public partial class ServerSettingsPage
 {
-    [Inject] private IServiceProvider ServiceProvider { get; set; } = default!;
+    [Inject]
+    private IServiceProvider ServiceProvider { get; set; } = default!;
 
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject]
+    private NotificationService NotificationService { get; set; } = default!;
 
     // ── Scheduler state ──
     private SchedulerConfiguration? _schedulerConfig;
@@ -87,7 +89,8 @@ public partial class ServerSettingsPage
 
     private bool IsEffectsDirty =>
         _effectsAvailable
-        && _effects.Any(e => e.Toggleable && e.Enabled != _savedEffectStates.GetValueOrDefault(e.FactoryType)
+        && _effects.Any(
+            e => e.Toggleable && e.Enabled != _savedEffectStates.GetValueOrDefault(e.FactoryType)
         );
 
     protected override void OnInitialized()
@@ -208,15 +211,16 @@ public partial class ServerSettingsPage
     {
         _effects = _effectRegistry!
             .GetAll()
-            .Select(kvp =>
-                new EffectEntry
-                {
-                    FactoryType = kvp.Key,
-                    Name = kvp.Key.Name,
-                    FullName = kvp.Key.FullName ?? kvp.Key.Name,
-                    Enabled = kvp.Value,
-                    Toggleable = _effectRegistry.IsToggleable(kvp.Key),
-                }
+            .Select(
+                kvp =>
+                    new EffectEntry
+                    {
+                        FactoryType = kvp.Key,
+                        Name = kvp.Key.Name,
+                        FullName = kvp.Key.FullName ?? kvp.Key.Name,
+                        Enabled = kvp.Value,
+                        Toggleable = _effectRegistry.IsToggleable(kvp.Key),
+                    }
             )
             .OrderBy(e => e.Name)
             .ToList();

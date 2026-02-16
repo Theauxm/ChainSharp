@@ -82,10 +82,9 @@ public class MaxActiveJobsTests
                         .AddEffectDataContextLogging(minimumLogLevel: LogLevel.Trace)
                         .AddJsonEffect()
                         .AddStepLogger(serializeStepData: true)
-                        .AddScheduler(scheduler =>
-                            scheduler
-                                .UseInMemoryTaskServer()
-                                .MaxActiveJobs(MaxActiveJobsLimit)
+                        .AddScheduler(
+                            scheduler =>
+                                scheduler.UseInMemoryTaskServer().MaxActiveJobs(MaxActiveJobsLimit)
                         )
             )
             .AddScoped<IDataContext>(sp =>
@@ -394,9 +393,7 @@ public class MaxActiveJobsTests
             .Metadatas.Where(m => m.ManifestId == newManifest.Id)
             .ToListAsync();
 
-        newMetadatas
-            .Should()
-            .NotBeEmpty("Succeeded jobs do not count toward MaxActiveJobs limit");
+        newMetadatas.Should().NotBeEmpty("Succeeded jobs do not count toward MaxActiveJobs limit");
     }
 
     [Test]
@@ -437,9 +434,7 @@ public class MaxActiveJobsTests
             .Metadatas.Where(m => m.ManifestId == newManifest.Id)
             .ToListAsync();
 
-        newMetadatas
-            .Should()
-            .NotBeEmpty("Failed jobs do not count toward MaxActiveJobs limit");
+        newMetadatas.Should().NotBeEmpty("Failed jobs do not count toward MaxActiveJobs limit");
     }
 
     #endregion

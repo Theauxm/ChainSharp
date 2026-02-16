@@ -1,3 +1,10 @@
+## [5.11.6](https://github.com/Theauxm/ChainSharp/compare/v5.11.5...v5.11.6) (2026-02-16)
+
+
+### Bug Fixes
+
+* Dashboard Static Web Assets ([b311935](https://github.com/Theauxm/ChainSharp/commit/b311935f1e23c8f5714d04b4721fc0e9a359ad69))
+
 ## [5.11.5](https://github.com/Theauxm/ChainSharp/compare/v5.11.4...v5.11.5) (2026-02-16)
 
 

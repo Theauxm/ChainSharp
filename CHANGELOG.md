@@ -1,3 +1,10 @@
+## [5.11.4](https://github.com/Theauxm/ChainSharp/compare/v5.11.3...v5.11.4) (2026-02-16)
+
+
+### Bug Fixes
+
+* namespace updates for enums ([9df2a52](https://github.com/Theauxm/ChainSharp/commit/9df2a52eea9270d9358fd28104d648de2df19956))
+
 ## [5.11.3](https://github.com/Theauxm/ChainSharp/compare/v5.11.2...v5.11.3) (2026-02-16)
 
 

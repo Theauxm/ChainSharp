@@ -373,8 +373,6 @@ public class ManifestSchedulingTests
         public List<int> Values { get; set; } = [];
     }
 
-    #endregion
-
     #region Record with Custom Enum Serialization Tests
 
     /// <summary>
@@ -399,8 +397,11 @@ public class ManifestSchedulingTests
         public int Batch { get; } = Batch;
         public List<int> Ids = Ids ?? [];
 
-        public static ExtractRequest Create(NetSuiteTable table, int batch, List<int>? ids = null) =>
-            new(table, batch, ids);
+        public static ExtractRequest Create(
+            NetSuiteTable table,
+            int batch,
+            List<int>? ids = null
+        ) => new(table, batch, ids);
     }
 
     [Test]
@@ -417,7 +418,8 @@ public class ManifestSchedulingTests
         // Assert - enum should be serialized as string name, not integer
         manifest.Properties.Should().NotBeNull();
         manifest.Properties.Should().Contain("\"Orders\"");
-        manifest.Properties.Should().NotContain(": 1"); // Ensure not serialized as integer
+        // Verify table is serialized as string "Orders" not as integer "1"
+        manifest.Properties.Should().NotContain("\"table\": 1");
     }
 
     [Test]
@@ -471,7 +473,9 @@ public class ManifestSchedulingTests
             var retrieved = manifest.GetProperties<ExtractRequest>();
 
             // Assert
-            retrieved.Table.Should().Be(tableValue, $"Enum value {tableValue} should round-trip correctly");
+            retrieved
+                .Table.Should()
+                .Be(tableValue, $"Enum value {tableValue} should round-trip correctly");
         }
     }
 
@@ -530,9 +534,9 @@ public class ManifestSchedulingTests
         // Should have $type as first property
         json.First().Key.Should().Be("$type");
 
-        // Should contain expected property names
-        json.Should().ContainKey("Table");
-        json.Should().ContainKey("Batch");
+        // Should contain expected property names (camelCase in JSON)
+        json.ContainsKey("table").Should().BeTrue();
+        json.ContainsKey("batch").Should().BeTrue();
     }
 
     [Test]

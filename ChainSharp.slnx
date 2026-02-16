@@ -7,6 +7,14 @@
   <Project Path="src/orchestration/ChainSharp.Effect.Orchestration.Mediator/ChainSharp.Effect.Orchestration.Mediator.csproj" />
   <Project Path="src/orchestration/ChainSharp.Effect.Orchestration.Scheduler/ChainSharp.Effect.Orchestration.Scheduler.csproj" />
   <Project Path="src/orchestration/ChainSharp.Effect.Orchestration.Scheduler.Hangfire/ChainSharp.Effect.Orchestration.Scheduler.Hangfire.csproj" />
+  <Folder Name="/src/" />
+  <Folder Name="/src/analyzers/" />
+  <Folder Name="/src/data/" />
+  <Folder Name="/src/orchestration/" />
+  <Folder Name="/src/providers/" />
+  <Folder Name="/tests/">
+    <Project Path="tests/ChainSharp.Tests.Effect.Scheduler.Integration/ChainSharp.Tests.Effect.Scheduler.Integration.csproj" />
+  </Folder>
   <Project Path="samples/ChainSharp.Samples.Scheduler.Hangfire/ChainSharp.Samples.Scheduler.Hangfire.csproj" />
   <Project Path="src/providers/ChainSharp.Effect.Provider.Parameter/ChainSharp.Effect.Provider.Parameter.csproj" />
   <Project Path="src/providers/ChainSharp.Effect.StepProvider.Logging/ChainSharp.Effect.StepProvider.Logging.csproj" />
@@ -20,11 +28,7 @@
   <Project Path="tests/ChainSharp.Tests.Integration/ChainSharp.Tests.Integration.csproj" />
   <Project Path="tests/ChainSharp.Tests.MemoryLeak.Integration/ChainSharp.Tests.MemoryLeak.Integration.csproj" />
   <Project Path="tests/ChainSharp.Tests.Unit/ChainSharp.Tests.Unit.csproj" />
-  <Project Path="tests/ChainSharp.Tests/ChainSharp.Tests.csproj">
-    <BuildType Project="?" />
-    <Platform Project="?" />
-    <Build Project="false" />
-  </Project>
+  <Project Path="tests/ChainSharp.Tests/ChainSharp.Tests.csproj" />
   <Project Path="src/core/ChainSharp/ChainSharp.csproj" />
   <Project Path="src/analyzers/ChainSharp.Analyzers/ChainSharp.Analyzers.csproj" />
   <Project Path="tests/ChainSharp.Tests.Analyzers/ChainSharp.Tests.Analyzers.csproj" />

@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Newtonsoft.Json;
@@ -56,6 +57,30 @@ public static class ChainSharpJsonSerializationOptions
             IncludeFields = true,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             ReferenceHandler = ReferenceHandler.Preserve,
+            MaxDepth = 8,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
+            Converters =
+            {
+                new JsonStringEnumConverter(),
+                new ValueTupleConverter(),
+                new MockConverter(),
+                new SystemTypeConverter(),
+            }
+        };
+
+    /// <summary>
+    /// JSON serializer options for Manifest property serialization.
+    /// Identical to <see cref="Default"/> but without <see cref="ReferenceHandler.Preserve"/>,
+    /// producing clean JSON without $id/$ref/$values noise.
+    /// </summary>
+    public static JsonSerializerOptions ManifestProperties { get; set; } =
+        new()
+        {
+            WriteIndented = true,
+            IncludeFields = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             MaxDepth = 8,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,

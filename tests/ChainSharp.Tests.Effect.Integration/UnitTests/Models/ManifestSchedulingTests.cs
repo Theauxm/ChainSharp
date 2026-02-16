@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.Manifest.DTOs;
@@ -206,5 +207,169 @@ public class ManifestSchedulingTests
         ((int)ScheduleType.Cron).Should().Be(1);
         ((int)ScheduleType.Interval).Should().Be(2);
         ((int)ScheduleType.OnDemand).Should().Be(3);
+    }
+
+    #region Properties Serialization Tests
+
+    [Test]
+    public void SetProperties_ShouldProduceTypeDiscriminator()
+    {
+        // Arrange
+        var config = new TestManifestProperties
+        {
+            Name = "TypeDiscriminatorTest",
+            Value = 42,
+            Enabled = true
+        };
+
+        // Act
+        var manifest = Manifest.Create(
+            new CreateManifest { Name = typeof(Unit), Properties = config }
+        );
+
+        // Assert - JSON should contain $type and NOT contain $id/$values
+        manifest.Properties.Should().NotBeNull();
+        manifest.Properties.Should().Contain("\"$type\"");
+        manifest.Properties.Should().Contain(typeof(TestManifestProperties).FullName!);
+        manifest.Properties.Should().NotContain("\"$id\"");
+        manifest.Properties.Should().NotContain("\"$values\"");
+    }
+
+    [Test]
+    public void SetProperties_ShouldPlaceTypeAsFirstProperty()
+    {
+        // Arrange
+        var config = new TestManifestProperties
+        {
+            Name = "Order",
+            Value = 1,
+            Enabled = true
+        };
+
+        // Act
+        var manifest = Manifest.Create(
+            new CreateManifest { Name = typeof(Unit), Properties = config }
+        );
+
+        // Assert - $type should be the first key in the JSON
+        var jsonObj = JsonNode.Parse(manifest.Properties!)!.AsObject();
+        jsonObj.First().Key.Should().Be("$type");
+    }
+
+    [Test]
+    public void GetProperties_ShouldRoundTripEnumValues()
+    {
+        // Arrange
+        var config = new TestManifestPropertiesWithEnum
+        {
+            Name = "EnumTest",
+            Category = TestCategory.Beta,
+            Values = [1, 2, 3]
+        };
+
+        var manifest = Manifest.Create(
+            new CreateManifest { Name = typeof(Unit), Properties = config }
+        );
+
+        // Act
+        var retrieved = manifest.GetProperties<TestManifestPropertiesWithEnum>();
+
+        // Assert
+        retrieved.Name.Should().Be("EnumTest");
+        retrieved.Category.Should().Be(TestCategory.Beta);
+        retrieved.Values.Should().BeEquivalentTo([1, 2, 3]);
+    }
+
+    [Test]
+    public void GetPropertiesUntyped_ShouldReturnCorrectRuntimeType()
+    {
+        // Arrange
+        var config = new TestManifestPropertiesWithEnum
+        {
+            Name = "UntypedTest",
+            Category = TestCategory.Gamma,
+            Values = [10, 20]
+        };
+
+        var manifest = Manifest.Create(
+            new CreateManifest { Name = typeof(Unit), Properties = config }
+        );
+
+        // Act
+        var result = manifest.GetPropertiesUntyped();
+
+        // Assert
+        result.Should().BeOfType<TestManifestPropertiesWithEnum>();
+        var typed = (TestManifestPropertiesWithEnum)result;
+        typed.Name.Should().Be("UntypedTest");
+        typed.Category.Should().Be(TestCategory.Gamma);
+        typed.Values.Should().BeEquivalentTo([10, 20]);
+    }
+
+    [Test]
+    public void GetProperties_ShouldRoundTripListFields()
+    {
+        // Arrange
+        var config = new TestManifestPropertiesWithEnum
+        {
+            Name = "ListTest",
+            Category = TestCategory.Alpha,
+            Values = [100, 200, 300, 400, 500]
+        };
+
+        var manifest = Manifest.Create(
+            new CreateManifest { Name = typeof(Unit), Properties = config }
+        );
+
+        // Act
+        var retrieved = manifest.GetProperties<TestManifestPropertiesWithEnum>();
+
+        // Assert
+        retrieved.Values.Should().HaveCount(5);
+        retrieved.Values.Should().BeEquivalentTo([100, 200, 300, 400, 500]);
+    }
+
+    [Test]
+    public void SetProperties_EnumShouldSerializeAsString()
+    {
+        // Arrange
+        var config = new TestManifestPropertiesWithEnum
+        {
+            Name = "EnumStringTest",
+            Category = TestCategory.Beta,
+            Values = []
+        };
+
+        // Act
+        var manifest = Manifest.Create(
+            new CreateManifest { Name = typeof(Unit), Properties = config }
+        );
+
+        // Assert - enum should be serialized as string name, not integer
+        manifest.Properties.Should().Contain("\"Beta\"");
+        manifest.Properties.Should().NotContain(": 1");
+    }
+
+    #endregion
+
+    private class TestManifestProperties : IManifestProperties
+    {
+        public string Name { get; set; } = string.Empty;
+        public int Value { get; set; }
+        public bool Enabled { get; set; }
+    }
+
+    private enum TestCategory
+    {
+        Alpha,
+        Beta,
+        Gamma
+    }
+
+    private class TestManifestPropertiesWithEnum : IManifestProperties
+    {
+        public string Name { get; set; } = string.Empty;
+        public TestCategory Category { get; set; }
+        public List<int> Values { get; set; } = [];
     }
 }

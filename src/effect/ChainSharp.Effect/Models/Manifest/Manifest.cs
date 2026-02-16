@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
 using ChainSharp.Effect.Enums;
@@ -179,11 +180,27 @@ public class Manifest : IModel
         var propertiesType = properties.GetType();
 
         PropertyTypeName = propertiesType.FullName;
-        Properties = JsonSerializer.Serialize(
+
+        var json = JsonSerializer.Serialize(
             properties,
             propertiesType,
-            ChainSharpJsonSerializationOptions.Default
+            ChainSharpJsonSerializationOptions.ManifestProperties
         );
+
+        var node = JsonNode.Parse(json);
+        if (node is JsonObject obj)
+        {
+            var reordered = new JsonObject { ["$type"] = propertiesType.FullName };
+            foreach (var kvp in obj)
+                reordered[kvp.Key] = kvp.Value?.DeepClone();
+            Properties = reordered.ToJsonString(
+                ChainSharpJsonSerializationOptions.ManifestProperties
+            );
+        }
+        else
+        {
+            Properties = json;
+        }
 
         return Unit.Default;
     }
@@ -201,17 +218,34 @@ public class Manifest : IModel
                 $"Cannot deserialize null property object with type ({PropertyType})"
             );
 
-        var deserializedObject =
-            JsonSerializer.Deserialize(
+        return JsonSerializer.Deserialize(
                 Properties,
                 propertyType,
-                ChainSharpJsonSerializationOptions.Default
+                ChainSharpJsonSerializationOptions.ManifestProperties
             )
             ?? throw new Exception(
                 $"Could not deserialize property object ({Properties}) with type ({PropertyType})"
             );
+    }
 
-        return deserializedObject;
+    /// <summary>
+    /// Deserializes the Properties JSON using the type resolved from <see cref="PropertyTypeName"/>.
+    /// </summary>
+    public object GetPropertiesUntyped()
+    {
+        if (string.IsNullOrEmpty(Properties))
+            throw new Exception(
+                $"Cannot deserialize null property object with type ({PropertyType})"
+            );
+
+        return JsonSerializer.Deserialize(
+                Properties,
+                PropertyType,
+                ChainSharpJsonSerializationOptions.ManifestProperties
+            )
+            ?? throw new Exception(
+                $"Could not deserialize property object ({Properties}) with type ({PropertyType})"
+            );
     }
 
     public override string ToString() =>

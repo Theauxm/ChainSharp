@@ -26,6 +26,41 @@ public class ManifestSchedulingTests
     }
 
     [Test]
+    public void Create_ShouldGenerateNonEmptyExternalId()
+    {
+        // Arrange & Act
+        var manifest = Manifest.Create(new CreateManifest { Name = typeof(Unit) });
+
+        // Assert
+        manifest.ExternalId.Should().NotBeNullOrEmpty();
+    }
+
+    [Test]
+    public void Create_ShouldGenerateUniqueExternalIds()
+    {
+        // Arrange & Act
+        var manifest1 = Manifest.Create(new CreateManifest { Name = typeof(Unit) });
+        var manifest2 = Manifest.Create(new CreateManifest { Name = typeof(Unit) });
+
+        // Assert
+        manifest1.ExternalId.Should().NotBe(manifest2.ExternalId);
+    }
+
+    [Test]
+    public void ExternalId_ShouldBeSettableToArbitraryString()
+    {
+        // Arrange
+        var manifest = Manifest.Create(new CreateManifest { Name = typeof(Unit) });
+        var customId = "custom-slug-identifier-that-is-not-a-guid";
+
+        // Act
+        manifest.ExternalId = customId;
+
+        // Assert
+        manifest.ExternalId.Should().Be(customId);
+    }
+
+    [Test]
     public void Create_WithCronSchedule_ShouldSetCronProperties()
     {
         // Arrange & Act

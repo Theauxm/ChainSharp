@@ -1,3 +1,10 @@
+## [5.11.2](https://github.com/Theauxm/ChainSharp/compare/v5.11.1...v5.11.2) (2026-02-16)
+
+
+### Bug Fixes
+
+* ManifestProperties serialization ([#151](https://github.com/Theauxm/ChainSharp/issues/151)) ([912384e](https://github.com/Theauxm/ChainSharp/commit/912384ec420c5b2d50f1c31aab6d1f77bdad3360))
+
 ## [5.11.1](https://github.com/Theauxm/ChainSharp/compare/v5.11.0...v5.11.1) (2026-02-16)
 
 

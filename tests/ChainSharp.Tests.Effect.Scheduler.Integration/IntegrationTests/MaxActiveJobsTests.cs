@@ -105,8 +105,7 @@ public class MaxActiveJobsTests
         _workflow = _scope.ServiceProvider.GetRequiredService<IJobDispatcherWorkflow>();
         _dataContext = _scope.ServiceProvider.GetRequiredService<IDataContext>();
 
-        // Ensure test isolation by cleaning up leftover active entries from prior tests
-        await CleanupExistingEntries();
+        await TestSetup.CleanupDatabase(_dataContext);
     }
 
     [TearDown]
@@ -119,37 +118,6 @@ public class MaxActiveJobsTests
             dataContextDisposable.Dispose();
 
         _scope.Dispose();
-    }
-
-    private async Task CleanupExistingEntries()
-    {
-        // Cancel any leftover queued work queue entries
-        var existingEntries = await _dataContext
-            .WorkQueues.Where(q => q.Status == WorkQueueStatus.Queued)
-            .ToListAsync();
-
-        foreach (var entry in existingEntries)
-        {
-            entry.Status = WorkQueueStatus.Cancelled;
-        }
-
-        // Mark any leftover active metadata as completed so they don't count toward MaxActiveJobs
-        var activeMetadata = await _dataContext
-            .Metadatas.Where(
-                m =>
-                    m.WorkflowState == WorkflowState.Pending
-                    || m.WorkflowState == WorkflowState.InProgress
-            )
-            .ToListAsync();
-
-        foreach (var metadata in activeMetadata)
-        {
-            metadata.WorkflowState = WorkflowState.Completed;
-            metadata.EndTime = DateTime.UtcNow;
-        }
-
-        await _dataContext.SaveChanges(CancellationToken.None);
-        _dataContext.Reset();
     }
 
     #region Basic MaxActiveJobs Limit Tests

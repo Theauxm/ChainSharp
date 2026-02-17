@@ -20,7 +20,7 @@ LoadQueuedJobs → DispatchJobs
 
 ### LoadQueuedJobsStep
 
-Loads all `WorkQueue` entries with `Status = Queued`, ordered by `CreatedAt` ascending. FIFO—oldest entries get dispatched first.
+Loads all `WorkQueue` entries with `Status = Queued`, prioritizing dependent workflows (those whose manifest has `ScheduleType.Dependent`) over non-dependent ones, then ordered by `CreatedAt` ascending within each group. This ensures dependent workflows—which are already waiting on a parent to complete—get dispatched as soon as possible once queued.
 
 ### DispatchJobsStep
 

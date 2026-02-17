@@ -18,7 +18,7 @@ namespace ChainSharp.Tests.Effect.Scheduler.Integration.IntegrationTests;
 /// </summary>
 /// <remarks>
 /// The JobDispatcherWorkflow runs through the following steps:
-/// 1. LoadQueuedJobsStep - Loads all WorkQueue entries with Status == Queued, ordered by CreatedAt
+/// 1. LoadQueuedJobsStep - Loads all WorkQueue entries with Status == Queued, prioritizing dependent workflows then ordered by CreatedAt
 /// 2. DispatchJobsStep - For each entry: creates Metadata, updates status to Dispatched, enqueues to BackgroundTaskServer
 /// </remarks>
 [TestFixture]

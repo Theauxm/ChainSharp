@@ -62,11 +62,11 @@ public class MetadataCleanupWorkflowTests : TestSetup
     }
 
     [Test]
-    public void DefaultRetentionPeriod_IsOneHour()
+    public void DefaultRetentionPeriod_IsThirtyMinutes()
     {
         _config
             .MetadataCleanup!.RetentionPeriod.Should()
-            .Be(TimeSpan.FromHours(1), "default retention period should be 1 hour");
+            .Be(TimeSpan.FromMinutes(30), "default retention period should be 30 minutes");
     }
 
     [Test]
@@ -136,7 +136,7 @@ public class MetadataCleanupWorkflowTests : TestSetup
         var metadata = await CreateAndSaveMetadata(
             name: typeof(ManifestManagerWorkflow).FullName!,
             state: WorkflowState.Completed,
-            startTime: DateTime.UtcNow.AddMinutes(-30) // 30 min ago, within 1 hour retention
+            startTime: DateTime.UtcNow.AddMinutes(-15) // 15 min ago, within 30 minute retention
         );
 
         // Act

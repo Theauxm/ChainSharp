@@ -69,8 +69,9 @@ public static class ServiceExtensions
         // Migrate the database schema to the latest version
         DatabaseMigrator.Migrate(connectionString).Wait();
 
-        // Create a data source with enum mappings
+        // Create a data source with enum mappings and register for disposal on shutdown
         var dataSource = ModelBuilderExtensions.BuildDataSource(connectionString);
+        configurationBuilder.ServiceCollection.AddSingleton(dataSource);
 
         // Register the DbContextFactory
         configurationBuilder.ServiceCollection.AddDbContextFactory<PostgresContext>(

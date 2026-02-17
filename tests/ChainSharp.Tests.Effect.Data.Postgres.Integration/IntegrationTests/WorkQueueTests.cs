@@ -43,7 +43,7 @@ public class WorkQueueTests : TestSetup
         // Assert
         found.Should().NotBeNull();
         found!.WorkflowName.Should().Be("ChainSharp.Tests.TestWorkflow");
-        found.Input.Should().Be("""{"value":"test"}""");
+        found.Input.Should().Be("""{"value": "test"}""");
         found.InputTypeName.Should().Be("ChainSharp.Tests.TestInput");
         found.Status.Should().Be(WorkQueueStatus.Queued);
         found.ExternalId.Should().NotBeNullOrEmpty();
@@ -306,7 +306,7 @@ public class WorkQueueTests : TestSetup
         found.Input.Should().Contain("\"name\"");
         found.Input.Should().Contain("\"test\"");
         found.Input.Should().Contain("\"nested\"");
-        found.Input.Should().Contain("[1,2,3]");
+        found.Input.Should().Contain("[1, 2, 3]");
         found.Input.Should().Contain("true");
     }
 }

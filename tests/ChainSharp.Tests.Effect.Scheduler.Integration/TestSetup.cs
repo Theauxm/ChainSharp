@@ -11,6 +11,7 @@ using ChainSharp.Effect.Provider.Json.Extensions;
 using ChainSharp.Effect.Provider.Parameter.Extensions;
 using ChainSharp.Effect.StepProvider.Logging.Extensions;
 using ChainSharp.Tests.ArrayLogger.Services.ArrayLoggingProvider;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -90,6 +91,29 @@ public abstract class TestSetup
         TaskServerExecutor =
             Scope.ServiceProvider.GetRequiredService<ITaskServerExecutorWorkflow>();
         DataContext = Scope.ServiceProvider.GetRequiredService<IDataContext>();
+
+        await CleanupDatabase(DataContext);
+    }
+
+    /// <summary>
+    /// Deletes all rows from all scheduler tables in FK-safe order to ensure
+    /// complete test isolation between runs.
+    /// </summary>
+    public static async Task CleanupDatabase(IDataContext dataContext)
+    {
+        // Delete in FK-safe order (children before parents)
+        await dataContext.Logs.ExecuteDeleteAsync();
+        await dataContext.WorkQueues.ExecuteDeleteAsync();
+        await dataContext.DeadLetters.ExecuteDeleteAsync();
+        await dataContext.Metadatas.ExecuteDeleteAsync();
+
+        // Clear self-referencing FK before deleting manifests
+        await dataContext
+            .Manifests.Where(m => m.DependsOnManifestId != null)
+            .ExecuteUpdateAsync(s => s.SetProperty(m => m.DependsOnManifestId, (int?)null));
+        await dataContext.Manifests.ExecuteDeleteAsync();
+
+        dataContext.Reset();
     }
 
     [TearDown]

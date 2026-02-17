@@ -35,27 +35,6 @@ public class ManifestManagerWorkflowTests : TestSetup
     {
         await base.TestSetUp();
         _workflow = Scope.ServiceProvider.GetRequiredService<IManifestManagerWorkflow>();
-
-        // Ensure test isolation by disabling all existing manifests
-        // This prevents interference from data created by previous test runs
-        await CleanupExistingManifests();
-    }
-
-    /// <summary>
-    /// Disables all existing enabled manifests to ensure test isolation.
-    /// Each test creates its own manifests, and only those should be processed.
-    /// </summary>
-    private async Task CleanupExistingManifests()
-    {
-        var existingManifests = await DataContext.Manifests.Where(m => m.IsEnabled).ToListAsync();
-
-        foreach (var manifest in existingManifests)
-        {
-            manifest.IsEnabled = false;
-        }
-
-        await DataContext.SaveChanges(CancellationToken.None);
-        DataContext.Reset();
     }
 
     [TearDown]

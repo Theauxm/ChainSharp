@@ -53,4 +53,4 @@ jobs:
         run: dotnet build --configuration Release /clp:ErrorsOnly
 
       - name: Run Tests
-        run: dotnet test --configuration Release --no-restore /clp:ErrorsOnly
+        run: dotnet test --configuration Release --no-restore /clp:ErrorsOnly -- RunConfiguration.MaxCpuCount=1

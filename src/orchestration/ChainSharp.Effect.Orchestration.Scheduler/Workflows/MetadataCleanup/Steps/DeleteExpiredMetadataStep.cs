@@ -9,14 +9,14 @@ using Microsoft.Extensions.Logging;
 namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.MetadataCleanup.Steps;
 
 /// <summary>
-/// Deletes expired metadata and associated log entries for whitelisted workflow types.
+/// Deletes expired metadata and associated work queue entries and log entries for whitelisted workflow types.
 /// </summary>
 /// <remarks>
 /// Uses EF Core bulk delete (<see cref="RelationalQueryableExtensions.ExecuteDeleteAsync{TSource}"/>)
 /// for efficient single-statement SQL deletion without loading entities into memory.
 ///
 /// Only metadata in a terminal state (Completed or Failed) is eligible for deletion.
-/// Associated log entries are deleted first to avoid foreign key constraint violations.
+/// Associated work queue entries and log entries are deleted first to avoid foreign key constraint violations.
 /// </remarks>
 internal class DeleteExpiredMetadataStep(
     IDataContext dataContext,
@@ -47,7 +47,14 @@ internal class DeleteExpiredMetadataStep(
             )
             .Select(m => m.Id);
 
-        // Delete associated logs first to avoid FK constraint violations
+        // Delete associated work queue entries first to avoid FK constraint violations
+        var workQueuesDeleted = await dataContext
+            .WorkQueues.Where(
+                wq => wq.MetadataId.HasValue && metadataIdsToDelete.Contains(wq.MetadataId.Value)
+            )
+            .ExecuteDeleteAsync();
+
+        // Delete associated logs to avoid FK constraint violations
         var logsDeleted = await dataContext
             .Logs.Where(l => metadataIdsToDelete.Contains(l.MetadataId))
             .ExecuteDeleteAsync();
@@ -66,8 +73,9 @@ internal class DeleteExpiredMetadataStep(
         if (metadataDeleted > 0)
         {
             logger.LogInformation(
-                "Metadata cleanup completed: deleted {MetadataCount} metadata and {LogCount} log entries",
+                "Metadata cleanup completed: deleted {MetadataCount} metadata, {WorkQueueCount} work queue entries, and {LogCount} log entries",
                 metadataDeleted,
+                workQueuesDeleted,
                 logsDeleted
             );
         }

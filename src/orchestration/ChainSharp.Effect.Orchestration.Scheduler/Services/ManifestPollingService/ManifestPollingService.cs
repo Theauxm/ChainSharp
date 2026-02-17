@@ -1,8 +1,11 @@
+using ChainSharp.Effect.Data.Services.DataContext;
+using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestScheduler;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.JobDispatcher;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager;
 using LanguageExt;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -27,10 +30,14 @@ internal class ManifestPollingService(
 ) : BackgroundService
 {
     /// <summary>
-    /// Seeds pending manifests during host startup. Failures here prevent the host from starting.
+    /// Seeds pending manifests and recovers stuck jobs during host startup.
+    /// Failures here prevent the host from starting.
     /// </summary>
     public override async Task StartAsync(CancellationToken cancellationToken)
     {
+        if (configuration.RecoverStuckJobsOnStartup)
+            await RecoverStuckJobs();
+
         await SeedPendingManifests(cancellationToken);
         await base.StartAsync(cancellationToken);
     }
@@ -63,33 +70,87 @@ internal class ManifestPollingService(
         using var scope = serviceProvider.CreateScope();
 
         // Step 1: ManifestManager queues manifests → work queue entries
-        try
+        if (configuration.ManifestManagerEnabled)
         {
-            var manifestManager =
-                scope.ServiceProvider.GetRequiredService<IManifestManagerWorkflow>();
+            try
+            {
+                var manifestManager =
+                    scope.ServiceProvider.GetRequiredService<IManifestManagerWorkflow>();
 
-            logger.LogDebug("ManifestManager polling cycle starting");
-            await manifestManager.Run(Unit.Default);
-            logger.LogDebug("ManifestManager polling cycle completed");
+                logger.LogDebug("ManifestManager polling cycle starting");
+                await manifestManager.Run(Unit.Default);
+                logger.LogDebug("ManifestManager polling cycle completed");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error during ManifestManager polling cycle");
+            }
         }
-        catch (Exception ex)
+        else
         {
-            logger.LogError(ex, "Error during ManifestManager polling cycle");
+            logger.LogDebug("ManifestManager is disabled, skipping polling cycle");
         }
 
         // Step 2: JobDispatcher picks from queue → creates metadata → enqueues
-        try
+        if (configuration.JobDispatcherEnabled)
         {
-            var jobDispatcher = scope.ServiceProvider.GetRequiredService<IJobDispatcherWorkflow>();
+            try
+            {
+                var jobDispatcher =
+                    scope.ServiceProvider.GetRequiredService<IJobDispatcherWorkflow>();
 
-            logger.LogDebug("JobDispatcher polling cycle starting");
-            await jobDispatcher.Run(Unit.Default);
-            logger.LogDebug("JobDispatcher polling cycle completed");
+                logger.LogDebug("JobDispatcher polling cycle starting");
+                await jobDispatcher.Run(Unit.Default);
+                logger.LogDebug("JobDispatcher polling cycle completed");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error during JobDispatcher polling cycle");
+            }
         }
-        catch (Exception ex)
+        else
         {
-            logger.LogError(ex, "Error during JobDispatcher polling cycle");
+            logger.LogDebug("JobDispatcher is disabled, skipping polling cycle");
         }
+    }
+
+    private async Task RecoverStuckJobs()
+    {
+        var serverStartTime = DateTime.UtcNow;
+
+        using var scope = serviceProvider.CreateScope();
+        var dataContext = scope.ServiceProvider.GetRequiredService<IDataContext>();
+
+        var stuckJobs = await dataContext
+            .Metadatas.Where(
+                m => m.WorkflowState == WorkflowState.InProgress && m.StartTime < serverStartTime
+            )
+            .ToListAsync();
+
+        if (stuckJobs.Count == 0)
+        {
+            logger.LogInformation(
+                "RecoverStuckJobs: no in-progress jobs found from before server start"
+            );
+            return;
+        }
+
+        foreach (var metadata in stuckJobs)
+        {
+            metadata.WorkflowState = WorkflowState.Failed;
+            metadata.EndTime = DateTime.UtcNow;
+            metadata.AddException(
+                new InvalidOperationException("Server restarted while job was in progress")
+            );
+        }
+
+        await dataContext.SaveChanges(CancellationToken.None);
+
+        logger.LogWarning(
+            "RecoverStuckJobs: failed {Count} stuck in-progress job(s) from before server start at {ServerStartTime}",
+            stuckJobs.Count,
+            serverStartTime
+        );
     }
 
     private async Task SeedPendingManifests(CancellationToken cancellationToken)

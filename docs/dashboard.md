@@ -68,9 +68,16 @@ When `ChainSharp.Effect.Data` is registered, the dashboard exposes pages for bro
 | **Metadata** | Workflow execution history—start/end times, success/failure, inputs/outputs |
 | **Logs** | Application log entries captured during workflow execution |
 | **Manifests** | Scheduled job definitions (requires Scheduler) |
+| **Manifest Groups** | Aggregate view of manifests sharing a `groupId` (requires Scheduler) |
 | **Dead Letters** | Failed jobs that exhausted their retry budget (requires Scheduler) |
 
 These pages are accessible from the **Data** section in the sidebar navigation.
+
+### Manifest Groups
+
+When manifests are created via `ScheduleMany` with a `groupId`, the **Manifest Groups** page shows one row per group with aggregate stats: manifest count, total executions, completed, failed, and last run time. Clicking a group opens a detail page listing every manifest in that group along with their recent executions.
+
+This is useful when a logical operation is spread across many manifests—e.g., 1000 table slices for a data sync. Instead of scrolling through individual manifests, the groups page gives you a single row that summarizes the health of the entire batch.
 
 ## How Discovery Works
 

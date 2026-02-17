@@ -1,5 +1,6 @@
 using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestScheduler;
+using ChainSharp.Effect.Orchestration.Scheduler.Workflows.JobDispatcher;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager;
 using LanguageExt;
 using Microsoft.Extensions.DependencyInjection;
@@ -59,18 +60,35 @@ internal class ManifestPollingService(
 
     private async Task PollManifests()
     {
+        using var scope = serviceProvider.CreateScope();
+
+        // Step 1: ManifestManager queues manifests → work queue entries
         try
         {
-            using var scope = serviceProvider.CreateScope();
-            var workflow = scope.ServiceProvider.GetRequiredService<IManifestManagerWorkflow>();
+            var manifestManager =
+                scope.ServiceProvider.GetRequiredService<IManifestManagerWorkflow>();
 
             logger.LogDebug("ManifestManager polling cycle starting");
-            await workflow.Run(Unit.Default);
+            await manifestManager.Run(Unit.Default);
             logger.LogDebug("ManifestManager polling cycle completed");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error during ManifestManager polling cycle");
+        }
+
+        // Step 2: JobDispatcher picks from queue → creates metadata → enqueues
+        try
+        {
+            var jobDispatcher = scope.ServiceProvider.GetRequiredService<IJobDispatcherWorkflow>();
+
+            logger.LogDebug("JobDispatcher polling cycle starting");
+            await jobDispatcher.Run(Unit.Default);
+            logger.LogDebug("JobDispatcher polling cycle completed");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error during JobDispatcher polling cycle");
         }
     }
 

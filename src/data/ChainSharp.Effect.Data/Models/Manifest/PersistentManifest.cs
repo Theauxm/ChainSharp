@@ -26,6 +26,12 @@ public class PersistentManifest : Effect.Models.Manifest.Manifest
             entity.Property(e => e.Id).ValueGeneratedOnAdd();
 
             entity.Property(e => e.Properties).HasColumnType("jsonb");
+
+            entity
+                .HasOne(x => x.DependsOnManifest)
+                .WithMany()
+                .HasForeignKey(x => x.DependsOnManifestId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

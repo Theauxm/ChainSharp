@@ -23,6 +23,7 @@ internal static class SchedulingHelpers
             ScheduleType.Cron => ShouldRunByCron(manifest, now, logger),
             ScheduleType.Interval => ShouldRunByInterval(manifest, now, logger),
             ScheduleType.OnDemand => false, // OnDemand manifests are never auto-scheduled, only via BulkEnqueueAsync
+            ScheduleType.Dependent => false, // Dependent manifests are evaluated separately in DetermineJobsToQueueStep
             _ => false
         };
     }

@@ -88,9 +88,14 @@ public class WorkflowRegistry : IWorkflowRegistry
             allWorkflowTypes.UnionWith(workflowTypes);
         }
 
-        InputTypeToWorkflow = allWorkflowTypes.ToDictionary(
-            x =>
-                x.GetInterfaces()
+        // Build the input type → workflow mapping, skipping duplicates.
+        // Multiple workflows can share the same input type (e.g., internal scheduler
+        // workflows using Unit). These are resolved directly from DI rather than the bus.
+        InputTypeToWorkflow = new Dictionary<Type, Type>();
+        foreach (var wf in allWorkflowTypes)
+        {
+            var inputType =
+                wf.GetInterfaces()
                     .Where(interfaceType => interfaceType.IsGenericType)
                     .FirstOrDefault(
                         interfaceType => interfaceType.GetGenericTypeDefinition() == workflowType
@@ -98,8 +103,10 @@ public class WorkflowRegistry : IWorkflowRegistry
                     ?.GetGenericArguments()
                     .FirstOrDefault()
                 ?? throw new WorkflowException(
-                    $"Could not find an interface and/or an inherited interface of type ({workflowType.Name}) on target type ({x.Name}) with FullName ({x.FullName}) on Assembly ({x.AssemblyQualifiedName})."
-                )
-        );
+                    $"Could not find an interface and/or an inherited interface of type ({workflowType.Name}) on target type ({wf.Name}) with FullName ({wf.FullName}) on Assembly ({wf.AssemblyQualifiedName})."
+                );
+
+            InputTypeToWorkflow.TryAdd(inputType, wf);
+        }
     }
 }

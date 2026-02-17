@@ -19,12 +19,12 @@
 
     @if (_metadata is not null && !string.IsNullOrWhiteSpace(_metadata.Input))
     {
-        <RadzenButton Text="Re-run"
-                      Icon="replay"
+        <RadzenButton Text="Re-queue"
+                      Icon="queue"
                       ButtonStyle="ButtonStyle.Secondary"
                       Variant="Variant.Outlined"
                       Size="ButtonSize.Small"
-                      Click="@RerunWorkflow"
+                      Click="@RequeueWorkflow"
                       IsBusy="@_rerunning"
                       Disabled="@_rerunning"
                       Style="margin-left: auto;" />

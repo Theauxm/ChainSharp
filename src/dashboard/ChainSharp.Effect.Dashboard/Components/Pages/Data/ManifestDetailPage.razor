@@ -15,6 +15,19 @@
             <text>Manifest Not Found</text>
         }
     </RadzenText>
+
+    @if (_manifest is not null)
+    {
+        <RadzenButton Text="Run Now"
+                      Icon="play_arrow"
+                      ButtonStyle="ButtonStyle.Secondary"
+                      Variant="Variant.Outlined"
+                      Size="ButtonSize.Small"
+                      Click="@TriggerManifest"
+                      IsBusy="@_triggering"
+                      Disabled="@_triggering"
+                      Style="margin-left: auto;" />
+    }
 </RadzenStack>
 
 @if (IsLoading)
@@ -29,6 +42,13 @@
     return;
 }
 
+@if (_triggerError is not null)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" Variant="Variant.Flat" class="rz-mb-4">
+        @_triggerError
+    </RadzenAlert>
+}
+
 @* ── Manifest Details ── *@
 <RadzenCard class="rz-mb-4">
     <RadzenText TextStyle="TextStyle.H6" class="rz-mb-2">Details</RadzenText>
@@ -39,6 +59,7 @@
                 <FieldDisplay Label="Name" Value="@ShortName(_manifest.Name)" />
                 <FieldDisplay Label="External ID" Value="@_manifest.ExternalId" />
                 <FieldDisplay Label="Enabled" Value="@(_manifest.IsEnabled ? "Yes" : "No")" />
+                <FieldDisplay Label="Group" Value="@(_manifest.GroupId ?? "—")" />
             </RadzenStack>
         </RadzenColumn>
         <RadzenColumn Size="12" SizeMD="6" SizeLG="4">

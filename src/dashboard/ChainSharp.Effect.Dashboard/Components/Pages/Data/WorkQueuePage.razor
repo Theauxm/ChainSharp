@@ -1,0 +1,77 @@
+@page "/chainsharp/data/work-queue"
+@inherits PollingComponentBase
+@inject IDataContextProviderFactory DataContextFactory
+@inject NavigationManager Navigation
+
+<RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Work Queue</RadzenText>
+
+<ChainSharpDataGrid Data="@_items"
+                    TItem="WorkQueue"
+                    IsLoading="@IsLoading"
+                    RowClick="@OnRowClick"
+                    Style="cursor: pointer;">
+    <Columns>
+        <RadzenDataGridColumn TItem="WorkQueue"
+                              Property="Id"
+                              Title="Id"
+                              Width="80px"
+                              SortOrder="SortOrder.Descending" />
+        <RadzenDataGridColumn TItem="WorkQueue"
+                              Property="WorkflowName"
+                              Title="Workflow"
+                              Width="200px">
+            <Template Context="q">@ShortName(q.WorkflowName)</Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="WorkQueue"
+                              Property="Status"
+                              Title="Status"
+                              Width="120px">
+            <Template Context="q">
+                <RadzenBadge BadgeStyle="@GetStatusBadgeStyle(q.Status)"
+                             Text="@q.Status.ToString()" />
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="WorkQueue"
+                              Property="ManifestId"
+                              Title="Manifest Id"
+                              Width="110px" />
+        <RadzenDataGridColumn TItem="WorkQueue"
+                              Property="MetadataId"
+                              Title="Metadata Id"
+                              Width="110px" />
+        <RadzenDataGridColumn TItem="WorkQueue"
+                              Property="CreatedAt"
+                              Title="Created At"
+                              Width="180px"
+                              FormatString="{0:yyyy-MM-dd HH:mm:ss}" />
+        <RadzenDataGridColumn TItem="WorkQueue"
+                              Property="DispatchedAt"
+                              Title="Dispatched At"
+                              Width="180px"
+                              FormatString="{0:yyyy-MM-dd HH:mm:ss}" />
+    </Columns>
+</ChainSharpDataGrid>
+
+@code {
+    private List<WorkQueue> _items = [];
+
+    protected override async Task LoadDataAsync(CancellationToken cancellationToken)
+    {
+        using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
+        _items = await context.WorkQueues.AsNoTracking().ToListAsync(cancellationToken);
+    }
+
+    private void OnRowClick(DataGridRowMouseEventArgs<WorkQueue> args)
+    {
+        Navigation.NavigateTo($"chainsharp/data/work-queue/{args.Data.Id}");
+    }
+
+    private static BadgeStyle GetStatusBadgeStyle(WorkQueueStatus status) =>
+        status switch
+        {
+            WorkQueueStatus.Queued => BadgeStyle.Info,
+            WorkQueueStatus.Dispatched => BadgeStyle.Success,
+            WorkQueueStatus.Cancelled => BadgeStyle.Warning,
+            _ => BadgeStyle.Light,
+        };
+}

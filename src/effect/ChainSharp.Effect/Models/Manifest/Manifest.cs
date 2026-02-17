@@ -121,11 +121,38 @@ public class Manifest : IModel
     [Column("last_successful_run")]
     public DateTime? LastSuccessfulRun { get; set; }
 
+    /// <summary>
+    /// Gets or sets an optional group identifier for manifests scheduled together.
+    /// </summary>
+    /// <remarks>
+    /// When manifests are created via <c>ScheduleMany</c>, they can be assigned a common
+    /// GroupId to indicate they belong to the same logical batch. This enables grouping
+    /// and aggregate visualization in the dashboard.
+    /// </remarks>
+    [Column("group_id")]
+    public string? GroupId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the ID of the parent manifest that this manifest depends on.
+    /// </summary>
+    /// <remarks>
+    /// When set, this manifest will only be queued for execution after the parent manifest
+    /// completes successfully. The <see cref="ScheduleType"/> should be set to
+    /// <see cref="Enums.ScheduleType.Dependent"/> when this property is used.
+    /// </remarks>
+    [Column("depends_on_manifest_id")]
+    public int? DependsOnManifestId { get; set; }
+
     #endregion
 
     #endregion
 
     #region ForeignKeys
+
+    /// <summary>
+    /// Gets or sets the parent manifest that this manifest depends on.
+    /// </summary>
+    public Manifest? DependsOnManifest { get; set; }
 
     /// <summary>
     /// Gets the collection of metadata records (workflow executions) associated with this manifest.
@@ -147,6 +174,8 @@ public class Manifest : IModel
     /// </remarks>
     public ICollection<DeadLetter.DeadLetter> DeadLetters { get; private set; } = [];
 
+    public ICollection<WorkQueue.WorkQueue> WorkQueues { get; private set; } = [];
+
     #endregion
 
     #region Functions
@@ -167,6 +196,7 @@ public class Manifest : IModel
             IntervalSeconds = manifest.IntervalSeconds,
             MaxRetries = manifest.MaxRetries,
             TimeoutSeconds = manifest.TimeoutSeconds,
+            DependsOnManifestId = manifest.DependsOnManifestId,
         };
 
         if (manifest.Properties != null)

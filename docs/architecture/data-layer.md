@@ -40,58 +40,62 @@ public class DataContext<TDbContext> : DbContext, IDataContext
 ┌──────────────────────────────────────────────────────────────────┐
 │                           MANIFEST                                │
 ├──────────────────────────────────────────────────────────────────┤
-│ Id (PK)            │ int                                         │
-│ ExternalId         │ string                                      │
-│ Name               │ string                                      │
-│ PropertyTypeName   │ string?                                     │
-│ Properties         │ jsonb                                       │
-│ IsEnabled          │ bool                                        │
-│ ScheduleType       │ enum (None/Cron/Interval/OnDemand)          │
-│ CronExpression     │ string?                                     │
-│ IntervalSeconds    │ int?                                        │
-│ MaxRetries         │ int                                         │
-│ TimeoutSeconds     │ int?                                        │
-│ LastSuccessfulRun  │ datetime?                                   │
+│ Id (PK)              │ int                                       │
+│ ExternalId           │ string                                    │
+│ Name                 │ string                                    │
+│ PropertyTypeName     │ string?                                   │
+│ Properties           │ jsonb                                     │
+│ IsEnabled            │ bool                                      │
+│ ScheduleType         │ enum (None/Cron/Interval/Dependent)       │
+│ CronExpression       │ string?                                   │
+│ IntervalSeconds      │ int?                                      │
+│ MaxRetries           │ int                                       │
+│ TimeoutSeconds       │ int?                                      │
+│ LastSuccessfulRun    │ datetime?                                 │
+│ GroupId              │ string?                                   │
+│ DependsOnManifestId  │ int? → Self                               │
 └──────────────────────────────────────────────────────────────────┘
-          │                              │
-          │ 1:N                          │ 1:N
-          ▼                              ▼
-┌─────────────────────────────┐  ┌─────────────────────────────────┐
-│        DEAD_LETTER          │  │           METADATA               │
-├─────────────────────────────┤  ├─────────────────────────────────┤
-│ Id (PK)          │ int      │  │ Id (PK)            │ int        │
-│ ManifestId (FK)  │ int      │  │ ParentId (FK)      │ int?  → Self │
-│ DeadLetteredAt   │ datetime │  │ ManifestId (FK)    │ int?       │
-│ Status           │ enum     │  │ ExternalId         │ string     │
-│ Reason           │ string   │  │ Name               │ string     │
-│ RetryCount       │ int      │  │ Executor           │ string?    │
-│ ResolvedAt       │ datetime?│  │ WorkflowState      │ enum       │
-│ ResolutionNote   │ string?  │  │ FailureStep        │ string?    │
-│ RetryMetadataId  │ int?     │  │ FailureException   │ string?    │
-└─────────────────────────────┘  │ FailureReason      │ string?    │
-                                 │ StackTrace         │ string?    │
-  DeadLetterStatus:              │ Input              │ jsonb      │
-  - AwaitingIntervention         │ Output             │ jsonb      │
-  - Retried                      │ StartTime          │ datetime   │
-  - Acknowledged                 │ EndTime            │ datetime?  │
-                                 │ ScheduledTime      │ datetime?  │
-                                 └─────────────────────────────────┘
-                                          │
-                                          │ 1:N
-                                          ▼
-                                 ┌─────────────────────────────────┐
-                                 │              LOG                 │
-                                 ├─────────────────────────────────┤
-                                 │ Id (PK)          │ int          │
-                                 │ MetadataId (FK)  │ int          │
-                                 │ EventId          │ int          │
-                                 │ Level            │ enum         │
-                                 │ Message          │ string       │
-                                 │ Category         │ string       │
-                                 │ Exception        │ string?      │
-                                 │ StackTrace       │ string?      │
-                                 └─────────────────────────────────┘
+       │              │                  │
+       │ 1:N          │ 1:N              │ 1:N
+       ▼              ▼                  ▼
+┌────────────┐  ┌────────────────┐  ┌─────────────────────────────┐
+│ DEAD_LETTER│  │  WORK_QUEUE    │  │          METADATA            │
+├────────────┤  ├────────────────┤  ├─────────────────────────────┤
+│ Id     │int│  │ Id       │ int │  │ Id (PK)         │ int       │
+│Manifest│int│  │ External │ str │  │ ParentId (FK)   │ int? →Self│
+│  Id    │   │  │ Workflow │ str │  │ ManifestId (FK) │ int?      │
+│DeadLet │ dt│  │   Name   │     │  │ ExternalId      │ string    │
+│ teredAt│   │  │ Input    │json?│  │ Name            │ string    │
+│ Status │enm│  │ InputTyp │str? │  │ Executor        │ string?   │
+│ Reason │str│  │   eName  │     │  │ WorkflowState   │ enum      │
+│RetryC. │int│  │ Status   │enum │  │ FailureStep     │ string?   │
+│Resolved│dt?│  │ CreatedAt│ dt  │  │ FailureException│ string?   │
+│Resoluti│   │  │Dispatched│ dt? │  │ FailureReason   │ string?   │
+│  onNote│str│  │   At     │     │  │ StackTrace      │ string?   │
+│RetryMet│   │  │ManifestId│int? │  │ Input           │ jsonb     │
+│ adataId│int│  │MetadataId│int? │  │ Output          │ jsonb     │
+└────────────┘  └────────────────┘  │ StartTime       │ datetime  │
+                                    │ EndTime         │ datetime? │
+  DeadLetterStatus:                 │ ScheduledTime   │ datetime? │
+  - AwaitingIntervention            └─────────────────────────────┘
+  - Retried                                  │
+  - Acknowledged                             │ 1:N
+                                             ▼
+  WorkQueueStatus:              ┌─────────────────────────────────┐
+  - Queued                      │              LOG                 │
+  - Dispatched                  ├─────────────────────────────────┤
+                                │ Id (PK)          │ int          │
+                                │ MetadataId (FK)  │ int          │
+                                │ EventId          │ int          │
+                                │ Level            │ enum         │
+                                │ Message          │ string       │
+                                │ Category         │ string       │
+                                │ Exception        │ string?      │
+                                │ StackTrace       │ string?      │
+                                └─────────────────────────────────┘
 ```
+
+The **WorkQueue** table sits between scheduling and dispatch. When a manifest is due (or `TriggerAsync` is called), a `Queued` entry is created. The JobDispatcher reads these, creates a Metadata record, enqueues to the background task server, and flips the status to `Dispatched`. Both the Manifest and Metadata FKs use `ON DELETE RESTRICT`.
 
 Additionally, **StepMetadata** tracks individual step executions within a workflow (not persisted to the database, used in-memory during workflow execution):
 

@@ -27,7 +27,7 @@ public class MetadataCleanupConfiguration
     /// Only metadata in a terminal state (Completed or Failed) older than this
     /// period will be deleted. Pending or InProgress metadata is never cleaned up.
     /// </remarks>
-    public TimeSpan RetentionPeriod { get; set; } = TimeSpan.FromHours(1);
+    public TimeSpan RetentionPeriod { get; set; } = TimeSpan.FromMinutes(30);
 
     /// <summary>
     /// The list of workflow type names whose metadata should be cleaned up.

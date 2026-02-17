@@ -26,6 +26,7 @@ internal class LoadManifestsStep(IDataContext dataContext) : EffectStep<Unit, Li
             .Where(m => m.IsEnabled)
             .Include(m => m.Metadatas)
             .Include(m => m.DeadLetters)
+            .Include(m => m.WorkQueues)
             .AsNoTracking()
             .ToListAsync();
 }

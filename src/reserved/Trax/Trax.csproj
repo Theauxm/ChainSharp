@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <PackageId>Trax</PackageId>
+        <Authors>Theauxm,mark-keaton</Authors>
+        <PackageDescription>Reserved package namespace for Trax — a Railway Oriented .NET workflow engine (formerly ChainSharp).</PackageDescription>
+        <RepositoryUrl>https://github.com/Theauxm/ChainSharp</RepositoryUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    </PropertyGroup>
+
+</Project>

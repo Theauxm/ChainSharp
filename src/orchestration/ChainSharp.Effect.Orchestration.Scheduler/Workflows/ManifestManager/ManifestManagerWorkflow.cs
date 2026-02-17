@@ -14,6 +14,6 @@ public class ManifestManagerWorkflow : EffectWorkflow<Unit, Unit>, IManifestMana
             .Chain<LoadManifestsStep>()
             .Chain<ReapFailedJobsStep>()
             .Chain<DetermineJobsToQueueStep>()
-            .Chain<EnqueueJobsStep>()
+            .Chain<CreateWorkQueueEntriesStep>()
             .Resolve();
 }

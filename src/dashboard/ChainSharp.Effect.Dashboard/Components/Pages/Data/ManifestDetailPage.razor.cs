@@ -2,6 +2,7 @@ using ChainSharp.Effect.Dashboard.Components.Shared;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.Metadata;
+using ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestScheduler;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Radzen;
@@ -17,11 +18,19 @@ public partial class ManifestDetailPage
     [Inject]
     private NavigationManager Navigation { get; set; } = default!;
 
+    [Inject]
+    private IManifestScheduler ManifestScheduler { get; set; } = default!;
+
+    [Inject]
+    private NotificationService NotificationService { get; set; } = default!;
+
     [Parameter]
     public int ManifestId { get; set; }
 
     private Manifest? _manifest;
     private List<Metadata> _metadataItems = [];
+    private bool _triggering;
+    private string? _triggerError;
 
     protected override async Task LoadDataAsync(CancellationToken cancellationToken)
     {
@@ -44,5 +53,34 @@ public partial class ManifestDetailPage
     private void OnMetadataRowClick(DataGridRowMouseEventArgs<Metadata> args)
     {
         Navigation.NavigateTo($"chainsharp/data/metadata/{args.Data.Id}");
+    }
+
+    private async Task TriggerManifest()
+    {
+        if (_manifest is null)
+            return;
+
+        _triggerError = null;
+        _triggering = true;
+
+        try
+        {
+            await ManifestScheduler.TriggerAsync(_manifest.ExternalId);
+
+            NotificationService.Notify(
+                NotificationSeverity.Success,
+                "Workflow Queued",
+                $"{ShortName(_manifest.Name)} has been queued for execution.",
+                duration: 4000
+            );
+        }
+        catch (Exception ex)
+        {
+            _triggerError = ex.Message;
+        }
+        finally
+        {
+            _triggering = false;
+        }
     }
 }

@@ -46,6 +46,7 @@ public static class ModelBuilderExtensions
         modelBuilder.HasPostgresEnum<LogLevel>(schema: "chain_sharp");
         modelBuilder.HasPostgresEnum<ScheduleType>(schema: "chain_sharp");
         modelBuilder.HasPostgresEnum<DeadLetterStatus>(schema: "chain_sharp");
+        modelBuilder.HasPostgresEnum<WorkQueueStatus>(schema: "chain_sharp");
 
         return modelBuilder;
     }
@@ -73,6 +74,7 @@ public static class ModelBuilderExtensions
         npgsqlDataSourceBuilder.MapEnum<LogLevel>("chain_sharp.log_level");
         npgsqlDataSourceBuilder.MapEnum<ScheduleType>("chain_sharp.schedule_type");
         npgsqlDataSourceBuilder.MapEnum<DeadLetterStatus>("chain_sharp.dead_letter_status");
+        npgsqlDataSourceBuilder.MapEnum<WorkQueueStatus>("chain_sharp.work_queue_status");
 
         return npgsqlDataSourceBuilder.Build();
     }

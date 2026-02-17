@@ -85,6 +85,7 @@ public static class ServiceExtensions
                             o.MapEnum<LogLevel>("log_level", "chain_sharp");
                             o.MapEnum<ScheduleType>("schedule_type", "chain_sharp");
                             o.MapEnum<DeadLetterStatus>("dead_letter_status", "chain_sharp");
+                            o.MapEnum<WorkQueueStatus>("work_queue_status", "chain_sharp");
                         }
                     )
                     .UseLoggerFactory(new NullLoggerFactory())

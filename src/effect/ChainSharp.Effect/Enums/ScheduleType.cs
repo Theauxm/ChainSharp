@@ -53,5 +53,17 @@ public enum ScheduleType
     /// This type signals intent that the manifest is designed for bulk operations
     /// and helps with monitoring and reporting.
     /// </remarks>
-    OnDemand = 3
+    OnDemand = 3,
+
+    /// <summary>
+    /// The manifest runs after a parent manifest completes successfully.
+    /// </summary>
+    /// <remarks>
+    /// Use this for workflows that should be triggered by the successful completion of
+    /// another workflow. The <see cref="Manifest.Manifest.DependsOnManifestId"/> property
+    /// must be set to the parent manifest's ID. The dependent manifest is queued when the
+    /// parent's <see cref="Manifest.Manifest.LastSuccessfulRun"/> is newer than the
+    /// dependent's own <see cref="Manifest.Manifest.LastSuccessfulRun"/>.
+    /// </remarks>
+    Dependent = 4
 }

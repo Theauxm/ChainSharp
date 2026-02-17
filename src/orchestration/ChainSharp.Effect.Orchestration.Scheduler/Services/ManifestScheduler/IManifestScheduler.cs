@@ -87,6 +87,54 @@ public interface IManifestScheduler
         Schedule schedule,
         Action<TSource, ManifestOptions>? configure = null,
         string? prunePrefix = null,
+        string? groupId = null,
+        CancellationToken ct = default
+    )
+        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TInput : IManifestProperties;
+
+    /// <summary>
+    /// Schedules a single workflow that depends on another manifest's successful completion.
+    /// </summary>
+    /// <typeparam name="TWorkflow">The workflow interface type.</typeparam>
+    /// <typeparam name="TInput">The input type for the workflow.</typeparam>
+    /// <param name="externalId">A unique identifier for this dependent job.</param>
+    /// <param name="input">The input data that will be passed to the workflow on each execution.</param>
+    /// <param name="dependsOnExternalId">The external ID of the parent manifest this job depends on.</param>
+    /// <param name="configure">Optional action to configure additional manifest options.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The created or updated manifest.</returns>
+    Task<Manifest> ScheduleDependentAsync<TWorkflow, TInput>(
+        string externalId,
+        TInput input,
+        string dependsOnExternalId,
+        Action<ManifestOptions>? configure = null,
+        CancellationToken ct = default
+    )
+        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TInput : IManifestProperties;
+
+    /// <summary>
+    /// Schedules multiple dependent workflow instances from a collection.
+    /// </summary>
+    /// <typeparam name="TWorkflow">The workflow interface type.</typeparam>
+    /// <typeparam name="TInput">The input type for the workflow.</typeparam>
+    /// <typeparam name="TSource">The type of elements in the source collection.</typeparam>
+    /// <param name="sources">The collection of source items to create manifests from.</param>
+    /// <param name="map">A function that transforms each source item into an ExternalId and Input pair.</param>
+    /// <param name="dependsOn">A function that maps each source item to the external ID of its parent manifest.</param>
+    /// <param name="configure">Optional action to configure additional manifest options per source item.</param>
+    /// <param name="prunePrefix">When specified, deletes stale manifests with this prefix not in the current batch.</param>
+    /// <param name="groupId">Optional group identifier for dashboard grouping.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A read-only list of the created or updated manifests.</returns>
+    Task<IReadOnlyList<Manifest>> ScheduleManyDependentAsync<TWorkflow, TInput, TSource>(
+        IEnumerable<TSource> sources,
+        Func<TSource, (string ExternalId, TInput Input)> map,
+        Func<TSource, string> dependsOn,
+        Action<TSource, ManifestOptions>? configure = null,
+        string? prunePrefix = null,
+        string? groupId = null,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>

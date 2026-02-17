@@ -32,6 +32,25 @@ services.AddChainSharpEffects(options => options
 
 The builder captures the manifests and seeds them when the `BackgroundService` starts—same upsert semantics as `Schedule`.
 
+### Grouping Manifests
+
+When you schedule a batch of related manifests, pass a `groupId` to tie them together:
+
+```csharp
+services.AddChainSharpEffects(options => options
+    .AddScheduler(scheduler => scheduler
+        .UseHangfire(connectionString)
+        .ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
+            tables,
+            tableName => ($"sync-{tableName}", new SyncTableInput { TableName = tableName }),
+            Every.Minutes(5),
+            groupId: "table-sync")
+    )
+);
+```
+
+The `groupId` is stored on each `Manifest` in the batch. It's optional—manifests without a group work exactly as before. The dashboard's **Manifest Groups** page aggregates execution stats across all manifests sharing a group, which is useful when a logical operation is split across many manifests (e.g., syncing 1000 table slices).
+
 ### Runtime: ScheduleManyAsync
 
 `ScheduleManyAsync` creates multiple manifests in a single transaction at runtime. If any fails, the entire batch rolls back.
@@ -45,10 +64,11 @@ await scheduler.ScheduleManyAsync<ISyncTableWorkflow, SyncTableInput, string>(
         ExternalId: $"sync-{tableName}",
         Input: new SyncTableInput { TableName = tableName }
     ),
-    Every.Minutes(5));
+    Every.Minutes(5),
+    groupId: "table-sync");
 ```
 
-Use the builder approach for jobs known at compile time. Use `ScheduleManyAsync` when the set of jobs is determined at runtime (loaded from a database, config file, or external API).
+Use the builder approach for jobs known at compile time. Use `ScheduleManyAsync` when the set of jobs is determined at runtime (loaded from a database, config file, or external API). Both variants accept the same `groupId` parameter.
 
 ### Configuration Per Item
 
@@ -133,6 +153,12 @@ await scheduler.EnableAsync("sync-users");
 
 // Trigger immediate execution (doesn't wait for schedule)
 await scheduler.TriggerAsync("sync-users");
+
+// Schedule a dependent job at runtime
+await scheduler.ScheduleDependentAsync<ILoadWorkflow, LoadInput>(
+    "load-users",
+    new LoadInput { Table = "users" },
+    dependsOnExternalId: "sync-users");
 ```
 
 Disabled jobs remain in the database but are skipped by the ManifestManager until re-enabled.
@@ -160,14 +186,17 @@ await scheduler.ScheduleAsync<IMyWorkflow, MyInput>(
 |------|----------|-----|
 | `Interval` | Simple recurring | `Every.Minutes(5)` or `Schedule.FromInterval(TimeSpan)` |
 | `Cron` | Traditional scheduling | `Cron.Daily()` or `Schedule.FromCron("0 3 * * *")` |
+| `Dependent` | Runs after another manifest succeeds | `.Then()` / `.ThenMany()` or `ScheduleDependentAsync` |
 | `None` | Manual trigger only | Use `scheduler.TriggerAsync(externalId)` |
+
+See [Dependent Workflows](dependent-workflows.md) for details on chaining workflows.
 
 ## Configuration Options
 
 | Option | Default | Description |
 |--------|---------|-------------|
 | `PollingInterval` | 5s | How often ManifestManager checks for pending jobs (supports sub-minute) |
-| `MaxActiveJobs` | 100 | Maximum active jobs (Pending + InProgress) allowed across all manifests. Set to null for unlimited |
+| `MaxActiveJobs` | 100 | Maximum active jobs (Pending + InProgress) allowed. Enforced by the [JobDispatcher](admin-workflows/job-dispatcher.md) at dispatch time. Set to null for unlimited |
 | `DefaultMaxRetries` | 3 | Retry attempts before dead-lettering |
 | `DefaultRetryDelay` | 5m | Delay between retries |
 | `RetryBackoffMultiplier` | 2.0 | Exponential backoff (delays of 5m, 10m, 20m...) |

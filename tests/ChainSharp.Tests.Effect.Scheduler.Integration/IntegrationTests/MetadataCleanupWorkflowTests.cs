@@ -3,6 +3,8 @@ using ChainSharp.Effect.Models.Log;
 using ChainSharp.Effect.Models.Log.DTOs;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.Metadata.DTOs;
+using ChainSharp.Effect.Models.WorkQueue;
+using ChainSharp.Effect.Models.WorkQueue.DTOs;
 using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.MetadataCleanup;
@@ -318,6 +320,113 @@ public class MetadataCleanupWorkflowTests : TestSetup
             .Should()
             .BeNull("logs associated with deleted metadata should also be deleted");
         remainingMetadata.Should().BeNull("the metadata itself should be deleted");
+    }
+
+    #endregion
+
+    #region Associated Work Queue Tests
+
+    [Test]
+    public async Task Run_DeletesAssociatedWorkQueueEntries()
+    {
+        // Arrange - Create expired metadata with an associated dispatched work queue entry
+        var metadata = await CreateAndSaveMetadata(
+            name: typeof(ManifestManagerWorkflow).FullName!,
+            state: WorkflowState.Completed,
+            startTime: DateTime.UtcNow.AddHours(-2)
+        );
+
+        var workQueueEntry = WorkQueue.Create(
+            new CreateWorkQueue
+            {
+                WorkflowName = typeof(ManifestManagerWorkflow).FullName!,
+                Input = null,
+                InputTypeName = null,
+            }
+        );
+
+        await DataContext.Track(workQueueEntry);
+        await DataContext.SaveChanges(CancellationToken.None);
+        var entryId = workQueueEntry.Id;
+
+        // Link the work queue entry to the metadata and mark as dispatched
+        await DataContext
+            .WorkQueues.Where(wq => wq.Id == entryId)
+            .ExecuteUpdateAsync(
+                setters =>
+                    setters
+                        .SetProperty(wq => wq.MetadataId, metadata.Id)
+                        .SetProperty(wq => wq.Status, WorkQueueStatus.Dispatched)
+                        .SetProperty(wq => wq.DispatchedAt, DateTime.UtcNow)
+            );
+
+        DataContext.Reset();
+
+        // Act
+        await _workflow.Run(new MetadataCleanupRequest());
+
+        // Assert
+        DataContext.Reset();
+        var remainingEntry = await DataContext
+            .WorkQueues.Where(wq => wq.Id == entryId)
+            .FirstOrDefaultAsync();
+        var remainingMetadata = await DataContext
+            .Metadatas.Where(m => m.Id == metadata.Id)
+            .FirstOrDefaultAsync();
+
+        remainingEntry
+            .Should()
+            .BeNull("work queue entries associated with deleted metadata should also be deleted");
+        remainingMetadata.Should().BeNull("the metadata itself should be deleted");
+    }
+
+    [Test]
+    public async Task Run_DoesNotDeleteWorkQueueEntriesForNonExpiredMetadata()
+    {
+        // Arrange - Create recent metadata with an associated work queue entry
+        var metadata = await CreateAndSaveMetadata(
+            name: typeof(ManifestManagerWorkflow).FullName!,
+            state: WorkflowState.Completed,
+            startTime: DateTime.UtcNow.AddMinutes(-10) // Within 30 minute retention
+        );
+
+        var workQueueEntry = WorkQueue.Create(
+            new CreateWorkQueue
+            {
+                WorkflowName = typeof(ManifestManagerWorkflow).FullName!,
+                Input = null,
+                InputTypeName = null,
+            }
+        );
+
+        await DataContext.Track(workQueueEntry);
+        await DataContext.SaveChanges(CancellationToken.None);
+        var entryId = workQueueEntry.Id;
+
+        await DataContext
+            .WorkQueues.Where(wq => wq.Id == entryId)
+            .ExecuteUpdateAsync(
+                setters =>
+                    setters
+                        .SetProperty(wq => wq.MetadataId, metadata.Id)
+                        .SetProperty(wq => wq.Status, WorkQueueStatus.Dispatched)
+                        .SetProperty(wq => wq.DispatchedAt, DateTime.UtcNow)
+            );
+
+        DataContext.Reset();
+
+        // Act
+        await _workflow.Run(new MetadataCleanupRequest());
+
+        // Assert
+        DataContext.Reset();
+        var remainingEntry = await DataContext
+            .WorkQueues.Where(wq => wq.Id == entryId)
+            .FirstOrDefaultAsync();
+
+        remainingEntry
+            .Should()
+            .NotBeNull("work queue entries for non-expired metadata should survive cleanup");
     }
 
     #endregion

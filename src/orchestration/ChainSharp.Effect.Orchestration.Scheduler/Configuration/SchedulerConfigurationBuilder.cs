@@ -263,7 +263,8 @@ public class SchedulerConfigurationBuilder
         Func<TSource, (string ExternalId, TInput Input)> map,
         Schedule schedule,
         Action<TSource, ManifestOptions>? configure = null,
-        string? prunePrefix = null
+        string? prunePrefix = null,
+        string? groupId = null
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
@@ -284,6 +285,7 @@ public class SchedulerConfigurationBuilder
                         schedule,
                         configure,
                         prunePrefix: prunePrefix,
+                        groupId: groupId,
                         ct: ct
                     );
                     return results.FirstOrDefault()!;

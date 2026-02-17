@@ -87,6 +87,7 @@ public interface IManifestScheduler
         Schedule schedule,
         Action<TSource, ManifestOptions>? configure = null,
         string? prunePrefix = null,
+        string? groupId = null,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>

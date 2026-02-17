@@ -1,0 +1,69 @@
+@page "/chainsharp/data/manifest-groups"
+@inherits PollingComponentBase
+@inject IDataContextProviderFactory DataContextFactory
+@inject NavigationManager Navigation
+
+<RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Manifest Groups</RadzenText>
+
+<ChainSharpDataGrid Data="@_items"
+                    TItem="GroupSummary"
+                    IsLoading="@IsLoading"
+                    RowClick="@OnRowClick"
+                    Style="cursor: pointer;">
+    <Columns>
+        <RadzenDataGridColumn TItem="GroupSummary"
+                              Property="GroupId"
+                              Title="Group"
+                              Width="250px" />
+        <RadzenDataGridColumn TItem="GroupSummary"
+                              Property="ManifestCount"
+                              Title="Manifests"
+                              Width="120px" />
+        <RadzenDataGridColumn TItem="GroupSummary"
+                              Property="TotalExecutions"
+                              Title="Total Executions"
+                              Width="150px" />
+        <RadzenDataGridColumn TItem="GroupSummary"
+                              Property="CompletedCount"
+                              Title="Completed"
+                              Width="120px" />
+        <RadzenDataGridColumn TItem="GroupSummary"
+                              Property="FailedCount"
+                              Title="Failed"
+                              Width="100px" />
+        <RadzenDataGridColumn TItem="GroupSummary"
+                              Property="LastRun"
+                              Title="Last Run"
+                              Width="180px"
+                              FormatString="{0:yyyy-MM-dd HH:mm:ss}" />
+    </Columns>
+</ChainSharpDataGrid>
+
+@code {
+    private List<GroupSummary> _items = [];
+
+    protected override async Task LoadDataAsync(CancellationToken cancellationToken)
+    {
+        using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
+
+        _items = await context.Manifests
+            .AsNoTracking()
+            .Where(m => m.GroupId != null)
+            .GroupBy(m => m.GroupId!)
+            .Select(g => new GroupSummary
+            {
+                GroupId = g.Key,
+                ManifestCount = g.Count(),
+                TotalExecutions = g.SelectMany(m => m.Metadatas).Count(),
+                CompletedCount = g.SelectMany(m => m.Metadatas).Count(md => md.WorkflowState == WorkflowState.Completed),
+                FailedCount = g.SelectMany(m => m.Metadatas).Count(md => md.WorkflowState == WorkflowState.Failed),
+                LastRun = g.SelectMany(m => m.Metadatas).Max(md => (DateTime?)md.StartTime),
+            })
+            .ToListAsync(cancellationToken);
+    }
+
+    private void OnRowClick(DataGridRowMouseEventArgs<GroupSummary> args)
+    {
+        Navigation.NavigateTo($"chainsharp/data/manifest-groups/{Uri.EscapeDataString(args.Data.GroupId)}");
+    }
+}

@@ -50,7 +50,7 @@ public class ManifestScheduler(
             input,
             schedule,
             options,
-            ct
+            ct: ct
         );
 
         await context.SaveChanges(ct);
@@ -71,6 +71,7 @@ public class ManifestScheduler(
         Schedule schedule,
         Action<TSource, ManifestOptions>? configure = null,
         string? prunePrefix = null,
+        string? groupId = null,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -103,7 +104,8 @@ public class ManifestScheduler(
                     input,
                     schedule,
                     options,
-                    ct
+                    groupId: groupId,
+                    ct: ct
                 );
                 results.Add(manifest);
             }

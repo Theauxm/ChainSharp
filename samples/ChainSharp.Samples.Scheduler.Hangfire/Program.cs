@@ -77,7 +77,8 @@ builder.Services.AddChainSharpEffects(
                                 }
                             ),
                         Every.Minutes(5),
-                        prunePrefix: "extract-import-customer-"
+                        prunePrefix: "extract-import-customer-",
+                        groupId: "extract-import-customer"
                     )
                     // Schedule ExtractImport for Transaction table (100 indexes)
                     .ScheduleMany<
@@ -96,7 +97,8 @@ builder.Services.AddChainSharpEffects(
                                 }
                             ),
                         Every.Minutes(5),
-                        prunePrefix: "extract-import-transaction-"
+                        prunePrefix: "extract-import-transaction-",
+                        groupId: "extract-import-transaction"
                     );
             })
 );

@@ -31,6 +31,7 @@ public static class DataContextExtensions
         TInput input,
         Schedule schedule,
         ManifestOptions options,
+        string? groupId = null,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -52,6 +53,7 @@ public static class DataContextExtensions
             existing.TimeoutSeconds = options.Timeout.HasValue
                 ? (int)options.Timeout.Value.TotalSeconds
                 : null;
+            existing.GroupId = groupId;
             ApplySchedule(existing, schedule);
 
             return existing;
@@ -68,6 +70,7 @@ public static class DataContextExtensions
             TimeoutSeconds = options.Timeout.HasValue
                 ? (int)options.Timeout.Value.TotalSeconds
                 : null,
+            GroupId = groupId,
         };
         manifest.SetProperties(input);
         ApplySchedule(manifest, schedule);

@@ -121,6 +121,17 @@ public class Manifest : IModel
     [Column("last_successful_run")]
     public DateTime? LastSuccessfulRun { get; set; }
 
+    /// <summary>
+    /// Gets or sets an optional group identifier for manifests scheduled together.
+    /// </summary>
+    /// <remarks>
+    /// When manifests are created via <c>ScheduleMany</c>, they can be assigned a common
+    /// GroupId to indicate they belong to the same logical batch. This enables grouping
+    /// and aggregate visualization in the dashboard.
+    /// </remarks>
+    [Column("group_id")]
+    public string? GroupId { get; set; }
+
     #endregion
 
     #endregion

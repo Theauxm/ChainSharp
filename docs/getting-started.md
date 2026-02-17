@@ -16,6 +16,8 @@ ChainSharp 5.x targets `net10.0` exclusively. Make sure your project's target fr
 
 If you're upgrading from 4.x, see [Migration (4.x → 5.x)](migration.md).
 
+For a complete starter project with scheduling, persistence, and dashboards already configured, see the [Project Template](templates.md).
+
 ## Installation
 
 ### Install NuGet Packages

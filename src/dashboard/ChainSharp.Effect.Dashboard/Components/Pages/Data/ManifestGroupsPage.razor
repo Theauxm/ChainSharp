@@ -3,7 +3,10 @@
 @inject IDataContextProviderFactory DataContextFactory
 @inject NavigationManager Navigation
 
-<RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Manifest Groups</RadzenText>
+<RadzenText TextStyle="TextStyle.H4" class="rz-mb-2">Manifest Groups</RadzenText>
+<RadzenText TextStyle="TextStyle.Body2" class="rz-mb-4" Style="color: var(--rz-text-secondary-color);">
+    Logical groupings of related manifests with aggregate execution statistics.
+</RadzenText>
 
 <ChainSharpDataGrid Data="@_items"
                     TItem="GroupSummary"

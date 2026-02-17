@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "ChainSharp",
+  "classifications": ["Web", "ChainSharp", "Hangfire", "Scheduler"],
+  "identity": "ChainSharp.Server.CSharp",
+  "name": "ChainSharp Server with Hangfire",
+  "shortName": "chainsharp-server",
+  "sourceName": "ChainSharp.Server",
+  "preferNameDirectory": true,
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "symbols": {
+    "ConnectionString": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "Host=localhost;Port=5432;Database=chain_sharp;Username=chain_sharp;Password=chain_sharp123",
+      "replaces": "HOST_CONNECTION_STRING",
+      "description": "The PostgreSQL connection string for ChainSharp"
+    }
+  }
+}

@@ -92,6 +92,7 @@ ChainSharp 5.x requires `net10.0`. See [Getting Started](getting-started.md) for
 | [Theauxm.ChainSharp.Effect.Provider.Parameter](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Provider.Parameter/) | Parameter serialization for ChainSharp Effects | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Provider.Parameter) |
 | [Theauxm.ChainSharp.Effect.Orchestration.Scheduler](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Orchestration.Scheduler/) | Manifest-based job scheduling for ChainSharp | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Orchestration.Scheduler) |
 | [Theauxm.ChainSharp.Effect.Orchestration.Scheduler.Hangfire](https://www.nuget.org/packages/Theauxm.ChainSharp.Effect.Orchestration.Scheduler.Hangfire/) | Hangfire integration for ChainSharp Scheduler | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Effect.Orchestration.Scheduler.Hangfire) |
+| [Theauxm.ChainSharp.Templates](https://www.nuget.org/packages/Theauxm.ChainSharp.Templates/) | `dotnet new` project template for ChainSharp servers | ![NuGet Version](https://img.shields.io/nuget/v/Theauxm.ChainSharp.Templates) |
 
 ## License
 

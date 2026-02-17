@@ -71,13 +71,17 @@ public static class DashboardServiceExtensions
     /// </summary>
     public static WebApplication UseChainSharpDashboard(
         this WebApplication app,
-        string routePrefix = "/chainsharp"
+        string routePrefix = "/chainsharp",
+        string? title = null
     )
     {
         routePrefix = "/" + routePrefix.Trim('/');
 
         var options = app.Services.GetRequiredService<DashboardOptions>();
         options.RoutePrefix = routePrefix;
+
+        if (title is not null)
+            options.Title = title;
         options.EnvironmentName = app.Environment.EnvironmentName;
 
         app.UseStaticFiles();

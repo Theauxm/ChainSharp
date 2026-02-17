@@ -2,7 +2,10 @@
 @inherits PollingComponentBase
 @inject IDataContextProviderFactory DataContextFactory
 
-<RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Dead Letters</RadzenText>
+<RadzenText TextStyle="TextStyle.H4" class="rz-mb-2">Dead Letters</RadzenText>
+<RadzenText TextStyle="TextStyle.Body2" class="rz-mb-4" Style="color: var(--rz-text-secondary-color);">
+    Workflow executions that exceeded their maximum retry count and require manual intervention. Resolve by retrying or acknowledging.
+</RadzenText>
 
 <ChainSharpDataGrid Data="@_items"
                     TItem="DeadLetter"

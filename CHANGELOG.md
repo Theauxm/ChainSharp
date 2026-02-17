@@ -1,3 +1,10 @@
+## [5.12.1](https://github.com/Theauxm/ChainSharp/compare/v5.12.0...v5.12.1) (2026-02-17)
+
+
+### Bug Fixes
+
+* memory clear ([#159](https://github.com/Theauxm/ChainSharp/issues/159)) ([95f93b2](https://github.com/Theauxm/ChainSharp/commit/95f93b26b696262df9b340ae6cce2a5a7f651e75))
+
 # [5.12.0](https://github.com/Theauxm/ChainSharp/compare/v5.11.6...v5.12.0) (2026-02-17)
 
 

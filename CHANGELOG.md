@@ -1,3 +1,10 @@
+# [5.12.0](https://github.com/Theauxm/ChainSharp/compare/v5.11.6...v5.12.0) (2026-02-17)
+
+
+### Features
+
+* Dashboard groups ([#156](https://github.com/Theauxm/ChainSharp/issues/156)) ([0baae16](https://github.com/Theauxm/ChainSharp/commit/0baae16e8aebc33a4c76774a46698f06765afc14))
+
 ## [5.11.6](https://github.com/Theauxm/ChainSharp/compare/v5.11.5...v5.11.6) (2026-02-16)
 
 

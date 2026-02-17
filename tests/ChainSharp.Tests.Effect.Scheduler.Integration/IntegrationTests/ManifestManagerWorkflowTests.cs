@@ -5,6 +5,8 @@ using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.Manifest.DTOs;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.Metadata.DTOs;
+using ChainSharp.Effect.Models.WorkQueue;
+using ChainSharp.Effect.Models.WorkQueue.DTOs;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager;
 using ChainSharp.Tests.Effect.Scheduler.Integration.Examples.Workflows;
 using FluentAssertions;
@@ -19,10 +21,10 @@ namespace ChainSharp.Tests.Effect.Scheduler.Integration.IntegrationTests;
 /// </summary>
 /// <remarks>
 /// The ManifestManagerWorkflow runs through the following steps:
-/// 1. LoadManifestsStep - Loads all enabled manifests with their Metadatas and DeadLetters
+/// 1. LoadManifestsStep - Loads all enabled manifests with their Metadatas, DeadLetters, and WorkQueues
 /// 2. ReapFailedJobsStep - Creates DeadLetter records for manifests exceeding retry limits
 /// 3. DetermineJobsToQueueStep - Determines which manifests are due for execution
-/// 4. EnqueueJobsStep - Creates Metadata records and enqueues jobs to the background task server
+/// 4. CreateWorkQueueEntriesStep - Creates WorkQueue entries for manifests that need to be dispatched
 /// </remarks>
 [TestFixture]
 public class ManifestManagerWorkflowTests : TestSetup
@@ -79,13 +81,13 @@ public class ManifestManagerWorkflowTests : TestSetup
         await _workflow.Run(Unit.Default);
 
         // Assert - The workflow should complete without errors
-        // Since the manifest is interval-based and never ran, it should be queued
+        // Since the manifest is interval-based and never ran, a work queue entry should be created
         DataContext.Reset();
-        var metadatas = await DataContext
-            .Metadatas.Where(m => m.ManifestId == manifest.Id)
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == manifest.Id)
             .ToListAsync();
 
-        metadatas.Should().NotBeEmpty("the manifest should have been queued for execution");
+        workQueueEntries.Should().NotBeEmpty("the manifest should have been queued for execution");
     }
 
     [Test]
@@ -101,13 +103,13 @@ public class ManifestManagerWorkflowTests : TestSetup
         // Act
         await _workflow.Run(Unit.Default);
 
-        // Assert - No metadata should be created for the disabled manifest
+        // Assert - No work queue entry should be created for the disabled manifest
         DataContext.Reset();
-        var metadatas = await DataContext
-            .Metadatas.Where(m => m.ManifestId == manifest.Id)
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == manifest.Id)
             .ToListAsync();
 
-        metadatas.Should().BeEmpty("disabled manifests should not be processed");
+        workQueueEntries.Should().BeEmpty("disabled manifests should not be processed");
     }
 
     #endregion
@@ -215,25 +217,15 @@ public class ManifestManagerWorkflowTests : TestSetup
         // Act
         await _workflow.Run(Unit.Default);
 
-        // Assert - A metadata record should be created for the job
+        // Assert - A work queue entry should be created for the job
         DataContext.Reset();
-        var metadatas = await DataContext
-            .Metadatas.Where(m => m.ManifestId == manifest.Id)
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == manifest.Id)
             .ToListAsync();
 
-        metadatas.Should().HaveCount(1, "interval manifest should be queued");
-
-        // Verify execution happened via LastSuccessfulRun being updated
-        // (InMemoryTaskServer executes immediately)
-        var updatedManifest = await DataContext.Manifests.FirstOrDefaultAsync(
-            m => m.Id == manifest.Id
-        );
-        updatedManifest!
-            .LastSuccessfulRun.Should()
-            .NotBeNull("InMemoryTaskServer executes immediately");
-        updatedManifest
-            .LastSuccessfulRun.Should()
-            .BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(10));
+        workQueueEntries.Should().HaveCount(1, "interval manifest should be queued");
+        workQueueEntries[0].Status.Should().Be(WorkQueueStatus.Queued);
+        workQueueEntries[0].WorkflowName.Should().Be(typeof(SchedulerTestWorkflow).FullName);
     }
 
     [Test]
@@ -255,13 +247,13 @@ public class ManifestManagerWorkflowTests : TestSetup
         // Act
         await _workflow.Run(Unit.Default);
 
-        // Assert - No new metadata should be created and LastSuccessfulRun unchanged
+        // Assert - No work queue entry should be created since interval hasn't elapsed
         DataContext.Reset();
-        var metadatas = await DataContext
-            .Metadatas.Where(m => m.ManifestId == manifest.Id)
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == manifest.Id)
             .ToListAsync();
 
-        metadatas.Should().BeEmpty("interval has not elapsed yet");
+        workQueueEntries.Should().BeEmpty("interval has not elapsed yet");
 
         // Verify LastSuccessfulRun wasn't changed (within milliseconds due to DB precision)
         var updatedManifest = await DataContext.Manifests.FirstAsync(m => m.Id == manifest.Id);
@@ -270,7 +262,7 @@ public class ManifestManagerWorkflowTests : TestSetup
             .BeCloseTo(
                 lastRunBefore,
                 TimeSpan.FromMilliseconds(100),
-                "manifest should not have been executed"
+                "manifest should not have been re-queued"
             );
     }
 
@@ -286,13 +278,14 @@ public class ManifestManagerWorkflowTests : TestSetup
         // Act
         await _workflow.Run(Unit.Default);
 
-        // Assert - A metadata record should be created
+        // Assert - A work queue entry should be created
         DataContext.Reset();
-        var metadatas = await DataContext
-            .Metadatas.Where(m => m.ManifestId == manifest.Id)
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == manifest.Id)
             .ToListAsync();
 
-        metadatas.Should().HaveCount(1, "cron manifest that never ran should be queued");
+        workQueueEntries.Should().HaveCount(1, "cron manifest that never ran should be queued");
+        workQueueEntries[0].Status.Should().Be(WorkQueueStatus.Queued);
     }
 
     [Test]
@@ -304,13 +297,15 @@ public class ManifestManagerWorkflowTests : TestSetup
         // Act
         await _workflow.Run(Unit.Default);
 
-        // Assert - No metadata should be created
+        // Assert - No work queue entry should be created
         DataContext.Reset();
-        var metadatas = await DataContext
-            .Metadatas.Where(m => m.ManifestId == manifest.Id)
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == manifest.Id)
             .ToListAsync();
 
-        metadatas.Should().BeEmpty("ScheduleType.None manifests should not be auto-scheduled");
+        workQueueEntries
+            .Should()
+            .BeEmpty("ScheduleType.None manifests should not be auto-scheduled");
     }
 
     [Test]
@@ -322,13 +317,13 @@ public class ManifestManagerWorkflowTests : TestSetup
         // Act
         await _workflow.Run(Unit.Default);
 
-        // Assert - No metadata should be created (OnDemand is for bulk operations only)
+        // Assert - No work queue entry should be created (OnDemand is for bulk operations only)
         DataContext.Reset();
-        var metadatas = await DataContext
-            .Metadatas.Where(m => m.ManifestId == manifest.Id)
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == manifest.Id)
             .ToListAsync();
 
-        metadatas
+        workQueueEntries
             .Should()
             .BeEmpty("OnDemand manifests should only be triggered via BulkEnqueueAsync");
     }
@@ -347,13 +342,13 @@ public class ManifestManagerWorkflowTests : TestSetup
         // Act
         await _workflow.Run(Unit.Default);
 
-        // Assert - No metadata should be created
+        // Assert - No work queue entry should be created
         DataContext.Reset();
-        var metadatas = await DataContext
-            .Metadatas.Where(m => m.ManifestId == manifest.Id)
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == manifest.Id)
             .ToListAsync();
 
-        metadatas
+        workQueueEntries
             .Should()
             .BeEmpty("manifests with AwaitingIntervention dead letters should be skipped");
     }
@@ -372,16 +367,15 @@ public class ManifestManagerWorkflowTests : TestSetup
         // Act
         await _workflow.Run(Unit.Default);
 
-        // Assert - No new metadata should be created
+        // Assert - No work queue entry should be created (active metadata prevents queueing)
         DataContext.Reset();
-        var metadatas = await DataContext
-            .Metadatas.Where(m => m.ManifestId == manifest.Id)
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == manifest.Id)
             .ToListAsync();
 
-        metadatas
+        workQueueEntries
             .Should()
-            .HaveCount(1, "should not queue a manifest that already has pending execution");
-        metadatas[0].WorkflowState.Should().Be(WorkflowState.Pending);
+            .BeEmpty("should not queue a manifest that already has pending execution");
     }
 
     [Test]
@@ -398,24 +392,23 @@ public class ManifestManagerWorkflowTests : TestSetup
         // Act
         await _workflow.Run(Unit.Default);
 
-        // Assert - No new metadata should be created
+        // Assert - No work queue entry should be created (active metadata prevents queueing)
         DataContext.Reset();
-        var metadatas = await DataContext
-            .Metadatas.Where(m => m.ManifestId == manifest.Id)
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == manifest.Id)
             .ToListAsync();
 
-        metadatas
+        workQueueEntries
             .Should()
-            .HaveCount(1, "should not queue a manifest that has in-progress execution");
-        metadatas[0].WorkflowState.Should().Be(WorkflowState.InProgress);
+            .BeEmpty("should not queue a manifest that has in-progress execution");
     }
 
     #endregion
 
-    #region EnqueueJobsStep Tests
+    #region CreateWorkQueueEntriesStep Tests
 
     [Test]
-    public async Task Run_WhenManifestIsQueued_CreatesMetadataWithCorrectManifestId()
+    public async Task Run_WhenManifestIsQueued_CreatesWorkQueueWithCorrectManifestId()
     {
         // Arrange
         var manifest = await CreateAndSaveManifest(
@@ -428,16 +421,16 @@ public class ManifestManagerWorkflowTests : TestSetup
 
         // Assert
         DataContext.Reset();
-        var metadata = await DataContext.Metadatas.FirstOrDefaultAsync(
-            m => m.ManifestId == manifest.Id
+        var workQueueEntry = await DataContext.WorkQueues.FirstOrDefaultAsync(
+            q => q.ManifestId == manifest.Id
         );
 
-        metadata.Should().NotBeNull();
-        metadata!.ManifestId.Should().Be(manifest.Id);
+        workQueueEntry.Should().NotBeNull();
+        workQueueEntry!.ManifestId.Should().Be(manifest.Id);
     }
 
     [Test]
-    public async Task Run_WhenManifestIsQueued_ExecutesWorkflowViaInMemoryTaskServer()
+    public async Task Run_WhenManifestIsQueued_CreatesWorkQueueWithCorrectWorkflowName()
     {
         // Arrange
         var manifest = await CreateAndSaveManifest(
@@ -448,17 +441,15 @@ public class ManifestManagerWorkflowTests : TestSetup
         // Act
         await _workflow.Run(Unit.Default);
 
-        // Assert - InMemoryTaskServer executes immediately and updates LastSuccessfulRun
+        // Assert - WorkQueue entry should have correct workflow name and Queued status
         DataContext.Reset();
-        var updatedManifest = await DataContext.Manifests.FirstOrDefaultAsync(
-            m => m.Id == manifest.Id
+        var workQueueEntry = await DataContext.WorkQueues.FirstOrDefaultAsync(
+            q => q.ManifestId == manifest.Id
         );
 
-        updatedManifest.Should().NotBeNull();
-        updatedManifest!.LastSuccessfulRun.Should().NotBeNull();
-        updatedManifest
-            .LastSuccessfulRun.Should()
-            .BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(10));
+        workQueueEntry.Should().NotBeNull();
+        workQueueEntry!.WorkflowName.Should().Be(typeof(SchedulerTestWorkflow).FullName);
+        workQueueEntry.Status.Should().Be(WorkQueueStatus.Queued);
     }
 
     #endregion
@@ -493,23 +484,24 @@ public class ManifestManagerWorkflowTests : TestSetup
         // Assert
         DataContext.Reset();
 
-        // Enabled interval manifest should be queued and executed
-        var enabledMetadatas = await DataContext
-            .Metadatas.Where(m => m.ManifestId == enabledIntervalManifest.Id)
+        // Enabled interval manifest should have a work queue entry
+        var enabledEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == enabledIntervalManifest.Id)
             .ToListAsync();
-        enabledMetadatas.Should().HaveCount(1);
+        enabledEntries.Should().HaveCount(1);
+        enabledEntries[0].Status.Should().Be(WorkQueueStatus.Queued);
 
         // Disabled manifest should not be processed
-        var disabledMetadatas = await DataContext
-            .Metadatas.Where(m => m.ManifestId == disabledManifest.Id)
+        var disabledEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == disabledManifest.Id)
             .ToListAsync();
-        disabledMetadatas.Should().BeEmpty();
+        disabledEntries.Should().BeEmpty();
 
         // Manual-only manifest should not be auto-scheduled
-        var manualMetadatas = await DataContext
-            .Metadatas.Where(m => m.ManifestId == manualOnlyManifest.Id)
+        var manualEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == manualOnlyManifest.Id)
             .ToListAsync();
-        manualMetadatas.Should().BeEmpty();
+        manualEntries.Should().BeEmpty();
     }
 
     [Test]
@@ -547,18 +539,17 @@ public class ManifestManagerWorkflowTests : TestSetup
         failingDeadLetters.Should().HaveCount(1);
         failingDeadLetters[0].Status.Should().Be(DeadLetterStatus.AwaitingIntervention);
 
-        var failingNewMetadatas = await DataContext
-            .Metadatas.Where(
-                m => m.ManifestId == failingManifest.Id && m.WorkflowState == WorkflowState.Pending
-            )
+        var failingWorkQueues = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == failingManifest.Id)
             .ToListAsync();
-        failingNewMetadatas.Should().BeEmpty("dead-lettered manifests should not be queued");
+        failingWorkQueues.Should().BeEmpty("dead-lettered manifests should not be queued");
 
-        // Healthy manifest should be queued and executed
-        var healthyMetadatas = await DataContext
-            .Metadatas.Where(m => m.ManifestId == healthyManifest.Id)
+        // Healthy manifest should have a work queue entry
+        var healthyWorkQueues = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == healthyManifest.Id)
             .ToListAsync();
-        healthyMetadatas.Should().HaveCount(1);
+        healthyWorkQueues.Should().HaveCount(1);
+        healthyWorkQueues[0].Status.Should().Be(WorkQueueStatus.Queued);
     }
 
     [Test]
@@ -591,33 +582,31 @@ public class ManifestManagerWorkflowTests : TestSetup
     }
 
     [Test]
-    public async Task Run_AfterCompletedExecution_DoesNotQueueAgainIfIntervalNotElapsed()
+    public async Task Run_WhenManifestAlreadyHasQueuedEntry_DoesNotCreateDuplicateQueueEntry()
     {
-        // Arrange - Create an interval manifest with a long interval
+        // Arrange - Create an interval manifest
         var manifest = await CreateAndSaveManifest(
             scheduleType: ScheduleType.Interval,
-            intervalSeconds: 3600 // 1 hour
+            intervalSeconds: 60
         );
 
-        // Act - Run the workflow once
+        // Act - Run the workflow twice (first creates queue entry, second should skip)
         await _workflow.Run(Unit.Default);
 
-        // Assert - After one run, LastSuccessfulRun should be set
-        // The next poll would not queue this manifest again because the interval hasn't elapsed
-        DataContext.Reset();
-        var updatedManifest = await DataContext.Manifests.FirstOrDefaultAsync(
-            m => m.Id == manifest.Id
-        );
+        // Recreate workflow for second run (fresh scope)
+        _workflow = Scope.ServiceProvider.GetRequiredService<IManifestManagerWorkflow>();
+        await _workflow.Run(Unit.Default);
 
-        updatedManifest.Should().NotBeNull();
-        updatedManifest!
-            .LastSuccessfulRun.Should()
-            .NotBeNull(
-                "LastSuccessfulRun should be set after successful execution, preventing re-queue until interval elapses"
-            );
-        updatedManifest
-            .LastSuccessfulRun.Should()
-            .BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(10));
+        // Assert - Only one work queue entry should exist (double-queue prevention)
+        DataContext.Reset();
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == manifest.Id)
+            .ToListAsync();
+
+        workQueueEntries
+            .Should()
+            .HaveCount(1, "double-queue prevention should stop duplicate Queued entries");
+        workQueueEntries[0].Status.Should().Be(WorkQueueStatus.Queued);
     }
 
     #endregion
@@ -654,13 +643,13 @@ public class ManifestManagerWorkflowTests : TestSetup
         // Act
         await _workflow.Run(Unit.Default);
 
-        // Assert - Should not create metadata due to invalid interval
+        // Assert - Should not create work queue entry due to invalid interval
         DataContext.Reset();
-        var metadatas = await DataContext
-            .Metadatas.Where(m => m.ManifestId == manifest.Id)
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == manifest.Id)
             .ToListAsync();
 
-        metadatas.Should().BeEmpty("zero interval should be treated as invalid");
+        workQueueEntries.Should().BeEmpty("zero interval should be treated as invalid");
     }
 
     [Test]
@@ -678,11 +667,11 @@ public class ManifestManagerWorkflowTests : TestSetup
 
         // Assert
         DataContext.Reset();
-        var metadatas = await DataContext
-            .Metadatas.Where(m => m.ManifestId == manifest.Id)
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == manifest.Id)
             .ToListAsync();
 
-        metadatas.Should().BeEmpty("negative interval should be treated as invalid");
+        workQueueEntries.Should().BeEmpty("negative interval should be treated as invalid");
     }
 
     [Test]
@@ -700,11 +689,11 @@ public class ManifestManagerWorkflowTests : TestSetup
 
         // Assert
         DataContext.Reset();
-        var metadatas = await DataContext
-            .Metadatas.Where(m => m.ManifestId == manifest.Id)
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == manifest.Id)
             .ToListAsync();
 
-        metadatas.Should().BeEmpty("cron manifest without expression should not be queued");
+        workQueueEntries.Should().BeEmpty("cron manifest without expression should not be queued");
     }
 
     #endregion

@@ -1,15 +1,13 @@
 using System.Text.Json;
-using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
-using ChainSharp.Effect.Dashboard.Components.Shared;
 using ChainSharp.Effect.Dashboard.Services.WorkflowDiscovery;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Models.Log;
 using ChainSharp.Effect.Models.Metadata;
-using ChainSharp.Effect.Models.Metadata.DTOs;
-using ChainSharp.Effect.Orchestration.Scheduler.Services.BackgroundTaskServer;
+using ChainSharp.Effect.Models.WorkQueue;
+using ChainSharp.Effect.Models.WorkQueue.DTOs;
+using ChainSharp.Effect.Utils;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Radzen;
 using static ChainSharp.Effect.Dashboard.Utilities.DashboardFormatters;
 
@@ -22,9 +20,6 @@ public partial class MetadataDetailPage
 
     [Inject]
     private NavigationManager Navigation { get; set; } = default!;
-
-    [Inject]
-    private IBackgroundTaskServer BackgroundTaskServer { get; set; } = default!;
 
     [Inject]
     private IWorkflowDiscoveryService WorkflowDiscovery { get; set; } = default!;
@@ -71,7 +66,7 @@ public partial class MetadataDetailPage
         }
     }
 
-    private async Task RerunWorkflow()
+    private async Task RequeueWorkflow()
     {
         if (_metadata is null || string.IsNullOrWhiteSpace(_metadata.Input))
             return;
@@ -96,43 +91,48 @@ public partial class MetadataDetailPage
                 return;
             }
 
-            var input = JsonSerializer.Deserialize(
+            // Re-serialize the input using ManifestProperties options for clean JSON
+            var deserializedInput = JsonSerializer.Deserialize(
                 _metadata.Input,
                 registration.InputType,
-                ChainSharpEffectConfiguration.StaticSystemJsonSerializerOptions
+                ChainSharpJsonSerializationOptions.ManifestProperties
             );
 
-            if (input is null)
+            if (deserializedInput is null)
             {
                 _rerunError = "Failed to deserialize the saved input.";
                 return;
             }
 
-            var metadata = Metadata.Create(
-                new CreateMetadata
+            var serializedInput = JsonSerializer.Serialize(
+                deserializedInput,
+                registration.InputType,
+                ChainSharpJsonSerializationOptions.ManifestProperties
+            );
+
+            var entry = WorkQueue.Create(
+                new CreateWorkQueue
                 {
-                    Name = registration.ServiceType.FullName!,
-                    ExternalId = Guid.NewGuid().ToString("N"),
-                    Input = null,
+                    WorkflowName = _metadata.Name,
+                    Input = serializedInput,
+                    InputTypeName = registration.InputType.FullName,
                 }
             );
 
             using var dataContext = await DataContextFactory.CreateDbContextAsync(
                 CancellationToken.None
             );
-            await dataContext.Track(metadata);
+            await dataContext.Track(entry);
             await dataContext.SaveChanges(CancellationToken.None);
-
-            await BackgroundTaskServer.EnqueueAsync(metadata.Id, input);
 
             NotificationService.Notify(
                 NotificationSeverity.Success,
                 "Workflow Queued",
-                $"{ShortName(_metadata.Name)} has been re-queued (ID {metadata.Id}).",
+                $"{ShortName(_metadata.Name)} has been re-queued (ID {entry.Id}).",
                 duration: 4000
             );
 
-            Navigation.NavigateTo($"chainsharp/data/metadata/{metadata.Id}");
+            Navigation.NavigateTo($"chainsharp/data/work-queue/{entry.Id}");
         }
         catch (JsonException je)
         {

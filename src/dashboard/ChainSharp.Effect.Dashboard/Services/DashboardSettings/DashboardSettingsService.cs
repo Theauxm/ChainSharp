@@ -1,4 +1,5 @@
 using ChainSharp.Effect.Dashboard.Services.LocalStorage;
+using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
 
 namespace ChainSharp.Effect.Dashboard.Services.DashboardSettings;
 
@@ -7,13 +8,6 @@ public class DashboardSettingsService(ILocalStorageService localStorage) : IDash
     public const int DefaultPollingIntervalSeconds = 15;
     public const bool DefaultHideAdminWorkflows = true;
     public const bool DefaultComponentVisibility = true;
-
-    public static readonly IReadOnlyList<string> DefaultAdminWorkflowNames =
-    [
-        "ManifestManagerWorkflow",
-        "TaskServerExecutorWorkflow",
-        "MetadataCleanupWorkflow",
-    ];
 
     private bool _isInitialized;
 
@@ -24,7 +18,7 @@ public class DashboardSettingsService(ILocalStorageService localStorage) : IDash
 
     public bool HideAdminWorkflows { get; private set; } = DefaultHideAdminWorkflows;
 
-    public IReadOnlyList<string> AdminWorkflowNames => DefaultAdminWorkflowNames;
+    public IReadOnlyList<string> AdminWorkflowNames => AdminWorkflows.ShortNames;
 
     // Dashboard component visibility (all default to true)
     public bool ShowSummaryCards { get; private set; } = DefaultComponentVisibility;

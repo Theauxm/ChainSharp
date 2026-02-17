@@ -32,6 +32,25 @@ services.AddChainSharpEffects(options => options
 
 The builder captures the manifests and seeds them when the `BackgroundService` starts—same upsert semantics as `Schedule`.
 
+### Grouping Manifests
+
+When you schedule a batch of related manifests, pass a `groupId` to tie them together:
+
+```csharp
+services.AddChainSharpEffects(options => options
+    .AddScheduler(scheduler => scheduler
+        .UseHangfire(connectionString)
+        .ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
+            tables,
+            tableName => ($"sync-{tableName}", new SyncTableInput { TableName = tableName }),
+            Every.Minutes(5),
+            groupId: "table-sync")
+    )
+);
+```
+
+The `groupId` is stored on each `Manifest` in the batch. It's optional—manifests without a group work exactly as before. The dashboard's **Manifest Groups** page aggregates execution stats across all manifests sharing a group, which is useful when a logical operation is split across many manifests (e.g., syncing 1000 table slices).
+
 ### Runtime: ScheduleManyAsync
 
 `ScheduleManyAsync` creates multiple manifests in a single transaction at runtime. If any fails, the entire batch rolls back.
@@ -45,10 +64,11 @@ await scheduler.ScheduleManyAsync<ISyncTableWorkflow, SyncTableInput, string>(
         ExternalId: $"sync-{tableName}",
         Input: new SyncTableInput { TableName = tableName }
     ),
-    Every.Minutes(5));
+    Every.Minutes(5),
+    groupId: "table-sync");
 ```
 
-Use the builder approach for jobs known at compile time. Use `ScheduleManyAsync` when the set of jobs is determined at runtime (loaded from a database, config file, or external API).
+Use the builder approach for jobs known at compile time. Use `ScheduleManyAsync` when the set of jobs is determined at runtime (loaded from a database, config file, or external API). Both variants accept the same `groupId` parameter.
 
 ### Configuration Per Item
 

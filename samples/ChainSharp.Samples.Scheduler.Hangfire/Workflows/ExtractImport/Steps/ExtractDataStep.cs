@@ -17,7 +17,7 @@ public class ExtractDataStep(ILogger<ExtractDataStep> logger)
             input.Index
         );
 
-        await Task.Delay(100);
+        await Task.Delay(5000);
 
         logger.LogInformation(
             "[{TableName}][Index {Index}] Extraction complete",

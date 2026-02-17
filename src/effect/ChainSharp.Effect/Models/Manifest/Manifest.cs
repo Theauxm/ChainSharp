@@ -158,6 +158,8 @@ public class Manifest : IModel
     /// </remarks>
     public ICollection<DeadLetter.DeadLetter> DeadLetters { get; private set; } = [];
 
+    public ICollection<WorkQueue.WorkQueue> WorkQueues { get; private set; } = [];
+
     #endregion
 
     #region Functions

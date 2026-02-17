@@ -21,13 +21,29 @@ public class SchedulerConfiguration
     public TimeSpan PollingInterval { get; set; } = TimeSpan.FromSeconds(5);
 
     /// <summary>
-    /// The maximum number of active jobs (Pending + InProgress) allowed across all manifests.
+    /// The maximum number of active jobs (Pending + InProgress Metadata) allowed across all manifests.
     /// </summary>
     /// <remarks>
-    /// When the total number of active jobs reaches this limit, no new jobs will be enqueued
-    /// until existing jobs complete. Set to null to disable this limit (unlimited).
+    /// Enforced by the JobDispatcher at dispatch time. Metadata whose workflow name appears in
+    /// <see cref="ExcludedWorkflowTypeNames"/> is excluded from the count. By default, internal
+    /// scheduler workflows (JobDispatcher, TaskServerExecutor, ManifestManager, MetadataCleanup)
+    /// are excluded. When the total number of active jobs reaches this limit, the JobDispatcher
+    /// will not dispatch new work queue entries until existing jobs complete.
+    /// Work queue entries remain in Queued status as a buffer.
+    /// Set to null to disable this limit (unlimited).
     /// </remarks>
     public int? MaxActiveJobs { get; set; } = 10;
+
+    /// <summary>
+    /// Workflow type names excluded from the MaxActiveJobs count.
+    /// </summary>
+    /// <remarks>
+    /// Metadata whose <c>Name</c> column matches any entry in this list is not counted
+    /// toward <see cref="MaxActiveJobs"/>. Populated automatically with internal scheduler
+    /// workflow types during <c>Build()</c>. Additional types can be added via
+    /// <see cref="SchedulerConfigurationBuilder.ExcludeFromMaxActiveJobs{TWorkflow}"/>.
+    /// </remarks>
+    internal List<string> ExcludedWorkflowTypeNames { get; } = [];
 
     /// <summary>
     /// The default number of retry attempts before a job is dead-lettered.

@@ -86,7 +86,7 @@ builder.Services.AddChainSharpEffects(
                         ExtractImportInput,
                         (string Table, int Index)
                     >(
-                        Enumerable.Range(0, 20).Select(i => ("Transaction", i)),
+                        Enumerable.Range(0, 30).Select(i => ("Transaction", i)),
                         source =>
                             (
                                 $"extract-import-transaction-{source.Index}",

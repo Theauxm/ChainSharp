@@ -6,6 +6,7 @@ using ChainSharp.Effect.Models.DeadLetter;
 using ChainSharp.Effect.Models.Log;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.Metadata;
+using ChainSharp.Effect.Models.WorkQueue;
 using ChainSharp.Effect.Services.EffectProvider;
 using Microsoft.EntityFrameworkCore;
 
@@ -80,6 +81,8 @@ public interface IDataContext : IEffectProvider
     /// and any retry attempts made after dead-lettering.
     /// </remarks>
     DbSet<DeadLetter> DeadLetters { get; }
+
+    DbSet<WorkQueue> WorkQueues { get; }
 
     #endregion
 

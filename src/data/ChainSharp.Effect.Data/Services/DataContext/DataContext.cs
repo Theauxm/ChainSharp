@@ -7,6 +7,7 @@ using ChainSharp.Effect.Models.DeadLetter;
 using ChainSharp.Effect.Models.Log;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.Metadata;
+using ChainSharp.Effect.Models.WorkQueue;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChainSharp.Effect.Data.Services.DataContext;
@@ -86,6 +87,8 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
     /// and any retry attempts made after dead-lettering.
     /// </remarks>
     public DbSet<DeadLetter> DeadLetters { get; set; }
+
+    public DbSet<WorkQueue> WorkQueues { get; set; }
 
     #endregion
 

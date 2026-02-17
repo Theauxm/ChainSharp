@@ -1,12 +1,11 @@
 using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Models.Manifest;
-using ChainSharp.Effect.Models.Metadata;
-using ChainSharp.Effect.Models.Metadata.DTOs;
+using ChainSharp.Effect.Models.WorkQueue;
+using ChainSharp.Effect.Models.WorkQueue.DTOs;
 using ChainSharp.Effect.Orchestration.Mediator.Services.WorkflowRegistry;
 using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
 using ChainSharp.Effect.Orchestration.Scheduler.Extensions;
-using ChainSharp.Effect.Orchestration.Scheduler.Services.BackgroundTaskServer;
 using ChainSharp.Effect.Services.EffectWorkflow;
 using LanguageExt;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +20,6 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestScheduler;
 public class ManifestScheduler(
     IDataContextProviderFactory dataContextFactory,
     IWorkflowRegistry workflowRegistry,
-    IBackgroundTaskServer backgroundTaskServer,
     ILogger<ManifestScheduler> logger
 ) : IManifestScheduler
 {
@@ -223,29 +221,23 @@ public class ManifestScheduler(
                 $"No manifest found with ExternalId '{externalId}'"
             );
 
-        // Create a new metadata record for this triggered execution
-        var metadata = Metadata.Create(
-            new CreateMetadata
+        // Create a work queue entry instead of directly creating metadata + enqueueing
+        var entry = WorkQueue.Create(
+            new CreateWorkQueue
             {
-                Name = manifest.Name,
-                ExternalId = Guid.NewGuid().ToString("N"),
-                Input =
-                    manifest.Properties != null
-                        ? manifest.GetProperties(manifest.PropertyType)
-                        : null,
-                ManifestId = manifest.Id
+                WorkflowName = manifest.Name,
+                Input = manifest.Properties,
+                InputTypeName = manifest.PropertyTypeName,
+                ManifestId = manifest.Id,
             }
         );
-        context.Metadatas.Add(metadata);
+        context.WorkQueues.Add(entry);
         await context.SaveChanges(ct);
 
-        // Enqueue the job for immediate execution
-        await backgroundTaskServer.EnqueueAsync(metadata.Id);
-
         logger.LogInformation(
-            "Triggered immediate execution of manifest {ExternalId} with MetadataId {MetadataId}",
+            "Queued manifest {ExternalId} for execution (WorkQueueId: {WorkQueueId})",
             externalId,
-            metadata.Id
+            entry.Id
         );
     }
 }

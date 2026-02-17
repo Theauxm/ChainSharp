@@ -1,9 +1,11 @@
 using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
+using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.BackgroundTaskServer;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestPollingService;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestScheduler;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.MetadataCleanupPollingService;
+using ChainSharp.Effect.Orchestration.Scheduler.Workflows.JobDispatcher;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.MetadataCleanup;
 using ChainSharp.Effect.Services.EffectWorkflow;
@@ -73,6 +75,22 @@ public class SchedulerConfigurationBuilder
     public SchedulerConfigurationBuilder MaxActiveJobs(int? maxJobs)
     {
         _configuration.MaxActiveJobs = maxJobs;
+        return this;
+    }
+
+    /// <summary>
+    /// Excludes a workflow type from the MaxActiveJobs count.
+    /// </summary>
+    /// <typeparam name="TWorkflow">The workflow class type to exclude</typeparam>
+    /// <returns>The builder for method chaining</returns>
+    /// <remarks>
+    /// Internal scheduler workflows are excluded by default. Use this method to
+    /// exclude additional workflow types whose Metadata should not count toward the limit.
+    /// </remarks>
+    public SchedulerConfigurationBuilder ExcludeFromMaxActiveJobs<TWorkflow>()
+        where TWorkflow : class
+    {
+        _configuration.ExcludedWorkflowTypeNames.Add(typeof(TWorkflow).FullName!);
         return this;
     }
 
@@ -340,11 +358,21 @@ public class SchedulerConfigurationBuilder
     /// <returns>The parent builder for continued chaining</returns>
     internal ChainSharpEffectConfigurationBuilder Build()
     {
+        // Exclude internal scheduler workflows from MaxActiveJobs count
+        foreach (var name in AdminWorkflows.FullNames)
+            _configuration.ExcludedWorkflowTypeNames.Add(name);
+
         // Register the configuration
         _parentBuilder.ServiceCollection.AddSingleton(_configuration);
 
         // Register IManifestScheduler
         _parentBuilder.ServiceCollection.AddScoped<IManifestScheduler, ManifestScheduler>();
+
+        // Register JobDispatcher workflow (must use AddScopedChainSharpWorkflow for property injection)
+        _parentBuilder.ServiceCollection.AddScopedChainSharpWorkflow<
+            IJobDispatcherWorkflow,
+            JobDispatcherWorkflow
+        >();
 
         // Register task server if configured
         _taskServerRegistration?.Invoke(_parentBuilder.ServiceCollection);

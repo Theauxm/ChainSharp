@@ -40,9 +40,11 @@ public class TaskServerExecutorTests : TestSetup
         // Arrange
         var manifest = await CreateAndSaveManifest();
         var metadata = await CreateAndSaveMetadata(manifest, WorkflowState.Completed);
+        var input = manifest.GetProperties<SchedulerTestInput>();
 
         // Act
-        var act = async () => await TaskServerExecutor.Run(new ExecuteManifestRequest(metadata.Id));
+        var act = async () =>
+            await TaskServerExecutor.Run(new ExecuteManifestRequest(metadata.Id, input));
 
         // Assert
         await act.Should()
@@ -56,9 +58,11 @@ public class TaskServerExecutorTests : TestSetup
         // Arrange
         var manifest = await CreateAndSaveManifest();
         var metadata = await CreateAndSaveMetadata(manifest, WorkflowState.Failed);
+        var input = manifest.GetProperties<SchedulerTestInput>();
 
         // Act
-        var act = async () => await TaskServerExecutor.Run(new ExecuteManifestRequest(metadata.Id));
+        var act = async () =>
+            await TaskServerExecutor.Run(new ExecuteManifestRequest(metadata.Id, input));
 
         // Assert
         await act.Should()
@@ -72,9 +76,11 @@ public class TaskServerExecutorTests : TestSetup
         // Arrange
         var manifest = await CreateAndSaveManifest();
         var metadata = await CreateAndSaveMetadata(manifest, WorkflowState.InProgress);
+        var input = manifest.GetProperties<SchedulerTestInput>();
 
         // Act
-        var act = async () => await TaskServerExecutor.Run(new ExecuteManifestRequest(metadata.Id));
+        var act = async () =>
+            await TaskServerExecutor.Run(new ExecuteManifestRequest(metadata.Id, input));
 
         // Assert
         await act.Should()
@@ -87,15 +93,16 @@ public class TaskServerExecutorTests : TestSetup
     #region Run - Null Manifest Tests
 
     [Test]
-    public async Task Run_WhenManifestIsNull_ThrowsWorkflowException()
+    public async Task Run_WhenManifestIsNull_SucceedsButSkipsManifestUpdate()
     {
         // Arrange - Create metadata without a manifest
+        var input = new SchedulerTestInput { Value = "Test" };
         var metadata = Metadata.Create(
             new CreateMetadata
             {
                 Name = typeof(SchedulerTestWorkflow).FullName!,
                 ExternalId = Guid.NewGuid().ToString("N"),
-                Input = new SchedulerTestInput { Value = "Test" },
+                Input = input,
                 ManifestId = null
             }
         );
@@ -104,11 +111,10 @@ public class TaskServerExecutorTests : TestSetup
         await DataContext.SaveChanges(CancellationToken.None);
         DataContext.Reset();
 
-        // Act
-        var act = async () => await TaskServerExecutor.Run(new ExecuteManifestRequest(metadata.Id));
-
-        // Assert
-        await act.Should().ThrowAsync<WorkflowException>().WithMessage("*Manifest not loaded*");
+        // Act - Should succeed (UpdateManifestSuccessStep gracefully handles null manifest)
+        var act = async () =>
+            await TaskServerExecutor.Run(new ExecuteManifestRequest(metadata.Id, input));
+        await act.Should().NotThrowAsync();
     }
 
     #endregion
@@ -121,10 +127,10 @@ public class TaskServerExecutorTests : TestSetup
         // Arrange
         var manifest = await CreateAndSaveManifest();
         var metadata = await CreateAndSaveMetadata(manifest, WorkflowState.Pending);
-        var metadataId = metadata.Id;
+        var input = manifest.GetProperties<SchedulerTestInput>();
 
         // Act
-        await TaskServerExecutor.Run(new ExecuteManifestRequest(metadataId));
+        await TaskServerExecutor.Run(new ExecuteManifestRequest(metadata.Id, input));
 
         // Assert - Verify execution happened (LastSuccessfulRun updated)
         DataContext.Reset();
@@ -146,9 +152,10 @@ public class TaskServerExecutorTests : TestSetup
         var manifest = await CreateAndSaveManifest();
         var beforeExecution = DateTime.UtcNow;
         var metadata = await CreateAndSaveMetadata(manifest, WorkflowState.Pending);
+        var input = manifest.GetProperties<SchedulerTestInput>();
 
         // Act
-        await TaskServerExecutor.Run(new ExecuteManifestRequest(metadata.Id));
+        await TaskServerExecutor.Run(new ExecuteManifestRequest(metadata.Id, input));
         var afterExecution = DateTime.UtcNow;
 
         // Assert
@@ -170,9 +177,10 @@ public class TaskServerExecutorTests : TestSetup
         var testValue = $"UniqueValue_{Guid.NewGuid():N}";
         var manifest = await CreateAndSaveManifest(testValue);
         var metadata = await CreateAndSaveMetadata(manifest, WorkflowState.Pending);
+        var input = manifest.GetProperties<SchedulerTestInput>();
 
         // Act
-        await TaskServerExecutor.Run(new ExecuteManifestRequest(metadata.Id));
+        await TaskServerExecutor.Run(new ExecuteManifestRequest(metadata.Id, input));
 
         // Assert
         DataContext.Reset();

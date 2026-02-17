@@ -1,0 +1,312 @@
+using ChainSharp.Effect.Data.Services.DataContext;
+using ChainSharp.Effect.Data.Services.IDataContextFactory;
+using ChainSharp.Effect.Enums;
+using ChainSharp.Effect.Models.Manifest;
+using ChainSharp.Effect.Models.Manifest.DTOs;
+using ChainSharp.Effect.Models.Metadata;
+using ChainSharp.Effect.Models.Metadata.DTOs;
+using ChainSharp.Effect.Models.WorkQueue;
+using ChainSharp.Effect.Models.WorkQueue.DTOs;
+using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace ChainSharp.Tests.Effect.Data.Postgres.Integration.IntegrationTests;
+
+public class WorkQueueTests : TestSetup
+{
+    [Theory]
+    public async Task CreateWorkQueue_PersistsToDatabase()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var entry = WorkQueue.Create(
+            new CreateWorkQueue
+            {
+                WorkflowName = "ChainSharp.Tests.TestWorkflow",
+                Input = """{"value":"test"}""",
+                InputTypeName = "ChainSharp.Tests.TestInput",
+            }
+        );
+
+        // Act
+        await context.Track(entry);
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        var found = await context.WorkQueues.FirstOrDefaultAsync(x => x.Id == entry.Id);
+
+        // Assert
+        found.Should().NotBeNull();
+        found!.WorkflowName.Should().Be("ChainSharp.Tests.TestWorkflow");
+        found.Input.Should().Be("""{"value":"test"}""");
+        found.InputTypeName.Should().Be("ChainSharp.Tests.TestInput");
+        found.Status.Should().Be(WorkQueueStatus.Queued);
+        found.ExternalId.Should().NotBeNullOrEmpty();
+        found.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(10));
+        found.DispatchedAt.Should().BeNull();
+        found.ManifestId.Should().BeNull();
+        found.MetadataId.Should().BeNull();
+    }
+
+    [Theory]
+    public async Task CreateWorkQueue_WithManifestLink_PersistsRelationship()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var manifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(WorkQueueTests),
+                IsEnabled = true,
+                ScheduleType = ScheduleType.None,
+                MaxRetries = 3,
+            }
+        );
+
+        await context.Track(manifest);
+        await context.SaveChanges(CancellationToken.None);
+
+        var entry = WorkQueue.Create(
+            new CreateWorkQueue
+            {
+                WorkflowName = typeof(WorkQueueTests).FullName!,
+                Input = """{"value":"test"}""",
+                InputTypeName = typeof(WorkQueueTests).FullName,
+                ManifestId = manifest.Id,
+            }
+        );
+
+        await context.Track(entry);
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        // Act
+        var found = await context
+            .WorkQueues.Include(q => q.Manifest)
+            .FirstOrDefaultAsync(x => x.Id == entry.Id);
+
+        // Assert
+        found.Should().NotBeNull();
+        found!.ManifestId.Should().Be(manifest.Id);
+        found.Manifest.Should().NotBeNull();
+        found.Manifest!.Id.Should().Be(manifest.Id);
+    }
+
+    [Theory]
+    public async Task CreateWorkQueue_WithoutManifest_PersistsWithNullManifestId()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var entry = WorkQueue.Create(
+            new CreateWorkQueue
+            {
+                WorkflowName = "ChainSharp.Tests.AdHocWorkflow",
+                Input = """{"key":"value"}""",
+                InputTypeName = "ChainSharp.Tests.AdHocInput",
+            }
+        );
+
+        // Act
+        await context.Track(entry);
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        var found = await context.WorkQueues.FirstOrDefaultAsync(x => x.Id == entry.Id);
+
+        // Assert
+        found.Should().NotBeNull();
+        found!.ManifestId.Should().BeNull();
+        found.Manifest.Should().BeNull();
+    }
+
+    [Theory]
+    public async Task UpdateStatus_ToDispatched_PersistsWithMetadataLink()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var entry = WorkQueue.Create(
+            new CreateWorkQueue
+            {
+                WorkflowName = "ChainSharp.Tests.TestWorkflow",
+                Input = """{"value":"dispatch-test"}""",
+                InputTypeName = "ChainSharp.Tests.TestInput",
+            }
+        );
+
+        await context.Track(entry);
+        await context.SaveChanges(CancellationToken.None);
+
+        var metadata = Metadata.Create(
+            new CreateMetadata
+            {
+                Name = "ChainSharp.Tests.TestWorkflow",
+                ExternalId = Guid.NewGuid().ToString("N"),
+                Input = new { value = "dispatch-test" },
+            }
+        );
+
+        await context.Track(metadata);
+        await context.SaveChanges(CancellationToken.None);
+
+        // Act
+        entry.Status = WorkQueueStatus.Dispatched;
+        entry.MetadataId = metadata.Id;
+        entry.DispatchedAt = DateTime.UtcNow;
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        var found = await context
+            .WorkQueues.Include(q => q.Metadata)
+            .FirstOrDefaultAsync(x => x.Id == entry.Id);
+
+        // Assert
+        found.Should().NotBeNull();
+        found!.Status.Should().Be(WorkQueueStatus.Dispatched);
+        found.MetadataId.Should().Be(metadata.Id);
+        found.DispatchedAt.Should().NotBeNull();
+        found.Metadata.Should().NotBeNull();
+        found.Metadata!.Id.Should().Be(metadata.Id);
+    }
+
+    [Theory]
+    public async Task UpdateStatus_ToCancelled_Persists()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var entry = WorkQueue.Create(
+            new CreateWorkQueue
+            {
+                WorkflowName = "ChainSharp.Tests.TestWorkflow",
+                Input = """{"value":"cancel-test"}""",
+                InputTypeName = "ChainSharp.Tests.TestInput",
+            }
+        );
+
+        await context.Track(entry);
+        await context.SaveChanges(CancellationToken.None);
+        var entryId = entry.Id;
+
+        // Act
+        entry.Status = WorkQueueStatus.Cancelled;
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        var found = await context.WorkQueues.FirstOrDefaultAsync(x => x.Id == entryId);
+
+        // Assert
+        found.Should().NotBeNull();
+        found!.Status.Should().Be(WorkQueueStatus.Cancelled);
+        found.DispatchedAt.Should().BeNull();
+        found.MetadataId.Should().BeNull();
+    }
+
+    [Theory]
+    public async Task QueryByStatus_ReturnsOnlyMatchingEntries()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var queuedEntry = WorkQueue.Create(
+            new CreateWorkQueue
+            {
+                WorkflowName = "ChainSharp.Tests.QueuedWorkflow",
+                Input = """{"status":"queued"}""",
+                InputTypeName = "ChainSharp.Tests.TestInput",
+            }
+        );
+
+        var cancelledEntry = WorkQueue.Create(
+            new CreateWorkQueue
+            {
+                WorkflowName = "ChainSharp.Tests.CancelledWorkflow",
+                Input = """{"status":"cancelled"}""",
+                InputTypeName = "ChainSharp.Tests.TestInput",
+            }
+        );
+
+        await context.Track(queuedEntry);
+        await context.Track(cancelledEntry);
+        await context.SaveChanges(CancellationToken.None);
+
+        cancelledEntry.Status = WorkQueueStatus.Cancelled;
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        // Act
+        var queuedEntries = await context
+            .WorkQueues.Where(q => q.Status == WorkQueueStatus.Queued)
+            .ToListAsync();
+
+        var cancelledEntries = await context
+            .WorkQueues.Where(q => q.Status == WorkQueueStatus.Cancelled)
+            .ToListAsync();
+
+        // Assert
+        queuedEntries.Should().Contain(q => q.Id == queuedEntry.Id);
+        queuedEntries.Should().NotContain(q => q.Id == cancelledEntry.Id);
+        cancelledEntries.Should().Contain(q => q.Id == cancelledEntry.Id);
+    }
+
+    [Theory]
+    public async Task InputJsonb_RoundTrips()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var complexJson =
+            """{"name":"test","nested":{"key":"value","numbers":[1,2,3]},"enabled":true}""";
+
+        var entry = WorkQueue.Create(
+            new CreateWorkQueue
+            {
+                WorkflowName = "ChainSharp.Tests.JsonTestWorkflow",
+                Input = complexJson,
+                InputTypeName = "ChainSharp.Tests.ComplexInput",
+            }
+        );
+
+        // Act
+        await context.Track(entry);
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        var found = await context.WorkQueues.FirstOrDefaultAsync(x => x.Id == entry.Id);
+
+        // Assert
+        found.Should().NotBeNull();
+        found!.Input.Should().NotBeNull();
+        // JSONB normalizes whitespace but preserves data
+        found.Input.Should().Contain("\"name\"");
+        found.Input.Should().Contain("\"test\"");
+        found.Input.Should().Contain("\"nested\"");
+        found.Input.Should().Contain("[1,2,3]");
+        found.Input.Should().Contain("true");
+    }
+}

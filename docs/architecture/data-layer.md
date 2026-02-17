@@ -52,6 +52,7 @@ public class DataContext<TDbContext> : DbContext, IDataContext
 │ MaxRetries         │ int                                         │
 │ TimeoutSeconds     │ int?                                        │
 │ LastSuccessfulRun  │ datetime?                                   │
+│ GroupId            │ string?                                     │
 └──────────────────────────────────────────────────────────────────┘
           │                              │
           │ 1:N                          │ 1:N

@@ -34,11 +34,11 @@
                               Filterable="false"
                               Sortable="false">
             <Template Context="registration">
-                <RadzenButton Text="Run"
-                              Icon="play_arrow"
+                <RadzenButton Text="Queue"
+                              Icon="queue"
                               ButtonStyle="ButtonStyle.Primary"
                               Size="ButtonSize.Small"
-                              Click="@(() => OpenRunDialog(registration))" />
+                              Click="@(() => OpenQueueDialog(registration))" />
             </Template>
         </RadzenDataGridColumn>
     </Columns>
@@ -64,10 +64,10 @@
         }
     }
 
-    private async Task OpenRunDialog(WorkflowRegistration registration)
+    private async Task OpenQueueDialog(WorkflowRegistration registration)
     {
-        await DialogService.OpenAsync<RunWorkflowDialog>(
-            $"Run {registration.ServiceTypeName}",
+        await DialogService.OpenAsync<QueueWorkflowDialog>(
+            $"Queue {registration.ServiceTypeName}",
             new Dictionary<string, object> { ["Registration"] = registration },
             new DialogOptions
             {

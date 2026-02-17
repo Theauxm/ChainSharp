@@ -1,5 +1,7 @@
 using ChainSharp.Effect.Data.Extensions;
 using ChainSharp.Effect.Data.Postgres.Extensions;
+using ChainSharp.Effect.Data.Services.DataContext;
+using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Orchestration.Mediator.Extensions;
 using ChainSharp.Effect.Orchestration.Mediator.Services.WorkflowBus;
@@ -8,6 +10,7 @@ using ChainSharp.Effect.Provider.Parameter.Extensions;
 using ChainSharp.Effect.Services.EffectRunner;
 using ChainSharp.Effect.StepProvider.Logging.Extensions;
 using ChainSharp.Tests.ArrayLogger.Services.ArrayLoggingProvider;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -71,6 +74,31 @@ public abstract class TestSetup
     {
         Scope = ServiceProvider.CreateScope();
         WorkflowBus = Scope.ServiceProvider.GetRequiredService<IWorkflowBus>();
+
+        var factory = Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+        using var cleanupContext = (IDataContext)factory.Create();
+        await CleanupDatabase(cleanupContext);
+    }
+
+    /// <summary>
+    /// Deletes all rows from all scheduler tables in FK-safe order to ensure
+    /// complete test isolation between runs.
+    /// </summary>
+    private static async Task CleanupDatabase(IDataContext dataContext)
+    {
+        // Delete in FK-safe order (children before parents)
+        await dataContext.Logs.ExecuteDeleteAsync();
+        await dataContext.WorkQueues.ExecuteDeleteAsync();
+        await dataContext.DeadLetters.ExecuteDeleteAsync();
+        await dataContext.Metadatas.ExecuteDeleteAsync();
+
+        // Clear self-referencing FK before deleting manifests
+        await dataContext
+            .Manifests.Where(m => m.DependsOnManifestId != null)
+            .ExecuteUpdateAsync(s => s.SetProperty(m => m.DependsOnManifestId, (int?)null));
+        await dataContext.Manifests.ExecuteDeleteAsync();
+
+        dataContext.Reset();
     }
 
     [TearDown]

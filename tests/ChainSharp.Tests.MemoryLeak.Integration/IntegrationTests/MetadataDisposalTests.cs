@@ -94,6 +94,114 @@ public class MetadataDisposalTests
     }
 
     [Test]
+    public async Task SuccessfulEffectWorkflows_ShouldNotLeakMemory()
+    {
+        // This test validates that EffectWorkflow.Dispose() properly clears the Memory dictionary
+        // on the success path, preventing large step inputs/outputs from being retained.
+        var result = await MemoryProfiler.MonitorMemoryUsageAsync(
+            async () =>
+            {
+                for (int i = 0; i < 20; i++)
+                {
+                    var serviceProviderScope = _serviceProvider.CreateScope();
+
+                    try
+                    {
+                        var workflow =
+                            serviceProviderScope.ServiceProvider.GetRequiredService<IMemoryTestWorkflow>();
+
+                        var testInput = MemoryTestModelFactory.CreateInput(
+                            $"success_test_{i}",
+                            dataSizeBytes: 100_000,
+                            processingDelayMs: 0
+                        ); // 100KB each
+
+                        await workflow.Run(testInput);
+                    }
+                    finally
+                    {
+                        // Scope disposal triggers EffectWorkflow.Dispose() which should clear Memory
+                        serviceProviderScope.Dispose();
+                    }
+                }
+            },
+            "SuccessfulEffectWorkflows_ShouldNotLeakMemory"
+        );
+
+        Console.WriteLine(result.GetSummary());
+
+        // Successful workflows should clean up Memory dictionary contents on disposal
+        result
+            .MemoryRetained.Should()
+            .BeLessThan(
+                2 * 1024 * 1024,
+                "Should not retain more than 2MB total for 20 successful workflows with 100KB data each"
+            );
+
+        // Ensure per-workflow retention is minimal
+        var memoryPerWorkflow = result.MemoryRetained / 20;
+        memoryPerWorkflow
+            .Should()
+            .BeLessThan(
+                100 * 1024,
+                "Each successful workflow should retain less than 100KB on average after disposal"
+            );
+    }
+
+    [Test]
+    public async Task EffectWorkflow_ShouldBeCollected_AfterScopeDisposal()
+    {
+        // This test validates that EffectWorkflow instances are GC-collectible after scope disposal.
+        // Memory.Clear() in Dispose() is critical here — without it, large objects in the Memory
+        // dictionary could prevent the workflow and its references from being collected.
+        var weakReferences = new List<WeakReference>();
+
+        for (int i = 0; i < 30; i++)
+        {
+            var serviceProviderScope = _serviceProvider.CreateScope();
+
+            try
+            {
+                var workflow =
+                    serviceProviderScope.ServiceProvider.GetRequiredService<IMemoryTestWorkflow>();
+
+                weakReferences.Add(new WeakReference(workflow));
+
+                var testInput = MemoryTestModelFactory.CreateInput(
+                    $"gc_test_{i}",
+                    dataSizeBytes: 50_000,
+                    processingDelayMs: 0
+                ); // 50KB each
+
+                await workflow.Run(testInput);
+            }
+            finally
+            {
+                serviceProviderScope.Dispose();
+            }
+        }
+
+        // Force garbage collection
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+
+        await Task.Delay(100);
+
+        var aliveCount = weakReferences.Count(wr => wr.IsAlive);
+        Console.WriteLine(
+            $"EffectWorkflows still alive after scope disposal + GC: {aliveCount}/{weakReferences.Count}"
+        );
+
+        aliveCount
+            .Should()
+            .BeLessThan(
+                weakReferences.Count,
+                "Some EffectWorkflow instances should be collected by GC after scope disposal"
+            );
+    }
+
+    [Test]
     public async Task FailingWorkflows_ShouldNotLeakMemory()
     {
         // Arrange

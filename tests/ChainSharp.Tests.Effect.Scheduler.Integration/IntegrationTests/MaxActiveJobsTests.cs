@@ -452,6 +452,62 @@ public class MaxActiveJobsTests
 
     #endregion
 
+    #region Priority Ordering Tests
+
+    [Test]
+    public async Task Run_WhenOnlyOneSlot_DependentEntryDispatchedBeforeNonDependent()
+    {
+        // Arrange - Fill all but one slot so only 1 entry can be dispatched
+        for (var i = 0; i < MaxActiveJobsLimit - 1; i++)
+        {
+            var manifest = await CreateAndSaveManifest(inputValue: $"Active_{i}");
+            await CreateAndSaveMetadata(manifest, WorkflowState.Pending);
+        }
+
+        // Create a non-dependent entry FIRST (earlier CreatedAt)
+        var nonDependentManifest = await CreateAndSaveManifest(inputValue: "NonDependent");
+        var nonDependentEntry = await CreateAndSaveWorkQueueEntry(nonDependentManifest);
+
+        // Small delay to guarantee CreatedAt ordering
+        await Task.Delay(50);
+
+        // Create a parent manifest, then a dependent manifest that depends on it
+        var parentManifest = await CreateAndSaveManifest(inputValue: "Parent");
+        var dependentManifest = await CreateAndSaveDependentManifest(
+            parentManifest,
+            inputValue: "Dependent"
+        );
+        var dependentEntry = await CreateAndSaveWorkQueueEntry(dependentManifest);
+
+        // Act
+        await _workflow.Run(Unit.Default);
+
+        // Assert - The dependent entry should be dispatched (not the non-dependent one)
+        _dataContext.Reset();
+
+        var updatedDependent = await _dataContext.WorkQueues.FirstAsync(
+            q => q.Id == dependentEntry.Id
+        );
+        updatedDependent
+            .Status.Should()
+            .Be(
+                WorkQueueStatus.Dispatched,
+                "dependent entries should be prioritized over non-dependent ones"
+            );
+
+        var updatedNonDependent = await _dataContext.WorkQueues.FirstAsync(
+            q => q.Id == nonDependentEntry.Id
+        );
+        updatedNonDependent
+            .Status.Should()
+            .Be(
+                WorkQueueStatus.Queued,
+                "non-dependent entry should remain queued when dependent entry takes the only slot"
+            );
+    }
+
+    #endregion
+
     #region Limit Boundary Tests
 
     [Test]
@@ -790,6 +846,30 @@ public class MaxActiveJobsTests
         _dataContext.Reset();
 
         return metadata;
+    }
+
+    private async Task<Manifest> CreateAndSaveDependentManifest(
+        Manifest parentManifest,
+        string inputValue = "TestValue"
+    )
+    {
+        var manifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(SchedulerTestWorkflow),
+                IsEnabled = true,
+                ScheduleType = ScheduleType.Dependent,
+                MaxRetries = 3,
+                Properties = new SchedulerTestInput { Value = inputValue },
+                DependsOnManifestId = parentManifest.Id,
+            }
+        );
+
+        await _dataContext.Track(manifest);
+        await _dataContext.SaveChanges(CancellationToken.None);
+        _dataContext.Reset();
+
+        return manifest;
     }
 
     private async Task<WorkQueue> CreateAndSaveWorkQueueEntry(Manifest manifest)

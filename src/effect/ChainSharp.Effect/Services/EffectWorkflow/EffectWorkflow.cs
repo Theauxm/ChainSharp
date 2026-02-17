@@ -201,6 +201,9 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
         StepEffectRunner?.Dispose();
         Metadata?.Dispose();
 
+        // Release all step inputs/outputs and services held in the workflow Memory dictionary
+        Memory?.Clear();
+
         Logger = null;
         ServiceProvider = null;
     }

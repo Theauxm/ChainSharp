@@ -1,3 +1,4 @@
+using System.Threading;
 using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Services.EffectProvider;
@@ -45,7 +46,17 @@ public class PostgresContextProviderFactory(
     /// It can be useful for monitoring and debugging purposes, such as detecting context leaks
     /// or understanding the context creation patterns in the application.
     /// </remarks>
-    public int Count { get; private set; } = 0;
+    private int _count;
+
+    /// <summary>
+    /// Gets the number of database contexts created by this factory.
+    /// </summary>
+    /// <remarks>
+    /// This property tracks the total number of database contexts created by this factory instance.
+    /// It can be useful for monitoring and debugging purposes, such as detecting context leaks
+    /// or understanding the context creation patterns in the application.
+    /// </remarks>
+    public int Count => _count;
 
     /// <summary>
     /// Creates a new PostgreSQL database context.
@@ -65,7 +76,7 @@ public class PostgresContextProviderFactory(
     {
         var context = dbContextFactory.CreateDbContext();
 
-        Count++;
+        Interlocked.Increment(ref _count);
 
         return context;
     }
@@ -89,7 +100,7 @@ public class PostgresContextProviderFactory(
     {
         var context = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
-        Count++;
+        Interlocked.Increment(ref _count);
 
         return context;
     }

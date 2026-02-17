@@ -12,6 +12,8 @@
   <Folder Name="/src/data/" />
   <Folder Name="/src/orchestration/" />
   <Folder Name="/src/providers/" />
+  <Folder Name="/src/reserved/" />
+  <Project Path="src/reserved/Trax/Trax.csproj" />
   <Folder Name="/tests/">
     <Project Path="tests/ChainSharp.Tests.Effect.Scheduler.Integration/ChainSharp.Tests.Effect.Scheduler.Integration.csproj" />
   </Folder>

@@ -1,4 +1,5 @@
 using ChainSharp.Effect.Data.Services.DataContext;
+using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
 using ChainSharp.Effect.Services.EffectWorkflow;
@@ -74,6 +75,66 @@ public static class DataContextExtensions
         };
         manifest.SetProperties(input);
         ApplySchedule(manifest, schedule);
+
+        context.Manifests.Add(manifest);
+
+        return manifest;
+    }
+
+    /// <summary>
+    /// Creates or updates a dependent manifest that triggers after a parent manifest succeeds.
+    /// </summary>
+    public static async Task<Manifest> UpsertDependentManifestAsync<TWorkflow, TInput>(
+        this IDataContext context,
+        string externalId,
+        TInput input,
+        int dependsOnManifestId,
+        ManifestOptions options,
+        string? groupId = null,
+        CancellationToken ct = default
+    )
+        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TInput : IManifestProperties
+    {
+        var existing = await context.Manifests.FirstOrDefaultAsync(
+            m => m.ExternalId == externalId,
+            ct
+        );
+
+        if (existing != null)
+        {
+            existing.Name = typeof(TWorkflow).FullName!;
+            existing.PropertyTypeName = typeof(TInput).FullName;
+            existing.SetProperties(input);
+            existing.IsEnabled = options.IsEnabled;
+            existing.MaxRetries = options.MaxRetries;
+            existing.TimeoutSeconds = options.Timeout.HasValue
+                ? (int)options.Timeout.Value.TotalSeconds
+                : null;
+            existing.GroupId = groupId;
+            existing.ScheduleType = ScheduleType.Dependent;
+            existing.DependsOnManifestId = dependsOnManifestId;
+            existing.CronExpression = null;
+            existing.IntervalSeconds = null;
+
+            return existing;
+        }
+
+        var manifest = new Manifest
+        {
+            ExternalId = externalId,
+            Name = typeof(TWorkflow).FullName!,
+            PropertyTypeName = typeof(TInput).FullName,
+            IsEnabled = options.IsEnabled,
+            MaxRetries = options.MaxRetries,
+            TimeoutSeconds = options.Timeout.HasValue
+                ? (int)options.Timeout.Value.TotalSeconds
+                : null,
+            GroupId = groupId,
+            ScheduleType = ScheduleType.Dependent,
+            DependsOnManifestId = dependsOnManifestId,
+        };
+        manifest.SetProperties(input);
 
         context.Manifests.Add(manifest);
 

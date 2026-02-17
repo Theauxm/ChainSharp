@@ -59,43 +59,69 @@ When a job fails more times than `MaxRetries`, it moves to the dead letter queue
 
 Operators can retry (which creates a new execution) or acknowledge (mark as handled without retry).
 
+### Dependent Manifests
+
+A manifest can depend on another manifest. Instead of running on a timer, it fires when its parent's `LastSuccessfulRun` advances past the dependent's own. This is how you build ETL chains, post-processing steps, or any workflow that should only run after another succeeds. See [Dependent Workflows](scheduler/dependent-workflows.md).
+
+```csharp
+scheduler
+    .Schedule<IExtractWorkflow, ExtractInput>(
+        "extract", new ExtractInput(), Every.Hours(1))
+    .Then<ILoadWorkflow, LoadInput>(
+        "load", new LoadInput());
+```
+
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │              ManifestPollingService (BackgroundService)           │
-│          Polls ManifestManager on a configurable interval        │
+│     Runs ManifestManager then JobDispatcher each cycle           │
 └─────────────────────────────────┬───────────────────────────────┘
                                   │
-                                  ▼
+                      ┌───────────┴───────────┐
+                      ▼                       ▼
+┌──────────────────────────────┐  ┌──────────────────────────────┐
+│   ManifestManagerWorkflow    │  │    JobDispatcherWorkflow      │
+│                              │  │                               │
+│  LoadManifests               │  │  LoadQueuedJobs               │
+│  → ReapFailedJobs            │  │  → DispatchJobs               │
+│  → DetermineJobsToQueue      │  │    (enforces MaxActiveJobs)   │
+│  → CreateWorkQueueEntries    │  │                               │
+└──────────────┬───────────────┘  └──────────────┬────────────────┘
+               │                                  │
+               │ writes to                        │ reads from
+               ▼                                  ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                  ManifestManagerWorkflow                         │
-│                                                                  │
-│  LoadManifests → ReapFailedJobs → DetermineJobsToQueue →        │
-│                                        EnqueueJobs               │
+│                        WORK_QUEUE                                │
+│            Decouples scheduling from dispatch                    │
 └─────────────────────────────────┬───────────────────────────────┘
-                                  │ Enqueues jobs to Hangfire
+                                  │ dispatched to
                                   ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                  TaskServerExecutorWorkflow                        │
+│                  TaskServerExecutorWorkflow                       │
 │                  (runs on Hangfire workers)                       │
 │                                                                  │
-│  LoadMetadata → ValidateState → ExecuteWorkflow →               │
+│  LoadMetadata → ValidateState → ExecuteWorkflow →                │
 │                                      UpdateManifest              │
 └─────────────────────────────────┬───────────────────────────────┘
                                   │
                                   ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                     Your Workflow                                │
-│              (Resolved via WorkflowBus)                          │
+│                     Your Workflow                                 │
+│              (Resolved via WorkflowBus)                           │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-The **ManifestPollingService** is a .NET `BackgroundService` that runs the ManifestManager on a configurable interval. It supports sub-minute polling (e.g., every 5 seconds)—something that wasn't possible when the manager was triggered by a Hangfire cron job. On startup, it also seeds any manifests configured via `.Schedule()` or `.ScheduleMany()`.
+The **ManifestPollingService** is a .NET `BackgroundService` that runs two workflows each cycle: the ManifestManager first, then the JobDispatcher. It supports sub-minute polling (e.g., every 5 seconds). On startup, it seeds any manifests configured via `.Schedule()`, `.ScheduleMany()`, `.Then()`, or `.ThenMany()`.
 
-The **ManifestManagerWorkflow** loads enabled manifests, dead-letters any that have exceeded their retry limit, determines which are due for execution, and enqueues them to the background task server (Hangfire).
+The **ManifestManagerWorkflow** loads enabled manifests, dead-letters any that have exceeded their retry limit, determines which are due for execution (including [dependent manifests](scheduler/dependent-workflows.md) whose parent has a newer `LastSuccessfulRun`), and writes them to the work queue. It doesn't enqueue anything directly—it just records intent.
+
+The **JobDispatcherWorkflow** reads from the work queue, enforces the `MaxActiveJobs` limit, creates `Metadata` records, and enqueues to the background task server (Hangfire). This is the single gateway to execution. Everything goes through the work queue first—manifest schedules, `TriggerAsync` calls, dashboard re-runs—so capacity enforcement happens in one place.
 
 The **TaskServerExecutorWorkflow** runs on Hangfire workers for each enqueued job. It loads the Metadata and Manifest, validates the job is still pending, executes the target workflow via `IWorkflowBus`, and updates `LastSuccessfulRun` on success.
+
+See [Administrative Workflows](scheduler/admin-workflows.md) for detailed documentation on each internal workflow.
 
 ## Sample Project
 

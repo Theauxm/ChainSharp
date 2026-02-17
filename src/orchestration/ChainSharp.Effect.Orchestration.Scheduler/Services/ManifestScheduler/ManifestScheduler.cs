@@ -171,6 +171,180 @@ public class ManifestScheduler(
     }
 
     /// <inheritdoc />
+    public async Task<Manifest> ScheduleDependentAsync<TWorkflow, TInput>(
+        string externalId,
+        TInput input,
+        string dependsOnExternalId,
+        Action<ManifestOptions>? configure = null,
+        CancellationToken ct = default
+    )
+        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TInput : IManifestProperties
+    {
+        workflowRegistry.ValidateWorkflowRegistration<TInput>();
+
+        var options = new ManifestOptions();
+        configure?.Invoke(options);
+
+        using var context =
+            dataContextFactory.Create() as IDataContext
+            ?? throw new InvalidOperationException("Failed to create data context");
+
+        var parentManifest =
+            await context.Manifests.FirstOrDefaultAsync(
+                m => m.ExternalId == dependsOnExternalId,
+                ct
+            )
+            ?? throw new InvalidOperationException(
+                $"Parent manifest with ExternalId '{dependsOnExternalId}' not found. "
+                    + "Ensure the parent manifest is scheduled before its dependents."
+            );
+
+        var manifest = await context.UpsertDependentManifestAsync<TWorkflow, TInput>(
+            externalId,
+            input,
+            parentManifest.Id,
+            options,
+            ct: ct
+        );
+
+        await context.SaveChanges(ct);
+
+        logger.LogInformation(
+            "Scheduled dependent workflow {Workflow} with ExternalId {ExternalId} depending on {ParentExternalId}",
+            typeof(TWorkflow).Name,
+            externalId,
+            dependsOnExternalId
+        );
+
+        return manifest;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Manifest>> ScheduleManyDependentAsync<
+        TWorkflow,
+        TInput,
+        TSource
+    >(
+        IEnumerable<TSource> sources,
+        Func<TSource, (string ExternalId, TInput Input)> map,
+        Func<TSource, string> dependsOn,
+        Action<TSource, ManifestOptions>? configure = null,
+        string? prunePrefix = null,
+        string? groupId = null,
+        CancellationToken ct = default
+    )
+        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TInput : IManifestProperties
+    {
+        workflowRegistry.ValidateWorkflowRegistration<TInput>();
+
+        var results = new List<Manifest>();
+        var sourceList = sources.ToList();
+
+        if (sourceList.Count == 0)
+            return results;
+
+        using var context =
+            dataContextFactory.Create() as IDataContext
+            ?? throw new InvalidOperationException("Failed to create data context");
+
+        var transaction = await context.BeginTransaction();
+
+        try
+        {
+            // Collect all unique parent external IDs and resolve them in one pass
+            var parentExternalIds = sourceList.Select(dependsOn).Distinct().ToList();
+            var parentManifests = await context
+                .Manifests.Where(m => parentExternalIds.Contains(m.ExternalId))
+                .ToDictionaryAsync(m => m.ExternalId, ct);
+
+            foreach (var source in sourceList)
+            {
+                var (externalId, input) = map(source);
+                var parentExternalId = dependsOn(source);
+
+                if (!parentManifests.TryGetValue(parentExternalId, out var parentManifest))
+                    throw new InvalidOperationException(
+                        $"Parent manifest with ExternalId '{parentExternalId}' not found. "
+                            + "Ensure parent manifests are scheduled before their dependents."
+                    );
+
+                var options = new ManifestOptions();
+                configure?.Invoke(source, options);
+
+                var manifest = await context.UpsertDependentManifestAsync<TWorkflow, TInput>(
+                    externalId,
+                    input,
+                    parentManifest.Id,
+                    options,
+                    groupId: groupId,
+                    ct: ct
+                );
+                results.Add(manifest);
+            }
+
+            await context.SaveChanges(ct);
+
+            if (prunePrefix is not null)
+            {
+                var keepIds = results.Select(m => m.ExternalId).ToHashSet();
+
+                var staleManifestIds = await context
+                    .Manifests.Where(
+                        m => m.ExternalId.StartsWith(prunePrefix) && !keepIds.Contains(m.ExternalId)
+                    )
+                    .Select(m => m.Id)
+                    .ToListAsync(ct);
+
+                if (staleManifestIds.Count > 0)
+                {
+                    await context
+                        .DeadLetters.Where(d => staleManifestIds.Contains(d.ManifestId))
+                        .ExecuteDeleteAsync(ct);
+
+                    await context
+                        .Metadatas.Where(
+                            m =>
+                                m.ManifestId.HasValue
+                                && staleManifestIds.Contains(m.ManifestId.Value)
+                        )
+                        .ExecuteDeleteAsync(ct);
+
+                    var pruned = await context
+                        .Manifests.Where(m => staleManifestIds.Contains(m.Id))
+                        .ExecuteDeleteAsync(ct);
+
+                    logger.LogInformation(
+                        "Pruned {Count} stale dependent manifests with prefix '{Prefix}'",
+                        pruned,
+                        prunePrefix
+                    );
+                }
+            }
+
+            await context.CommitTransaction();
+
+            logger.LogInformation(
+                "Scheduled {Count} dependent manifests for workflow {Workflow} in single transaction",
+                results.Count,
+                typeof(TWorkflow).Name
+            );
+
+            return results;
+        }
+        catch
+        {
+            await context.RollbackTransaction();
+            throw;
+        }
+        finally
+        {
+            transaction?.Dispose();
+        }
+    }
+
+    /// <inheritdoc />
     public async Task DisableAsync(string externalId, CancellationToken ct = default)
     {
         using var context =

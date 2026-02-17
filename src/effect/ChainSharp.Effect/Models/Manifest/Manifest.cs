@@ -132,11 +132,27 @@ public class Manifest : IModel
     [Column("group_id")]
     public string? GroupId { get; set; }
 
+    /// <summary>
+    /// Gets or sets the ID of the parent manifest that this manifest depends on.
+    /// </summary>
+    /// <remarks>
+    /// When set, this manifest will only be queued for execution after the parent manifest
+    /// completes successfully. The <see cref="ScheduleType"/> should be set to
+    /// <see cref="Enums.ScheduleType.Dependent"/> when this property is used.
+    /// </remarks>
+    [Column("depends_on_manifest_id")]
+    public int? DependsOnManifestId { get; set; }
+
     #endregion
 
     #endregion
 
     #region ForeignKeys
+
+    /// <summary>
+    /// Gets or sets the parent manifest that this manifest depends on.
+    /// </summary>
+    public Manifest? DependsOnManifest { get; set; }
 
     /// <summary>
     /// Gets the collection of metadata records (workflow executions) associated with this manifest.
@@ -180,6 +196,7 @@ public class Manifest : IModel
             IntervalSeconds = manifest.IntervalSeconds,
             MaxRetries = manifest.MaxRetries,
             TimeoutSeconds = manifest.TimeoutSeconds,
+            DependsOnManifestId = manifest.DependsOnManifestId,
         };
 
         if (manifest.Properties != null)

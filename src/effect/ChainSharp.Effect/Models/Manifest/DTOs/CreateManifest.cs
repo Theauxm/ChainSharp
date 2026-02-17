@@ -49,5 +49,11 @@ public class CreateManifest
     /// </summary>
     public int? TimeoutSeconds { get; set; }
 
+    /// <summary>
+    /// The ID of the parent manifest this manifest depends on.
+    /// Used with <see cref="ScheduleType.Dependent"/>.
+    /// </summary>
+    public int? DependsOnManifestId { get; set; }
+
     #endregion
 }

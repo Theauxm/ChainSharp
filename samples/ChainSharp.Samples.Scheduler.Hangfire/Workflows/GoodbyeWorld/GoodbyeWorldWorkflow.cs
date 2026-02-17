@@ -1,0 +1,15 @@
+using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Samples.Scheduler.Hangfire.Workflows.GoodbyeWorld.Steps;
+using LanguageExt;
+
+namespace ChainSharp.Samples.Scheduler.Hangfire.Workflows.GoodbyeWorld;
+
+/// <summary>
+/// A "Goodbye World" workflow that demonstrates dependent scheduling.
+/// Runs after HelloWorldWorkflow succeeds via .Then() chaining.
+/// </summary>
+public class GoodbyeWorldWorkflow : EffectWorkflow<GoodbyeWorldInput, Unit>, IGoodbyeWorldWorkflow
+{
+    protected override async Task<Either<Exception, Unit>> RunInternal(GoodbyeWorldInput input) =>
+        Activate(input).Chain<LogFarewellStep>().Resolve();
+}

@@ -698,6 +698,233 @@ public class ManifestManagerWorkflowTests : TestSetup
 
     #endregion
 
+    #region DetermineJobsToQueueStep Dependent Tests
+
+    [Test]
+    public async Task Run_WhenDependentManifestParentSucceeded_EnqueuesDependent()
+    {
+        // Arrange - Create a parent manifest that has run successfully
+        var parent = await CreateAndSaveManifest(
+            scheduleType: ScheduleType.Interval,
+            intervalSeconds: 3600,
+            inputValue: "Parent"
+        );
+
+        // Set parent's LastSuccessfulRun to now (simulating a recent success)
+        var trackedParent = await DataContext.Manifests.FirstAsync(m => m.Id == parent.Id);
+        trackedParent.LastSuccessfulRun = DateTime.UtcNow;
+        await DataContext.SaveChanges(CancellationToken.None);
+        DataContext.Reset();
+
+        // Create a dependent manifest that has never run
+        var dependent = await CreateAndSaveDependentManifest(parent, inputValue: "Dependent");
+
+        // Act
+        await _workflow.Run(Unit.Default);
+
+        // Assert - Dependent should be queued
+        DataContext.Reset();
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == dependent.Id)
+            .ToListAsync();
+
+        workQueueEntries
+            .Should()
+            .HaveCount(1, "dependent manifest should be queued after parent succeeds");
+        workQueueEntries[0].Status.Should().Be(WorkQueueStatus.Queued);
+    }
+
+    [Test]
+    public async Task Run_WhenDependentManifestAlreadyRanAfterParent_DoesNotEnqueueDependent()
+    {
+        // Arrange - Parent ran 10 minutes ago
+        var parent = await CreateAndSaveManifest(
+            scheduleType: ScheduleType.Interval,
+            intervalSeconds: 3600,
+            inputValue: "Parent"
+        );
+
+        var trackedParent = await DataContext.Manifests.FirstAsync(m => m.Id == parent.Id);
+        trackedParent.LastSuccessfulRun = DateTime.UtcNow.AddMinutes(-10);
+        await DataContext.SaveChanges(CancellationToken.None);
+        DataContext.Reset();
+
+        // Dependent ran 5 minutes ago (after parent)
+        var dependent = await CreateAndSaveDependentManifest(parent, inputValue: "Dependent");
+        var trackedDependent = await DataContext.Manifests.FirstAsync(m => m.Id == dependent.Id);
+        trackedDependent.LastSuccessfulRun = DateTime.UtcNow.AddMinutes(-5);
+        await DataContext.SaveChanges(CancellationToken.None);
+        DataContext.Reset();
+
+        // Act
+        await _workflow.Run(Unit.Default);
+
+        // Assert - Dependent should NOT be queued (already ran after parent)
+        DataContext.Reset();
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == dependent.Id)
+            .ToListAsync();
+
+        workQueueEntries.Should().BeEmpty("dependent already ran after parent's last success");
+    }
+
+    [Test]
+    public async Task Run_WhenDependentManifestParentNeverRan_DoesNotEnqueueDependent()
+    {
+        // Arrange - Parent has never run (LastSuccessfulRun = null)
+        var parent = await CreateAndSaveManifest(
+            scheduleType: ScheduleType.Interval,
+            intervalSeconds: 3600,
+            inputValue: "Parent"
+        );
+
+        var dependent = await CreateAndSaveDependentManifest(parent, inputValue: "Dependent");
+
+        // Act
+        await _workflow.Run(Unit.Default);
+
+        // Assert - Dependent should NOT be queued (parent hasn't succeeded yet)
+        DataContext.Reset();
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == dependent.Id)
+            .ToListAsync();
+
+        workQueueEntries.Should().BeEmpty("parent has never run successfully");
+    }
+
+    [Test]
+    public async Task Run_WhenDependentManifestHasDeadLetter_DoesNotEnqueueDependent()
+    {
+        // Arrange - Parent ran successfully
+        var parent = await CreateAndSaveManifest(
+            scheduleType: ScheduleType.Interval,
+            intervalSeconds: 3600,
+            inputValue: "Parent"
+        );
+
+        var trackedParent = await DataContext.Manifests.FirstAsync(m => m.Id == parent.Id);
+        trackedParent.LastSuccessfulRun = DateTime.UtcNow;
+        await DataContext.SaveChanges(CancellationToken.None);
+        DataContext.Reset();
+
+        // Dependent has a dead letter
+        var dependent = await CreateAndSaveDependentManifest(parent, inputValue: "Dependent");
+        await CreateAndSaveDeadLetter(dependent, DeadLetterStatus.AwaitingIntervention);
+
+        // Act
+        await _workflow.Run(Unit.Default);
+
+        // Assert - Dependent should NOT be queued (has dead letter)
+        DataContext.Reset();
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == dependent.Id)
+            .ToListAsync();
+
+        workQueueEntries.Should().BeEmpty("dependent with dead letter should be skipped");
+    }
+
+    [Test]
+    public async Task Run_WhenDependentManifestHasActiveExecution_DoesNotEnqueueDependent()
+    {
+        // Arrange - Parent ran successfully
+        var parent = await CreateAndSaveManifest(
+            scheduleType: ScheduleType.Interval,
+            intervalSeconds: 3600,
+            inputValue: "Parent"
+        );
+
+        var trackedParent = await DataContext.Manifests.FirstAsync(m => m.Id == parent.Id);
+        trackedParent.LastSuccessfulRun = DateTime.UtcNow;
+        await DataContext.SaveChanges(CancellationToken.None);
+        DataContext.Reset();
+
+        // Dependent has a pending execution
+        var dependent = await CreateAndSaveDependentManifest(parent, inputValue: "Dependent");
+        await CreateAndSaveMetadata(dependent, WorkflowState.Pending);
+
+        // Act
+        await _workflow.Run(Unit.Default);
+
+        // Assert - Dependent should NOT be queued (has active execution)
+        DataContext.Reset();
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == dependent.Id)
+            .ToListAsync();
+
+        workQueueEntries.Should().BeEmpty("dependent with active execution should be skipped");
+    }
+
+    [Test]
+    public async Task Run_WhenDependentManifestHasQueuedEntry_DoesNotEnqueueDuplicate()
+    {
+        // Arrange - Parent ran successfully
+        var parent = await CreateAndSaveManifest(
+            scheduleType: ScheduleType.Interval,
+            intervalSeconds: 3600,
+            inputValue: "Parent"
+        );
+
+        var trackedParent = await DataContext.Manifests.FirstAsync(m => m.Id == parent.Id);
+        trackedParent.LastSuccessfulRun = DateTime.UtcNow;
+        await DataContext.SaveChanges(CancellationToken.None);
+        DataContext.Reset();
+
+        // Dependent has never run, but already has a queued entry from a prior cycle
+        var dependent = await CreateAndSaveDependentManifest(parent, inputValue: "Dependent");
+        await CreateAndSaveWorkQueueEntry(dependent);
+
+        // Act
+        await _workflow.Run(Unit.Default);
+
+        // Assert - Should NOT create a duplicate queue entry
+        DataContext.Reset();
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == dependent.Id)
+            .ToListAsync();
+
+        workQueueEntries.Should().HaveCount(1, "should not create duplicate work queue entry");
+    }
+
+    [Test]
+    public async Task Run_DependentChain_QueuesOnlyImmediateDependent()
+    {
+        // Arrange - Chain: A → B → C
+        // A ran successfully, B and C have never run
+        var manifestA = await CreateAndSaveManifest(
+            scheduleType: ScheduleType.Interval,
+            intervalSeconds: 3600,
+            inputValue: "A"
+        );
+
+        var trackedA = await DataContext.Manifests.FirstAsync(m => m.Id == manifestA.Id);
+        trackedA.LastSuccessfulRun = DateTime.UtcNow;
+        await DataContext.SaveChanges(CancellationToken.None);
+        DataContext.Reset();
+
+        var manifestB = await CreateAndSaveDependentManifest(manifestA, inputValue: "B");
+        var manifestC = await CreateAndSaveDependentManifest(manifestB, inputValue: "C");
+
+        // Act
+        await _workflow.Run(Unit.Default);
+
+        // Assert
+        DataContext.Reset();
+
+        // B should be queued (A succeeded, B never ran)
+        var bEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == manifestB.Id)
+            .ToListAsync();
+        bEntries.Should().HaveCount(1, "B should be queued because A succeeded");
+
+        // C should NOT be queued (B hasn't succeeded yet)
+        var cEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == manifestC.Id)
+            .ToListAsync();
+        cEntries.Should().BeEmpty("C should not be queued because B hasn't succeeded yet");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private async Task<Manifest> CreateAndSaveManifest(
@@ -804,6 +1031,49 @@ public class ManifestManagerWorkflowTests : TestSetup
         DataContext.Reset();
 
         return deadLetter;
+    }
+
+    private async Task<Manifest> CreateAndSaveDependentManifest(
+        Manifest parent,
+        string inputValue = "Dependent"
+    )
+    {
+        var manifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(SchedulerTestWorkflow),
+                IsEnabled = true,
+                ScheduleType = ScheduleType.Dependent,
+                MaxRetries = 3,
+                Properties = new SchedulerTestInput { Value = inputValue },
+                DependsOnManifestId = parent.Id,
+            }
+        );
+
+        await DataContext.Track(manifest);
+        await DataContext.SaveChanges(CancellationToken.None);
+        DataContext.Reset();
+
+        return manifest;
+    }
+
+    private async Task<WorkQueue> CreateAndSaveWorkQueueEntry(Manifest manifest)
+    {
+        var entry = WorkQueue.Create(
+            new CreateWorkQueue
+            {
+                WorkflowName = manifest.Name,
+                Input = manifest.Properties,
+                InputTypeName = manifest.PropertyTypeName,
+                ManifestId = manifest.Id,
+            }
+        );
+
+        await DataContext.Track(entry);
+        await DataContext.SaveChanges(CancellationToken.None);
+        DataContext.Reset();
+
+        return entry;
     }
 
     #endregion

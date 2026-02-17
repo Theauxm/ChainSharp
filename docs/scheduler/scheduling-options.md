@@ -153,6 +153,12 @@ await scheduler.EnableAsync("sync-users");
 
 // Trigger immediate execution (doesn't wait for schedule)
 await scheduler.TriggerAsync("sync-users");
+
+// Schedule a dependent job at runtime
+await scheduler.ScheduleDependentAsync<ILoadWorkflow, LoadInput>(
+    "load-users",
+    new LoadInput { Table = "users" },
+    dependsOnExternalId: "sync-users");
 ```
 
 Disabled jobs remain in the database but are skipped by the ManifestManager until re-enabled.
@@ -180,14 +186,17 @@ await scheduler.ScheduleAsync<IMyWorkflow, MyInput>(
 |------|----------|-----|
 | `Interval` | Simple recurring | `Every.Minutes(5)` or `Schedule.FromInterval(TimeSpan)` |
 | `Cron` | Traditional scheduling | `Cron.Daily()` or `Schedule.FromCron("0 3 * * *")` |
+| `Dependent` | Runs after another manifest succeeds | `.Then()` / `.ThenMany()` or `ScheduleDependentAsync` |
 | `None` | Manual trigger only | Use `scheduler.TriggerAsync(externalId)` |
+
+See [Dependent Workflows](dependent-workflows.md) for details on chaining workflows.
 
 ## Configuration Options
 
 | Option | Default | Description |
 |--------|---------|-------------|
 | `PollingInterval` | 5s | How often ManifestManager checks for pending jobs (supports sub-minute) |
-| `MaxActiveJobs` | 100 | Maximum active jobs (Pending + InProgress) allowed across all manifests. Set to null for unlimited |
+| `MaxActiveJobs` | 100 | Maximum active jobs (Pending + InProgress) allowed. Enforced by the [JobDispatcher](admin-workflows/job-dispatcher.md) at dispatch time. Set to null for unlimited |
 | `DefaultMaxRetries` | 3 | Retry attempts before dead-lettering |
 | `DefaultRetryDelay` | 5m | Delay between retries |
 | `RetryBackoffMultiplier` | 2.0 | Exponential backoff (delays of 5m, 10m, 20m...) |

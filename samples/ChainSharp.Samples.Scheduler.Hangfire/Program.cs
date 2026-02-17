@@ -10,7 +10,9 @@ using ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor;
 using ChainSharp.Effect.Provider.Json.Extensions;
 using ChainSharp.Effect.Provider.Parameter.Extensions;
 using ChainSharp.Samples.Scheduler.Hangfire.Workflows.ExtractImport;
+using ChainSharp.Samples.Scheduler.Hangfire.Workflows.GoodbyeWorld;
 using ChainSharp.Samples.Scheduler.Hangfire.Workflows.HelloWorld;
+using ChainSharp.Samples.Scheduler.Hangfire.Workflows.TransformLoad;
 using Hangfire;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -52,7 +54,9 @@ builder.Services.AddChainSharpEffects(
                     .AddMetadataCleanup(cleanup =>
                     {
                         cleanup.AddWorkflowType<IHelloWorldWorkflow>();
+                        cleanup.AddWorkflowType<IGoodbyeWorldWorkflow>();
                         cleanup.AddWorkflowType<IExtractImportWorkflow>();
+                        cleanup.AddWorkflowType<ITransformLoadWorkflow>();
                     })
                     .UseHangfire(connectionString)
                     .Schedule<IHelloWorldWorkflow, HelloWorldInput>(
@@ -60,7 +64,12 @@ builder.Services.AddChainSharpEffects(
                         new HelloWorldInput { Name = "ChainSharp Scheduler" },
                         Every.Seconds(20)
                     )
-                    // Schedule ExtractImport for Customer table (1000 indexes)
+                    // Dependent: GoodbyeWorld runs after HelloWorld succeeds
+                    .Then<IGoodbyeWorldWorkflow, GoodbyeWorldInput>(
+                        "sample-goodbye-world",
+                        new GoodbyeWorldInput { Name = "ChainSharp Scheduler" }
+                    )
+                    // Schedule ExtractImport for Customer table (10 indexes)
                     .ScheduleMany<
                         IExtractImportWorkflow,
                         ExtractImportInput,
@@ -80,7 +89,27 @@ builder.Services.AddChainSharpEffects(
                         prunePrefix: "extract-import-customer-",
                         groupId: "extract-import-customer"
                     )
-                    // Schedule ExtractImport for Transaction table (100 indexes)
+                    // Dependent: TransformLoad runs after each Customer ExtractImport succeeds
+                    .ThenMany<
+                        ITransformLoadWorkflow,
+                        TransformLoadInput,
+                        (string Table, int Index)
+                    >(
+                        Enumerable.Range(0, 10).Select(i => ("Customer", i)),
+                        source =>
+                            (
+                                $"transform-load-customer-{source.Index}",
+                                new TransformLoadInput
+                                {
+                                    TableName = source.Table,
+                                    Index = source.Index,
+                                }
+                            ),
+                        dependsOn: source => $"extract-import-customer-{source.Index}",
+                        prunePrefix: "transform-load-customer-",
+                        groupId: "transform-load-customer"
+                    )
+                    // Schedule ExtractImport for Transaction table (30 indexes)
                     .ScheduleMany<
                         IExtractImportWorkflow,
                         ExtractImportInput,

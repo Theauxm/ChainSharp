@@ -83,7 +83,7 @@ builder.Services.AddChainSharpEffects(options => options
 );
 ```
 
-With no configuration, this cleans up `ManifestManagerWorkflow` and `MetadataCleanupWorkflow` metadata older than 1 hour, checking every minute.
+With no configuration, this cleans up `ManifestManagerWorkflow`, `JobDispatcherWorkflow`, and `MetadataCleanupWorkflow` metadata older than 1 hour, checking every minute. See [MetadataCleanup](admin-workflows/metadata-cleanup.md) for details on how the cleanup workflow operates internally.
 
 ### Custom Configuration
 
@@ -110,7 +110,7 @@ Override defaults and add your own workflow types to the whitelist:
 |--------|---------|-------------|
 | `CleanupInterval` | 1 minute | How often the cleanup service runs |
 | `RetentionPeriod` | 1 hour | How long to keep metadata before it becomes eligible for deletion |
-| `WorkflowTypeWhitelist` | `ManifestManagerWorkflow`, `MetadataCleanupWorkflow` | Workflow names whose metadata can be deleted (append via `AddWorkflowType`) |
+| `WorkflowTypeWhitelist` | `ManifestManagerWorkflow`, `JobDispatcherWorkflow`, `MetadataCleanupWorkflow` | Workflow names whose metadata can be deleted (append via `AddWorkflowType`) |
 
 ### What Gets Deleted
 

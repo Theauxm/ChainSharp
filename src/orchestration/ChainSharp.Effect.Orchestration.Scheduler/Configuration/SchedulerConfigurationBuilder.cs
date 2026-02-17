@@ -37,6 +37,7 @@ public class SchedulerConfigurationBuilder
     private readonly ChainSharpEffectConfigurationBuilder _parentBuilder;
     private readonly SchedulerConfiguration _configuration = new();
     private Action<IServiceCollection>? _taskServerRegistration;
+    private string? _lastScheduledExternalId;
 
     /// <summary>
     /// Creates a new scheduler configuration builder.
@@ -244,6 +245,57 @@ public class SchedulerConfigurationBuilder
             }
         );
 
+        _lastScheduledExternalId = externalId;
+
+        return this;
+    }
+
+    /// <summary>
+    /// Schedules a dependent workflow that runs after the previously scheduled manifest succeeds.
+    /// </summary>
+    /// <typeparam name="TWorkflow">The workflow interface type</typeparam>
+    /// <typeparam name="TInput">The input type for the workflow (must implement IManifestProperties)</typeparam>
+    /// <param name="externalId">A unique identifier for this dependent job</param>
+    /// <param name="input">The input data that will be passed to the workflow on each execution</param>
+    /// <param name="configure">Optional action to configure additional manifest options</param>
+    /// <returns>The builder for method chaining</returns>
+    /// <remarks>
+    /// Must be called after <see cref="Schedule{TWorkflow,TInput}"/> or another <c>Then</c> call.
+    /// The dependent manifest will be queued when the parent's LastSuccessfulRun is newer than its own.
+    /// Supports chaining: <c>.Schedule(...).Then(...).Then(...)</c> for A → B → C dependency chains.
+    /// </remarks>
+    public SchedulerConfigurationBuilder Then<TWorkflow, TInput>(
+        string externalId,
+        TInput input,
+        Action<ManifestOptions>? configure = null
+    )
+        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TInput : IManifestProperties
+    {
+        var parentExternalId =
+            _lastScheduledExternalId
+            ?? throw new InvalidOperationException(
+                "Then() must be called after Schedule() or another Then(). "
+                    + "No parent manifest external ID is available."
+            );
+
+        _configuration.PendingManifests.Add(
+            new PendingManifest
+            {
+                ExternalId = externalId,
+                ScheduleFunc = (scheduler, ct) =>
+                    scheduler.ScheduleDependentAsync<TWorkflow, TInput>(
+                        externalId,
+                        input,
+                        parentExternalId,
+                        configure,
+                        ct
+                    ),
+            }
+        );
+
+        _lastScheduledExternalId = externalId;
+
         return this;
     }
 
@@ -310,6 +362,80 @@ public class SchedulerConfigurationBuilder
                 }
             }
         );
+
+        _lastScheduledExternalId = null;
+
+        return this;
+    }
+
+    /// <summary>
+    /// Schedules multiple dependent workflow instances from a collection.
+    /// Each dependent manifest is linked to its parent via the <paramref name="dependsOn"/> function.
+    /// </summary>
+    /// <typeparam name="TWorkflow">The workflow interface type</typeparam>
+    /// <typeparam name="TInput">The input type for the workflow (must implement IManifestProperties)</typeparam>
+    /// <typeparam name="TSource">The type of elements in the source collection</typeparam>
+    /// <param name="sources">The collection of source items to create dependent manifests from</param>
+    /// <param name="map">A function that transforms each source item into an ExternalId and Input pair</param>
+    /// <param name="dependsOn">A function that maps each source item to the external ID of its parent manifest</param>
+    /// <param name="configure">Optional action to configure additional manifest options per source item</param>
+    /// <param name="prunePrefix">When specified, deletes stale manifests with this prefix not in the current batch</param>
+    /// <param name="groupId">Optional group identifier for dashboard grouping</param>
+    /// <returns>The builder for method chaining</returns>
+    /// <example>
+    /// <code>
+    /// scheduler
+    ///     .ScheduleMany&lt;IExtractWorkflow, ExtractInput, int&gt;(
+    ///         Enumerable.Range(0, 10),
+    ///         i => ($"extract-{i}", new ExtractInput { Index = i }),
+    ///         Every.Minutes(5),
+    ///         groupId: "extract")
+    ///     .ThenMany&lt;ITransformWorkflow, TransformInput, int&gt;(
+    ///         Enumerable.Range(0, 10),
+    ///         i => ($"transform-{i}", new TransformInput { Index = i }),
+    ///         dependsOn: i => $"extract-{i}",
+    ///         groupId: "transform")
+    /// </code>
+    /// </example>
+    public SchedulerConfigurationBuilder ThenMany<TWorkflow, TInput, TSource>(
+        IEnumerable<TSource> sources,
+        Func<TSource, (string ExternalId, TInput Input)> map,
+        Func<TSource, string> dependsOn,
+        Action<TSource, ManifestOptions>? configure = null,
+        string? prunePrefix = null,
+        string? groupId = null
+    )
+        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TInput : IManifestProperties
+    {
+        var sourceList = sources.ToList();
+        var firstId = sourceList.Select(s => map(s).ExternalId).FirstOrDefault() ?? "batch";
+
+        _configuration.PendingManifests.Add(
+            new PendingManifest
+            {
+                ExternalId = $"{firstId}... (dependent batch of {sourceList.Count})",
+                ScheduleFunc = async (scheduler, ct) =>
+                {
+                    var results = await scheduler.ScheduleManyDependentAsync<
+                        TWorkflow,
+                        TInput,
+                        TSource
+                    >(
+                        sourceList,
+                        map,
+                        dependsOn,
+                        configure,
+                        prunePrefix: prunePrefix,
+                        groupId: groupId,
+                        ct: ct
+                    );
+                    return results.FirstOrDefault()!;
+                }
+            }
+        );
+
+        _lastScheduledExternalId = null;
 
         return this;
     }

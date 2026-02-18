@@ -56,7 +56,7 @@ Task<Manifest> ScheduleAsync<TWorkflow, TInput>(
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `externalId` | `string` | Yes | — | A unique identifier for this scheduled job. Used for upsert semantics — if a manifest with this ID exists, it will be updated; otherwise a new one is created. Also used to reference this job in dependent scheduling (`Then`). |
+| `externalId` | `string` | Yes | — | A unique identifier for this scheduled job. Used for upsert semantics — if a manifest with this ID exists, it will be updated; otherwise a new one is created. Also used to reference this job in dependent scheduling (`ThenInclude`, `Include`). |
 | `input` | `TInput` | Yes | — | The input data that will be passed to the workflow on each execution. Serialized and stored in the manifest. |
 | `schedule` | `Schedule` | Yes | — | The schedule definition — either interval-based or cron-based. Use [Every]({% link api-reference/scheduler-api/scheduling-helpers.md %}) or [Cron]({% link api-reference/scheduler-api/scheduling-helpers.md %}) helpers to create one. |
 | `configure` | `Action<ManifestOptions>?` | No | `null` | Optional callback to set per-job options like `MaxRetries`, `IsEnabled`, `Timeout`, and `Priority`. See [ManifestOptions]({% link api-reference/scheduler-api/scheduling-helpers.md %}#manifestoptions). |

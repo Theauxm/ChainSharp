@@ -98,5 +98,5 @@ These methods are available on the `SchedulerConfigurationBuilder` passed to the
 - `AddScheduler` requires a data provider (`AddPostgresEffect` or `AddInMemoryEffect`) and `AddEffectWorkflowBus` to be configured first.
 - Internal scheduler workflows (`ManifestManager`, `JobDispatcher`, `TaskServerExecutor`, `MetadataCleanup`) are automatically excluded from `MaxActiveJobs`.
 - Manifests declared via `Schedule`/`ScheduleMany` are not created immediately — they are seeded on application startup by the `ManifestPollingService`.
-- Manifests declared via `Schedule`/`Then` get a ManifestGroup based on their `groupId` parameter (defaults to externalId). Per-group dispatch controls (MaxActiveJobs, Priority, IsEnabled) are configured from the dashboard.
+- Manifests declared via `Schedule`/`ThenInclude`/`Include` get a ManifestGroup based on their `groupId` parameter (defaults to externalId). Per-group dispatch controls (MaxActiveJobs, Priority, IsEnabled) are configured from the dashboard.
 - At build time, the scheduler validates that ManifestGroup dependencies form a DAG (no circular dependencies). If a cycle is detected, `AddScheduler` throws `InvalidOperationException` with the groups involved. See [Dependent Workflows — Cycle Detection]({% link scheduler/dependent-workflows.md %}#cycle-detection).

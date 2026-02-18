@@ -25,7 +25,7 @@ That's it. No event bus, no callbacks. The existing polling loop picks up the ch
 
 The same guards that apply to scheduled manifests apply here too: if the dependent has an active execution, a queued work entry, or a dead letter awaiting intervention, it won't be queued again.
 
-## Startup Configuration: Then
+## Startup Configuration: ThenInclude
 
 Chain a dependent workflow after a `Schedule` call:
 
@@ -38,7 +38,7 @@ services.AddChainSharpEffects(options => options
             new ExtractInput { Source = "api" },
             Every.Hours(1),
             groupId: "etl")
-        .Then<ITransformWorkflow, TransformInput>(
+        .ThenInclude<ITransformWorkflow, TransformInput>(
             "transform-data",
             new TransformInput { Format = "parquet" },
             groupId: "etl")
@@ -46,48 +46,96 @@ services.AddChainSharpEffects(options => options
 );
 ```
 
-*API Reference: [Schedule]({% link api-reference/scheduler-api/schedule.md %}), [Then]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
+*API Reference: [Schedule]({% link api-reference/scheduler-api/schedule.md %}), [ThenInclude]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
 
-`Then` captures the previous call's external ID as the parent. No schedule parameter—dependent manifests don't have one.
+`ThenInclude` captures the previous call's external ID as the parent. No schedule parameter—dependent manifests don't have one.
 
-Chaining works: `.Schedule(...).Then(...).Then(...)` creates A &rarr; B &rarr; C. Each `Then` depends on the one before it.
+Chaining works: `.Schedule(...).ThenInclude(...).ThenInclude(...)` creates A &rarr; B &rarr; C. Each `ThenInclude` depends on the one before it.
 
 ```csharp
 scheduler
     .Schedule<IExtractWorkflow, ExtractInput>(
         "extract", new ExtractInput(), Every.Hours(1),
         groupId: "etl")
-    .Then<ITransformWorkflow, TransformInput>(
+    .ThenInclude<ITransformWorkflow, TransformInput>(
         "transform", new TransformInput(),
         groupId: "etl")
-    .Then<ILoadWorkflow, LoadInput>(
+    .ThenInclude<ILoadWorkflow, LoadInput>(
         "load", new LoadInput(),
         groupId: "etl");
 ```
 
 Here, `transform` runs after `extract` succeeds, and `load` runs after `transform` succeeds. If `extract` fails, neither downstream workflow fires.
 
-## Bulk Dependencies: ThenMany
+## Fan-Out: Include
 
-For batch jobs where each item in one batch depends on a corresponding item in another, use `ThenMany` after `ScheduleMany`:
+Sometimes one job needs to trigger multiple independent downstream jobs. An extract might feed both a transform pipeline and a validation step. `ThenInclude` can't express this — it always chains from the previous manifest, producing a linear pipeline.
+
+`Include` solves this. It always branches from the **root** `Schedule`, not the cursor:
+
+```csharp
+scheduler
+    .Schedule<IExtractWorkflow, ExtractInput>(
+        "extract", new ExtractInput(), Every.Hours(1),
+        groupId: "etl")
+    // Both depend on Extract, not on each other
+    .Include<ITransformWorkflow, TransformInput>(
+        "transform", new TransformInput(),
+        groupId: "etl")
+    .Include<IValidateWorkflow, ValidateInput>(
+        "validate", new ValidateInput(),
+        groupId: "etl");
+```
+
+*API Reference: [Include]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
+
+This creates: `extract` &rarr; `transform`, `extract` &rarr; `validate`. When extract succeeds, both transform and validate are queued independently. If transform fails, validate is unaffected.
+
+### Mixing Include and ThenInclude
+
+`Include` and `ThenInclude` compose naturally. `Include` branches from the root, `ThenInclude` chains from wherever you are:
+
+```csharp
+scheduler
+    .Schedule<IExtractWorkflow, ExtractInput>(
+        "extract", new ExtractInput(), Every.Hours(1),
+        groupId: "etl")
+    // Branch 1: extract → transform → load
+    .Include<ITransformWorkflow, TransformInput>(
+        "transform", new TransformInput(),
+        groupId: "etl")
+        .ThenInclude<ILoadWorkflow, LoadInput>(
+            "load", new LoadInput(),
+            groupId: "etl")
+    // Branch 2: extract → validate (back to root)
+    .Include<IValidateWorkflow, ValidateInput>(
+        "validate", new ValidateInput(),
+        groupId: "etl");
+```
+
+The builder tracks two pointers: the **root** (set by `Schedule`) and the **cursor** (moved by every `ThenInclude` or `Include`). `Include` always parents from the root. `ThenInclude` always parents from the cursor.
+
+## Bulk Dependencies: IncludeMany
+
+For batch jobs where each item in one batch depends on a corresponding item in another, use `IncludeMany` (with `dependsOn`) after `ScheduleMany`. The name-based overloads eliminate repetitive `groupId`, `prunePrefix`, and external ID prefix strings:
 
 ```csharp
 scheduler
     .ScheduleMany<IExtractWorkflow, ExtractInput, int>(
+        "extract",
         Enumerable.Range(0, 100),
-        i => ($"extract-{i}", new ExtractInput { Partition = i }),
-        Every.Minutes(30),
-        prunePrefix: "extract-",
-        groupId: "extract")
-    .ThenMany<ILoadWorkflow, LoadInput, int>(
+        i => ($"{i}", new ExtractInput { Partition = i }),
+        Every.Minutes(30))
+    .IncludeMany<ILoadWorkflow, LoadInput, int>(
+        "load",
         Enumerable.Range(0, 100),
-        i => ($"load-{i}", new LoadInput { Partition = i }),
-        dependsOn: i => $"extract-{i}",
-        prunePrefix: "load-",
-        groupId: "load");
+        i => ($"{i}", new LoadInput { Partition = i }),
+        dependsOn: i => $"extract-{i}");
+// Creates: extract-0..extract-99 (groupId: "extract", prunePrefix: "extract-")
+//          load-0..load-99 (groupId: "load", prunePrefix: "load-")
 ```
 
-*API Reference: [ScheduleMany]({% link api-reference/scheduler-api/schedule-many.md %}), [ThenMany]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
+*API Reference: [ScheduleMany]({% link api-reference/scheduler-api/schedule-many.md %}), [IncludeMany]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
 
 The `dependsOn` function maps each source item to its parent's external ID. In this example, `load-0` depends on `extract-0`, `load-1` on `extract-1`, and so on. When `extract-42` succeeds, only `load-42` gets queued—the rest are unaffected.
 
@@ -95,13 +143,56 @@ The mapping is flexible. You aren't limited to 1:1. Multiple dependents can poin
 
 ```csharp
 // All load jobs depend on a single extract job
-.ThenMany<ILoadWorkflow, LoadInput, int>(
+.IncludeMany<ILoadWorkflow, LoadInput, int>(
+    "load",
     Enumerable.Range(0, 10),
-    i => ($"load-{i}", new LoadInput { Partition = i }),
+    i => ($"{i}", new LoadInput { Partition = i }),
     dependsOn: _ => "extract-all");
 ```
 
-`ThenMany` supports `prunePrefix` and `groupId` just like `ScheduleMany`. When a chain shares a `groupId`, all manifests belong to the same ManifestGroup, sharing per-group dispatch controls.
+The name-based overloads automatically set `groupId` and `prunePrefix` from the `name` parameter. When a chain shares a `groupId`, all manifests belong to the same ManifestGroup, sharing per-group dispatch controls. The explicit overloads (without the `name` parameter) are still available when you need full control over `groupId`, `prunePrefix`, and external IDs independently.
+
+For deeper chaining (a third batch level), use `ThenIncludeMany`:
+
+```csharp
+scheduler
+    .ScheduleMany<IExtractWorkflow, ExtractInput, int>(
+        "extract",
+        Enumerable.Range(0, 10),
+        i => ($"{i}", new ExtractInput { Partition = i }),
+        Every.Minutes(30))
+    .IncludeMany<ITransformWorkflow, TransformInput, int>(
+        "transform",
+        Enumerable.Range(0, 10),
+        i => ($"{i}", new TransformInput { Partition = i }),
+        dependsOn: i => $"extract-{i}")
+    .ThenIncludeMany<ILoadWorkflow, LoadInput, int>(
+        "load",
+        Enumerable.Range(0, 10),
+        i => ($"{i}", new LoadInput { Partition = i }),
+        dependsOn: i => $"transform-{i}");
+```
+
+## Bulk Fan-Out: IncludeMany
+
+When a single root manifest should trigger an entire batch of dependents, use `IncludeMany`:
+
+```csharp
+scheduler
+    .Schedule<IExtractWorkflow, ExtractInput>(
+        "extract-all",
+        new ExtractInput { Mode = "full" },
+        Every.Hours(1),
+        groupId: "extract")
+    .IncludeMany<ILoadWorkflow, LoadInput, int>(
+        "load",
+        Enumerable.Range(0, 10),
+        i => ($"{i}", new LoadInput { Partition = i }));
+```
+
+*API Reference: [IncludeMany]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
+
+All 10 `load-*` manifests depend on `extract-all`. No `dependsOn` function needed — `IncludeMany` automatically parents every item from the root `Schedule`. The name `"load"` derives `groupId: "load"` and `prunePrefix: "load-"`.
 
 ## Runtime API
 
@@ -131,7 +222,7 @@ Both methods use upsert semantics, same as their non-dependent counterparts. `Sc
 
 ManifestGroup dependencies must form a directed acyclic graph (DAG). Circular dependencies between groups—where group A depends on group B which depends back on group A, directly or transitively—would create a deadlock where no group can ever fire.
 
-The scheduler validates this **at startup**. When `AddScheduler` builds the configuration, it derives group-level edges from the manifest-level `Schedule`/`Then`/`ScheduleMany`/`ThenMany` calls and runs a topological sort (Kahn's algorithm) over the group graph. If a cycle is detected, the application fails fast with an `InvalidOperationException` listing the groups involved:
+The scheduler validates this **at startup**. When `AddScheduler` builds the configuration, it derives group-level edges from the manifest-level `Schedule`/`ThenInclude`/`Include`/`ScheduleMany`/`ThenIncludeMany`/`IncludeMany` calls and runs a topological sort (Kahn's algorithm) over the group graph. If a cycle is detected, the application fails fast with an `InvalidOperationException` listing the groups involved:
 
 ```
 Circular dependency detected among manifest groups: [group-a, group-b, group-c].

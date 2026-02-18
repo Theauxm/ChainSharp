@@ -11,7 +11,7 @@ nav_order: 2
 
 ### Startup Configuration: ScheduleMany
 
-For static bulk jobs, use the builder-time `ScheduleMany` during DI configuration. No async startup code or service resolution needed:
+For static bulk jobs, use the builder-time `ScheduleMany` during DI configuration. No async startup code or service resolution needed. The name-based overload is the simplest approach — it derives `groupId`, `prunePrefix`, and the external ID prefix from a single `name` parameter:
 
 ```csharp
 var tables = new[] { "users", "orders", "products", "inventory" };
@@ -20,14 +20,25 @@ services.AddChainSharpEffects(options => options
     .AddScheduler(scheduler => scheduler
         .UseHangfire(connectionString)
         .ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
+            "sync",
             tables,
-            tableName => (
-                ExternalId: $"sync-{tableName}",
-                Input: new SyncTableInput { TableName = tableName }
-            ),
+            tableName => (tableName, new SyncTableInput { TableName = tableName }),
             Every.Minutes(5))
     )
 );
+// Creates: sync-users, sync-orders, sync-products, sync-inventory
+// groupId: "sync", prunePrefix: "sync-"
+```
+
+For full control over `groupId`, `prunePrefix`, and external IDs independently, use the explicit overload:
+
+```csharp
+scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
+    tables,
+    tableName => ($"sync-{tableName}", new SyncTableInput { TableName = tableName }),
+    Every.Minutes(5),
+    prunePrefix: "sync-",
+    groupId: "sync");
 ```
 
 *API Reference: [ScheduleMany]({% link api-reference/scheduler-api/schedule-many.md %})*
@@ -38,7 +49,7 @@ The builder captures the manifests and seeds them when the `BackgroundService` s
 
 Every manifest belongs to a **ManifestGroup**. A ManifestGroup is a first-class entity that ties related manifests together and exposes per-group dispatch controls (see [Per-Group Dispatch Controls](#per-group-dispatch-controls) below).
 
-The `groupId` parameter is available on `Schedule`, `Then`, `ScheduleMany`, and `ThenMany`. When you don't specify a `groupId`, it defaults to the manifest's `externalId`—so every manifest always has a group, even if it's a group of one. ManifestGroups are upserted by name during scheduling: if a group with that name already exists it's reused, otherwise a new one is created automatically. Orphaned groups (groups with no remaining manifests) are cleaned up on startup.
+The `groupId` parameter is available on `Schedule`, `ThenInclude`, `Include`, `ScheduleMany`, `ThenIncludeMany`, and `IncludeMany`. When you don't specify a `groupId`, it defaults to the manifest's `externalId`—so every manifest always has a group, even if it's a group of one. ManifestGroups are upserted by name during scheduling: if a group with that name already exists it's reused, otherwise a new one is created automatically. Orphaned groups (groups with no remaining manifests) are cleaned up on startup.
 
 ```csharp
 services.AddChainSharpEffects(options => options
@@ -51,17 +62,16 @@ services.AddChainSharpEffects(options => options
             Every.Minutes(5),
             groupId: "user-pipeline")
         // Dependent manifest in the same group
-        .Then<ILoadWorkflow, LoadInput>(
+        .Include<ILoadWorkflow, LoadInput>(
             "load-users",
             new LoadInput { Table = "users" },
-            dependsOn: "extract-users",
             groupId: "user-pipeline")
-        // Bulk scheduling — all manifests share one group
+        // Bulk scheduling — name-based overload sets groupId automatically
         .ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
+            "table-sync",
             tables,
-            tableName => ($"sync-{tableName}", new SyncTableInput { TableName = tableName }),
-            Every.Minutes(5),
-            groupId: "table-sync")
+            tableName => (tableName, new SyncTableInput { TableName = tableName }),
+            Every.Minutes(5))
     )
 );
 ```
@@ -145,20 +155,27 @@ await scheduler.ScheduleManyAsync<ISyncTableWorkflow, SyncTableInput, (string Ta
 
 ### Pruning Stale Manifests
 
-When the source collection shrinks between deployments—tables removed, slices reduced—old manifests stick around in the database. The `prunePrefix` parameter handles this automatically:
+When the source collection shrinks between deployments—tables removed, slices reduced—old manifests stick around in the database. The name-based overload handles this automatically (pruning is always enabled via `prunePrefix: "{name}-"`):
 
 ```csharp
 // If "partner" was removed from this list since the last deployment,
-// its manifests will be deleted because they start with "sync-"
-// but weren't included in the current batch.
+// its manifest (sync-partner) will be deleted because it starts with "sync-"
+// but wasn't included in the current batch.
 var tables = new[] { "customer", "user" };
 
 scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
+    "sync",
     tables,
-    table => (
-        ExternalId: $"sync-{table}",
-        Input: new SyncTableInput { TableName = table }
-    ),
+    table => (table, new SyncTableInput { TableName = table }),
+    Every.Minutes(5));
+```
+
+With the explicit overload, specify `prunePrefix` manually:
+
+```csharp
+scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
+    tables,
+    table => ($"sync-{table}", new SyncTableInput { TableName = table }),
     Every.Minutes(5),
     prunePrefix: "sync-");
 ```
@@ -235,7 +252,7 @@ await scheduler.ScheduleAsync<IMyWorkflow, MyInput>(
 |------|----------|-----|
 | `Interval` | Simple recurring | `Every.Minutes(5)` or `Schedule.FromInterval(TimeSpan)` |
 | `Cron` | Traditional scheduling | `Cron.Daily()` or `Schedule.FromCron("0 3 * * *")` |
-| `Dependent` | Runs after another manifest succeeds | `.Then()` / `.ThenMany()` or `ScheduleDependentAsync` |
+| `Dependent` | Runs after another manifest succeeds | `.ThenInclude()` / `.ThenIncludeMany()` / `.Include()` / `.IncludeMany()` or `ScheduleDependentAsync` |
 | `None` | Manual trigger only | Use `scheduler.TriggerAsync(externalId)` |
 
 See [Dependent Workflows](dependent-workflows.md) for details on chaining workflows.

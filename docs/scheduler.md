@@ -30,10 +30,10 @@ await scheduler.ScheduleAsync<ISyncCustomersWorkflow, SyncCustomersInput>(
 
 // For bulk scheduling from a collection, use ScheduleMany:
 scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
+    "sync",
     tables,
-    table => ($"sync-{table}", new SyncTableInput { TableName = table }),
-    Every.Minutes(5),
-    prunePrefix: "sync-");
+    table => (table, new SyncTableInput { TableName = table }),
+    Every.Minutes(5));
 ```
 
 *API Reference: [ScheduleAsync]({% link api-reference/scheduler-api/schedule.md %}), [ScheduleMany]({% link api-reference/scheduler-api/schedule-many.md %})*
@@ -76,11 +76,11 @@ A manifest can depend on another manifest. Instead of running on a timer, it fir
 scheduler
     .Schedule<IExtractWorkflow, ExtractInput>(
         "extract", new ExtractInput(), Every.Hours(1))
-    .Then<ILoadWorkflow, LoadInput>(
+    .Include<ILoadWorkflow, LoadInput>(
         "load", new LoadInput());
 ```
 
-*API Reference: [Schedule]({% link api-reference/scheduler-api/schedule.md %}), [Then]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
+*API Reference: [Schedule]({% link api-reference/scheduler-api/schedule.md %}), [Include]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
 
 ### Manifest Groups
 
@@ -91,7 +91,7 @@ scheduler
     .Schedule<ISyncWorkflow, SyncInput>(
         "sync-data", new SyncInput(), Every.Hours(1),
         groupId: "data-sync")
-    .Then<ILoadWorkflow, LoadInput>(
+    .Include<ILoadWorkflow, LoadInput>(
         "load-data", new LoadInput(),
         groupId: "data-sync");
 ```
@@ -140,7 +140,7 @@ When `groupId` is not specified, it defaults to the manifest's `externalId`. See
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-The **ManifestPollingService** is a .NET `BackgroundService` that runs two workflows each cycle: the ManifestManager first, then the JobDispatcher. It supports sub-minute polling (e.g., every 5 seconds). On startup, it seeds any manifests configured via `.Schedule()`, `.ScheduleMany()`, `.Then()`, or `.ThenMany()`.
+The **ManifestPollingService** is a .NET `BackgroundService` that runs two workflows each cycle: the ManifestManager first, then the JobDispatcher. It supports sub-minute polling (e.g., every 5 seconds). On startup, it seeds any manifests configured via `.Schedule()`, `.ScheduleMany()`, `.ThenInclude()`, `.ThenIncludeMany()`, `.Include()`, or `.IncludeMany()`.
 
 The **ManifestManagerWorkflow** loads enabled manifests, dead-letters any that have exceeded their retry limit, determines which are due for execution (including [dependent manifests](scheduler/dependent-workflows.md) whose parent has a newer `LastSuccessfulRun`), and writes them to the work queue. It doesn't enqueue anything directly—it just records intent.
 
@@ -156,7 +156,7 @@ For complete method signatures, all parameters, and detailed usage examples for 
 
 - [Schedule / ScheduleAsync]({% link api-reference/scheduler-api/schedule.md %}) — single recurring workflow
 - [ScheduleMany / ScheduleManyAsync]({% link api-reference/scheduler-api/schedule-many.md %}) — batch scheduling with pruning
-- [Dependent Scheduling]({% link api-reference/scheduler-api/dependent-scheduling.md %}) — Then, ThenMany, ScheduleDependentAsync
+- [Dependent Scheduling]({% link api-reference/scheduler-api/dependent-scheduling.md %}) — ThenInclude, ThenIncludeMany, Include, IncludeMany, ScheduleDependentAsync
 - [Manifest Management]({% link api-reference/scheduler-api/manifest-management.md %}) — DisableAsync, EnableAsync, TriggerAsync
 - [Scheduling Helpers]({% link api-reference/scheduler-api/scheduling-helpers.md %}) — Every, Cron, Schedule record, ManifestOptions
 

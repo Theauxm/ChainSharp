@@ -30,7 +30,7 @@ Both share the same concepts: external IDs for upsert semantics, `Schedule` obje
 |--------|---------|-------------|
 | [Schedule / ScheduleAsync]({% link api-reference/scheduler-api/schedule.md %}) | Startup / Runtime | Schedules a single recurring workflow |
 | [ScheduleMany / ScheduleManyAsync]({% link api-reference/scheduler-api/schedule-many.md %}) | Startup / Runtime | Batch-schedules manifests from a collection with optional pruning |
-| [Dependent Scheduling]({% link api-reference/scheduler-api/dependent-scheduling.md %}) | Both | Schedules workflows that run after a parent completes (`Then`, `ThenMany`, `ScheduleDependentAsync`, `ScheduleManyDependentAsync`) |
+| [Dependent Scheduling]({% link api-reference/scheduler-api/dependent-scheduling.md %}) | Both | Schedules workflows that run after a parent completes (`ThenInclude`, `ThenIncludeMany`, `Include`, `IncludeMany`, `ScheduleDependentAsync`, `ScheduleManyDependentAsync`) |
 
 ### Management
 

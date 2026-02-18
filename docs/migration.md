@@ -122,7 +122,7 @@ The migration is idempotent — existing data is preserved and migrated automati
 ### Code Changes
 
 - `Manifest.GroupId` (string?) is replaced by `Manifest.ManifestGroupId` (int) and `Manifest.ManifestGroup` (navigation property)
-- `groupId` parameter is now available on `Schedule`, `Then`, `ScheduleMany`, and `ThenMany` (previously only on batch methods)
+- `groupId` parameter is now available on `Schedule`, `ThenInclude`, `Include`, `ScheduleMany`, `ThenIncludeMany`, and `IncludeMany` (previously only on batch methods)
 - When `groupId` is not specified, it defaults to the manifest's `externalId`
 - Per-group `MaxActiveJobs`, `Priority`, and `IsEnabled` are configured from the dashboard (not from code)
 

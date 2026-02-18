@@ -54,12 +54,12 @@ public class CyclicDependencyValidationTests
                             Every.Minutes(5),
                             groupId: "group-a"
                         )
-                        .Then<IFakeSchedulerWorkflowB, FakeManifestInputB>(
+                        .ThenInclude<IFakeSchedulerWorkflowB, FakeManifestInputB>(
                             "job-b",
                             new FakeManifestInputB(),
                             groupId: "group-b"
                         )
-                        .Then<IFakeSchedulerWorkflowC, FakeManifestInputC>(
+                        .ThenInclude<IFakeSchedulerWorkflowC, FakeManifestInputC>(
                             "job-c",
                             new FakeManifestInputC(),
                             groupId: "group-c"
@@ -84,7 +84,7 @@ public class CyclicDependencyValidationTests
                             Every.Minutes(5),
                             groupId: "same-group"
                         )
-                        .Then<IFakeSchedulerWorkflowB, FakeManifestInputB>(
+                        .ThenInclude<IFakeSchedulerWorkflowB, FakeManifestInputB>(
                             "job-b",
                             new FakeManifestInputB(),
                             groupId: "same-group"
@@ -109,7 +109,7 @@ public class CyclicDependencyValidationTests
                             Every.Minutes(5),
                             groupId: "group-a"
                         )
-                        .Then<IFakeSchedulerWorkflowB, FakeManifestInputB>(
+                        .ThenInclude<IFakeSchedulerWorkflowB, FakeManifestInputB>(
                             "job-b",
                             new FakeManifestInputB(),
                             groupId: "group-b"
@@ -120,7 +120,7 @@ public class CyclicDependencyValidationTests
                             Every.Minutes(5),
                             groupId: "group-a"
                         )
-                        .Then<IFakeSchedulerWorkflowD, FakeManifestInputD>(
+                        .ThenInclude<IFakeSchedulerWorkflowD, FakeManifestInputD>(
                             "job-d",
                             new FakeManifestInputD(),
                             groupId: "group-c"
@@ -150,7 +150,7 @@ public class CyclicDependencyValidationTests
                             Every.Minutes(5),
                             groupId: "group-a"
                         )
-                        .Then<IFakeSchedulerWorkflowB, FakeManifestInputB>(
+                        .ThenInclude<IFakeSchedulerWorkflowB, FakeManifestInputB>(
                             "job-b",
                             new FakeManifestInputB(),
                             groupId: "group-b"
@@ -162,7 +162,7 @@ public class CyclicDependencyValidationTests
                             Every.Minutes(5),
                             groupId: "group-b"
                         )
-                        .Then<IFakeSchedulerWorkflowD, FakeManifestInputD>(
+                        .ThenInclude<IFakeSchedulerWorkflowD, FakeManifestInputD>(
                             "job-d",
                             new FakeManifestInputD(),
                             groupId: "group-a"
@@ -189,12 +189,12 @@ public class CyclicDependencyValidationTests
                             Every.Minutes(5),
                             groupId: "group-a"
                         )
-                        .Then<IFakeSchedulerWorkflowB, FakeManifestInputB>(
+                        .ThenInclude<IFakeSchedulerWorkflowB, FakeManifestInputB>(
                             "job-b",
                             new FakeManifestInputB(),
                             groupId: "group-b"
                         )
-                        .Then<IFakeSchedulerWorkflowC, FakeManifestInputC>(
+                        .ThenInclude<IFakeSchedulerWorkflowC, FakeManifestInputC>(
                             "job-c",
                             new FakeManifestInputC(),
                             groupId: "group-c"
@@ -206,7 +206,7 @@ public class CyclicDependencyValidationTests
                             Every.Minutes(5),
                             groupId: "group-c"
                         )
-                        .Then<IFakeSchedulerWorkflowA, FakeManifestInputA>(
+                        .ThenInclude<IFakeSchedulerWorkflowA, FakeManifestInputA>(
                             "job-a2",
                             new FakeManifestInputA(),
                             groupId: "group-a"
@@ -236,7 +236,7 @@ public class CyclicDependencyValidationTests
                             new FakeManifestInputA(),
                             Every.Minutes(5)
                         )
-                        .Then<IFakeSchedulerWorkflowB, FakeManifestInputB>(
+                        .ThenInclude<IFakeSchedulerWorkflowB, FakeManifestInputB>(
                             "ext-b",
                             new FakeManifestInputB()
                         )
@@ -245,7 +245,7 @@ public class CyclicDependencyValidationTests
                             new FakeManifestInputC(),
                             Every.Minutes(5)
                         )
-                        .Then<IFakeSchedulerWorkflowD, FakeManifestInputD>(
+                        .ThenInclude<IFakeSchedulerWorkflowD, FakeManifestInputD>(
                             "ext-a",
                             new FakeManifestInputD()
                         )

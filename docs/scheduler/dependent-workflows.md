@@ -127,6 +127,21 @@ await scheduler.ScheduleManyDependentAsync<ILoadWorkflow, LoadInput, string>(
 
 Both methods use upsert semantics, same as their non-dependent counterparts. `ScheduleManyDependentAsync` runs in a single transaction.
 
+## Cycle Detection
+
+ManifestGroup dependencies must form a directed acyclic graph (DAG). Circular dependencies between groups—where group A depends on group B which depends back on group A, directly or transitively—would create a deadlock where no group can ever fire.
+
+The scheduler validates this **at startup**. When `AddScheduler` builds the configuration, it derives group-level edges from the manifest-level `Schedule`/`Then`/`ScheduleMany`/`ThenMany` calls and runs a topological sort (Kahn's algorithm) over the group graph. If a cycle is detected, the application fails fast with an `InvalidOperationException` listing the groups involved:
+
+```
+Circular dependency detected among manifest groups: [group-a, group-b, group-c].
+Manifest groups must form a directed acyclic graph (DAG).
+```
+
+Dependencies **within** a single group (two manifests in the same `groupId` where one depends on the other) are fine—only cross-group edges are checked, since within-group ordering is handled by the polling loop's parent/dependent evaluation.
+
+The dashboard also visualizes the group dependency graph on the ManifestGroups page and each ManifestGroup detail page, making it easy to see the structure at a glance.
+
 ## Under the Hood
 
 ### Database

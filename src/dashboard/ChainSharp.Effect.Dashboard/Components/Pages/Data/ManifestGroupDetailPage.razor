@@ -29,6 +29,15 @@
     return;
 }
 
+@* ── Dependency Graph ── *@
+@if (_dagLayout is not null && _dagLayout.Nodes.Count > 1)
+{
+    <RadzenCard class="rz-mb-4">
+        <RadzenText TextStyle="TextStyle.H6" class="rz-mb-2">Dependencies</RadzenText>
+        <DagGraph Layout="@_dagLayout" OnNodeClick="@OnDagNodeClick" />
+    </RadzenCard>
+}
+
 @* ── Group Settings ── *@
 <RadzenFieldset Text="Group Settings" class="@(IsSettingsDirty ? "cs-fieldset-dirty rz-mb-4" : "rz-mb-4")">
     <RadzenStack Gap="1.5rem">

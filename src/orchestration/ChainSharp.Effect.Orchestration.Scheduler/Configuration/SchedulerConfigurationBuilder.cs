@@ -6,6 +6,7 @@ using ChainSharp.Effect.Orchestration.Scheduler.Services.BackgroundTaskServer;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestPollingService;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestScheduler;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.MetadataCleanupPollingService;
+using ChainSharp.Effect.Orchestration.Scheduler.Utilities;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.JobDispatcher;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.MetadataCleanup;
@@ -39,6 +40,10 @@ public class SchedulerConfigurationBuilder
     private readonly SchedulerConfiguration _configuration = new();
     private Action<IServiceCollection>? _taskServerRegistration;
     private string? _lastScheduledExternalId;
+
+    // Dependency graph tracking for cycle detection at build time
+    private readonly Dictionary<string, string> _externalIdToGroupId = new();
+    private readonly List<(string ParentExternalId, string ChildExternalId)> _dependencyEdges = [];
 
     /// <summary>
     /// Creates a new scheduler configuration builder.
@@ -249,6 +254,8 @@ public class SchedulerConfigurationBuilder
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
     {
+        _externalIdToGroupId[externalId] = groupId ?? externalId;
+
         _configuration.PendingManifests.Add(
             new PendingManifest
             {
@@ -302,6 +309,9 @@ public class SchedulerConfigurationBuilder
                 "Then() must be called after Schedule() or another Then(). "
                     + "No parent manifest external ID is available."
             );
+
+        _externalIdToGroupId[externalId] = groupId ?? externalId;
+        _dependencyEdges.Add((parentExternalId, externalId));
 
         _configuration.PendingManifests.Add(
             new PendingManifest
@@ -370,6 +380,12 @@ public class SchedulerConfigurationBuilder
         // Materialize the sources to avoid multiple enumeration
         var sourceList = sources.ToList();
         var firstId = sourceList.Select(s => map(s).ExternalId).FirstOrDefault() ?? "batch";
+
+        foreach (var source in sourceList)
+        {
+            var (extId, _) = map(source);
+            _externalIdToGroupId[extId] = groupId ?? extId;
+        }
 
         _configuration.PendingManifests.Add(
             new PendingManifest
@@ -441,6 +457,14 @@ public class SchedulerConfigurationBuilder
     {
         var sourceList = sources.ToList();
         var firstId = sourceList.Select(s => map(s).ExternalId).FirstOrDefault() ?? "batch";
+
+        foreach (var source in sourceList)
+        {
+            var (extId, _) = map(source);
+            var parentExtId = dependsOn(source);
+            _externalIdToGroupId[extId] = groupId ?? extId;
+            _dependencyEdges.Add((parentExtId, extId));
+        }
 
         _configuration.PendingManifests.Add(
             new PendingManifest
@@ -516,6 +540,8 @@ public class SchedulerConfigurationBuilder
     /// <returns>The parent builder for continued chaining</returns>
     internal ChainSharpEffectConfigurationBuilder Build()
     {
+        ValidateNoCyclicGroupDependencies();
+
         // Exclude internal scheduler workflows from MaxActiveJobs count
         foreach (var name in AdminWorkflows.FullNames)
             _configuration.ExcludedWorkflowTypeNames.Add(name);
@@ -543,5 +569,44 @@ public class SchedulerConfigurationBuilder
             _parentBuilder.ServiceCollection.AddHostedService<MetadataCleanupPollingService>();
 
         return _parentBuilder;
+    }
+
+    /// <summary>
+    /// Validates that the manifest group dependency graph is a DAG (no circular dependencies).
+    /// </summary>
+    private void ValidateNoCyclicGroupDependencies()
+    {
+        if (_dependencyEdges.Count == 0)
+            return;
+
+        // Derive group-level edges from manifest-level edges
+        var groupNodes = new System.Collections.Generic.HashSet<string>(
+            _externalIdToGroupId.Values
+        );
+        var groupEdges = _dependencyEdges
+            .Select(e =>
+            {
+                _externalIdToGroupId.TryGetValue(e.ParentExternalId, out var fromGroup);
+                _externalIdToGroupId.TryGetValue(e.ChildExternalId, out var toGroup);
+                return (From: fromGroup, To: toGroup);
+            })
+            .Where(e => e.From is not null && e.To is not null && e.From != e.To)
+            .Select(e => (e.From!, e.To!))
+            .Distinct()
+            .ToList();
+
+        if (groupEdges.Count == 0)
+            return;
+
+        var result = DagValidator.TopologicalSort(groupNodes, groupEdges);
+
+        if (!result.IsAcyclic)
+        {
+            var cycleGroups = string.Join(", ", result.CycleMembers.Order());
+            throw new InvalidOperationException(
+                $"Circular dependency detected among manifest groups: [{cycleGroups}]. "
+                    + "Manifest groups must form a directed acyclic graph (DAG)."
+            );
+        }
     }
 }

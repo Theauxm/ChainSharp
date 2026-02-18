@@ -8,6 +8,12 @@
     Logical groupings of related manifests with per-group dispatch controls.
 </RadzenText>
 
+@if (_dagLayout is not null && _dagLayout.Nodes.Count > 0)
+{
+    <RadzenText TextStyle="TextStyle.H6" class="rz-mb-2">Dependency Graph</RadzenText>
+    <DagGraph Layout="@_dagLayout" OnNodeClick="@OnDagNodeClick" />
+}
+
 <ChainSharpDataGrid Data="@_items"
                     TItem="GroupSummary"
                     IsLoading="@IsLoading"
@@ -58,6 +64,7 @@
 
 @code {
     private List<GroupSummary> _items = [];
+    private DagLayout? _dagLayout;
 
     protected override async Task LoadDataAsync(CancellationToken cancellationToken)
     {
@@ -81,10 +88,43 @@
                 LastRun = g.Manifests.SelectMany(m => m.Metadatas).Max(md => (DateTime?)md.StartTime),
             })
             .ToListAsync(cancellationToken);
+
+        // Build group-level dependency graph
+        var crossGroupEdges = await context.Manifests
+            .AsNoTracking()
+            .Where(m => m.DependsOnManifestId != null)
+            .Join(
+                context.Manifests.AsNoTracking(),
+                dependent => dependent.DependsOnManifestId,
+                parent => (int?)parent.Id,
+                (dependent, parent) => new
+                {
+                    ParentGroupId = parent.ManifestGroupId,
+                    DependentGroupId = dependent.ManifestGroupId,
+                }
+            )
+            .Where(e => e.ParentGroupId != e.DependentGroupId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var dagNodes = _items
+            .Select(g => new DagNode { Id = g.Id, Label = g.Name })
+            .ToList();
+
+        var dagEdges = crossGroupEdges
+            .Select(e => new DagEdge { FromId = e.ParentGroupId, ToId = e.DependentGroupId })
+            .ToList();
+
+        _dagLayout = DagLayoutEngine.ComputeLayout(dagNodes, dagEdges);
     }
 
     private void OnRowClick(DataGridRowMouseEventArgs<GroupSummary> args)
     {
         Navigation.NavigateTo($"chainsharp/data/manifest-groups/{args.Data.Id}");
+    }
+
+    private void OnDagNodeClick(int groupId)
+    {
+        Navigation.NavigateTo($"chainsharp/data/manifest-groups/{groupId}");
     }
 }

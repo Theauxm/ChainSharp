@@ -1,3 +1,10 @@
+## [5.12.2](https://github.com/Theauxm/ChainSharp/compare/v5.12.1...v5.12.2) (2026-02-18)
+
+
+### Bug Fixes
+
+* work queue cleanup ([#160](https://github.com/Theauxm/ChainSharp/issues/160)) ([d7e1be0](https://github.com/Theauxm/ChainSharp/commit/d7e1be0484a50d458028442d91e5d8d422ac5daf))
+
 ## [5.12.1](https://github.com/Theauxm/ChainSharp/compare/v5.12.0...v5.12.1) (2026-02-17)
 
 

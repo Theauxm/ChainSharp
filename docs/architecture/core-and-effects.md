@@ -28,12 +28,9 @@ public interface IStep<TIn, TOut>
     Task<TOut> Run(TIn input);
 }
 
-// Chain class for composing steps
-public class Chain<T>
-{
-    public Chain<TOut> Chain<TStep, TOut>() where TStep : IStep<T, TOut>;
-    public Task<Either<Exception, T>> Resolve();
-}
+// Chaining is done via methods on Workflow<TIn, TOut> itself
+// e.g. Activate(input).Chain<MyStep>().Chain<MyOtherStep>().Resolve()
+// See API Reference > Workflow Methods for all overloads
 ```
 
 This layer handles chaining, error propagation, and the core workflow lifecycle.
@@ -49,7 +46,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
 {
     // Internal framework properties (injected automatically)
     [Inject] public IEffectRunner? EffectRunner { get; set; }
-    [Inject] public ILogger<EffectWorkflow<TIn, TOut>>? EffectLogger { get; set; }
+    [Inject] public ILogger<EffectWorkflow<TIn, TOut>>? Logger { get; set; }
     [Inject] public IServiceProvider? ServiceProvider { get; set; }
 
     public Metadata Metadata { get; private set; }

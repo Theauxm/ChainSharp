@@ -16,6 +16,27 @@ public class SchedulerConfiguration
     internal List<PendingManifest> PendingManifests { get; } = [];
 
     /// <summary>
+    /// Whether the ManifestManager workflow is enabled during polling cycles.
+    /// </summary>
+    /// <remarks>
+    /// When disabled, the ManifestManager will not run during polling cycles, meaning
+    /// no new work queue entries will be created from scheduled manifests. Existing
+    /// work queue entries are not affected. Takes effect on the next polling cycle.
+    /// </remarks>
+    public bool ManifestManagerEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Whether the JobDispatcher workflow is enabled during polling cycles.
+    /// </summary>
+    /// <remarks>
+    /// When disabled, the JobDispatcher will not run during polling cycles, meaning
+    /// no queued work will be dispatched to the background task server. Work queue
+    /// entries will continue to accumulate if the ManifestManager is still enabled.
+    /// Takes effect on the next polling cycle.
+    /// </remarks>
+    public bool JobDispatcherEnabled { get; set; } = true;
+
+    /// <summary>
     /// The interval at which the ManifestManager polls for pending jobs.
     /// </summary>
     public TimeSpan PollingInterval { get; set; } = TimeSpan.FromSeconds(5);

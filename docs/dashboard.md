@@ -41,6 +41,8 @@ app.UseChainSharpDashboard("/chainsharp");
 app.Run();
 ```
 
+*API Reference: [AddChainSharpDashboard]({% link api-reference/dashboard-api/add-chainsharp-dashboard.md %}), [UseChainSharpDashboard]({% link api-reference/dashboard-api/use-chainsharp-dashboard.md %})*
+
 Navigate to `/chainsharp/workflows` and you'll see every `IEffectWorkflow` registered in your application.
 
 ## What It Shows
@@ -93,6 +95,8 @@ builder.Services.AddChainSharpDashboard(options =>
     options.Title = "My App";  // Header text (default: "ChainSharp")
 });
 ```
+
+*API Reference: [AddChainSharpDashboard]({% link api-reference/dashboard-api/add-chainsharp-dashboard.md %}), [DashboardOptions]({% link api-reference/dashboard-api/dashboard-options.md %})*
 
 The route prefix is set in `UseChainSharpDashboard`:
 

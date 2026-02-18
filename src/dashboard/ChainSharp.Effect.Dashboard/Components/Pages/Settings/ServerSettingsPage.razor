@@ -20,6 +20,31 @@
     }
     else
     {
+        @* ── Administrative Workflows ── *@
+        <RadzenFieldset Text="Administrative Workflows" class="@(IsAdminWorkflowsDirty ? "cs-fieldset-dirty" : "")">
+            <RadzenStack Gap="1.5rem">
+                <RadzenAlert AlertStyle="AlertStyle.Warning" Shade="Shade.Lighter" AllowClose="false" Variant="Variant.Flat">
+                    Disabling these workflows takes effect on the next polling cycle. While disabled, the ManifestManager will not queue new work and the JobDispatcher will not dispatch queued entries.
+                </RadzenAlert>
+
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="Manifest Manager" />
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                        Scans scheduled manifests for due work and creates work queue entries. Disable to stop new work from being queued.
+                    </RadzenText>
+                    <RadzenSwitch @bind-Value="_schedulerConfig!.ManifestManagerEnabled" />
+                </RadzenStack>
+
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="Job Dispatcher" />
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                        Picks queued work and dispatches it to the background task server. Disable to stop jobs from being dispatched while allowing the queue to accumulate.
+                    </RadzenText>
+                    <RadzenSwitch @bind-Value="_schedulerConfig!.JobDispatcherEnabled" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenFieldset>
+
         @* ── Polling & Queue ── *@
         <RadzenFieldset Text="Polling & Queue" class="@(IsPollingQueueDirty ? "cs-fieldset-dirty" : "")">
             <RadzenStack Gap="1.5rem">

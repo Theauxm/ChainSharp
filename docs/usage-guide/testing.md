@@ -99,6 +99,8 @@ public async Task CreateUserWorkflow_CreatesUser()
 }
 ```
 
+*API Reference: [AddEffectWorkflowBus]({% link api-reference/configuration/add-effect-workflow-bus.md %}), [WorkflowBus.RunAsync]({% link api-reference/mediator-api/workflow-bus.md %})*
+
 ## Integration Testing with InMemory Provider
 
 For integration tests, use the InMemory data provider to avoid database dependencies:
@@ -129,3 +131,5 @@ public async Task Workflow_PersistsMetadata()
     Assert.Equal(WorkflowState.Completed, metadata.WorkflowState);
 }
 ```
+
+*API Reference: [AddInMemoryEffect]({% link api-reference/configuration/add-in-memory-effect.md %}), [AddEffectWorkflowBus]({% link api-reference/configuration/add-effect-workflow-bus.md %})*

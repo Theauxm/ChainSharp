@@ -24,6 +24,8 @@ protected override async Task<Either<Exception, User>> RunInternal(CreateUserReq
 }
 ```
 
+*API Reference: [Activate]({% link api-reference/workflow-methods/activate.md %}), [AddServices]({% link api-reference/workflow-methods/add-services.md %}), [Chain]({% link api-reference/workflow-methods/chain.md %}), [Resolve]({% link api-reference/workflow-methods/resolve.md %})*
+
 ## How It Works
 
 Each type argument is stored in Memory with the corresponding instance. Steps that declare `IValidator` or `INotifier` as their `TIn` type will receive these instances.
@@ -35,8 +37,11 @@ Each type argument is stored in Memory with the corresponding instance. Steps th
 .AddServices<IValidator, INotifier>(validator, notifier)
 ```
 
+*API Reference: [AddServices]({% link api-reference/workflow-methods/add-services.md %})*
+
 ## When to Use It
 
 Use `AddServices` when you need to inject runtime-created instances into the chain—objects that aren't available through the DI container or that need to be created per-execution.
 
 For standard dependencies, prefer constructor injection in your steps instead.
+

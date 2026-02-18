@@ -3,7 +3,10 @@
 @inject IDataContextProviderFactory DataContextFactory
 @inject NavigationManager Navigation
 
-<RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Metadata</RadzenText>
+<RadzenText TextStyle="TextStyle.H4" class="rz-mb-2">Metadata</RadzenText>
+<RadzenText TextStyle="TextStyle.Body2" class="rz-mb-4" Style="color: var(--rz-text-secondary-color);">
+    Execution records for each workflow run, tracking state, timing, input/output, and failure details.
+</RadzenText>
 
 <ChainSharpDataGrid Data="@_items"
                     TItem="Metadata"

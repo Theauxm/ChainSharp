@@ -17,6 +17,8 @@ Activate(input)
     .Resolve();
 ```
 
+*API Reference: [Chain]({% link api-reference/workflow-methods/chain.md %}), [Extract]({% link api-reference/workflow-methods/extract.md %}), [Resolve]({% link api-reference/workflow-methods/resolve.md %})*
+
 ## How It Works
 
 `Extract` uses reflection to scan the `TSource` type for a property or field whose type matches `TTarget`. If it finds one, it reads the value and adds it to Memory. If it doesn't find a match, the workflow fails.
@@ -45,3 +47,4 @@ public class GetUserEmailStep : Step<User, EmailAddress>
 `.Extract<User, EmailAddress>()` does the same thing without the boilerplate.
 
 Use it when the property access is trivial. If you need any logic (null checking, transformation, validation), write a step instead.
+

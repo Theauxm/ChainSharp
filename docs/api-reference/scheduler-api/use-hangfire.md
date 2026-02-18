@@ -1,0 +1,56 @@
+---
+layout: default
+title: UseHangfire
+parent: Scheduler API
+grand_parent: API Reference
+nav_order: 2
+---
+
+# UseHangfire
+
+Configures [Hangfire](https://www.hangfire.io/) as the background task server for the ChainSharp scheduler, using PostgreSQL for job storage.
+
+## Signature
+
+```csharp
+public static SchedulerConfigurationBuilder UseHangfire(
+    this SchedulerConfigurationBuilder builder,
+    string connectionString
+)
+```
+
+## Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `connectionString` | `string` | Yes | PostgreSQL connection string for Hangfire's job storage |
+
+## Returns
+
+`SchedulerConfigurationBuilder` — for continued fluent chaining.
+
+## Example
+
+```csharp
+services.AddChainSharpEffects(options => options
+    .AddPostgresEffect(connectionString)
+    .AddEffectWorkflowBus(assemblies: typeof(Program).Assembly)
+    .AddScheduler(scheduler => scheduler
+        .UseHangfire(connectionString)
+        .Schedule<IMyWorkflow, MyInput>("my-job", new MyInput(), Every.Minutes(5))
+    )
+);
+```
+
+## Remarks
+
+- Hangfire's automatic retries are **disabled** — ChainSharp manages retries through the manifest system (`DefaultMaxRetries`, `RetryBackoffMultiplier`, etc.).
+- Completed Hangfire jobs are auto-deleted to prevent storage bloat.
+- The `InvisibilityTimeout` is set to 30 minutes (above the default `DefaultJobTimeout` of 20 minutes) to prevent Hangfire from re-enqueuing long-running jobs that ChainSharp is still tracking.
+- Requires the `ChainSharp.Effect.Orchestration.Scheduler.Hangfire` NuGet package.
+
+## Package
+
+```
+dotnet add package ChainSharp.Effect.Orchestration.Scheduler.Hangfire
+```

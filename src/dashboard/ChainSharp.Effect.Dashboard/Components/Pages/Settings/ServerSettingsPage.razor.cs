@@ -29,6 +29,8 @@ public partial class ServerSettingsPage
     private static readonly List<string> TimeUnits = ["seconds", "minutes", "hours", "days"];
 
     // Scheduler saved-state snapshots
+    private bool _savedManifestManagerEnabled;
+    private bool _savedJobDispatcherEnabled;
     private TimeSpan _savedPollingInterval;
     private int? _savedMaxActiveJobs;
     private int _savedDefaultMaxRetries;
@@ -49,6 +51,13 @@ public partial class ServerSettingsPage
     private Dictionary<Type, bool> _savedEffectStates = new();
 
     // ── Dirty tracking ──
+    private bool IsAdminWorkflowsDirty =>
+        _schedulerAvailable
+        && (
+            _schedulerConfig!.ManifestManagerEnabled != _savedManifestManagerEnabled
+            || _schedulerConfig.JobDispatcherEnabled != _savedJobDispatcherEnabled
+        );
+
     private bool IsPollingQueueDirty =>
         _schedulerAvailable
         && (
@@ -164,6 +173,8 @@ public partial class ServerSettingsPage
         if (_schedulerConfig is null)
             return;
 
+        _schedulerConfig.ManifestManagerEnabled = true;
+        _schedulerConfig.JobDispatcherEnabled = true;
         _schedulerConfig.PollingInterval = TimeSpan.FromSeconds(5);
         _schedulerConfig.MaxActiveJobs = 10;
         _schedulerConfig.DefaultMaxRetries = 3;
@@ -187,7 +198,9 @@ public partial class ServerSettingsPage
 
     private void SnapshotSchedulerState()
     {
-        _savedPollingInterval = _schedulerConfig!.PollingInterval;
+        _savedManifestManagerEnabled = _schedulerConfig!.ManifestManagerEnabled;
+        _savedJobDispatcherEnabled = _schedulerConfig.JobDispatcherEnabled;
+        _savedPollingInterval = _schedulerConfig.PollingInterval;
         _savedMaxActiveJobs = _schedulerConfig.MaxActiveJobs;
         _savedDefaultMaxRetries = _schedulerConfig.DefaultMaxRetries;
         _savedDefaultRetryDelay = _schedulerConfig.DefaultRetryDelay;

@@ -23,6 +23,8 @@ public class ProcessOrderWorkflow : EffectWorkflow<OrderRequest, OrderResult>
 }
 ```
 
+*API Reference: [Chain]({% link api-reference/workflow-methods/chain.md %}), [ShortCircuit]({% link api-reference/workflow-methods/short-circuit.md %}), [Resolve]({% link api-reference/workflow-methods/resolve.md %})*
+
 ## The Step
 
 A `ShortCircuit` step returns the result when it wants to short-circuit, and throws when it doesn't:
@@ -50,3 +52,4 @@ public class CheckCacheStep(ICache Cache) : Step<OrderRequest, OrderResult>
 - **Caching** — return a cached result if available, otherwise compute it
 - **Feature flags** — return a default result if a feature is disabled
 - **Early exits** — skip expensive processing when a precondition is already satisfied
+

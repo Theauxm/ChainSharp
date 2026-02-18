@@ -44,6 +44,8 @@ services.AddChainSharpEffects(options => options
 );
 ```
 
+*API Reference: [Schedule]({% link api-reference/scheduler-api/schedule.md %}), [Then]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
+
 `Then` captures the previous call's external ID as the parent. No schedule parameter—dependent manifests don't have one.
 
 Chaining works: `.Schedule(...).Then(...).Then(...)` creates A &rarr; B &rarr; C. Each `Then` depends on the one before it.
@@ -80,6 +82,8 @@ scheduler
         groupId: "load");
 ```
 
+*API Reference: [ScheduleMany]({% link api-reference/scheduler-api/schedule-many.md %}), [ThenMany]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
+
 The `dependsOn` function maps each source item to its parent's external ID. In this example, `load-0` depends on `extract-0`, `load-1` on `extract-1`, and so on. When `extract-42` succeeds, only `load-42` gets queued—the rest are unaffected.
 
 The mapping is flexible. You aren't limited to 1:1. Multiple dependents can point to the same parent:
@@ -113,6 +117,8 @@ await scheduler.ScheduleManyDependentAsync<ILoadWorkflow, LoadInput, string>(
     prunePrefix: "load-",
     groupId: "load");
 ```
+
+*API Reference: [ScheduleDependentAsync]({% link api-reference/scheduler-api/dependent-scheduling.md %}), [ScheduleManyDependentAsync]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
 
 Both methods use upsert semantics, same as their non-dependent counterparts. `ScheduleManyDependentAsync` runs in a single transaction.
 

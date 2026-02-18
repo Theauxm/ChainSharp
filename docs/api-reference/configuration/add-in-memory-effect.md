@@ -1,0 +1,49 @@
+---
+layout: default
+title: AddInMemoryEffect
+parent: Configuration
+grand_parent: API Reference
+nav_order: 2
+---
+
+# AddInMemoryEffect
+
+Adds in-memory database support for testing and development. No external database required. Data is lost when the application shuts down.
+
+## Signature
+
+```csharp
+public static ChainSharpEffectConfigurationBuilder AddInMemoryEffect(
+    this ChainSharpEffectConfigurationBuilder configurationBuilder
+)
+```
+
+## Parameters
+
+None.
+
+## Returns
+
+`ChainSharpEffectConfigurationBuilder` — for continued fluent chaining.
+
+## Example
+
+```csharp
+services.AddChainSharpEffects(options => options
+    .AddInMemoryEffect()
+    .AddEffectWorkflowBus(assemblies: typeof(Program).Assembly)
+);
+```
+
+## Remarks
+
+- Suitable for unit/integration testing and local development.
+- Data does not persist between application restarts.
+- Registers an `IDataContext` backed by an in-memory EF Core provider.
+- For production use, use [AddPostgresEffect]({% link api-reference/configuration/add-postgres-effect.md %}) instead.
+
+## Package
+
+```
+dotnet add package ChainSharp.Effect.Data.InMemory
+```

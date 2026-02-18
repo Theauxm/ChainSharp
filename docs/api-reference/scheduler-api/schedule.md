@@ -21,7 +21,8 @@ public SchedulerConfigurationBuilder Schedule<TWorkflow, TInput>(
     string externalId,
     TInput input,
     Schedule schedule,
-    Action<ManifestOptions>? configure = null
+    Action<ManifestOptions>? configure = null,
+    int priority = 0
 )
     where TWorkflow : IEffectWorkflow<TInput, Unit>
     where TInput : IManifestProperties
@@ -35,6 +36,7 @@ Task<Manifest> ScheduleAsync<TWorkflow, TInput>(
     TInput input,
     Schedule schedule,
     Action<ManifestOptions>? configure = null,
+    int priority = 0,
     CancellationToken ct = default
 )
     where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -55,7 +57,8 @@ Task<Manifest> ScheduleAsync<TWorkflow, TInput>(
 | `externalId` | `string` | Yes | — | A unique identifier for this scheduled job. Used for upsert semantics — if a manifest with this ID exists, it will be updated; otherwise a new one is created. Also used to reference this job in dependent scheduling (`Then`). |
 | `input` | `TInput` | Yes | — | The input data that will be passed to the workflow on each execution. Serialized and stored in the manifest. |
 | `schedule` | `Schedule` | Yes | — | The schedule definition — either interval-based or cron-based. Use [Every]({% link api-reference/scheduler-api/scheduling-helpers.md %}) or [Cron]({% link api-reference/scheduler-api/scheduling-helpers.md %}) helpers to create one. |
-| `configure` | `Action<ManifestOptions>?` | No | `null` | Optional callback to set per-job options like `MaxRetries`, `IsEnabled`, and `Timeout`. See [ManifestOptions]({% link api-reference/scheduler-api/scheduling-helpers.md %}#manifestoptions). |
+| `configure` | `Action<ManifestOptions>?` | No | `null` | Optional callback to set per-job options like `MaxRetries`, `IsEnabled`, `Timeout`, and `Priority`. See [ManifestOptions]({% link api-reference/scheduler-api/scheduling-helpers.md %}#manifestoptions). |
+| `priority` | `int` | No | `0` | Dispatch priority (0-31). Higher values are dispatched first by the JobDispatcher. Applied before `configure`, so the callback can override. |
 | `ct` | `CancellationToken` | No | `default` | Cancellation token (runtime API only). |
 
 ## Returns
@@ -75,7 +78,8 @@ services.AddChainSharpEffects(options => options
             externalId: "sync-daily",
             input: new SyncInput { Source = "production" },
             schedule: Cron.Daily(hour: 3),
-            configure: opts => opts.MaxRetries = 5)
+            configure: opts => opts.MaxRetries = 5,
+            priority: 20)
     )
 );
 ```
@@ -91,7 +95,7 @@ public class MyService(IManifestScheduler scheduler)
             externalId: "sync-on-demand",
             input: new SyncInput { Source = "staging" },
             schedule: Every.Hours(1),
-            configure: opts => opts.Timeout = TimeSpan.FromMinutes(30));
+            priority: 15);
     }
 }
 ```

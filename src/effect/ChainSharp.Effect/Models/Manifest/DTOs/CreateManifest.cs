@@ -55,5 +55,10 @@ public class CreateManifest
     /// </summary>
     public int? DependsOnManifestId { get; set; }
 
+    /// <summary>
+    /// Default dispatch priority for work queue entries. Range: 0-31. Defaults to 0.
+    /// </summary>
+    public int Priority { get; set; }
+
     #endregion
 }

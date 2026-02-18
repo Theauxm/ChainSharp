@@ -55,6 +55,7 @@ public static class DataContextExtensions
                 ? (int)options.Timeout.Value.TotalSeconds
                 : null;
             existing.GroupId = groupId;
+            existing.Priority = options.Priority;
             ApplySchedule(existing, schedule);
 
             return existing;
@@ -72,6 +73,7 @@ public static class DataContextExtensions
                 ? (int)options.Timeout.Value.TotalSeconds
                 : null,
             GroupId = groupId,
+            Priority = options.Priority,
         };
         manifest.SetProperties(input);
         ApplySchedule(manifest, schedule);
@@ -112,6 +114,7 @@ public static class DataContextExtensions
                 ? (int)options.Timeout.Value.TotalSeconds
                 : null;
             existing.GroupId = groupId;
+            existing.Priority = options.Priority;
             existing.ScheduleType = ScheduleType.Dependent;
             existing.DependsOnManifestId = dependsOnManifestId;
             existing.CronExpression = null;
@@ -131,6 +134,7 @@ public static class DataContextExtensions
                 ? (int)options.Timeout.Value.TotalSeconds
                 : null,
             GroupId = groupId,
+            Priority = options.Priority,
             ScheduleType = ScheduleType.Dependent,
             DependsOnManifestId = dependsOnManifestId,
         };

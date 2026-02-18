@@ -143,6 +143,16 @@ public class Manifest : IModel
     [Column("depends_on_manifest_id")]
     public int? DependsOnManifestId { get; set; }
 
+    /// <summary>
+    /// Gets or sets the default dispatch priority for work queue entries created from this manifest.
+    /// </summary>
+    /// <remarks>
+    /// Values range from 0 (lowest) to 31 (highest). Higher-priority entries are dispatched
+    /// before lower-priority ones. This value is denormalized onto WorkQueue entries at creation time.
+    /// </remarks>
+    [Column("priority")]
+    public int Priority { get; set; }
+
     #endregion
 
     #endregion
@@ -197,6 +207,7 @@ public class Manifest : IModel
             MaxRetries = manifest.MaxRetries,
             TimeoutSeconds = manifest.TimeoutSeconds,
             DependsOnManifestId = manifest.DependsOnManifestId,
+            Priority = manifest.Priority,
         };
 
         if (manifest.Properties != null)

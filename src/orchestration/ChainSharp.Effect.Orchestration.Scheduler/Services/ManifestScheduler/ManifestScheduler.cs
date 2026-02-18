@@ -29,6 +29,7 @@ public class ManifestScheduler(
         TInput input,
         Schedule schedule,
         Action<ManifestOptions>? configure = null,
+        int priority = 0,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -36,7 +37,7 @@ public class ManifestScheduler(
     {
         workflowRegistry.ValidateWorkflowRegistration<TInput>();
 
-        var options = new ManifestOptions();
+        var options = new ManifestOptions { Priority = priority };
         configure?.Invoke(options);
 
         using var context =
@@ -70,6 +71,7 @@ public class ManifestScheduler(
         Action<TSource, ManifestOptions>? configure = null,
         string? prunePrefix = null,
         string? groupId = null,
+        int priority = 0,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -94,7 +96,7 @@ public class ManifestScheduler(
             foreach (var source in sourceList)
             {
                 var (externalId, input) = map(source);
-                var options = new ManifestOptions();
+                var options = new ManifestOptions { Priority = priority };
                 configure?.Invoke(source, options);
 
                 var manifest = await context.UpsertManifestAsync<TWorkflow, TInput>(
@@ -176,6 +178,7 @@ public class ManifestScheduler(
         TInput input,
         string dependsOnExternalId,
         Action<ManifestOptions>? configure = null,
+        int priority = 0,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -183,7 +186,7 @@ public class ManifestScheduler(
     {
         workflowRegistry.ValidateWorkflowRegistration<TInput>();
 
-        var options = new ManifestOptions();
+        var options = new ManifestOptions { Priority = priority };
         configure?.Invoke(options);
 
         using var context =
@@ -232,6 +235,7 @@ public class ManifestScheduler(
         Action<TSource, ManifestOptions>? configure = null,
         string? prunePrefix = null,
         string? groupId = null,
+        int priority = 0,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -270,7 +274,7 @@ public class ManifestScheduler(
                             + "Ensure parent manifests are scheduled before their dependents."
                     );
 
-                var options = new ManifestOptions();
+                var options = new ManifestOptions { Priority = priority };
                 configure?.Invoke(source, options);
 
                 var manifest = await context.UpsertDependentManifestAsync<TWorkflow, TInput>(
@@ -403,6 +407,7 @@ public class ManifestScheduler(
                 Input = manifest.Properties,
                 InputTypeName = manifest.PropertyTypeName,
                 ManifestId = manifest.Id,
+                Priority = manifest.Priority,
             }
         );
         context.WorkQueues.Add(entry);

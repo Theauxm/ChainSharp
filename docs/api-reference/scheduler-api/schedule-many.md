@@ -23,7 +23,8 @@ public SchedulerConfigurationBuilder ScheduleMany<TWorkflow, TInput, TSource>(
     Schedule schedule,
     Action<TSource, ManifestOptions>? configure = null,
     string? prunePrefix = null,
-    string? groupId = null
+    string? groupId = null,
+    int priority = 0
 )
     where TWorkflow : IEffectWorkflow<TInput, Unit>
     where TInput : IManifestProperties
@@ -39,6 +40,7 @@ Task<IReadOnlyList<Manifest>> ScheduleManyAsync<TWorkflow, TInput, TSource>(
     Action<TSource, ManifestOptions>? configure = null,
     string? prunePrefix = null,
     string? groupId = null,
+    int priority = 0,
     CancellationToken ct = default
 )
     where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -63,6 +65,7 @@ Task<IReadOnlyList<Manifest>> ScheduleManyAsync<TWorkflow, TInput, TSource>(
 | `configure` | `Action<TSource, ManifestOptions>?` | No | `null` | Optional callback to set per-item manifest options. Unlike `Schedule`'s `Action<ManifestOptions>`, this receives **both** the source item and the options, allowing per-item configuration. |
 | `prunePrefix` | `string?` | No | `null` | When specified, deletes any existing manifests whose `ExternalId` starts with this prefix but were **not** included in the current batch. Enables automatic cleanup when items are removed from the source collection between deployments. |
 | `groupId` | `string?` | No | `null` | Optional group identifier for dashboard grouping. All manifests in the batch are tagged with this group. |
+| `priority` | `int` | No | `0` | Dispatch priority (0-31) applied to **all** items in the batch. Higher values are dispatched first. Per-item `configure` callback can override. |
 | `ct` | `CancellationToken` | No | `default` | Cancellation token (runtime API only). |
 
 ## Returns
@@ -115,10 +118,14 @@ scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
     Every.Minutes(5),
     configure: (table, opts) =>
     {
-        // Give the "orders" table more retries
+        // Give the "orders" table more retries and higher priority
         if (table == "orders")
+        {
             opts.MaxRetries = 10;
-    });
+            opts.Priority = 25;
+        }
+    },
+    priority: 10);  // Base priority for all items; configure can override per-item
 ```
 
 ### Runtime Scheduling

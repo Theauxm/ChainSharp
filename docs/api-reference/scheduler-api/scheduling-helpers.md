@@ -139,10 +139,12 @@ public class ManifestOptions
 | `IsEnabled` | `bool` | `true` | Whether the manifest is enabled. When `false`, ManifestManager skips it during polling. |
 | `MaxRetries` | `int` | `3` | Maximum retry attempts before the job is dead-lettered. Each retry creates a new Metadata record. |
 | `Timeout` | `TimeSpan?` | `null` | Per-job timeout override. `null` falls back to the global `DefaultJobTimeout`. If a job exceeds this duration, it may be considered stuck. |
+| `Priority` | `int` | `0` | Dispatch priority (0 = lowest, 31 = highest). Higher-priority work queue entries are dispatched first by the JobDispatcher. For dependent manifests, `DependentPriorityBoost` (default 16) is added on top at dispatch time. Can also be set directly via the `priority` parameter on scheduling methods. |
 
 ### Example
 
 ```csharp
+// Priority can be set via the configure callback...
 await scheduler.ScheduleAsync<IMyWorkflow, MyInput>(
     "my-job",
     new MyInput(),
@@ -152,5 +154,13 @@ await scheduler.ScheduleAsync<IMyWorkflow, MyInput>(
         opts.IsEnabled = true;
         opts.MaxRetries = 5;
         opts.Timeout = TimeSpan.FromMinutes(30);
+        opts.Priority = 20;
     });
+
+// ...or directly via the priority parameter (simpler for most cases)
+await scheduler.ScheduleAsync<IMyWorkflow, MyInput>(
+    "my-job",
+    new MyInput(),
+    Every.Minutes(5),
+    priority: 20);
 ```

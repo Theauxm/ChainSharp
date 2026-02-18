@@ -18,6 +18,9 @@ namespace ChainSharp.Effect.Models.WorkQueue;
 /// </remarks>
 public class WorkQueue : IModel
 {
+    public const int MinPriority = 0;
+    public const int MaxPriority = 31;
+
     #region Columns
 
     [Column("id")]
@@ -62,6 +65,12 @@ public class WorkQueue : IModel
     [Column("dispatched_at")]
     public DateTime? DispatchedAt { get; set; }
 
+    /// <summary>
+    /// Dispatch priority for this entry. Higher values (up to 31) are dispatched first.
+    /// </summary>
+    [Column("priority")]
+    public int Priority { get; set; }
+
     #endregion
 
     #region ForeignKeys
@@ -104,6 +113,7 @@ public class WorkQueue : IModel
             Input = dto.Input,
             InputTypeName = dto.InputTypeName,
             ManifestId = dto.ManifestId,
+            Priority = Math.Clamp(dto.Priority, MinPriority, MaxPriority),
             Status = WorkQueueStatus.Queued,
             CreatedAt = DateTime.UtcNow,
         };

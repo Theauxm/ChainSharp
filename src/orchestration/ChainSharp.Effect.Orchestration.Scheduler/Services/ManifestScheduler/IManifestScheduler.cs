@@ -29,6 +29,7 @@ public interface IManifestScheduler
     /// <param name="input">The input data that will be passed to the workflow on each execution.</param>
     /// <param name="schedule">The schedule definition (interval or cron-based).</param>
     /// <param name="configure">Optional action to configure additional manifest options.</param>
+    /// <param name="priority">The dispatch priority (0-31, default 0). Higher values are dispatched first. Applied before configure, so the callback can override.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The created or updated manifest.</returns>
     /// <exception cref="InvalidOperationException">
@@ -39,6 +40,7 @@ public interface IManifestScheduler
         TInput input,
         Schedule schedule,
         Action<ManifestOptions>? configure = null,
+        int priority = 0,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -88,6 +90,7 @@ public interface IManifestScheduler
         Action<TSource, ManifestOptions>? configure = null,
         string? prunePrefix = null,
         string? groupId = null,
+        int priority = 0,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -102,6 +105,7 @@ public interface IManifestScheduler
     /// <param name="input">The input data that will be passed to the workflow on each execution.</param>
     /// <param name="dependsOnExternalId">The external ID of the parent manifest this job depends on.</param>
     /// <param name="configure">Optional action to configure additional manifest options.</param>
+    /// <param name="priority">The base dispatch priority (0-31, default 0). DependentPriorityBoost is added on top at dispatch time. Applied before configure, so the callback can override.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The created or updated manifest.</returns>
     Task<Manifest> ScheduleDependentAsync<TWorkflow, TInput>(
@@ -109,6 +113,7 @@ public interface IManifestScheduler
         TInput input,
         string dependsOnExternalId,
         Action<ManifestOptions>? configure = null,
+        int priority = 0,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -135,6 +140,7 @@ public interface IManifestScheduler
         Action<TSource, ManifestOptions>? configure = null,
         string? prunePrefix = null,
         string? groupId = null,
+        int priority = 0,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>

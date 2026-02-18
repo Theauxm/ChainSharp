@@ -126,7 +126,8 @@ builder.Services.AddChainSharpEffects(
                             ),
                         Every.Minutes(5),
                         prunePrefix: "extract-import-transaction-",
-                        groupId: "extract-import-transaction"
+                        groupId: "extract-import-transaction",
+                        priority: 24
                     );
             })
 );

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>ChainSharp.Effect.Provider.Alerting</RootNamespace>
@@ -11,6 +11,7 @@
     <ItemGroup>
         <ProjectReference Include="../../effect/ChainSharp.Effect/ChainSharp.Effect.csproj" />
         <ProjectReference Include="../../data/ChainSharp.Effect.Data/ChainSharp.Effect.Data.csproj" />
+        <ProjectReference Include="../../orchestration/ChainSharp.Effect.Orchestration.Mediator/ChainSharp.Effect.Orchestration.Mediator.csproj" />
     </ItemGroup>
 
     <ItemGroup>

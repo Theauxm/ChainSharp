@@ -131,4 +131,11 @@ public class JsonEffectProvider(
 
     /// <inheritdoc />
     public Task Update(IModel model) => Task.CompletedTask;
+
+    /// <inheritdoc />
+    public Task OnError(
+        ChainSharp.Effect.Models.Metadata.Metadata metadata,
+        Exception exception,
+        CancellationToken cancellationToken
+    ) => Task.CompletedTask;
 }

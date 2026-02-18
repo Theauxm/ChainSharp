@@ -64,4 +64,31 @@ public interface IEffectProvider : IDisposable
     /// properties directly, then calls Update to notify all providers of the change.
     /// </remarks>
     Task Update(IModel model);
+
+    /// <summary>
+    /// Called when a workflow fails with an exception.
+    /// This is triggered BEFORE SaveChanges(), allowing providers to react
+    /// to failures without waiting for persistence.
+    /// Called at most once per workflow execution.
+    /// </summary>
+    /// <param name="metadata">The metadata for the failed workflow</param>
+    /// <param name="exception">The exception that caused the failure</param>
+    /// <param name="cancellationToken">Cancellation token for the operation</param>
+    /// <returns>A task representing the asynchronous operation</returns>
+    /// <remarks>
+    /// This hook allows effect providers to implement failure-specific logic such as
+    /// alerting, notification, or specialized error handling. It is invoked immediately
+    /// after a workflow throws an exception, before the workflow metadata is finalized.
+    ///
+    /// Providers that don't need failure-specific behavior can simply return
+    /// Task.CompletedTask.
+    ///
+    /// IMPORTANT: This method should not throw exceptions, as doing so would prevent
+    /// other providers from receiving the OnError notification. Log errors instead.
+    /// </remarks>
+    Task OnError(
+        ChainSharp.Effect.Models.Metadata.Metadata metadata,
+        Exception exception,
+        CancellationToken cancellationToken
+    );
 }

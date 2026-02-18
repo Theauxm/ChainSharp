@@ -111,6 +111,45 @@ public class EffectRunner : IEffectRunner
     }
 
     /// <summary>
+    /// Triggers the OnError hook on all active effect providers.
+    /// Called once per workflow failure before SaveChanges.
+    /// </summary>
+    /// <param name="metadata">The metadata for the failed workflow</param>
+    /// <param name="exception">The exception that caused the failure</param>
+    /// <param name="cancellationToken">Cancellation token for the operation</param>
+    /// <returns>A task representing the asynchronous operation</returns>
+    /// <remarks>
+    /// This method calls OnError on each active provider in parallel,
+    /// allowing providers to react to workflow failures without waiting for
+    /// persistence. Exceptions thrown by providers are caught and logged
+    /// to prevent one provider from blocking others.
+    /// </remarks>
+    public async Task OnError(
+        Models.Metadata.Metadata metadata,
+        Exception exception,
+        CancellationToken cancellationToken
+    )
+    {
+        foreach (var provider in ActiveEffectProviders)
+        {
+            try
+            {
+                await provider.OnError(metadata, exception, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(
+                    ex,
+                    "Effect provider ({ProviderType}) threw exception in OnError handler for workflow ({WorkflowName}). "
+                        + "This error has been suppressed to allow other providers to run.",
+                    provider.GetType().Name,
+                    metadata.Name
+                );
+            }
+        }
+    }
+
+    /// <summary>
     /// Disposes of all active effect providers and clears the collection.
     /// </summary>
     /// <remarks>

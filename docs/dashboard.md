@@ -70,16 +70,21 @@ When `ChainSharp.Effect.Data` is registered, the dashboard exposes pages for bro
 | **Metadata** | Workflow execution history—start/end times, success/failure, inputs/outputs |
 | **Logs** | Application log entries captured during workflow execution |
 | **Manifests** | Scheduled job definitions (requires Scheduler) |
-| **Manifest Groups** | Aggregate view of manifests sharing a `groupId` (requires Scheduler) |
+| **Manifest Groups** | Manifest group settings and aggregate execution stats (requires Scheduler) |
 | **Dead Letters** | Failed jobs that exhausted their retry budget (requires Scheduler) |
 
 These pages are accessible from the **Data** section in the sidebar navigation.
 
 ### Manifest Groups
 
-When manifests are created via `ScheduleMany` with a `groupId`, the **Manifest Groups** page shows one row per group with aggregate stats: manifest count, total executions, completed, failed, and last run time. Clicking a group opens a detail page listing every manifest in that group along with their recent executions.
+Every manifest belongs to a **ManifestGroup** — a first-class entity with per-group dispatch controls. The **Manifest Groups** page shows one row per group with its settings and aggregate stats: manifest count, total executions, completed, failed, and last run time.
 
-This is useful when a logical operation is spread across many manifests—e.g., 1000 table slices for a data sync. Instead of scrolling through individual manifests, the groups page gives you a single row that summarizes the health of the entire batch.
+Clicking a group opens a detail page with two sections:
+
+- **Group Settings**: configurable `MaxActiveJobs` (per-group concurrency limit), `Priority` (0-31 dispatch ordering), and `IsEnabled` (disable all manifests in the group). Changes take effect on the next polling cycle.
+- **Group Data**: lists every manifest in the group along with their recent executions.
+
+Per-group `MaxActiveJobs` prevents starvation — when a high-priority group hits its concurrency cap, lower-priority groups can still dispatch. This is configured from the dashboard, not from code.
 
 ## How Discovery Works
 

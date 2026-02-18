@@ -36,10 +36,12 @@ services.AddChainSharpEffects(options => options
         .Schedule<IExtractWorkflow, ExtractInput>(
             "extract-data",
             new ExtractInput { Source = "api" },
-            Every.Hours(1))
+            Every.Hours(1),
+            groupId: "etl")
         .Then<ITransformWorkflow, TransformInput>(
             "transform-data",
-            new TransformInput { Format = "parquet" })
+            new TransformInput { Format = "parquet" },
+            groupId: "etl")
     )
 );
 ```
@@ -53,11 +55,14 @@ Chaining works: `.Schedule(...).Then(...).Then(...)` creates A &rarr; B &rarr; C
 ```csharp
 scheduler
     .Schedule<IExtractWorkflow, ExtractInput>(
-        "extract", new ExtractInput(), Every.Hours(1))
+        "extract", new ExtractInput(), Every.Hours(1),
+        groupId: "etl")
     .Then<ITransformWorkflow, TransformInput>(
-        "transform", new TransformInput())
+        "transform", new TransformInput(),
+        groupId: "etl")
     .Then<ILoadWorkflow, LoadInput>(
-        "load", new LoadInput());
+        "load", new LoadInput(),
+        groupId: "etl");
 ```
 
 Here, `transform` runs after `extract` succeeds, and `load` runs after `transform` succeeds. If `extract` fails, neither downstream workflow fires.
@@ -96,7 +101,7 @@ The mapping is flexible. You aren't limited to 1:1. Multiple dependents can poin
     dependsOn: _ => "extract-all");
 ```
 
-`ThenMany` supports `prunePrefix` and `groupId` just like `ScheduleMany`.
+`ThenMany` supports `prunePrefix` and `groupId` just like `ScheduleMany`. When a chain shares a `groupId`, all manifests belong to the same ManifestGroup, sharing per-group dispatch controls.
 
 ## Runtime API
 

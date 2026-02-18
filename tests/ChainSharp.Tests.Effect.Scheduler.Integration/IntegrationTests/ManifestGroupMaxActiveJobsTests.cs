@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ChainSharp.Effect.Data.Extensions;
 using ChainSharp.Effect.Data.Postgres.Extensions;
 using ChainSharp.Effect.Data.Services.DataContext;
@@ -18,6 +19,7 @@ using ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor;
 using ChainSharp.Effect.Provider.Json.Extensions;
 using ChainSharp.Effect.Provider.Parameter.Extensions;
 using ChainSharp.Effect.StepProvider.Logging.Extensions;
+using ChainSharp.Effect.Utils;
 using ChainSharp.Tests.ArrayLogger.Services.ArrayLoggingProvider;
 using ChainSharp.Tests.Effect.Scheduler.Integration.Examples.Workflows;
 using FluentAssertions;
@@ -430,6 +432,72 @@ public class ManifestGroupMaxActiveJobsTests
 
     #endregion
 
+    #region Manual Queue (No Manifest) Tests
+
+    [Test]
+    public async Task Run_ManualEntry_RespectsGlobalMaxActiveJobs()
+    {
+        // Arrange - Fill global capacity, then queue a manual entry
+        var fillerGroup = await CreateAndSaveManifestGroup("filler-group");
+        for (var i = 0; i < GlobalMaxActiveJobs; i++)
+        {
+            var filler = await CreateAndSaveManifest(fillerGroup, inputValue: $"Filler_{i}");
+            await CreateAndSaveMetadata(filler, WorkflowState.Pending);
+        }
+
+        var manualEntry = await CreateAndSaveManualWorkQueueEntry();
+
+        // Act
+        await _workflow.Run(Unit.Default);
+
+        // Assert - Manual entry should remain queued (global limit reached)
+        _dataContext.Reset();
+        var updated = await _dataContext.WorkQueues.FirstAsync(q => q.Id == manualEntry.Id);
+        updated
+            .Status.Should()
+            .Be(
+                WorkQueueStatus.Queued,
+                "manual entries should still respect global MaxActiveJobs limit"
+            );
+    }
+
+    [Test]
+    public async Task Run_ManualEntry_BypassesPerGroupLimits()
+    {
+        // Arrange - A group at per-group capacity + a manual entry with no manifest
+        var group = await CreateAndSaveManifestGroup("full-group", maxActiveJobs: 1, priority: 31);
+        var activeManifest = await CreateAndSaveManifest(group, inputValue: "Active");
+        await CreateAndSaveMetadata(activeManifest, WorkflowState.Pending);
+
+        // Group entry should be skipped (at capacity)
+        var groupManifest = await CreateAndSaveManifest(group, inputValue: "Queued_Group");
+        var groupEntry = await CreateAndSaveWorkQueueEntry(groupManifest);
+
+        // Manual entry should dispatch (no group association)
+        var manualEntry = await CreateAndSaveManualWorkQueueEntry();
+
+        // Act
+        await _workflow.Run(Unit.Default);
+
+        // Assert
+        _dataContext.Reset();
+
+        var updatedGroup = await _dataContext.WorkQueues.FirstAsync(q => q.Id == groupEntry.Id);
+        updatedGroup
+            .Status.Should()
+            .Be(WorkQueueStatus.Queued, "group entry should be blocked by per-group limit");
+
+        var updatedManual = await _dataContext.WorkQueues.FirstAsync(q => q.Id == manualEntry.Id);
+        updatedManual
+            .Status.Should()
+            .Be(
+                WorkQueueStatus.Dispatched,
+                "manual entry has no manifest and bypasses per-group limits"
+            );
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private async Task<ManifestGroup> CreateAndSaveManifestGroup(
@@ -502,6 +570,33 @@ public class ManifestGroupMaxActiveJobsTests
                 Input = manifest.Properties,
                 InputTypeName = typeof(SchedulerTestInput).AssemblyQualifiedName,
                 ManifestId = manifest.Id,
+                Priority = priority,
+            }
+        );
+
+        await _dataContext.Track(entry);
+        await _dataContext.SaveChanges(CancellationToken.None);
+        _dataContext.Reset();
+
+        return entry;
+    }
+
+    private async Task<WorkQueue> CreateAndSaveManualWorkQueueEntry(
+        string inputValue = "ManualTestValue",
+        int priority = 0
+    )
+    {
+        var serializedInput = JsonSerializer.Serialize(
+            new SchedulerTestInput { Value = inputValue },
+            ChainSharpJsonSerializationOptions.ManifestProperties
+        );
+
+        var entry = WorkQueue.Create(
+            new CreateWorkQueue
+            {
+                WorkflowName = typeof(SchedulerTestWorkflow).FullName!,
+                Input = serializedInput,
+                InputTypeName = typeof(SchedulerTestInput).AssemblyQualifiedName,
                 Priority = priority,
             }
         );

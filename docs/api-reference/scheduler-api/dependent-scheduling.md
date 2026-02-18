@@ -21,6 +21,7 @@ public SchedulerConfigurationBuilder Then<TWorkflow, TInput>(
     string externalId,
     TInput input,
     Action<ManifestOptions>? configure = null,
+    string? groupId = null,
     int priority = 0
 )
     where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -51,6 +52,7 @@ Task<Manifest> ScheduleDependentAsync<TWorkflow, TInput>(
     TInput input,
     string dependsOnExternalId,
     Action<ManifestOptions>? configure = null,
+    string? groupId = null,
     int priority = 0,
     CancellationToken ct = default
 )
@@ -84,6 +86,7 @@ Task<IReadOnlyList<Manifest>> ScheduleManyDependentAsync<TWorkflow, TInput, TSou
 | `externalId` | `string` | Yes | Unique identifier for this dependent job |
 | `input` | `TInput` | Yes | Input data passed to the workflow on each execution |
 | `configure` | `Action<ManifestOptions>?` | No | Per-job options (MaxRetries, Timeout, Priority, etc.) |
+| `groupId` | `string?` | No | Manifest group name. Defaults to externalId when null. See [ManifestGroup]({% link scheduler/scheduling-options.md %}#per-group-dispatch-controls). |
 | `priority` | `int` | No | Base dispatch priority (0-31, default 0). `DependentPriorityBoost` is added on top at dispatch time. `configure` can override. |
 
 `Then` **implicitly** links to the previously scheduled manifest. Must be called after `Schedule()` or another `Then()`.
@@ -96,6 +99,7 @@ Task<IReadOnlyList<Manifest>> ScheduleManyDependentAsync<TWorkflow, TInput, TSou
 | `input` | `TInput` | Yes | Input data passed to the workflow on each execution |
 | `dependsOnExternalId` | `string` | Yes | The `ExternalId` of the parent manifest this job depends on |
 | `configure` | `Action<ManifestOptions>?` | No | Per-job options |
+| `groupId` | `string?` | No | Manifest group name. Defaults to externalId when null. |
 | `priority` | `int` | No | Base dispatch priority (0-31, default 0). `DependentPriorityBoost` is added on top at dispatch time. `configure` can override. |
 | `ct` | `CancellationToken` | No | Cancellation token |
 
@@ -119,16 +123,19 @@ services.AddChainSharpEffects(options => options
         .Schedule<IExtractWorkflow, ExtractInput>(
             "etl-extract",
             new ExtractInput(),
-            Every.Minutes(5))
+            Every.Minutes(5),
+            groupId: "etl-pipeline")
         // B: Transform runs after Extract succeeds (priority 5 + DependentPriorityBoost)
         .Then<ITransformWorkflow, TransformInput>(
             "etl-transform",
             new TransformInput(),
+            groupId: "etl-pipeline",
             priority: 5)
         // C: Load runs after Transform succeeds
         .Then<ILoadWorkflow, LoadInput>(
             "etl-load",
-            new LoadInput())
+            new LoadInput(),
+            groupId: "etl-pipeline")
     )
 );
 ```

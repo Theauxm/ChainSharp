@@ -19,8 +19,8 @@ internal class LoadQueuedJobsStep(IDataContext dataContext) : EffectStep<Unit, L
             .WorkQueues.Include(q => q.Manifest)
             .ThenInclude(m => m.ManifestGroup)
             .Where(q => q.Status == WorkQueueStatus.Queued)
-            .Where(q => q.Manifest.ManifestGroup.IsEnabled)
-            .OrderByDescending(q => q.Manifest.ManifestGroup.Priority)
+            .Where(q => q.ManifestId == null || q.Manifest.ManifestGroup.IsEnabled)
+            .OrderByDescending(q => q.Manifest != null ? q.Manifest.ManifestGroup.Priority : 0)
             .ThenByDescending(q => q.Priority)
             .ThenBy(q => q.CreatedAt)
             .ToListAsync();

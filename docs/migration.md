@@ -103,3 +103,29 @@ ChainSharp handles this internally for its own enum types (`WorkflowState`, `Log
 6. **Restore and build.** `dotnet restore && dotnet build` will surface anything you missed.
 
 If you hit unresolved types after the rename, check the [Namespace Reference](scheduler/setup.md#namespace-reference) for the full namespace of scheduler-related types—some live in unexpected packages.
+
+## ManifestGroup Migration (5.12+)
+
+Version 5.12 promotes ManifestGroup from a denormalized string field (`group_id`) to a first-class database entity with per-group dispatch controls.
+
+### Database Migration
+
+Run `014_manifest_group.sql` against your database. This migration:
+
+1. Creates the `chain_sharp.manifest_group` table with `name`, `max_active_jobs`, `priority`, `is_enabled`, and timestamp columns
+2. Seeds ManifestGroup rows from existing `group_id` values on manifests
+3. Adds a `manifest_group_id` foreign key (NOT NULL) on `chain_sharp.manifest`
+4. Drops the old `group_id` column
+
+The migration is idempotent — existing data is preserved and migrated automatically.
+
+### Code Changes
+
+- `Manifest.GroupId` (string?) is replaced by `Manifest.ManifestGroupId` (int) and `Manifest.ManifestGroup` (navigation property)
+- `groupId` parameter is now available on `Schedule`, `Then`, `ScheduleMany`, and `ThenMany` (previously only on batch methods)
+- When `groupId` is not specified, it defaults to the manifest's `externalId`
+- Per-group `MaxActiveJobs`, `Priority`, and `IsEnabled` are configured from the dashboard (not from code)
+
+### No Breaking Changes for Most Users
+
+If you were not using `Manifest.GroupId` directly in your code, no source changes are needed beyond running the migration. The `groupId` parameter defaults are designed to be backward-compatible — each manifest gets its own group when no explicit groupId is provided.

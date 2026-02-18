@@ -36,12 +36,27 @@ The builder captures the manifests and seeds them when the `BackgroundService` s
 
 ### Grouping Manifests
 
-When you schedule a batch of related manifests, pass a `groupId` to tie them together:
+Every manifest belongs to a **ManifestGroup**. A ManifestGroup is a first-class entity that ties related manifests together and exposes per-group dispatch controls (see [Per-Group Dispatch Controls](#per-group-dispatch-controls) below).
+
+The `groupId` parameter is available on `Schedule`, `Then`, `ScheduleMany`, and `ThenMany`. When you don't specify a `groupId`, it defaults to the manifest's `externalId`—so every manifest always has a group, even if it's a group of one. ManifestGroups are upserted by name during scheduling: if a group with that name already exists it's reused, otherwise a new one is created automatically. Orphaned groups (groups with no remaining manifests) are cleaned up on startup.
 
 ```csharp
 services.AddChainSharpEffects(options => options
     .AddScheduler(scheduler => scheduler
         .UseHangfire(connectionString)
+        // Single manifest — explicit groupId shared with other related jobs
+        .Schedule<IExtractWorkflow, ExtractInput>(
+            "extract-users",
+            new ExtractInput { Table = "users" },
+            Every.Minutes(5),
+            groupId: "user-pipeline")
+        // Dependent manifest in the same group
+        .Then<ILoadWorkflow, LoadInput>(
+            "load-users",
+            new LoadInput { Table = "users" },
+            dependsOn: "extract-users",
+            groupId: "user-pipeline")
+        // Bulk scheduling — all manifests share one group
         .ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
             tables,
             tableName => ($"sync-{tableName}", new SyncTableInput { TableName = tableName }),
@@ -51,9 +66,9 @@ services.AddChainSharpEffects(options => options
 );
 ```
 
-*API Reference: [ScheduleMany]({% link api-reference/scheduler-api/schedule-many.md %})*
+*API Reference: [Schedule]({% link api-reference/scheduler-api/schedule.md %}), [ScheduleMany]({% link api-reference/scheduler-api/schedule-many.md %})*
 
-The `groupId` is stored on each `Manifest` in the batch. It's optional—manifests without a group work exactly as before. The dashboard's **Manifest Groups** page aggregates execution stats across all manifests sharing a group, which is useful when a logical operation is split across many manifests (e.g., syncing 1000 table slices).
+The dashboard's **Manifest Groups** page shows each group's settings and aggregate execution stats, which is useful when a logical operation is split across many manifests (e.g., syncing 1000 table slices).
 
 ### Runtime: ScheduleManyAsync
 
@@ -152,6 +167,24 @@ scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
 
 When `prunePrefix` is specified, after creating or updating the manifests in the batch, the scheduler deletes any existing manifests whose `ExternalId` starts with the prefix but weren't part of the current call. This keeps the manifest table in sync with your source data without manual cleanup.
 
+## Per-Group Dispatch Controls
+
+Each ManifestGroup has three configurable properties that govern how its manifests are dispatched:
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `MaxActiveJobs` | `int?` | `null` (unlimited) | Maximum concurrent active jobs (Pending + InProgress) within this group |
+| `Priority` | `int` (0–31) | `0` | Dispatch ordering between groups—higher values are dispatched first |
+| `IsEnabled` | `bool` | `true` | When `false`, all manifests in the group are skipped during queuing and dispatch |
+
+These settings are configured from the dashboard's **Manifest Group detail page**, not from code. This keeps scheduling declarations in code focused on *what* runs and *when*, while operators control *how much* and *in what order* from the dashboard.
+
+**MaxActiveJobs** limits concurrent active jobs within a single group. When a group hits its cap, the [JobDispatcher](admin-workflows/job-dispatcher.md) skips it and moves on to the next group—so other groups can still dispatch normally. This prevents a single high-throughput group from monopolizing all capacity. The global `MaxActiveJobs` (configured in code) still applies as an overall ceiling across all groups.
+
+**Priority** determines the order in which groups are considered during dispatch. The JobDispatcher processes groups from highest priority (31) to lowest (0). If a high-priority group continually re-queues work, it is dispatched first—but because `MaxActiveJobs` caps how many jobs it can have active at once, lower-priority groups still get their fair share of capacity. This solves the starvation problem: priority controls *ordering*, while `MaxActiveJobs` controls *capacity*.
+
+**IsEnabled** acts as a kill switch for an entire group. Disabling a group prevents its manifests from being queued or dispatched until re-enabled. This is useful during maintenance windows or when a downstream system is unavailable.
+
 ## Management Operations
 
 `IManifestScheduler` includes methods for runtime job control:
@@ -212,7 +245,7 @@ See [Dependent Workflows](dependent-workflows.md) for details on chaining workfl
 | Option | Default | Description |
 |--------|---------|-------------|
 | `PollingInterval` | 5s | How often ManifestManager checks for pending jobs (supports sub-minute) |
-| `MaxActiveJobs` | 100 | Maximum active jobs (Pending + InProgress) allowed. Enforced by the [JobDispatcher](admin-workflows/job-dispatcher.md) at dispatch time. Set to null for unlimited |
+| `MaxActiveJobs` | 100 | Maximum active jobs (Pending + InProgress) allowed globally. Enforced by the [JobDispatcher](admin-workflows/job-dispatcher.md) at dispatch time. Set to null for unlimited. Per-group `MaxActiveJobs` can also be set from the dashboard's Manifest Group detail page to limit concurrency within individual groups (see [Per-Group Dispatch Controls](#per-group-dispatch-controls)) |
 | `DefaultMaxRetries` | 3 | Retry attempts before dead-lettering |
 | `DefaultRetryDelay` | 5m | Delay between retries |
 | `RetryBackoffMultiplier` | 2.0 | Exponential backoff (delays of 5m, 10m, 20m...) |

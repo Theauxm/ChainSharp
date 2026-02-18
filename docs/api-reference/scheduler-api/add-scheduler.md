@@ -51,7 +51,8 @@ services.AddChainSharpEffects(options => options
             "my-job",
             new MyInput(),
             Every.Minutes(5),
-            priority: 10)
+            priority: 10,
+            groupId: "my-group")
     )
 );
 ```
@@ -73,7 +74,7 @@ These methods are available on the `SchedulerConfigurationBuilder` passed to the
 | Method | Parameter | Default | Description |
 |--------|-----------|---------|-------------|
 | `PollingInterval(TimeSpan)` | interval | 60 seconds | How often ManifestManager polls for pending jobs |
-| `MaxActiveJobs(int?)` | maxJobs | 100 | Max concurrent active jobs (Pending + InProgress). `null` = unlimited |
+| `MaxActiveJobs(int?)` | maxJobs | 100 | Max concurrent active jobs (Pending + InProgress) globally. `null` = unlimited. Per-group limits can also be set from the dashboard on each ManifestGroup |
 | `ExcludeFromMaxActiveJobs<TWorkflow>()` | — | — | Excludes a workflow type from the MaxActiveJobs count |
 | `DefaultMaxRetries(int)` | maxRetries | 3 | Retry attempts before dead-lettering |
 | `DefaultRetryDelay(TimeSpan)` | delay | 5 minutes | Base delay between retries |
@@ -97,3 +98,4 @@ These methods are available on the `SchedulerConfigurationBuilder` passed to the
 - `AddScheduler` requires a data provider (`AddPostgresEffect` or `AddInMemoryEffect`) and `AddEffectWorkflowBus` to be configured first.
 - Internal scheduler workflows (`ManifestManager`, `JobDispatcher`, `TaskServerExecutor`, `MetadataCleanup`) are automatically excluded from `MaxActiveJobs`.
 - Manifests declared via `Schedule`/`ScheduleMany` are not created immediately — they are seeded on application startup by the `ManifestPollingService`.
+- Manifests declared via `Schedule`/`Then` get a ManifestGroup based on their `groupId` parameter (defaults to externalId). Per-group dispatch controls (MaxActiveJobs, Priority, IsEnabled) are configured from the dashboard.

@@ -82,6 +82,22 @@ scheduler
 
 *API Reference: [Schedule]({% link api-reference/scheduler-api/schedule.md %}), [Then]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
 
+### Manifest Groups
+
+Every manifest belongs to a `ManifestGroup`. Groups provide per-group dispatch controls — `MaxActiveJobs`, `Priority`, and `IsEnabled` — configurable from the dashboard. When a group hits its concurrency cap, the dispatcher skips it and continues processing other groups, preventing starvation.
+
+```csharp
+scheduler
+    .Schedule<ISyncWorkflow, SyncInput>(
+        "sync-data", new SyncInput(), Every.Hours(1),
+        groupId: "data-sync")
+    .Then<ILoadWorkflow, LoadInput>(
+        "load-data", new LoadInput(),
+        groupId: "data-sync");
+```
+
+When `groupId` is not specified, it defaults to the manifest's `externalId`. See [Scheduling Options](scheduler/scheduling-options.md#per-group-dispatch-controls).
+
 ## Architecture
 
 ```
@@ -97,8 +113,8 @@ scheduler
 │                              │  │                               │
 │  LoadManifests               │  │  LoadQueuedJobs               │
 │  → ReapFailedJobs            │  │  → DispatchJobs               │
-│  → DetermineJobsToQueue      │  │    (enforces MaxActiveJobs)   │
-│  → CreateWorkQueueEntries    │  │                               │
+│  → DetermineJobsToQueue      │  │    (enforces global and       │
+│  → CreateWorkQueueEntries    │  │     per-group MaxActiveJobs)  │
 └──────────────┬───────────────┘  └──────────────┬────────────────┘
                │                                  │
                │ writes to                        │ reads from
@@ -128,7 +144,7 @@ The **ManifestPollingService** is a .NET `BackgroundService` that runs two workf
 
 The **ManifestManagerWorkflow** loads enabled manifests, dead-letters any that have exceeded their retry limit, determines which are due for execution (including [dependent manifests](scheduler/dependent-workflows.md) whose parent has a newer `LastSuccessfulRun`), and writes them to the work queue. It doesn't enqueue anything directly—it just records intent.
 
-The **JobDispatcherWorkflow** reads from the work queue, enforces the `MaxActiveJobs` limit, creates `Metadata` records, and enqueues to the background task server (Hangfire). This is the single gateway to execution. Everything goes through the work queue first—manifest schedules, `TriggerAsync` calls, dashboard re-runs—so capacity enforcement happens in one place.
+The **JobDispatcherWorkflow** reads from the work queue, enforces both global and per-group `MaxActiveJobs` limits, creates `Metadata` records, and enqueues to the background task server (Hangfire). This is the single gateway to execution. Everything goes through the work queue first—manifest schedules, `TriggerAsync` calls, dashboard re-runs—so capacity enforcement happens in one place.
 
 The **TaskServerExecutorWorkflow** runs on Hangfire workers for each enqueued job. It loads the Metadata and Manifest, validates the job is still pending, executes the target workflow via `IWorkflowBus`, and updates `LastSuccessfulRun` on success.
 

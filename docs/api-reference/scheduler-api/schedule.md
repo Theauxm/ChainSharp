@@ -22,6 +22,7 @@ public SchedulerConfigurationBuilder Schedule<TWorkflow, TInput>(
     TInput input,
     Schedule schedule,
     Action<ManifestOptions>? configure = null,
+    string? groupId = null,
     int priority = 0
 )
     where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -36,6 +37,7 @@ Task<Manifest> ScheduleAsync<TWorkflow, TInput>(
     TInput input,
     Schedule schedule,
     Action<ManifestOptions>? configure = null,
+    string? groupId = null,
     int priority = 0,
     CancellationToken ct = default
 )
@@ -58,6 +60,7 @@ Task<Manifest> ScheduleAsync<TWorkflow, TInput>(
 | `input` | `TInput` | Yes | — | The input data that will be passed to the workflow on each execution. Serialized and stored in the manifest. |
 | `schedule` | `Schedule` | Yes | — | The schedule definition — either interval-based or cron-based. Use [Every]({% link api-reference/scheduler-api/scheduling-helpers.md %}) or [Cron]({% link api-reference/scheduler-api/scheduling-helpers.md %}) helpers to create one. |
 | `configure` | `Action<ManifestOptions>?` | No | `null` | Optional callback to set per-job options like `MaxRetries`, `IsEnabled`, `Timeout`, and `Priority`. See [ManifestOptions]({% link api-reference/scheduler-api/scheduling-helpers.md %}#manifestoptions). |
+| `groupId` | `string?` | No | `null` | Manifest group name. All manifests with the same groupId share per-group dispatch controls (MaxActiveJobs, Priority, IsEnabled) configurable from the dashboard. When null, defaults to the externalId — each manifest gets its own group. |
 | `priority` | `int` | No | `0` | Dispatch priority (0-31). Higher values are dispatched first by the JobDispatcher. Applied before `configure`, so the callback can override. |
 | `ct` | `CancellationToken` | No | `default` | Cancellation token (runtime API only). |
 
@@ -79,6 +82,7 @@ services.AddChainSharpEffects(options => options
             input: new SyncInput { Source = "production" },
             schedule: Cron.Daily(hour: 3),
             configure: opts => opts.MaxRetries = 5,
+            groupId: "daily-syncs",
             priority: 20)
     )
 );
@@ -106,3 +110,4 @@ public class MyService(IManifestScheduler scheduler)
 - At runtime, `ScheduleAsync` creates/updates the manifest in the database immediately.
 - The `externalId` is the primary key for upsert logic. Changing it creates a new manifest rather than updating the existing one.
 - If the workflow type is not registered in the `WorkflowRegistry` (via `AddEffectWorkflowBus`), an `InvalidOperationException` is thrown.
+- The `groupId` determines which ManifestGroup the manifest belongs to. Groups are auto-created (upserted by name) during scheduling. Orphaned groups are cleaned up on startup.

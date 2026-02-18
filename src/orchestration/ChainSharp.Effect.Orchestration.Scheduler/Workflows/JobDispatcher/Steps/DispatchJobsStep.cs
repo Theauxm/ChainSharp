@@ -99,18 +99,23 @@ internal class DispatchJobsStep(
             )
                 break;
 
-            // Per-group limit check
-            var groupId = entry.Manifest.ManifestGroupId;
-            if (groupLimits.TryGetValue(groupId, out var groupLimit))
+            // Per-group limit check (manual jobs without a manifest skip group limits)
+            if (entry.Manifest is not null)
             {
-                var active = groupActiveCounts.GetValueOrDefault(groupId, 0);
-                var dispatched = groupDispatchCounts.GetValueOrDefault(groupId, 0);
-                if (active + dispatched >= groupLimit)
-                    continue; // skip this group but keep processing other groups
+                var groupId = entry.Manifest.ManifestGroupId;
+                if (groupLimits.TryGetValue(groupId, out var groupLimit))
+                {
+                    var active = groupActiveCounts.GetValueOrDefault(groupId, 0);
+                    var dispatched = groupDispatchCounts.GetValueOrDefault(groupId, 0);
+                    if (active + dispatched >= groupLimit)
+                        continue; // skip this group but keep processing other groups
+                }
+
+                groupDispatchCounts[groupId] =
+                    groupDispatchCounts.GetValueOrDefault(groupId, 0) + 1;
             }
 
             toDispatch.Add(entry);
-            groupDispatchCounts[groupId] = groupDispatchCounts.GetValueOrDefault(groupId, 0) + 1;
             globalDispatched++;
         }
 

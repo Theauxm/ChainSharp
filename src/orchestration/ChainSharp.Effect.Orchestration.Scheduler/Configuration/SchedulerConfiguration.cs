@@ -56,6 +56,16 @@ public class SchedulerConfiguration
     public int? MaxActiveJobs { get; set; } = 10;
 
     /// <summary>
+    /// Priority boost automatically applied to dependent workflow work queue entries.
+    /// </summary>
+    /// <remarks>
+    /// When the ManifestManager creates work queue entries for dependent manifests
+    /// (ScheduleType.Dependent), this value is added to the manifest's base priority,
+    /// clamped to [0, 31]. Set to 0 to disable the automatic boost.
+    /// </remarks>
+    public int DependentPriorityBoost { get; set; } = 16;
+
+    /// <summary>
     /// Workflow type names excluded from the MaxActiveJobs count.
     /// </summary>
     /// <remarks>

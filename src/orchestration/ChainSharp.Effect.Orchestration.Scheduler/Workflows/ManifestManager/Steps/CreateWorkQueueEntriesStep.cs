@@ -1,6 +1,8 @@
 using ChainSharp.Effect.Data.Services.DataContext;
+using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.WorkQueue.DTOs;
+using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
 using ChainSharp.Effect.Services.EffectStep;
 using LanguageExt;
 using Microsoft.Extensions.Logging;
@@ -17,6 +19,7 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager.St
 /// </remarks>
 internal class CreateWorkQueueEntriesStep(
     IDataContext dataContext,
+    SchedulerConfiguration schedulerConfiguration,
     ILogger<CreateWorkQueueEntriesStep> logger
 ) : EffectStep<List<Manifest>, Unit>
 {
@@ -34,6 +37,11 @@ internal class CreateWorkQueueEntriesStep(
         {
             try
             {
+                var effectivePriority =
+                    manifest.ScheduleType == ScheduleType.Dependent
+                        ? manifest.Priority + schedulerConfiguration.DependentPriorityBoost
+                        : manifest.Priority;
+
                 var entry = Models.WorkQueue.WorkQueue.Create(
                     new CreateWorkQueue
                     {
@@ -41,6 +49,7 @@ internal class CreateWorkQueueEntriesStep(
                         Input = manifest.Properties,
                         InputTypeName = manifest.PropertyTypeName,
                         ManifestId = manifest.Id,
+                        Priority = effectivePriority,
                     }
                 );
 

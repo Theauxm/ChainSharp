@@ -45,11 +45,13 @@ services.AddChainSharpEffects(options => options
         .MaxRetryDelay(TimeSpan.FromHours(1))
         .DefaultJobTimeout(TimeSpan.FromMinutes(20))
         .RecoverStuckJobsOnStartup()
+        .DependentPriorityBoost(16)
         .AddMetadataCleanup()
         .Schedule<IMyWorkflow, MyInput>(
             "my-job",
             new MyInput(),
-            Every.Minutes(5))
+            Every.Minutes(5),
+            priority: 10)
     )
 );
 ```
@@ -79,6 +81,7 @@ These methods are available on the `SchedulerConfigurationBuilder` passed to the
 | `MaxRetryDelay(TimeSpan)` | maxDelay | 1 hour | Caps retry delay to prevent unbounded growth |
 | `DefaultJobTimeout(TimeSpan)` | timeout | 1 hour | Timeout after which a running job is considered stuck |
 | `RecoverStuckJobsOnStartup(bool)` | recover | `true` | Whether to auto-recover stuck jobs on startup |
+| `DependentPriorityBoost(int)` | boost | 16 | Priority boost added to dependent workflow work queue entries at dispatch time. Range: 0-31. Ensures dependent workflows are dispatched before non-dependent ones by default |
 
 ### Startup Schedules
 

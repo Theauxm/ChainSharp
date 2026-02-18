@@ -31,6 +31,7 @@ public partial class QueueWorkflowDialog
     private string _jsonInput = "";
     private string? _error;
     private bool _running;
+    private int _priority;
 
     private PropertyInfo[] _inputProperties = [];
     private readonly Dictionary<string, object?> _formValues = new();
@@ -95,6 +96,7 @@ public partial class QueueWorkflowDialog
                     WorkflowName = Registration.ServiceType.FullName!,
                     Input = serializedInput,
                     InputTypeName = Registration.InputType.FullName,
+                    Priority = _priority,
                 }
             );
 

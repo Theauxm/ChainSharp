@@ -24,4 +24,9 @@ public class CreateWorkQueue
     /// Optional manifest ID when this entry was queued from a scheduled manifest.
     /// </summary>
     public int? ManifestId { get; set; }
+
+    /// <summary>
+    /// Dispatch priority. Range: 0-31 (clamped in WorkQueue.Create). Defaults to 0.
+    /// </summary>
+    public int Priority { get; set; }
 }

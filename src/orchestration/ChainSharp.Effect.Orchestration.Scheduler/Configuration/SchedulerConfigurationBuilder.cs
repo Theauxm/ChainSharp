@@ -1,6 +1,7 @@
 using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Manifest;
+using ChainSharp.Effect.Models.WorkQueue;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.BackgroundTaskServer;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestPollingService;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestScheduler;
@@ -92,6 +93,21 @@ public class SchedulerConfigurationBuilder
         where TWorkflow : class
     {
         _configuration.ExcludedWorkflowTypeNames.Add(typeof(TWorkflow).FullName!);
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the priority boost automatically applied to dependent workflow work queue entries.
+    /// </summary>
+    /// <param name="boost">The priority boost (default: 16, range: 0-31)</param>
+    /// <returns>The builder for method chaining</returns>
+    public SchedulerConfigurationBuilder DependentPriorityBoost(int boost)
+    {
+        _configuration.DependentPriorityBoost = Math.Clamp(
+            boost,
+            WorkQueue.MinPriority,
+            WorkQueue.MaxPriority
+        );
         return this;
     }
 
@@ -202,6 +218,7 @@ public class SchedulerConfigurationBuilder
     /// <param name="input">The input data that will be passed to the workflow on each execution</param>
     /// <param name="schedule">The schedule definition (interval or cron-based)</param>
     /// <param name="configure">Optional action to configure additional manifest options</param>
+    /// <param name="priority">The dispatch priority (0-31, default 0). Higher values are dispatched first. Can be overridden by the configure callback.</param>
     /// <returns>The builder for method chaining</returns>
     /// <remarks>
     /// The manifest is not created immediately. It is captured and will be seeded
@@ -225,7 +242,8 @@ public class SchedulerConfigurationBuilder
         string externalId,
         TInput input,
         Schedule schedule,
-        Action<ManifestOptions>? configure = null
+        Action<ManifestOptions>? configure = null,
+        int priority = 0
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
@@ -240,7 +258,8 @@ public class SchedulerConfigurationBuilder
                         input,
                         schedule,
                         configure,
-                        ct
+                        priority: priority,
+                        ct: ct
                     )
             }
         );
@@ -258,6 +277,7 @@ public class SchedulerConfigurationBuilder
     /// <param name="externalId">A unique identifier for this dependent job</param>
     /// <param name="input">The input data that will be passed to the workflow on each execution</param>
     /// <param name="configure">Optional action to configure additional manifest options</param>
+    /// <param name="priority">The base dispatch priority (0-31, default 0). DependentPriorityBoost is added on top at dispatch time. Can be overridden by the configure callback.</param>
     /// <returns>The builder for method chaining</returns>
     /// <remarks>
     /// Must be called after <see cref="Schedule{TWorkflow,TInput}"/> or another <c>Then</c> call.
@@ -267,7 +287,8 @@ public class SchedulerConfigurationBuilder
     public SchedulerConfigurationBuilder Then<TWorkflow, TInput>(
         string externalId,
         TInput input,
-        Action<ManifestOptions>? configure = null
+        Action<ManifestOptions>? configure = null,
+        int priority = 0
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
@@ -289,7 +310,8 @@ public class SchedulerConfigurationBuilder
                         input,
                         parentExternalId,
                         configure,
-                        ct
+                        priority: priority,
+                        ct: ct
                     ),
             }
         );
@@ -309,6 +331,7 @@ public class SchedulerConfigurationBuilder
     /// <param name="map">A function that transforms each source item into an ExternalId and Input pair</param>
     /// <param name="schedule">The schedule definition applied to all manifests</param>
     /// <param name="configure">Optional action to configure additional manifest options per source item</param>
+    /// <param name="priority">The dispatch priority (0-31, default 0) applied to all items. Per-item configure callback can override.</param>
     /// <returns>The builder for method chaining</returns>
     /// <remarks>
     /// The manifests are not created immediately. They are captured and will be seeded
@@ -334,7 +357,8 @@ public class SchedulerConfigurationBuilder
         Schedule schedule,
         Action<TSource, ManifestOptions>? configure = null,
         string? prunePrefix = null,
-        string? groupId = null
+        string? groupId = null,
+        int priority = 0
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
@@ -356,6 +380,7 @@ public class SchedulerConfigurationBuilder
                         configure,
                         prunePrefix: prunePrefix,
                         groupId: groupId,
+                        priority: priority,
                         ct: ct
                     );
                     return results.FirstOrDefault()!;
@@ -381,6 +406,7 @@ public class SchedulerConfigurationBuilder
     /// <param name="configure">Optional action to configure additional manifest options per source item</param>
     /// <param name="prunePrefix">When specified, deletes stale manifests with this prefix not in the current batch</param>
     /// <param name="groupId">Optional group identifier for dashboard grouping</param>
+    /// <param name="priority">The base dispatch priority (0-31, default 0) applied to all items. DependentPriorityBoost is added on top at dispatch time. Per-item configure callback can override.</param>
     /// <returns>The builder for method chaining</returns>
     /// <example>
     /// <code>
@@ -403,7 +429,8 @@ public class SchedulerConfigurationBuilder
         Func<TSource, string> dependsOn,
         Action<TSource, ManifestOptions>? configure = null,
         string? prunePrefix = null,
-        string? groupId = null
+        string? groupId = null,
+        int priority = 0
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
@@ -428,6 +455,7 @@ public class SchedulerConfigurationBuilder
                         configure,
                         prunePrefix: prunePrefix,
                         groupId: groupId,
+                        priority: priority,
                         ct: ct
                     );
                     return results.FirstOrDefault()!;

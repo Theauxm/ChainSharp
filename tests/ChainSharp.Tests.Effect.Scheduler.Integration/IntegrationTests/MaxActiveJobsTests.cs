@@ -455,7 +455,7 @@ public class MaxActiveJobsTests
     #region Priority Ordering Tests
 
     [Test]
-    public async Task Run_WhenOnlyOneSlot_DependentEntryDispatchedBeforeNonDependent()
+    public async Task Run_WhenOnlyOneSlot_HigherPriorityDispatchedFirst()
     {
         // Arrange - Fill all but one slot so only 1 entry can be dispatched
         for (var i = 0; i < MaxActiveJobsLimit - 1; i++)
@@ -464,45 +464,88 @@ public class MaxActiveJobsTests
             await CreateAndSaveMetadata(manifest, WorkflowState.Pending);
         }
 
-        // Create a non-dependent entry FIRST (earlier CreatedAt)
-        var nonDependentManifest = await CreateAndSaveManifest(inputValue: "NonDependent");
-        var nonDependentEntry = await CreateAndSaveWorkQueueEntry(nonDependentManifest);
+        // Create a low-priority entry FIRST (earlier CreatedAt)
+        var lowPriorityManifest = await CreateAndSaveManifest(inputValue: "LowPriority");
+        var lowPriorityEntry = await CreateAndSaveWorkQueueEntry(lowPriorityManifest, priority: 5);
 
         // Small delay to guarantee CreatedAt ordering
         await Task.Delay(50);
 
-        // Create a parent manifest, then a dependent manifest that depends on it
-        var parentManifest = await CreateAndSaveManifest(inputValue: "Parent");
-        var dependentManifest = await CreateAndSaveDependentManifest(
-            parentManifest,
-            inputValue: "Dependent"
+        // Create a high-priority entry SECOND (later CreatedAt but higher priority)
+        var highPriorityManifest = await CreateAndSaveManifest(inputValue: "HighPriority");
+        var highPriorityEntry = await CreateAndSaveWorkQueueEntry(
+            highPriorityManifest,
+            priority: 20
         );
-        var dependentEntry = await CreateAndSaveWorkQueueEntry(dependentManifest);
 
         // Act
         await _workflow.Run(Unit.Default);
 
-        // Assert - The dependent entry should be dispatched (not the non-dependent one)
+        // Assert - The high-priority entry should be dispatched (not the low-priority one)
         _dataContext.Reset();
 
-        var updatedDependent = await _dataContext.WorkQueues.FirstAsync(
-            q => q.Id == dependentEntry.Id
+        var updatedHighPriority = await _dataContext.WorkQueues.FirstAsync(
+            q => q.Id == highPriorityEntry.Id
         );
-        updatedDependent
+        updatedHighPriority
             .Status.Should()
             .Be(
                 WorkQueueStatus.Dispatched,
-                "dependent entries should be prioritized over non-dependent ones"
+                "higher-priority entries should be dispatched before lower-priority ones"
             );
 
-        var updatedNonDependent = await _dataContext.WorkQueues.FirstAsync(
-            q => q.Id == nonDependentEntry.Id
+        var updatedLowPriority = await _dataContext.WorkQueues.FirstAsync(
+            q => q.Id == lowPriorityEntry.Id
         );
-        updatedNonDependent
+        updatedLowPriority
             .Status.Should()
             .Be(
                 WorkQueueStatus.Queued,
-                "non-dependent entry should remain queued when dependent entry takes the only slot"
+                "low-priority entry should remain queued when high-priority entry takes the only slot"
+            );
+    }
+
+    [Test]
+    public async Task Run_WhenSamePriority_FIFOByCreatedAt()
+    {
+        // Arrange - Fill all but one slot so only 1 entry can be dispatched
+        for (var i = 0; i < MaxActiveJobsLimit - 1; i++)
+        {
+            var manifest = await CreateAndSaveManifest(inputValue: $"Active_{i}");
+            await CreateAndSaveMetadata(manifest, WorkflowState.Pending);
+        }
+
+        // Create first entry (earlier CreatedAt, same priority)
+        var firstManifest = await CreateAndSaveManifest(inputValue: "First");
+        var firstEntry = await CreateAndSaveWorkQueueEntry(firstManifest, priority: 10);
+
+        // Small delay to guarantee CreatedAt ordering
+        await Task.Delay(50);
+
+        // Create second entry (later CreatedAt, same priority)
+        var secondManifest = await CreateAndSaveManifest(inputValue: "Second");
+        var secondEntry = await CreateAndSaveWorkQueueEntry(secondManifest, priority: 10);
+
+        // Act
+        await _workflow.Run(Unit.Default);
+
+        // Assert - The first entry (earlier CreatedAt) should be dispatched
+        _dataContext.Reset();
+
+        var updatedFirst = await _dataContext.WorkQueues.FirstAsync(q => q.Id == firstEntry.Id);
+        updatedFirst
+            .Status.Should()
+            .Be(
+                WorkQueueStatus.Dispatched,
+                "with same priority, earlier CreatedAt should be dispatched first (FIFO)"
+            );
+
+        var updatedSecond = await _dataContext.WorkQueues.FirstAsync(q => q.Id == secondEntry.Id);
+        updatedSecond
+            .Status.Should()
+            .Be(
+                WorkQueueStatus.Queued,
+                "later entry should remain queued when earlier entry with same priority takes the slot"
             );
     }
 
@@ -848,31 +891,7 @@ public class MaxActiveJobsTests
         return metadata;
     }
 
-    private async Task<Manifest> CreateAndSaveDependentManifest(
-        Manifest parentManifest,
-        string inputValue = "TestValue"
-    )
-    {
-        var manifest = Manifest.Create(
-            new CreateManifest
-            {
-                Name = typeof(SchedulerTestWorkflow),
-                IsEnabled = true,
-                ScheduleType = ScheduleType.Dependent,
-                MaxRetries = 3,
-                Properties = new SchedulerTestInput { Value = inputValue },
-                DependsOnManifestId = parentManifest.Id,
-            }
-        );
-
-        await _dataContext.Track(manifest);
-        await _dataContext.SaveChanges(CancellationToken.None);
-        _dataContext.Reset();
-
-        return manifest;
-    }
-
-    private async Task<WorkQueue> CreateAndSaveWorkQueueEntry(Manifest manifest)
+    private async Task<WorkQueue> CreateAndSaveWorkQueueEntry(Manifest manifest, int priority = 0)
     {
         var entry = WorkQueue.Create(
             new CreateWorkQueue
@@ -880,7 +899,8 @@ public class MaxActiveJobsTests
                 WorkflowName = typeof(SchedulerTestWorkflow).FullName!,
                 Input = manifest.Properties,
                 InputTypeName = typeof(SchedulerTestInput).AssemblyQualifiedName,
-                ManifestId = manifest.Id
+                ManifestId = manifest.Id,
+                Priority = priority,
             }
         );
 

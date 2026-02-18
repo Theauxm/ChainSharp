@@ -233,6 +233,52 @@ public class JobDispatcherWorkflowTests : TestSetup
 
     #endregion
 
+    #region Priority Tests
+
+    [Test]
+    public async Task Run_DispatchesHigherPriorityEntriesFirst()
+    {
+        // Arrange - Create entries with different priorities
+        var lowManifest = await CreateAndSaveManifest(inputValue: "Low");
+        var lowEntry = await CreateAndSaveWorkQueueEntry(lowManifest, priority: 0);
+
+        await Task.Delay(50);
+
+        var midManifest = await CreateAndSaveManifest(inputValue: "Mid");
+        var midEntry = await CreateAndSaveWorkQueueEntry(midManifest, priority: 15);
+
+        await Task.Delay(50);
+
+        var highManifest = await CreateAndSaveManifest(inputValue: "High");
+        var highEntry = await CreateAndSaveWorkQueueEntry(highManifest, priority: 31);
+
+        // Act
+        await _workflow.Run(Unit.Default);
+
+        // Assert - All entries should be dispatched
+        DataContext.Reset();
+
+        var entries = await DataContext
+            .WorkQueues.Where(q => new[] { lowEntry.Id, midEntry.Id, highEntry.Id }.Contains(q.Id))
+            .ToListAsync();
+
+        entries.Should().HaveCount(3);
+        entries.Should().AllSatisfy(e => e.Status.Should().Be(WorkQueueStatus.Dispatched));
+
+        // Verify dispatch order: higher priority should have earlier MetadataId
+        // (since they are dispatched sequentially, earlier dispatch = lower MetadataId)
+        var highMeta = entries.First(e => e.Id == highEntry.Id).MetadataId!.Value;
+        var midMeta = entries.First(e => e.Id == midEntry.Id).MetadataId!.Value;
+        var lowMeta = entries.First(e => e.Id == lowEntry.Id).MetadataId!.Value;
+
+        highMeta
+            .Should()
+            .BeLessThan(midMeta, "priority 31 should be dispatched before priority 15");
+        midMeta.Should().BeLessThan(lowMeta, "priority 15 should be dispatched before priority 0");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private async Task<Manifest> CreateAndSaveManifest(string inputValue = "TestValue")
@@ -257,7 +303,8 @@ public class JobDispatcherWorkflowTests : TestSetup
 
     private async Task<WorkQueue> CreateAndSaveWorkQueueEntry(
         Manifest manifest,
-        string? inputValue = null
+        string? inputValue = null,
+        int priority = 0
     )
     {
         var input = inputValue ?? manifest.Properties;
@@ -268,6 +315,7 @@ public class JobDispatcherWorkflowTests : TestSetup
                 Input = input,
                 InputTypeName = typeof(SchedulerTestInput).AssemblyQualifiedName,
                 ManifestId = manifest.Id,
+                Priority = priority,
             }
         );
 

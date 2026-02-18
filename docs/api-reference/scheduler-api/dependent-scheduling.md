@@ -20,7 +20,8 @@ Dependent manifests are evaluated during polling — when a parent's `LastSucces
 public SchedulerConfigurationBuilder Then<TWorkflow, TInput>(
     string externalId,
     TInput input,
-    Action<ManifestOptions>? configure = null
+    Action<ManifestOptions>? configure = null,
+    int priority = 0
 )
     where TWorkflow : IEffectWorkflow<TInput, Unit>
     where TInput : IManifestProperties
@@ -35,7 +36,8 @@ public SchedulerConfigurationBuilder ThenMany<TWorkflow, TInput, TSource>(
     Func<TSource, string> dependsOn,
     Action<TSource, ManifestOptions>? configure = null,
     string? prunePrefix = null,
-    string? groupId = null
+    string? groupId = null,
+    int priority = 0
 )
     where TWorkflow : IEffectWorkflow<TInput, Unit>
     where TInput : IManifestProperties
@@ -49,6 +51,7 @@ Task<Manifest> ScheduleDependentAsync<TWorkflow, TInput>(
     TInput input,
     string dependsOnExternalId,
     Action<ManifestOptions>? configure = null,
+    int priority = 0,
     CancellationToken ct = default
 )
     where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -65,6 +68,7 @@ Task<IReadOnlyList<Manifest>> ScheduleManyDependentAsync<TWorkflow, TInput, TSou
     Action<TSource, ManifestOptions>? configure = null,
     string? prunePrefix = null,
     string? groupId = null,
+    int priority = 0,
     CancellationToken ct = default
 )
     where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -79,7 +83,8 @@ Task<IReadOnlyList<Manifest>> ScheduleManyDependentAsync<TWorkflow, TInput, TSou
 |-----------|------|----------|-------------|
 | `externalId` | `string` | Yes | Unique identifier for this dependent job |
 | `input` | `TInput` | Yes | Input data passed to the workflow on each execution |
-| `configure` | `Action<ManifestOptions>?` | No | Per-job options (MaxRetries, Timeout, etc.) |
+| `configure` | `Action<ManifestOptions>?` | No | Per-job options (MaxRetries, Timeout, Priority, etc.) |
+| `priority` | `int` | No | Base dispatch priority (0-31, default 0). `DependentPriorityBoost` is added on top at dispatch time. `configure` can override. |
 
 `Then` **implicitly** links to the previously scheduled manifest. Must be called after `Schedule()` or another `Then()`.
 
@@ -91,6 +96,7 @@ Task<IReadOnlyList<Manifest>> ScheduleManyDependentAsync<TWorkflow, TInput, TSou
 | `input` | `TInput` | Yes | Input data passed to the workflow on each execution |
 | `dependsOnExternalId` | `string` | Yes | The `ExternalId` of the parent manifest this job depends on |
 | `configure` | `Action<ManifestOptions>?` | No | Per-job options |
+| `priority` | `int` | No | Base dispatch priority (0-31, default 0). `DependentPriorityBoost` is added on top at dispatch time. `configure` can override. |
 | `ct` | `CancellationToken` | No | Cancellation token |
 
 ### ThenMany / ScheduleManyDependentAsync (Batch)
@@ -114,10 +120,11 @@ services.AddChainSharpEffects(options => options
             "etl-extract",
             new ExtractInput(),
             Every.Minutes(5))
-        // B: Transform runs after Extract succeeds
+        // B: Transform runs after Extract succeeds (priority 5 + DependentPriorityBoost)
         .Then<ITransformWorkflow, TransformInput>(
             "etl-transform",
-            new TransformInput())
+            new TransformInput(),
+            priority: 5)
         // C: Load runs after Transform succeeds
         .Then<ILoadWorkflow, LoadInput>(
             "etl-load",
@@ -162,3 +169,4 @@ await scheduler.ScheduleDependentAsync<IProcessDataWorkflow, ProcessInput>(
 - `ThenMany()` cannot follow `ScheduleMany()` directly via implicit chaining — each item needs an explicit `dependsOn` function to map to its parent's `ExternalId`.
 - Dependent manifests have `ScheduleType.Dependent` and no interval/cron schedule of their own — they are triggered solely by their parent's successful completion.
 - The dependency check compares `parent.LastSuccessfulRun > dependent.LastSuccessfulRun` during each polling cycle.
+- **Priority boost**: When a dependent manifest's work queue entry is created, `DependentPriorityBoost` (default 16) is added to its base priority. This ensures dependent workflows are dispatched before non-dependent workflows by default. The boost is configurable via [`DependentPriorityBoost`]({% link api-reference/scheduler-api/add-scheduler.md %}) on the scheduler builder. The final priority is clamped to [0, 31].

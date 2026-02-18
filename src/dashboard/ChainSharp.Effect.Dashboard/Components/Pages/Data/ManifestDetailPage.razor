@@ -67,6 +67,7 @@
                 <FieldDisplay Label="Schedule Type" Value="@_manifest.ScheduleType.ToString()" />
                 <FieldDisplay Label="Cron Expression" Value="@(_manifest.CronExpression ?? "—")" />
                 <FieldDisplay Label="Interval (s)" Value="@(_manifest.IntervalSeconds?.ToString() ?? "—")" />
+                <FieldDisplay Label="Priority" Value="@_manifest.Priority.ToString()" />
             </RadzenStack>
         </RadzenColumn>
         <RadzenColumn Size="12" SizeMD="6" SizeLG="4">

@@ -17,6 +17,8 @@ Activate(input)
     .Resolve();
 ```
 
+*API Reference: [Activate]({% link api-reference/workflow-methods/activate.md %}), [Chain]({% link api-reference/workflow-methods/chain.md %}), [Resolve]({% link api-reference/workflow-methods/resolve.md %})*
+
 ## How It Works
 
 When the chain reaches `.Chain<TStep>()`:
@@ -40,4 +42,7 @@ Activate(input)
     .Resolve();                    // Returns Left(ValidationException)
 ```
 
+*API Reference: [Chain]({% link api-reference/workflow-methods/chain.md %}), [Resolve]({% link api-reference/workflow-methods/resolve.md %})*
+
 This is the core of Railway Oriented Programming—see [Railway Programming](../concepts/railway-programming.md) for the full explanation.
+

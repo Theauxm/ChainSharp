@@ -78,6 +78,8 @@ public class HelloWorldWorkflow : EffectWorkflow<HelloWorldInput, Unit>, IHelloW
 }
 ```
 
+*API Reference: [Activate]({% link api-reference/workflow-methods/activate.md %}), [Chain]({% link api-reference/workflow-methods/chain.md %}), [Resolve]({% link api-reference/workflow-methods/resolve.md %})*
+
 ### Package References
 
 The generated csproj references all ChainSharp packages at `5.*`, so you'll automatically pick up patch and minor updates:
@@ -149,6 +151,8 @@ scheduler
         Every.Hours(1)
     );
 ```
+
+*API Reference: [AddMetadataCleanup]({% link api-reference/scheduler-api/add-metadata-cleanup.md %}), [UseHangfire]({% link api-reference/scheduler-api/use-hangfire.md %}), [Schedule]({% link api-reference/scheduler-api/schedule.md %})*
 
 See [Scheduling](scheduler.md) for dependent workflows, bulk scheduling, and dead letter handling.
 

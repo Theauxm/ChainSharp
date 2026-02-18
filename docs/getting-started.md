@@ -55,6 +55,8 @@ var app = builder.Build();
 app.Run();
 ```
 
+*API Reference: [AddChainSharpEffects]({% link api-reference/configuration.md %}), [AddEffectWorkflowBus]({% link api-reference/configuration/add-effect-workflow-bus.md %})*
+
 ## Creating Your First Workflow
 
 ### 1. Define Input and Output Models
@@ -94,6 +96,8 @@ public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>, ICrea
             .Resolve();
 }
 ```
+
+*API Reference: [Activate]({% link api-reference/workflow-methods/activate.md %}), [Chain]({% link api-reference/workflow-methods/chain.md %}), [Resolve]({% link api-reference/workflow-methods/resolve.md %})*
 
 ### 3. Implement the Steps
 
@@ -169,6 +173,8 @@ public class UsersController(IWorkflowBus workflowBus) : ControllerBase
     }
 }
 ```
+
+*API Reference: [WorkflowBus.RunAsync]({% link api-reference/mediator-api/workflow-bus.md %})*
 
 ## Next Steps
 

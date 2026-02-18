@@ -1,0 +1,76 @@
+---
+layout: default
+title: AddChainSharpDashboard
+parent: Dashboard API
+grand_parent: API Reference
+nav_order: 1
+---
+
+# AddChainSharpDashboard
+
+Registers ChainSharp Dashboard services including Blazor/Radzen components, workflow discovery, theme state, and local storage.
+
+## Signatures
+
+### Recommended: WebApplicationBuilder overload
+
+```csharp
+public static WebApplicationBuilder AddChainSharpDashboard(
+    this WebApplicationBuilder builder,
+    Action<DashboardOptions>? configure = null
+)
+```
+
+This overload automatically calls `UseStaticWebAssets()` in non-Development environments, ensuring CSS/JS assets from NuGet packages are served correctly.
+
+### IServiceCollection overload
+
+```csharp
+public static IServiceCollection AddChainSharpDashboard(
+    this IServiceCollection services,
+    Action<DashboardOptions>? configure = null
+)
+```
+
+When using this overload, you must manually call `builder.WebHost.UseStaticWebAssets()` for non-Development environments.
+
+## Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `configure` | `Action<DashboardOptions>?` | No | `null` | Optional callback to configure [DashboardOptions]({% link api-reference/dashboard-api/dashboard-options.md %}) |
+
+## Returns
+
+- **WebApplicationBuilder overload**: `WebApplicationBuilder` — for continued chaining.
+- **IServiceCollection overload**: `IServiceCollection` — for continued chaining.
+
+## Example
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+// Recommended approach
+builder.AddChainSharpDashboard(options =>
+{
+    options.Title = "My App Dashboard";
+});
+
+var app = builder.Build();
+app.UseChainSharpDashboard(routePrefix: "/admin/chainsharp");
+```
+
+## What It Registers
+
+- `IWorkflowDiscoveryService` (scoped) — scans DI container for registered workflows
+- `ILocalStorageService` (scoped) — browser local storage access for theme preferences
+- `IThemeStateService` (scoped) — dark/light theme state management
+- `IDashboardSettingsService` (scoped) — dashboard configuration access
+- Radzen components (via `AddRadzenComponents()`)
+- Blazor Interactive Server components (via `AddRazorComponents().AddInteractiveServerComponents()`)
+
+## Package
+
+```
+dotnet add package ChainSharp.Effect.Dashboard
+```

@@ -27,7 +27,7 @@ public class RobustWorkflow : EffectWorkflow<ProcessOrderRequest, ProcessOrderRe
         catch (PaymentException ex)
         {
             // Handle payment-specific errors
-            EffectLogger?.LogWarning("Payment failed for order {OrderId}: {Error}",
+            Logger?.LogWarning("Payment failed for order {OrderId}: {Error}",
                 input.OrderId, ex.Message);
             return new OrderProcessingException("Payment processing failed", ex);
         }
@@ -39,6 +39,8 @@ public class RobustWorkflow : EffectWorkflow<ProcessOrderRequest, ProcessOrderRe
     }
 }
 ```
+
+*API Reference: [Activate]({% link api-reference/workflow-methods/activate.md %}), [Chain]({% link api-reference/workflow-methods/chain.md %}), [Resolve]({% link api-reference/workflow-methods/resolve.md %})*
 
 ### Step-Level Error Handling
 

@@ -30,6 +30,8 @@ services.AddChainSharpEffects(options => options
 );
 ```
 
+*API Reference: [ScheduleMany]({% link api-reference/scheduler-api/schedule-many.md %})*
+
 The builder captures the manifests and seeds them when the `BackgroundService` starts—same upsert semantics as `Schedule`.
 
 ### Grouping Manifests
@@ -49,6 +51,8 @@ services.AddChainSharpEffects(options => options
 );
 ```
 
+*API Reference: [ScheduleMany]({% link api-reference/scheduler-api/schedule-many.md %})*
+
 The `groupId` is stored on each `Manifest` in the batch. It's optional—manifests without a group work exactly as before. The dashboard's **Manifest Groups** page aggregates execution stats across all manifests sharing a group, which is useful when a logical operation is split across many manifests (e.g., syncing 1000 table slices).
 
 ### Runtime: ScheduleManyAsync
@@ -67,6 +71,8 @@ await scheduler.ScheduleManyAsync<ISyncTableWorkflow, SyncTableInput, string>(
     Every.Minutes(5),
     groupId: "table-sync");
 ```
+
+*API Reference: [ScheduleManyAsync]({% link api-reference/scheduler-api/schedule-many.md %})*
 
 Use the builder approach for jobs known at compile time. Use `ScheduleManyAsync` when the set of jobs is determined at runtime (loaded from a database, config file, or external API). Both variants accept the same `groupId` parameter.
 
@@ -93,6 +99,8 @@ foreach (var config in tableConfigs)
 }
 ```
 
+*API Reference: [ScheduleAsync]({% link api-reference/scheduler-api/schedule.md %}), [ManifestOptions]({% link api-reference/scheduler-api/scheduling-helpers.md %})*
+
 ### Multi-Dimensional Bulk Jobs
 
 For jobs split across multiple dimensions (e.g., table x slice index):
@@ -118,6 +126,8 @@ await scheduler.ScheduleManyAsync<ISyncTableWorkflow, SyncTableInput, (string Ta
     Every.Minutes(5));
 ```
 
+*API Reference: [ScheduleManyAsync]({% link api-reference/scheduler-api/schedule-many.md %})*
+
 ### Pruning Stale Manifests
 
 When the source collection shrinks between deployments—tables removed, slices reduced—old manifests stick around in the database. The `prunePrefix` parameter handles this automatically:
@@ -137,6 +147,8 @@ scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
     Every.Minutes(5),
     prunePrefix: "sync-");
 ```
+
+*API Reference: [ScheduleMany]({% link api-reference/scheduler-api/schedule-many.md %})*
 
 When `prunePrefix` is specified, after creating or updating the manifests in the batch, the scheduler deletes any existing manifests whose `ExternalId` starts with the prefix but weren't part of the current call. This keeps the manifest table in sync with your source data without manual cleanup.
 
@@ -161,6 +173,8 @@ await scheduler.ScheduleDependentAsync<ILoadWorkflow, LoadInput>(
     dependsOnExternalId: "sync-users");
 ```
 
+*API Reference: [DisableAsync / EnableAsync / TriggerAsync]({% link api-reference/scheduler-api/manifest-management.md %}), [ScheduleDependentAsync]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
+
 Disabled jobs remain in the database but are skipped by the ManifestManager until re-enabled.
 
 ## Manifest Options
@@ -179,6 +193,8 @@ await scheduler.ScheduleAsync<IMyWorkflow, MyInput>(
         opts.Timeout = TimeSpan.FromMinutes(30);  // Null uses global default
     });
 ```
+
+*API Reference: [ScheduleAsync]({% link api-reference/scheduler-api/schedule.md %}), [ManifestOptions]({% link api-reference/scheduler-api/scheduling-helpers.md %})*
 
 ## Schedule Types
 
@@ -203,3 +219,5 @@ See [Dependent Workflows](dependent-workflows.md) for details on chaining workfl
 | `MaxRetryDelay` | 1h | Cap on backoff growth |
 | `DefaultJobTimeout` | 1h | When a job is considered stuck |
 | `RecoverStuckJobsOnStartup` | true | Re-evaluate stuck jobs on startup |
+
+*API Reference: [AddScheduler]({% link api-reference/scheduler-api/add-scheduler.md %})*

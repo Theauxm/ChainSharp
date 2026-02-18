@@ -27,7 +27,16 @@ await scheduler.ScheduleAsync<ISyncCustomersWorkflow, SyncCustomersInput>(
     new SyncCustomersInput { Region = "us-east", BatchSize = 500 },
     Every.Hours(6),
     opts => opts.MaxRetries = 3);
+
+// For bulk scheduling from a collection, use ScheduleMany:
+scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
+    tables,
+    table => ($"sync-{table}", new SyncTableInput { TableName = table }),
+    Every.Minutes(5),
+    prunePrefix: "sync-");
 ```
+
+*API Reference: [ScheduleAsync]({% link api-reference/scheduler-api/schedule.md %}), [ScheduleMany]({% link api-reference/scheduler-api/schedule-many.md %})*
 
 The scheduler creates the manifest, resolves the correct type names, and serializes the input automatically. Every call is an upsert—safe to run on every startup without duplicating jobs.
 
@@ -70,6 +79,8 @@ scheduler
     .Then<ILoadWorkflow, LoadInput>(
         "load", new LoadInput());
 ```
+
+*API Reference: [Schedule]({% link api-reference/scheduler-api/schedule.md %}), [Then]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
 
 ## Architecture
 
@@ -122,6 +133,16 @@ The **JobDispatcherWorkflow** reads from the work queue, enforces the `MaxActive
 The **TaskServerExecutorWorkflow** runs on Hangfire workers for each enqueued job. It loads the Metadata and Manifest, validates the job is still pending, executes the target workflow via `IWorkflowBus`, and updates `LastSuccessfulRun` on success.
 
 See [Administrative Workflows](scheduler/admin-workflows.md) for detailed documentation on each internal workflow.
+
+## API Reference
+
+For complete method signatures, all parameters, and detailed usage examples for every scheduling function, see the [Scheduler API Reference]({% link api-reference/scheduler-api.md %}):
+
+- [Schedule / ScheduleAsync]({% link api-reference/scheduler-api/schedule.md %}) — single recurring workflow
+- [ScheduleMany / ScheduleManyAsync]({% link api-reference/scheduler-api/schedule-many.md %}) — batch scheduling with pruning
+- [Dependent Scheduling]({% link api-reference/scheduler-api/dependent-scheduling.md %}) — Then, ThenMany, ScheduleDependentAsync
+- [Manifest Management]({% link api-reference/scheduler-api/manifest-management.md %}) — DisableAsync, EnableAsync, TriggerAsync
+- [Scheduling Helpers]({% link api-reference/scheduler-api/scheduling-helpers.md %}) — Every, Cron, Schedule record, ManifestOptions
 
 ## Sample Project
 

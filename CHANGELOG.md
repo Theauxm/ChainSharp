@@ -1,3 +1,10 @@
+# [5.13.0](https://github.com/Theauxm/ChainSharp/compare/v5.12.2...v5.13.0) (2026-02-18)
+
+
+### Features
+
+* Priority added for JobDispatcher ([#163](https://github.com/Theauxm/ChainSharp/issues/163)) ([d256f9e](https://github.com/Theauxm/ChainSharp/commit/d256f9ed2ac3f2188759d262a439f86ee65bb495))
+
 ## [5.12.2](https://github.com/Theauxm/ChainSharp/compare/v5.12.1...v5.12.2) (2026-02-18)
 
 

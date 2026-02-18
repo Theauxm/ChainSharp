@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  DOTNET_VERSION: '8.0.204'
+  DOTNET_VERSION: '10.0.x'
   NODE_VERSION: '20'
 
 jobs:

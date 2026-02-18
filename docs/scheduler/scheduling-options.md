@@ -41,7 +41,7 @@ scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
     groupId: "sync");
 ```
 
-*API Reference: [ScheduleMany]({% link api-reference/scheduler-api/schedule-many.md %})*
+*API Reference: [ScheduleMany]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %})*
 
 The builder captures the manifests and seeds them when the `BackgroundService` starts—same upsert semantics as `Schedule`.
 
@@ -76,7 +76,7 @@ services.AddChainSharpEffects(options => options
 );
 ```
 
-*API Reference: [Schedule]({% link api-reference/scheduler-api/schedule.md %}), [ScheduleMany]({% link api-reference/scheduler-api/schedule-many.md %})*
+*API Reference: [Schedule]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}), [ScheduleMany]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %})*
 
 The dashboard's **Manifest Groups** page shows each group's settings and aggregate execution stats, which is useful when a logical operation is split across many manifests (e.g., syncing 1000 table slices).
 
@@ -97,7 +97,7 @@ await scheduler.ScheduleManyAsync<ISyncTableWorkflow, SyncTableInput, string>(
     groupId: "table-sync");
 ```
 
-*API Reference: [ScheduleManyAsync]({% link api-reference/scheduler-api/schedule-many.md %})*
+*API Reference: [ScheduleManyAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %})*
 
 Use the builder approach for jobs known at compile time. Use `ScheduleManyAsync` when the set of jobs is determined at runtime (loaded from a database, config file, or external API). Both variants accept the same `groupId` parameter.
 
@@ -124,7 +124,7 @@ foreach (var config in tableConfigs)
 }
 ```
 
-*API Reference: [ScheduleAsync]({% link api-reference/scheduler-api/schedule.md %}), [ManifestOptions]({% link api-reference/scheduler-api/scheduling-helpers.md %})*
+*API Reference: [ScheduleAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}), [ManifestOptions]({{ site.baseurl }}{% link api-reference/scheduler-api/scheduling-helpers.md %})*
 
 ### Multi-Dimensional Bulk Jobs
 
@@ -151,7 +151,7 @@ await scheduler.ScheduleManyAsync<ISyncTableWorkflow, SyncTableInput, (string Ta
     Every.Minutes(5));
 ```
 
-*API Reference: [ScheduleManyAsync]({% link api-reference/scheduler-api/schedule-many.md %})*
+*API Reference: [ScheduleManyAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %})*
 
 ### Pruning Stale Manifests
 
@@ -180,7 +180,7 @@ scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
     prunePrefix: "sync-");
 ```
 
-*API Reference: [ScheduleMany]({% link api-reference/scheduler-api/schedule-many.md %})*
+*API Reference: [ScheduleMany]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %})*
 
 When `prunePrefix` is specified, after creating or updating the manifests in the batch, the scheduler deletes any existing manifests whose `ExternalId` starts with the prefix but weren't part of the current call. This keeps the manifest table in sync with your source data without manual cleanup.
 
@@ -223,7 +223,7 @@ await scheduler.ScheduleDependentAsync<ILoadWorkflow, LoadInput>(
     dependsOnExternalId: "sync-users");
 ```
 
-*API Reference: [DisableAsync / EnableAsync / TriggerAsync]({% link api-reference/scheduler-api/manifest-management.md %}), [ScheduleDependentAsync]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
+*API Reference: [DisableAsync / EnableAsync / TriggerAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/manifest-management.md %}), [ScheduleDependentAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %})*
 
 Disabled jobs remain in the database but are skipped by the ManifestManager until re-enabled.
 
@@ -244,7 +244,7 @@ await scheduler.ScheduleAsync<IMyWorkflow, MyInput>(
     });
 ```
 
-*API Reference: [ScheduleAsync]({% link api-reference/scheduler-api/schedule.md %}), [ManifestOptions]({% link api-reference/scheduler-api/scheduling-helpers.md %})*
+*API Reference: [ScheduleAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}), [ManifestOptions]({{ site.baseurl }}{% link api-reference/scheduler-api/scheduling-helpers.md %})*
 
 ## Schedule Types
 
@@ -270,4 +270,4 @@ See [Dependent Workflows](dependent-workflows.md) for details on chaining workfl
 | `DefaultJobTimeout` | 1h | When a job is considered stuck |
 | `RecoverStuckJobsOnStartup` | true | Re-evaluate stuck jobs on startup |
 
-*API Reference: [AddScheduler]({% link api-reference/scheduler-api/add-scheduler.md %})*
+*API Reference: [AddScheduler]({{ site.baseurl }}{% link api-reference/scheduler-api/add-scheduler.md %})*

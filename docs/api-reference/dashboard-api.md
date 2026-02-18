@@ -21,6 +21,6 @@ app.UseChainSharpDashboard();
 
 | Page | Description |
 |------|-------------|
-| [AddChainSharpDashboard]({% link api-reference/dashboard-api/add-chainsharp-dashboard.md %}) | Registers dashboard services (Blazor, Radzen, workflow discovery) |
-| [UseChainSharpDashboard]({% link api-reference/dashboard-api/use-chainsharp-dashboard.md %}) | Maps the dashboard Blazor components at a route prefix |
-| [DashboardOptions]({% link api-reference/dashboard-api/dashboard-options.md %}) | Configuration options for route prefix, title, and environment |
+| [AddChainSharpDashboard]({{ site.baseurl }}{% link api-reference/dashboard-api/add-chainsharp-dashboard.md %}) | Registers dashboard services (Blazor, Radzen, workflow discovery) |
+| [UseChainSharpDashboard]({{ site.baseurl }}{% link api-reference/dashboard-api/use-chainsharp-dashboard.md %}) | Maps the dashboard Blazor components at a route prefix |
+| [DashboardOptions]({{ site.baseurl }}{% link api-reference/dashboard-api/dashboard-options.md %}) | Configuration options for route prefix, title, and environment |

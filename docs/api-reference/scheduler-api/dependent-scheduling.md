@@ -166,7 +166,7 @@ Task<IReadOnlyList<Manifest>> ScheduleManyDependentAsync<TWorkflow, TInput, TSou
 | `externalId` | `string` | Yes | Unique identifier for this dependent job |
 | `input` | `TInput` | Yes | Input data passed to the workflow on each execution |
 | `configure` | `Action<ManifestOptions>?` | No | Per-job options (MaxRetries, Timeout, Priority, etc.) |
-| `groupId` | `string?` | No | Manifest group name. Defaults to externalId when null. See [ManifestGroup]({% link scheduler/scheduling-options.md %}#per-group-dispatch-controls). |
+| `groupId` | `string?` | No | Manifest group name. Defaults to externalId when null. See [ManifestGroup]({{ site.baseurl }}{% link scheduler/scheduling-options.md %}#per-group-dispatch-controls). |
 | `priority` | `int` | No | Base dispatch priority (0-31, default 0). `DependentPriorityBoost` is added on top at dispatch time. `configure` can override. |
 
 `ThenInclude` links to the **cursor** — the most recently declared manifest (the last `Schedule`, `ThenInclude`, or `Include`). Must be called after `Schedule()`, `Include()`, or another `ThenInclude()`.
@@ -187,19 +187,19 @@ Task<IReadOnlyList<Manifest>> ScheduleManyDependentAsync<TWorkflow, TInput, TSou
 
 ### IncludeMany / ThenIncludeMany / ScheduleManyDependentAsync (Batch)
 
-The name-based overloads take the same parameters as [ScheduleMany name-based]({% link api-reference/scheduler-api/schedule-many.md %}#name-based-overload), plus:
+The name-based overloads take the same parameters as [ScheduleMany name-based]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %}#name-based-overload), plus:
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `dependsOn` | `Func<TSource, string>` | Yes | A function that maps each source item to the `ExternalId` of its parent manifest |
 
-The explicit overloads take the same parameters as [ScheduleMany explicit]({% link api-reference/scheduler-api/schedule-many.md %}#explicit-overload), plus `dependsOn`.
+The explicit overloads take the same parameters as [ScheduleMany explicit]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %}#explicit-overload), plus `dependsOn`.
 
 `IncludeMany` (with `dependsOn`) is for first-level batch dependents — use after `ScheduleMany` or `Schedule`. `ThenIncludeMany` is for deeper chaining after a previous `IncludeMany`.
 
 ### IncludeMany (Batch — root-based, no `dependsOn`)
 
-Same parameters as [ScheduleMany]({% link api-reference/scheduler-api/schedule-many.md %}) (without `schedule` or `dependsOn`) — all items automatically depend on the root `Schedule()`. Must be called after `Schedule()`.
+Same parameters as [ScheduleMany]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %}) (without `schedule` or `dependsOn`) — all items automatically depend on the root `Schedule()`. Must be called after `Schedule()`.
 
 ## Examples
 
@@ -329,5 +329,5 @@ await scheduler.ScheduleDependentAsync<IProcessDataWorkflow, ProcessInput>(
 - Dependent manifests have `ScheduleType.Dependent` and no interval/cron schedule of their own — they are triggered solely by their parent's successful completion.
 - The dependency check compares `parent.LastSuccessfulRun > dependent.LastSuccessfulRun` during each polling cycle.
 - **Cursor vs. Root**: The builder tracks two pointers — the *cursor* (last declared manifest, used by `ThenInclude`) and the *root* (the last `Schedule()`, used by `Include`). `Schedule` sets both. `ThenInclude` and `Include` move the cursor but leave the root unchanged. `ScheduleMany` resets both to null.
-- **Priority boost**: When a dependent manifest's work queue entry is created, `DependentPriorityBoost` (default 16) is added to its base priority. This ensures dependent workflows are dispatched before non-dependent workflows by default. The boost is configurable via [`DependentPriorityBoost`]({% link api-reference/scheduler-api/add-scheduler.md %}) on the scheduler builder. The final priority is clamped to [0, 31].
-- **Cycle detection**: ManifestGroup dependencies must form a DAG. At startup, the builder derives group-level edges from all `Schedule`/`ThenInclude`/`Include`/`ScheduleMany`/`ThenIncludeMany`/`IncludeMany` calls and validates that no circular dependencies exist between groups. If a cycle is detected, `Build()` throws `InvalidOperationException` listing the groups involved. Within-group dependencies are allowed—only cross-group edges are validated. See [Dependent Workflows — Cycle Detection]({% link scheduler/dependent-workflows.md %}#cycle-detection) for details.
+- **Priority boost**: When a dependent manifest's work queue entry is created, `DependentPriorityBoost` (default 16) is added to its base priority. This ensures dependent workflows are dispatched before non-dependent workflows by default. The boost is configurable via [`DependentPriorityBoost`]({{ site.baseurl }}{% link api-reference/scheduler-api/add-scheduler.md %}) on the scheduler builder. The final priority is clamped to [0, 31].
+- **Cycle detection**: ManifestGroup dependencies must form a DAG. At startup, the builder derives group-level edges from all `Schedule`/`ThenInclude`/`Include`/`ScheduleMany`/`ThenIncludeMany`/`IncludeMany` calls and validates that no circular dependencies exist between groups. If a cycle is detected, `Build()` throws `InvalidOperationException` listing the groups involved. Within-group dependencies are allowed—only cross-group edges are validated. See [Dependent Workflows — Cycle Detection]({{ site.baseurl }}{% link scheduler/dependent-workflows.md %}#cycle-detection) for details.

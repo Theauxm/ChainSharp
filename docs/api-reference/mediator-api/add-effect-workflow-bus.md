@@ -8,7 +8,7 @@ nav_order: 2
 
 # AddEffectWorkflowBus (Registration)
 
-Registers the workflow bus and discovers all workflow implementations via assembly scanning. This is the same method as documented in [Configuration > AddEffectWorkflowBus]({% link api-reference/configuration/add-effect-workflow-bus.md %}) — this page focuses on the registration and discovery behavior.
+Registers the workflow bus and discovers all workflow implementations via assembly scanning. This is the same method as documented in [Configuration > AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %}) — this page focuses on the registration and discovery behavior.
 
 ## How Discovery Works
 

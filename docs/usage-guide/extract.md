@@ -17,7 +17,7 @@ Activate(input)
     .Resolve();
 ```
 
-*API Reference: [Chain]({% link api-reference/workflow-methods/chain.md %}), [Extract]({% link api-reference/workflow-methods/extract.md %}), [Resolve]({% link api-reference/workflow-methods/resolve.md %})*
+*API Reference: [Chain]({{ site.baseurl }}{% link api-reference/workflow-methods/chain.md %}), [Extract]({{ site.baseurl }}{% link api-reference/workflow-methods/extract.md %}), [Resolve]({{ site.baseurl }}{% link api-reference/workflow-methods/resolve.md %})*
 
 ## How It Works
 

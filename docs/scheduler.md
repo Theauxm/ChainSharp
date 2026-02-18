@@ -36,7 +36,7 @@ scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
     Every.Minutes(5));
 ```
 
-*API Reference: [ScheduleAsync]({% link api-reference/scheduler-api/schedule.md %}), [ScheduleMany]({% link api-reference/scheduler-api/schedule-many.md %})*
+*API Reference: [ScheduleAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}), [ScheduleMany]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %})*
 
 The scheduler creates the manifest, resolves the correct type names, and serializes the input automatically. Every call is an upsert—safe to run on every startup without duplicating jobs.
 
@@ -80,7 +80,7 @@ scheduler
         "load", new LoadInput());
 ```
 
-*API Reference: [Schedule]({% link api-reference/scheduler-api/schedule.md %}), [Include]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
+*API Reference: [Schedule]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}), [Include]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %})*
 
 ### Manifest Groups
 
@@ -152,13 +152,13 @@ See [Administrative Workflows](scheduler/admin-workflows.md) for detailed docume
 
 ## API Reference
 
-For complete method signatures, all parameters, and detailed usage examples for every scheduling function, see the [Scheduler API Reference]({% link api-reference/scheduler-api.md %}):
+For complete method signatures, all parameters, and detailed usage examples for every scheduling function, see the [Scheduler API Reference]({{ site.baseurl }}{% link api-reference/scheduler-api.md %}):
 
-- [Schedule / ScheduleAsync]({% link api-reference/scheduler-api/schedule.md %}) — single recurring workflow
-- [ScheduleMany / ScheduleManyAsync]({% link api-reference/scheduler-api/schedule-many.md %}) — batch scheduling with pruning
-- [Dependent Scheduling]({% link api-reference/scheduler-api/dependent-scheduling.md %}) — ThenInclude, ThenIncludeMany, Include, IncludeMany, ScheduleDependentAsync
-- [Manifest Management]({% link api-reference/scheduler-api/manifest-management.md %}) — DisableAsync, EnableAsync, TriggerAsync
-- [Scheduling Helpers]({% link api-reference/scheduler-api/scheduling-helpers.md %}) — Every, Cron, Schedule record, ManifestOptions
+- [Schedule / ScheduleAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}) — single recurring workflow
+- [ScheduleMany / ScheduleManyAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %}) — batch scheduling with pruning
+- [Dependent Scheduling]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %}) — ThenInclude, ThenIncludeMany, Include, IncludeMany, ScheduleDependentAsync
+- [Manifest Management]({{ site.baseurl }}{% link api-reference/scheduler-api/manifest-management.md %}) — DisableAsync, EnableAsync, TriggerAsync
+- [Scheduling Helpers]({{ site.baseurl }}{% link api-reference/scheduler-api/scheduling-helpers.md %}) — Every, Cron, Schedule record, ManifestOptions
 
 ## Sample Project
 

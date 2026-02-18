@@ -39,7 +39,7 @@ public class UsersController(IWorkflowBus workflowBus) : ControllerBase
 }
 ```
 
-*API Reference: [WorkflowBus.RunAsync]({% link api-reference/mediator-api/workflow-bus.md %})*
+*API Reference: [WorkflowBus.RunAsync]({{ site.baseurl }}{% link api-reference/mediator-api/workflow-bus.md %})*
 
 The `WorkflowBus` looks at the input type (`CreateUserRequest`), finds the workflow registered for that type, and runs it. The controller doesn't need to know which workflow class handles the request—it just sends the input and gets back a result.
 
@@ -57,7 +57,7 @@ builder.Services.AddChainSharpEffects(options => options
 );
 ```
 
-*API Reference: [AddEffectWorkflowBus]({% link api-reference/configuration/add-effect-workflow-bus.md %})*
+*API Reference: [AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %})*
 
 `AddEffectWorkflowBus` scans the given assemblies for all classes implementing `IEffectWorkflow<TIn, TOut>`, builds a mapping from input types to workflow types, and registers everything in DI. Pass multiple assemblies if your workflows live in different projects.
 
@@ -100,7 +100,7 @@ public class OrdersController(IWorkflowBus workflowBus) : ControllerBase
 }
 ```
 
-*API Reference: [WorkflowBus.RunAsync]({% link api-reference/mediator-api/workflow-bus.md %})*
+*API Reference: [WorkflowBus.RunAsync]({{ site.baseurl }}{% link api-reference/mediator-api/workflow-bus.md %})*
 
 ## Nested Workflows
 
@@ -125,7 +125,7 @@ public class ParentWorkflow(IWorkflowBus WorkflowBus) : EffectWorkflow<ParentReq
 }
 ```
 
-*API Reference: [WorkflowBus.RunAsync]({% link api-reference/mediator-api/workflow-bus.md %})*
+*API Reference: [WorkflowBus.RunAsync]({{ site.baseurl }}{% link api-reference/mediator-api/workflow-bus.md %})*
 
 The parent's `Metadata.Id` becomes the child's `ParentId`, creating a tree you can query to trace execution across workflows.
 

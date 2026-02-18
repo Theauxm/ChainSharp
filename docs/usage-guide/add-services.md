@@ -24,7 +24,7 @@ protected override async Task<Either<Exception, User>> RunInternal(CreateUserReq
 }
 ```
 
-*API Reference: [Activate]({% link api-reference/workflow-methods/activate.md %}), [AddServices]({% link api-reference/workflow-methods/add-services.md %}), [Chain]({% link api-reference/workflow-methods/chain.md %}), [Resolve]({% link api-reference/workflow-methods/resolve.md %})*
+*API Reference: [Activate]({{ site.baseurl }}{% link api-reference/workflow-methods/activate.md %}), [AddServices]({{ site.baseurl }}{% link api-reference/workflow-methods/add-services.md %}), [Chain]({{ site.baseurl }}{% link api-reference/workflow-methods/chain.md %}), [Resolve]({{ site.baseurl }}{% link api-reference/workflow-methods/resolve.md %})*
 
 ## How It Works
 
@@ -37,7 +37,7 @@ Each type argument is stored in Memory with the corresponding instance. Steps th
 .AddServices<IValidator, INotifier>(validator, notifier)
 ```
 
-*API Reference: [AddServices]({% link api-reference/workflow-methods/add-services.md %})*
+*API Reference: [AddServices]({{ site.baseurl }}{% link api-reference/workflow-methods/add-services.md %})*
 
 ## When to Use It
 

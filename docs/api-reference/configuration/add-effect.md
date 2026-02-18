@@ -92,4 +92,4 @@ services.AddChainSharpEffects(options => options
 - **Workflow-level effects** (`AddEffect`): Implement `IEffectProviderFactory`. Called at workflow start and end. Used for cross-cutting concerns like data persistence, audit logging, etc.
 - **Step-level effects** (`AddStepEffect`): Implement `IStepEffectProviderFactory`. Called before and after each step. Used for step-level logging, metrics, etc.
 - The interface+implementation overloads register the factory under both the interface type and `IEffectProviderFactory`, enabling resolution by either type.
-- See [Effect Providers]({% link usage-guide/effect-providers.md %}) for conceptual background on the effect system.
+- See [Effect Providers]({{ site.baseurl }}{% link usage-guide/effect-providers.md %}) for conceptual background on the effect system.

@@ -84,5 +84,5 @@ var result = await workflow.Run(input, serviceProvider);
 ## Remarks
 
 - `RunEither` is useful when you want functional-style error handling without try/catch. It pairs naturally with LanguageExt's `Match`, `Map`, `Bind`, etc.
-- In most applications, workflows are executed through `IWorkflowBus.RunAsync` (which calls `Run` internally) rather than calling `Run` directly. See [WorkflowBus]({% link api-reference/mediator-api/workflow-bus.md %}).
+- In most applications, workflows are executed through `IWorkflowBus.RunAsync` (which calls `Run` internally) rather than calling `Run` directly. See [WorkflowBus]({{ site.baseurl }}{% link api-reference/mediator-api/workflow-bus.md %}).
 - The `serviceProvider` overload enables steps to resolve additional services beyond what was placed in Memory via `AddServices`.

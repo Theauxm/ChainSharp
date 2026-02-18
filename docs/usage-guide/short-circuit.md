@@ -23,7 +23,7 @@ public class ProcessOrderWorkflow : EffectWorkflow<OrderRequest, OrderResult>
 }
 ```
 
-*API Reference: [Chain]({% link api-reference/workflow-methods/chain.md %}), [ShortCircuit]({% link api-reference/workflow-methods/short-circuit.md %}), [Resolve]({% link api-reference/workflow-methods/resolve.md %})*
+*API Reference: [Chain]({{ site.baseurl }}{% link api-reference/workflow-methods/chain.md %}), [ShortCircuit]({{ site.baseurl }}{% link api-reference/workflow-methods/short-circuit.md %}), [Resolve]({{ site.baseurl }}{% link api-reference/workflow-methods/resolve.md %})*
 
 ## The Step
 

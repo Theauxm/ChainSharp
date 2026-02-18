@@ -46,7 +46,7 @@ services.AddChainSharpEffects(options => options
 );
 ```
 
-*API Reference: [Schedule]({% link api-reference/scheduler-api/schedule.md %}), [ThenInclude]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
+*API Reference: [Schedule]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}), [ThenInclude]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %})*
 
 `ThenInclude` captures the previous call's external ID as the parent. No schedule parameter—dependent manifests don't have one.
 
@@ -87,7 +87,7 @@ scheduler
         groupId: "etl");
 ```
 
-*API Reference: [Include]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
+*API Reference: [Include]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %})*
 
 This creates: `extract` &rarr; `transform`, `extract` &rarr; `validate`. When extract succeeds, both transform and validate are queued independently. If transform fails, validate is unaffected.
 
@@ -135,7 +135,7 @@ scheduler
 //          load-0..load-99 (groupId: "load", prunePrefix: "load-")
 ```
 
-*API Reference: [ScheduleMany]({% link api-reference/scheduler-api/schedule-many.md %}), [IncludeMany]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
+*API Reference: [ScheduleMany]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %}), [IncludeMany]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %})*
 
 The `dependsOn` function maps each source item to its parent's external ID. In this example, `load-0` depends on `extract-0`, `load-1` on `extract-1`, and so on. When `extract-42` succeeds, only `load-42` gets queued—the rest are unaffected.
 
@@ -190,7 +190,7 @@ scheduler
         i => ($"{i}", new LoadInput { Partition = i }));
 ```
 
-*API Reference: [IncludeMany]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
+*API Reference: [IncludeMany]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %})*
 
 All 10 `load-*` manifests depend on `extract-all`. No `dependsOn` function needed — `IncludeMany` automatically parents every item from the root `Schedule`. The name `"load"` derives `groupId: "load"` and `prunePrefix: "load-"`.
 
@@ -214,7 +214,7 @@ await scheduler.ScheduleManyDependentAsync<ILoadWorkflow, LoadInput, string>(
     groupId: "load");
 ```
 
-*API Reference: [ScheduleDependentAsync]({% link api-reference/scheduler-api/dependent-scheduling.md %}), [ScheduleManyDependentAsync]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
+*API Reference: [ScheduleDependentAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %}), [ScheduleManyDependentAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %})*
 
 Both methods use upsert semantics, same as their non-dependent counterparts. `ScheduleManyDependentAsync` runs in a single transaction.
 

@@ -8,7 +8,7 @@ nav_order: 2
 
 # Step Registration
 
-Extension methods for registering ChainSharp steps with `[Inject]` property injection support. These are **aliases** for the corresponding [Workflow Registration]({% link api-reference/di-registration/workflow-registration.md %}) methods — the injection behavior is identical.
+Extension methods for registering ChainSharp steps with `[Inject]` property injection support. These are **aliases** for the corresponding [Workflow Registration]({{ site.baseurl }}{% link api-reference/di-registration/workflow-registration.md %}) methods — the injection behavior is identical.
 
 ## Signatures
 

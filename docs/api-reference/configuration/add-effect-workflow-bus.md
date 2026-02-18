@@ -53,7 +53,7 @@ services.AddChainSharpEffects(options => options
 
 - Each input type must map to **exactly one** workflow. If two workflows accept the same input type, registration will fail.
 - The assembly scanning discovers workflows by their `IEffectWorkflow<TIn, TOut>` interface, not by convention.
-- See [WorkflowBus]({% link api-reference/mediator-api/workflow-bus.md %}) for the runtime dispatch API.
+- See [WorkflowBus]({{ site.baseurl }}{% link api-reference/mediator-api/workflow-bus.md %}) for the runtime dispatch API.
 
 ## Package
 

@@ -19,5 +19,5 @@ services.AddScopedChainSharpStep<IMyStep, MyStep>();
 
 | Page | Description |
 |------|-------------|
-| [Workflow Registration]({% link api-reference/di-registration/workflow-registration.md %}) | `AddScoped/Transient/SingletonChainSharpWorkflow` methods |
-| [Step Registration]({% link api-reference/di-registration/step-registration.md %}) | `AddScoped/Transient/SingletonChainSharpStep` methods |
+| [Workflow Registration]({{ site.baseurl }}{% link api-reference/di-registration/workflow-registration.md %}) | `AddScoped/Transient/SingletonChainSharpWorkflow` methods |
+| [Step Registration]({{ site.baseurl }}{% link api-reference/di-registration/step-registration.md %}) | `AddScoped/Transient/SingletonChainSharpStep` methods |

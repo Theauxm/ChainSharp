@@ -21,26 +21,26 @@ Both share the same concepts: external IDs for upsert semantics, `Schedule` obje
 
 | Method | Description |
 |--------|-------------|
-| [AddScheduler]({% link api-reference/scheduler-api/add-scheduler.md %}) | Adds the scheduler subsystem and configures global options (polling, retries, timeouts) |
-| [UseHangfire]({% link api-reference/scheduler-api/use-hangfire.md %}) | Configures Hangfire as the task server backend |
+| [AddScheduler]({{ site.baseurl }}{% link api-reference/scheduler-api/add-scheduler.md %}) | Adds the scheduler subsystem and configures global options (polling, retries, timeouts) |
+| [UseHangfire]({{ site.baseurl }}{% link api-reference/scheduler-api/use-hangfire.md %}) | Configures Hangfire as the task server backend |
 
 ### Scheduling Methods
 
 | Method | Context | Description |
 |--------|---------|-------------|
-| [Schedule / ScheduleAsync]({% link api-reference/scheduler-api/schedule.md %}) | Startup / Runtime | Schedules a single recurring workflow |
-| [ScheduleMany / ScheduleManyAsync]({% link api-reference/scheduler-api/schedule-many.md %}) | Startup / Runtime | Batch-schedules manifests from a collection with optional pruning |
-| [Dependent Scheduling]({% link api-reference/scheduler-api/dependent-scheduling.md %}) | Both | Schedules workflows that run after a parent completes (`ThenInclude`, `ThenIncludeMany`, `Include`, `IncludeMany`, `ScheduleDependentAsync`, `ScheduleManyDependentAsync`) |
+| [Schedule / ScheduleAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}) | Startup / Runtime | Schedules a single recurring workflow |
+| [ScheduleMany / ScheduleManyAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %}) | Startup / Runtime | Batch-schedules manifests from a collection with optional pruning |
+| [Dependent Scheduling]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %}) | Both | Schedules workflows that run after a parent completes (`ThenInclude`, `ThenIncludeMany`, `Include`, `IncludeMany`, `ScheduleDependentAsync`, `ScheduleManyDependentAsync`) |
 
 ### Management
 
 | Method | Description |
 |--------|-------------|
-| [Manifest Management]({% link api-reference/scheduler-api/manifest-management.md %}) | `DisableAsync`, `EnableAsync`, `TriggerAsync` — runtime control of scheduled jobs |
-| [AddMetadataCleanup]({% link api-reference/scheduler-api/add-metadata-cleanup.md %}) | Enables automatic purging of old metadata for high-frequency workflows |
+| [Manifest Management]({{ site.baseurl }}{% link api-reference/scheduler-api/manifest-management.md %}) | `DisableAsync`, `EnableAsync`, `TriggerAsync` — runtime control of scheduled jobs |
+| [AddMetadataCleanup]({{ site.baseurl }}{% link api-reference/scheduler-api/add-metadata-cleanup.md %}) | Enables automatic purging of old metadata for high-frequency workflows |
 
 ### Helpers
 
 | Page | Description |
 |------|-------------|
-| [Scheduling Helpers]({% link api-reference/scheduler-api/scheduling-helpers.md %}) | `Every`, `Cron`, `Schedule` record, and `ManifestOptions` — the building blocks for defining when and how jobs run |
+| [Scheduling Helpers]({{ site.baseurl }}{% link api-reference/scheduler-api/scheduling-helpers.md %}) | `Every`, `Cron`, `Schedule` record, and `ManifestOptions` — the building blocks for defining when and how jobs run |

@@ -18,7 +18,7 @@ protected override async Task<Either<Exception, User>> RunInternal(CreateUserReq
         .Resolve();
 ```
 
-*API Reference: [Activate]({% link api-reference/workflow-methods/activate.md %}), [Chain]({% link api-reference/workflow-methods/chain.md %}), [Resolve]({% link api-reference/workflow-methods/resolve.md %})*
+*API Reference: [Activate]({{ site.baseurl }}{% link api-reference/workflow-methods/activate.md %}), [Chain]({{ site.baseurl }}{% link api-reference/workflow-methods/chain.md %}), [Resolve]({{ site.baseurl }}{% link api-reference/workflow-methods/resolve.md %})*
 
 ## How It Works
 
@@ -58,7 +58,7 @@ protected override async Task<Either<Exception, ParentResult>> RunInternal(Paren
 }
 ```
 
-*API Reference: [Resolve]({% link api-reference/workflow-methods/resolve.md %}), [WorkflowBus.RunAsync]({% link api-reference/mediator-api/workflow-bus.md %})*
+*API Reference: [Resolve]({{ site.baseurl }}{% link api-reference/workflow-methods/resolve.md %}), [WorkflowBus.RunAsync]({{ site.baseurl }}{% link api-reference/mediator-api/workflow-bus.md %})*
 
 This skips the Memory lookup—you're providing the result directly. If an exception exists from the chain, it still takes precedence and the provided value is ignored. This is useful when you need to construct the return value manually, like combining results from nested workflows with the chain's output.
 

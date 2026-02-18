@@ -45,16 +45,24 @@ public partial class ManifestGroupDetailPage
     {
         using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
 
-        _group = await context.ManifestGroups.FirstOrDefaultAsync(
+        var freshGroup = await context.ManifestGroups.FirstOrDefaultAsync(
             g => g.Id == ManifestGroupId,
             cancellationToken
         );
 
-        if (_group is null)
+        if (freshGroup is null)
         {
+            _group = null;
             _manifests = [];
             _executions = [];
             return;
+        }
+
+        // Don't overwrite the user's unsaved edits during poll ticks
+        if (!IsSettingsDirty)
+        {
+            _group = freshGroup;
+            SnapshotSettings();
         }
 
         _manifests = await context
@@ -73,8 +81,6 @@ public partial class ManifestGroupDetailPage
                 .Take(200)
                 .ToListAsync(cancellationToken);
         }
-
-        SnapshotSettings();
     }
 
     private void SnapshotSettings()

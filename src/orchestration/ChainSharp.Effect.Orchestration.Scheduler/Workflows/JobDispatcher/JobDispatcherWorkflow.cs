@@ -10,5 +10,10 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.JobDispatcher;
 public class JobDispatcherWorkflow : EffectWorkflow<Unit, Unit>, IJobDispatcherWorkflow
 {
     protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
-        Activate(input).Chain<LoadQueuedJobsStep>().Chain<DispatchJobsStep>().Resolve();
+        Activate(input)
+            .Chain<LoadQueuedJobsStep>()
+            .Chain<LoadDispatchCapacityStep>()
+            .Chain<ApplyCapacityLimitsStep>()
+            .Chain<DispatchJobsStep>()
+            .Resolve();
 }

@@ -52,20 +52,24 @@ public partial class Index
         var hideAdmin = DashboardSettings.HideAdminWorkflows;
         var adminNames = DashboardSettings.AdminWorkflowNames;
 
-        // Summary cards
+        // Summary cards — single GroupBy instead of materializing all today's metadata
         var todayQuery = context.Metadatas.AsNoTracking().Where(m => m.StartTime >= todayStart);
 
         if (hideAdmin)
             todayQuery = todayQuery.ExcludeAdmin(adminNames);
 
-        var todayMetadata = await todayQuery.ToListAsync(cancellationToken);
+        var todayStateCounts = await todayQuery
+            .GroupBy(m => m.WorkflowState)
+            .Select(g => new { State = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
 
-        _executionsToday = todayMetadata.Count;
+        int CountForState(WorkflowState s) =>
+            todayStateCounts.FirstOrDefault(x => x.State == s)?.Count ?? 0;
 
-        var completed = todayMetadata.Count(m => m.WorkflowState == WorkflowState.Completed);
-        var terminal = todayMetadata.Count(
-            m => m.WorkflowState is WorkflowState.Completed or WorkflowState.Failed
-        );
+        _executionsToday = todayStateCounts.Sum(x => x.Count);
+
+        var completed = CountForState(WorkflowState.Completed);
+        var terminal = completed + CountForState(WorkflowState.Failed);
         _successRate = terminal > 0 ? Math.Round(100.0 * completed / terminal, 1) : 0;
 
         var runningQuery = context
@@ -93,58 +97,72 @@ public partial class Index
             ? allWorkflows.Count(w => !adminNames.Contains(w.ImplementationTypeName))
             : allWorkflows.Count;
 
-        // Executions over time (last 24h, grouped by hour)
+        // Executions over time (last 24h, grouped by hour) — aggregated in SQL
         var last24h = now.AddHours(-24);
         var recentQuery = context.Metadatas.AsNoTracking().Where(m => m.StartTime >= last24h);
 
         if (hideAdmin)
             recentQuery = recentQuery.ExcludeAdmin(adminNames);
 
-        var recentMetadata = await recentQuery
-            .Select(m => new { m.StartTime, m.WorkflowState })
+        var hourlyStats = await recentQuery
+            .GroupBy(
+                m =>
+                    new
+                    {
+                        m.StartTime.Date,
+                        m.StartTime.Hour,
+                        m.WorkflowState,
+                    }
+            )
+            .Select(
+                g =>
+                    new
+                    {
+                        g.Key.Date,
+                        g.Key.Hour,
+                        g.Key.WorkflowState,
+                        Count = g.Count(),
+                    }
+            )
             .ToListAsync(cancellationToken);
 
         _executionsOverTime = Enumerable
             .Range(0, 24)
             .Select(i =>
             {
-                var hourStart = now.AddHours(-23 + i).Date.AddHours(now.AddHours(-23 + i).Hour);
-                var hourEnd = hourStart.AddHours(1);
-                var inHour = recentMetadata.Where(
-                    m => m.StartTime >= hourStart && m.StartTime < hourEnd
-                );
+                var hourStart = now.AddHours(-23 + i);
+                var targetDate = hourStart.Date;
+                var targetHour = hourStart.Hour;
                 return new ExecutionTimePoint
                 {
                     Hour = hourStart.ToString("HH"),
-                    Completed = inHour.Count(m => m.WorkflowState == WorkflowState.Completed),
-                    Failed = inHour.Count(m => m.WorkflowState == WorkflowState.Failed),
+                    Completed = hourlyStats
+                        .Where(
+                            x =>
+                                x.Date == targetDate
+                                && x.Hour == targetHour
+                                && x.WorkflowState == WorkflowState.Completed
+                        )
+                        .Sum(x => x.Count),
+                    Failed = hourlyStats
+                        .Where(
+                            x =>
+                                x.Date == targetDate
+                                && x.Hour == targetHour
+                                && x.WorkflowState == WorkflowState.Failed
+                        )
+                        .Sum(x => x.Count),
                 };
             })
             .ToList();
 
-        // State breakdown (all time today)
+        // State breakdown — derived from the GroupBy above, no extra query
         _stateCounts =
         [
-            new()
-            {
-                State = "Completed",
-                Count = todayMetadata.Count(m => m.WorkflowState == WorkflowState.Completed),
-            },
-            new()
-            {
-                State = "Failed",
-                Count = todayMetadata.Count(m => m.WorkflowState == WorkflowState.Failed),
-            },
-            new()
-            {
-                State = "In Progress",
-                Count = todayMetadata.Count(m => m.WorkflowState == WorkflowState.InProgress),
-            },
-            new()
-            {
-                State = "Pending",
-                Count = todayMetadata.Count(m => m.WorkflowState == WorkflowState.Pending),
-            },
+            new() { State = "Completed", Count = CountForState(WorkflowState.Completed) },
+            new() { State = "Failed", Count = CountForState(WorkflowState.Failed) },
+            new() { State = "In Progress", Count = CountForState(WorkflowState.InProgress), },
+            new() { State = "Pending", Count = CountForState(WorkflowState.Pending) },
         ];
 
         // Top failing workflows (last 7 days)
@@ -167,7 +185,7 @@ public partial class Index
             .Select(x => new WorkflowFailureCount { Name = ShortName(x.Name), Count = x.Count })
             .ToList();
 
-        // Average duration by workflow (completed in last 7 days)
+        // Average duration by workflow (completed in last 7 days) — aggregated in SQL
         var durationsQuery = context
             .Metadatas.AsNoTracking()
             .Where(
@@ -181,33 +199,29 @@ public partial class Index
         if (hideAdmin)
             durationsQuery = durationsQuery.ExcludeAdmin(adminNames);
 
-        var completedRecent = await durationsQuery
-            .Select(
-                m =>
-                    new
-                    {
-                        m.Name,
-                        m.StartTime,
-                        m.EndTime,
-                    }
-            )
-            .ToListAsync(cancellationToken);
-
-        _avgDurations = completedRecent
+        var avgDurationData = await durationsQuery
             .GroupBy(m => m.Name)
             .Select(
                 g =>
-                    new WorkflowDuration
+                    new
                     {
-                        Name = ShortName(g.Key),
-                        AvgMs = Math.Round(
-                            g.Average(m => (m.EndTime!.Value - m.StartTime).TotalMilliseconds),
-                            0
-                        ),
+                        Name = g.Key,
+                        AvgSeconds = g.Average(m => (m.EndTime!.Value - m.StartTime).TotalSeconds),
                     }
             )
-            .OrderByDescending(x => x.AvgMs)
+            .OrderByDescending(x => x.AvgSeconds)
             .Take(10)
+            .ToListAsync(cancellationToken);
+
+        _avgDurations = avgDurationData
+            .Select(
+                x =>
+                    new WorkflowDuration
+                    {
+                        Name = ShortName(x.Name),
+                        AvgMs = Math.Round(x.AvgSeconds * 1000, 0),
+                    }
+            )
             .ToList();
 
         // Recent failures

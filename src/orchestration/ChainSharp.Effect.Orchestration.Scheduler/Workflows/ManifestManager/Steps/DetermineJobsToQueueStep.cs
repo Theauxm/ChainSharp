@@ -1,6 +1,6 @@
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.DeadLetter;
-using ChainSharp.Effect.Models.Manifest;
+using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager.Utilities;
 using ChainSharp.Effect.Services.EffectStep;
 using Microsoft.Extensions.Logging;
@@ -17,18 +17,20 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager.St
 /// queue entries, active executions).
 /// </remarks>
 internal class DetermineJobsToQueueStep(ILogger<DetermineJobsToQueueStep> logger)
-    : EffectStep<(List<Manifest>, List<DeadLetter>), List<Manifest>>
+    : EffectStep<(List<ManifestDispatchView>, List<DeadLetter>), List<ManifestDispatchView>>
 {
-    public override async Task<List<Manifest>> Run((List<Manifest>, List<DeadLetter>) input)
+    public override async Task<List<ManifestDispatchView>> Run(
+        (List<ManifestDispatchView>, List<DeadLetter>) input
+    )
     {
-        var (manifests, newlyCreatedDeadLetters) = input;
+        var (views, newlyCreatedDeadLetters) = input;
 
         logger.LogDebug(
             "Starting DetermineJobsToQueueStep to identify manifests due for execution"
         );
 
         var now = DateTime.UtcNow;
-        var manifestsToQueue = new List<Manifest>();
+        var viewsToQueue = new List<ManifestDispatchView>();
 
         // Create a set of manifest IDs that were just dead-lettered in this cycle
         var newlyDeadLetteredManifestIds = newlyCreatedDeadLetters
@@ -37,143 +39,142 @@ internal class DetermineJobsToQueueStep(ILogger<DetermineJobsToQueueStep> logger
 
         // Filter to only time-based scheduled manifests (not manual-only or dependent)
         // Also skip manifests whose group is disabled
-        var scheduledManifests = manifests
+        var scheduledViews = views
             .Where(
-                m =>
-                    m.ScheduleType != ScheduleType.None
-                    && m.ScheduleType != ScheduleType.Dependent
-                    && m.ManifestGroup.IsEnabled
+                v =>
+                    v.Manifest.ScheduleType != ScheduleType.None
+                    && v.Manifest.ScheduleType != ScheduleType.Dependent
+                    && v.ManifestGroup.IsEnabled
             )
             .ToList();
 
         logger.LogDebug(
             "Found {ManifestCount} enabled scheduled manifests to evaluate",
-            scheduledManifests.Count
+            scheduledViews.Count
         );
 
-        foreach (var manifest in scheduledManifests)
+        foreach (var view in scheduledViews)
         {
-            if (ShouldSkipManifest(manifest, newlyDeadLetteredManifestIds))
+            if (ShouldSkipManifest(view, newlyDeadLetteredManifestIds))
                 continue;
 
             // Check if this manifest is due for execution
-            if (SchedulingHelpers.ShouldRunNow(manifest, now, logger))
+            if (SchedulingHelpers.ShouldRunNow(view.Manifest, now, logger))
             {
                 logger.LogDebug(
                     "Manifest {ManifestId} (name: {ManifestName}) is due for execution",
-                    manifest.Id,
-                    manifest.Name
+                    view.Manifest.Id,
+                    view.Manifest.Name
                 );
-                manifestsToQueue.Add(manifest);
+                viewsToQueue.Add(view);
             }
         }
 
         // Evaluate dependent manifests (triggered by parent success, not by schedule)
-        var dependentManifests = manifests
+        var dependentViews = views
             .Where(
-                m =>
-                    m.ScheduleType == ScheduleType.Dependent
-                    && m.DependsOnManifestId != null
-                    && m.ManifestGroup.IsEnabled
+                v =>
+                    v.Manifest.ScheduleType == ScheduleType.Dependent
+                    && v.Manifest.DependsOnManifestId != null
+                    && v.ManifestGroup.IsEnabled
             )
             .ToList();
 
-        if (dependentManifests.Count > 0)
+        if (dependentViews.Count > 0)
         {
             logger.LogDebug(
                 "Found {DependentCount} dependent manifests to evaluate",
-                dependentManifests.Count
+                dependentViews.Count
             );
 
-            foreach (var dependent in dependentManifests)
+            foreach (var dependent in dependentViews)
             {
                 if (ShouldSkipManifest(dependent, newlyDeadLetteredManifestIds))
                     continue;
 
                 // Find parent manifest in the loaded set (only enabled manifests are loaded)
-                var parent = manifests.FirstOrDefault(m => m.Id == dependent.DependsOnManifestId);
+                var parent = views.FirstOrDefault(
+                    v => v.Manifest.Id == dependent.Manifest.DependsOnManifestId
+                );
                 if (parent is null)
                 {
                     logger.LogTrace(
                         "Skipping dependent manifest {ManifestId} - parent manifest {ParentId} not found or disabled",
-                        dependent.Id,
-                        dependent.DependsOnManifestId
+                        dependent.Manifest.Id,
+                        dependent.Manifest.DependsOnManifestId
                     );
                     continue;
                 }
 
                 // Queue if parent's LastSuccessfulRun is newer than dependent's LastSuccessfulRun
                 if (
-                    parent.LastSuccessfulRun != null
+                    parent.Manifest.LastSuccessfulRun != null
                     && (
-                        dependent.LastSuccessfulRun == null
-                        || parent.LastSuccessfulRun > dependent.LastSuccessfulRun
+                        dependent.Manifest.LastSuccessfulRun == null
+                        || parent.Manifest.LastSuccessfulRun > dependent.Manifest.LastSuccessfulRun
                     )
                 )
                 {
                     logger.LogDebug(
                         "Dependent manifest {ManifestId} (name: {ManifestName}) is due - parent {ParentId} last succeeded at {ParentLastRun}",
-                        dependent.Id,
-                        dependent.Name,
-                        parent.Id,
-                        parent.LastSuccessfulRun
+                        dependent.Manifest.Id,
+                        dependent.Manifest.Name,
+                        parent.Manifest.Id,
+                        parent.Manifest.LastSuccessfulRun
                     );
-                    manifestsToQueue.Add(dependent);
+                    viewsToQueue.Add(dependent);
                 }
             }
         }
 
         logger.LogInformation(
             "DetermineJobsToQueueStep completed: {ManifestsToQueueCount} manifests are due for execution",
-            manifestsToQueue.Count
+            viewsToQueue.Count
         );
 
-        return manifestsToQueue;
+        return viewsToQueue;
     }
 
     /// <summary>
     /// Checks common guards that apply to all manifest types (dead-lettered, queued, active execution).
     /// </summary>
-    private bool ShouldSkipManifest(Manifest manifest, HashSet<int> newlyDeadLetteredManifestIds)
+    private bool ShouldSkipManifest(
+        ManifestDispatchView view,
+        HashSet<int> newlyDeadLetteredManifestIds
+    )
     {
-        if (newlyDeadLetteredManifestIds.Contains(manifest.Id))
+        if (newlyDeadLetteredManifestIds.Contains(view.Manifest.Id))
         {
             logger.LogTrace(
                 "Skipping manifest {ManifestId} - was just dead-lettered in this cycle",
-                manifest.Id
+                view.Manifest.Id
             );
             return true;
         }
 
-        if (manifest.DeadLetters.Any(dl => dl.Status == DeadLetterStatus.AwaitingIntervention))
+        if (view.HasAwaitingDeadLetter)
         {
             logger.LogTrace(
                 "Skipping manifest {ManifestId} - has AwaitingIntervention dead letter",
-                manifest.Id
+                view.Manifest.Id
             );
             return true;
         }
 
-        if (manifest.WorkQueues.Any(q => q.Status == WorkQueueStatus.Queued))
+        if (view.HasQueuedWork)
         {
             logger.LogTrace(
                 "Skipping manifest {ManifestId} - has queued work queue entry",
-                manifest.Id
+                view.Manifest.Id
             );
             return true;
         }
 
-        if (
-            manifest.Metadatas.Any(
-                m =>
-                    m.WorkflowState == WorkflowState.Pending
-                    || m.WorkflowState == WorkflowState.InProgress
-            )
-        )
+        if (view.HasActiveExecution)
         {
             logger.LogTrace(
                 "Skipping manifest {ManifestId} - has pending or in-progress execution",
-                manifest.Id
+                view.Manifest.Id
             );
             return true;
         }

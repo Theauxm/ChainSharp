@@ -5,7 +5,7 @@
 
 <RadzenText TextStyle="TextStyle.H4" class="rz-mb-2">Manifest Groups</RadzenText>
 <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-4" Style="color: var(--rz-text-secondary-color);">
-    Logical groupings of related manifests with aggregate execution statistics.
+    Logical groupings of related manifests with per-group dispatch controls.
 </RadzenText>
 
 <ChainSharpDataGrid Data="@_items"
@@ -15,9 +15,23 @@
                     Style="cursor: pointer;">
     <Columns>
         <RadzenDataGridColumn TItem="GroupSummary"
-                              Property="GroupId"
+                              Property="Name"
                               Title="Group"
                               Width="250px" />
+        <RadzenDataGridColumn TItem="GroupSummary"
+                              Property="Priority"
+                              Title="Priority"
+                              Width="100px" />
+        <RadzenDataGridColumn TItem="GroupSummary"
+                              Property="MaxActiveJobs"
+                              Title="Max Active Jobs"
+                              Width="140px">
+            <Template Context="g">@(g.MaxActiveJobs?.ToString() ?? "—")</Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="GroupSummary"
+                              Property="IsEnabled"
+                              Title="Enabled"
+                              Width="100px" />
         <RadzenDataGridColumn TItem="GroupSummary"
                               Property="ManifestCount"
                               Title="Manifests"
@@ -49,24 +63,28 @@
     {
         using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
 
-        _items = await context.Manifests
+        _items = await context.ManifestGroups
             .AsNoTracking()
-            .Where(m => m.GroupId != null)
-            .GroupBy(m => m.GroupId!)
+            .Include(g => g.Manifests)
+                .ThenInclude(m => m.Metadatas)
             .Select(g => new GroupSummary
             {
-                GroupId = g.Key,
-                ManifestCount = g.Count(),
-                TotalExecutions = g.SelectMany(m => m.Metadatas).Count(),
-                CompletedCount = g.SelectMany(m => m.Metadatas).Count(md => md.WorkflowState == WorkflowState.Completed),
-                FailedCount = g.SelectMany(m => m.Metadatas).Count(md => md.WorkflowState == WorkflowState.Failed),
-                LastRun = g.SelectMany(m => m.Metadatas).Max(md => (DateTime?)md.StartTime),
+                Id = g.Id,
+                Name = g.Name,
+                MaxActiveJobs = g.MaxActiveJobs,
+                Priority = g.Priority,
+                IsEnabled = g.IsEnabled,
+                ManifestCount = g.Manifests.Count,
+                TotalExecutions = g.Manifests.SelectMany(m => m.Metadatas).Count(),
+                CompletedCount = g.Manifests.SelectMany(m => m.Metadatas).Count(md => md.WorkflowState == WorkflowState.Completed),
+                FailedCount = g.Manifests.SelectMany(m => m.Metadatas).Count(md => md.WorkflowState == WorkflowState.Failed),
+                LastRun = g.Manifests.SelectMany(m => m.Metadatas).Max(md => (DateTime?)md.StartTime),
             })
             .ToListAsync(cancellationToken);
     }
 
     private void OnRowClick(DataGridRowMouseEventArgs<GroupSummary> args)
     {
-        Navigation.NavigateTo($"chainsharp/data/manifest-groups/{Uri.EscapeDataString(args.Data.GroupId)}");
+        Navigation.NavigateTo($"chainsharp/data/manifest-groups/{args.Data.Id}");
     }
 }

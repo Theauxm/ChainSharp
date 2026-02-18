@@ -37,7 +37,8 @@ public partial class ManifestDetailPage
         using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
 
         _manifest = await context
-            .Manifests.AsNoTracking()
+            .Manifests.Include(m => m.ManifestGroup)
+            .AsNoTracking()
             .FirstOrDefaultAsync(m => m.Id == ManifestId, cancellationToken);
 
         if (_manifest is not null)

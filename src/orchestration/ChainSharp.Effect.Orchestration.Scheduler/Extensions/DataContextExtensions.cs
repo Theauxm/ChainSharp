@@ -1,6 +1,7 @@
 using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.Manifest;
+using ChainSharp.Effect.Models.ManifestGroup;
 using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
 using ChainSharp.Effect.Services.EffectWorkflow;
 using LanguageExt;
@@ -15,29 +16,58 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Extensions;
 public static class DataContextExtensions
 {
     /// <summary>
+    /// Ensures a ManifestGroup exists with the given name, creating one if necessary.
+    /// </summary>
+    /// <returns>The ManifestGroup ID.</returns>
+    public static async Task<int> EnsureManifestGroupAsync(
+        this IDataContext context,
+        string groupName,
+        int priority,
+        CancellationToken ct = default
+    )
+    {
+        var existing = await context.ManifestGroups.FirstOrDefaultAsync(
+            g => g.Name == groupName,
+            ct
+        );
+
+        if (existing != null)
+        {
+            existing.Priority = priority;
+            existing.UpdatedAt = DateTime.UtcNow;
+            return existing.Id;
+        }
+
+        var group = new ManifestGroup
+        {
+            Name = groupName,
+            Priority = priority,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+        };
+        context.ManifestGroups.Add(group);
+        await context.SaveChanges(ct);
+
+        return group.Id;
+    }
+
+    /// <summary>
     /// Creates or updates a manifest with the specified configuration.
     /// </summary>
-    /// <typeparam name="TWorkflow">The workflow type to schedule</typeparam>
-    /// <typeparam name="TInput">The input type for the workflow</typeparam>
-    /// <param name="context">The data context to use for persistence</param>
-    /// <param name="externalId">The unique external identifier for the manifest</param>
-    /// <param name="input">The input data for the scheduled workflow</param>
-    /// <param name="schedule">The schedule configuration</param>
-    /// <param name="options">Additional manifest options</param>
-    /// <param name="ct">Cancellation token</param>
-    /// <returns>The created or updated manifest</returns>
     public static async Task<Manifest> UpsertManifestAsync<TWorkflow, TInput>(
         this IDataContext context,
         string externalId,
         TInput input,
         Schedule schedule,
         ManifestOptions options,
-        string? groupId = null,
+        string groupId,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
     {
+        var manifestGroupId = await context.EnsureManifestGroupAsync(groupId, options.Priority, ct);
+
         var existing = await context.Manifests.FirstOrDefaultAsync(
             m => m.ExternalId == externalId,
             ct
@@ -54,7 +84,7 @@ public static class DataContextExtensions
             existing.TimeoutSeconds = options.Timeout.HasValue
                 ? (int)options.Timeout.Value.TotalSeconds
                 : null;
-            existing.GroupId = groupId;
+            existing.ManifestGroupId = manifestGroupId;
             existing.Priority = options.Priority;
             ApplySchedule(existing, schedule);
 
@@ -72,7 +102,7 @@ public static class DataContextExtensions
             TimeoutSeconds = options.Timeout.HasValue
                 ? (int)options.Timeout.Value.TotalSeconds
                 : null,
-            GroupId = groupId,
+            ManifestGroupId = manifestGroupId,
             Priority = options.Priority,
         };
         manifest.SetProperties(input);
@@ -92,12 +122,14 @@ public static class DataContextExtensions
         TInput input,
         int dependsOnManifestId,
         ManifestOptions options,
-        string? groupId = null,
+        string groupId,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
     {
+        var manifestGroupId = await context.EnsureManifestGroupAsync(groupId, options.Priority, ct);
+
         var existing = await context.Manifests.FirstOrDefaultAsync(
             m => m.ExternalId == externalId,
             ct
@@ -113,7 +145,7 @@ public static class DataContextExtensions
             existing.TimeoutSeconds = options.Timeout.HasValue
                 ? (int)options.Timeout.Value.TotalSeconds
                 : null;
-            existing.GroupId = groupId;
+            existing.ManifestGroupId = manifestGroupId;
             existing.Priority = options.Priority;
             existing.ScheduleType = ScheduleType.Dependent;
             existing.DependsOnManifestId = dependsOnManifestId;
@@ -133,7 +165,7 @@ public static class DataContextExtensions
             TimeoutSeconds = options.Timeout.HasValue
                 ? (int)options.Timeout.Value.TotalSeconds
                 : null,
-            GroupId = groupId,
+            ManifestGroupId = manifestGroupId,
             Priority = options.Priority,
             ScheduleType = ScheduleType.Dependent,
             DependsOnManifestId = dependsOnManifestId,

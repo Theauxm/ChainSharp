@@ -40,6 +40,7 @@ public interface IManifestScheduler
         TInput input,
         Schedule schedule,
         Action<ManifestOptions>? configure = null,
+        string? groupId = null,
         int priority = 0,
         CancellationToken ct = default
     )
@@ -113,6 +114,7 @@ public interface IManifestScheduler
         TInput input,
         string dependsOnExternalId,
         Action<ManifestOptions>? configure = null,
+        string? groupId = null,
         int priority = 0,
         CancellationToken ct = default
     )

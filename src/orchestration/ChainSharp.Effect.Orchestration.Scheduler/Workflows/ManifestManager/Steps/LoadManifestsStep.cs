@@ -24,6 +24,7 @@ internal class LoadManifestsStep(IDataContext dataContext) : EffectStep<Unit, Li
         await dataContext
             .Manifests.AsSplitQuery()
             .Where(m => m.IsEnabled)
+            .Include(m => m.ManifestGroup)
             .Include(m => m.Metadatas)
             .Include(m => m.DeadLetters)
             .Include(m => m.WorkQueues)

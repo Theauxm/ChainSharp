@@ -36,9 +36,13 @@ internal class DetermineJobsToQueueStep(ILogger<DetermineJobsToQueueStep> logger
             .ToHashSet();
 
         // Filter to only time-based scheduled manifests (not manual-only or dependent)
+        // Also skip manifests whose group is disabled
         var scheduledManifests = manifests
             .Where(
-                m => m.ScheduleType != ScheduleType.None && m.ScheduleType != ScheduleType.Dependent
+                m =>
+                    m.ScheduleType != ScheduleType.None
+                    && m.ScheduleType != ScheduleType.Dependent
+                    && m.ManifestGroup.IsEnabled
             )
             .ToList();
 
@@ -66,7 +70,12 @@ internal class DetermineJobsToQueueStep(ILogger<DetermineJobsToQueueStep> logger
 
         // Evaluate dependent manifests (triggered by parent success, not by schedule)
         var dependentManifests = manifests
-            .Where(m => m.ScheduleType == ScheduleType.Dependent && m.DependsOnManifestId != null)
+            .Where(
+                m =>
+                    m.ScheduleType == ScheduleType.Dependent
+                    && m.DependsOnManifestId != null
+                    && m.ManifestGroup.IsEnabled
+            )
             .ToList();
 
         if (dependentManifests.Count > 0)

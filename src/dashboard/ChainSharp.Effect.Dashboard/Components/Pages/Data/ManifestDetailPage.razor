@@ -59,7 +59,7 @@
                 <FieldDisplay Label="Name" Value="@ShortName(_manifest.Name)" />
                 <FieldDisplay Label="External ID" Value="@_manifest.ExternalId" />
                 <FieldDisplay Label="Enabled" Value="@(_manifest.IsEnabled ? "Yes" : "No")" />
-                <FieldDisplay Label="Group" Value="@(_manifest.GroupId ?? "—")" />
+                <FieldDisplay Label="Group" Value="@(_manifest.ManifestGroup?.Name ?? "—")" />
             </RadzenStack>
         </RadzenColumn>
         <RadzenColumn Size="12" SizeMD="6" SizeLG="4">

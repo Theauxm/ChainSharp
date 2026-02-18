@@ -243,6 +243,7 @@ public class SchedulerConfigurationBuilder
         TInput input,
         Schedule schedule,
         Action<ManifestOptions>? configure = null,
+        string? groupId = null,
         int priority = 0
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -258,6 +259,7 @@ public class SchedulerConfigurationBuilder
                         input,
                         schedule,
                         configure,
+                        groupId: groupId,
                         priority: priority,
                         ct: ct
                     )
@@ -288,6 +290,7 @@ public class SchedulerConfigurationBuilder
         string externalId,
         TInput input,
         Action<ManifestOptions>? configure = null,
+        string? groupId = null,
         int priority = 0
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -310,6 +313,7 @@ public class SchedulerConfigurationBuilder
                         input,
                         parentExternalId,
                         configure,
+                        groupId: groupId,
                         priority: priority,
                         ct: ct
                     ),

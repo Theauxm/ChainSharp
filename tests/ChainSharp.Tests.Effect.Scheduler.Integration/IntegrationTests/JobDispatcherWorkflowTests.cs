@@ -1,6 +1,7 @@
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.Manifest.DTOs;
+using ChainSharp.Effect.Models.ManifestGroup;
 using ChainSharp.Effect.Models.WorkQueue;
 using ChainSharp.Effect.Models.WorkQueue.DTOs;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.JobDispatcher;
@@ -283,6 +284,11 @@ public class JobDispatcherWorkflowTests : TestSetup
 
     private async Task<Manifest> CreateAndSaveManifest(string inputValue = "TestValue")
     {
+        var group = await TestSetup.CreateAndSaveManifestGroup(
+            DataContext,
+            name: $"group-{Guid.NewGuid():N}"
+        );
+
         var manifest = Manifest.Create(
             new CreateManifest
             {
@@ -293,6 +299,7 @@ public class JobDispatcherWorkflowTests : TestSetup
                 Properties = new SchedulerTestInput { Value = inputValue },
             }
         );
+        manifest.ManifestGroupId = group.Id;
 
         await DataContext.Track(manifest);
         await DataContext.SaveChanges(CancellationToken.None);

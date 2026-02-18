@@ -1,5 +1,6 @@
 using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Enums;
+using ChainSharp.Effect.Models.ManifestGroup;
 using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestScheduler;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.JobDispatcher;
@@ -189,5 +190,14 @@ internal class ManifestPollingService(
             "Successfully seeded {Count} manifest(s)",
             configuration.PendingManifests.Count
         );
+
+        // Clean up orphaned ManifestGroups (groups with no manifests remaining)
+        var dataContext = scope.ServiceProvider.GetRequiredService<IDataContext>();
+        var orphanedCount = await dataContext
+            .ManifestGroups.Where(g => !g.Manifests.Any())
+            .ExecuteDeleteAsync(cancellationToken);
+
+        if (orphanedCount > 0)
+            logger.LogInformation("Cleaned up {Count} orphaned manifest group(s)", orphanedCount);
     }
 }

@@ -37,10 +37,11 @@ internal class CreateWorkQueueEntriesStep(
         {
             try
             {
+                var basePriority = manifest.ManifestGroup.Priority;
                 var effectivePriority =
                     manifest.ScheduleType == ScheduleType.Dependent
-                        ? manifest.Priority + schedulerConfiguration.DependentPriorityBoost
-                        : manifest.Priority;
+                        ? basePriority + schedulerConfiguration.DependentPriorityBoost
+                        : basePriority;
 
                 var entry = Models.WorkQueue.WorkQueue.Create(
                     new CreateWorkQueue

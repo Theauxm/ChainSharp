@@ -61,12 +61,14 @@ builder.Services.AddChainSharpEffects(
                     .Schedule<IHelloWorldWorkflow, HelloWorldInput>(
                         "sample-hello-world",
                         new HelloWorldInput { Name = "ChainSharp Scheduler" },
-                        Every.Seconds(20)
+                        Every.Seconds(20),
+                        groupId: "hello-goodbye"
                     )
                     // Dependent: GoodbyeWorld runs after HelloWorld succeeds
                     .Then<IGoodbyeWorldWorkflow, GoodbyeWorldInput>(
                         "sample-goodbye-world",
-                        new GoodbyeWorldInput { Name = "ChainSharp Scheduler" }
+                        new GoodbyeWorldInput { Name = "ChainSharp Scheduler" },
+                        groupId: "hello-goodbye"
                     )
                     // Schedule ExtractImport for Customer table (10 indexes)
                     .ScheduleMany<

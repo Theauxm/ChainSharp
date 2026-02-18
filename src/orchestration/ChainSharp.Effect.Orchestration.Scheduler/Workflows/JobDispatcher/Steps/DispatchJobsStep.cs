@@ -18,10 +18,9 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.JobDispatcher.Step
 /// them to the background task server.
 /// </summary>
 /// <remarks>
-/// Enforces the global MaxActiveJobs limit at dispatch time by counting active
-/// (Pending + InProgress) Metadata before dispatching. This is the correct
-/// bottleneck since the JobDispatcher is the single gateway to the BackgroundTaskServer,
-/// and all sources (ManifestManager, Dashboard, ManifestScheduler) write to the WorkQueue.
+/// Enforces both global MaxActiveJobs and per-group MaxActiveJobs limits at dispatch time.
+/// Per-group limits prevent starvation: when a high-priority group hits its cap, lower-priority
+/// groups can still dispatch (using <c>continue</c> instead of <c>break</c>).
 /// </remarks>
 internal class DispatchJobsStep(
     IDataContext dataContext,
@@ -37,43 +36,92 @@ internal class DispatchJobsStep(
 
         logger.LogDebug("Starting DispatchJobsStep for {EntryCount} queued entries", entries.Count);
 
-        // Enforce MaxActiveJobs at dispatch time
-        if (config.MaxActiveJobs.HasValue)
+        var excluded = config.ExcludedWorkflowTypeNames;
+
+        // Count global active metadata
+        var activeMetadataCount = await dataContext.Metadatas.CountAsync(
+            m =>
+                !excluded.Contains(m.Name)
+                && (
+                    m.WorkflowState == WorkflowState.Pending
+                    || m.WorkflowState == WorkflowState.InProgress
+                )
+        );
+
+        // Check global capacity
+        if (config.MaxActiveJobs.HasValue && activeMetadataCount >= config.MaxActiveJobs.Value)
         {
-            // Exclude blacklisted workflow types (internal scheduler workflows by default).
-            // Additional types can be excluded via ExcludeFromMaxActiveJobs<T>().
-            var excluded = config.ExcludedWorkflowTypeNames;
-            var activeMetadataCount = await dataContext.Metadatas.CountAsync(
+            logger.LogInformation(
+                "MaxActiveJobs limit reached ({ActiveCount}/{MaxActiveJobs}). Skipping dispatch this cycle.",
+                activeMetadataCount,
+                config.MaxActiveJobs.Value
+            );
+            return Unit.Default;
+        }
+
+        // Load per-group active counts
+        var groupActiveCounts = await dataContext
+            .Metadatas.Where(
                 m =>
                     !excluded.Contains(m.Name)
                     && (
                         m.WorkflowState == WorkflowState.Pending
                         || m.WorkflowState == WorkflowState.InProgress
                     )
-            );
+                    && m.ManifestId.HasValue
+            )
+            .Join(
+                dataContext.Manifests,
+                m => m.ManifestId!.Value,
+                man => man.Id,
+                (m, man) => man.ManifestGroupId
+            )
+            .GroupBy(gid => gid)
+            .Select(g => new { GroupId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.GroupId, g => g.Count);
 
-            var remainingCapacity = config.MaxActiveJobs.Value - activeMetadataCount;
+        // Load per-group limits (only groups that have a limit set)
+        var groupLimits = await dataContext
+            .ManifestGroups.Where(g => g.MaxActiveJobs != null)
+            .ToDictionaryAsync(g => g.Id, g => g.MaxActiveJobs!.Value);
 
-            if (remainingCapacity <= 0)
+        // Filter entries respecting both global and per-group limits
+        var toDispatch = new List<WorkQueue>();
+        var groupDispatchCounts = new Dictionary<int, int>();
+        var globalDispatched = 0;
+
+        foreach (var entry in entries) // already sorted by group priority
+        {
+            // Global limit check
+            if (
+                config.MaxActiveJobs.HasValue
+                && activeMetadataCount + globalDispatched >= config.MaxActiveJobs.Value
+            )
+                break;
+
+            // Per-group limit check
+            var groupId = entry.Manifest.ManifestGroupId;
+            if (groupLimits.TryGetValue(groupId, out var groupLimit))
             {
-                logger.LogInformation(
-                    "MaxActiveJobs limit reached ({ActiveCount}/{MaxActiveJobs}). Skipping dispatch this cycle.",
-                    activeMetadataCount,
-                    config.MaxActiveJobs.Value
-                );
-                return Unit.Default;
+                var active = groupActiveCounts.GetValueOrDefault(groupId, 0);
+                var dispatched = groupDispatchCounts.GetValueOrDefault(groupId, 0);
+                if (active + dispatched >= groupLimit)
+                    continue; // skip this group but keep processing other groups
             }
 
-            entries = entries.Take(remainingCapacity).ToList();
-            logger.LogDebug(
-                "MaxActiveJobs capacity: {ActiveCount}/{MaxActiveJobs}, dispatching up to {RemainingCapacity} entries",
-                activeMetadataCount,
-                config.MaxActiveJobs.Value,
-                remainingCapacity
-            );
+            toDispatch.Add(entry);
+            groupDispatchCounts[groupId] = groupDispatchCounts.GetValueOrDefault(groupId, 0) + 1;
+            globalDispatched++;
         }
 
-        foreach (var entry in entries)
+        logger.LogDebug(
+            "Dispatch selection: {ToDispatch} of {Total} entries (global active: {ActiveCount})",
+            toDispatch.Count,
+            entries.Count,
+            activeMetadataCount
+        );
+
+        foreach (var entry in toDispatch)
         {
             try
             {

@@ -1,3 +1,10 @@
+# [5.14.0](https://github.com/Theauxm/ChainSharp/compare/v5.13.0...v5.14.0) (2026-02-19)
+
+
+### Features
+
+* Manifest Group ([#164](https://github.com/Theauxm/ChainSharp/issues/164)) ([fe8a860](https://github.com/Theauxm/ChainSharp/commit/fe8a86048dce58b0d59991d45632f69ee5ca4d8d))
+
 # [5.13.0](https://github.com/Theauxm/ChainSharp/compare/v5.12.2...v5.13.0) (2026-02-18)
 
 

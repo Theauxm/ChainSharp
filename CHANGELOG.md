@@ -1,3 +1,10 @@
+# [5.15.0](https://github.com/Theauxm/ChainSharp/compare/v5.14.0...v5.15.0) (2026-02-19)
+
+
+### Features
+
+* Added Fluent API Configuration updates. Runtime Log Level changing added. Hosted Services cleanup ([#166](https://github.com/Theauxm/ChainSharp/issues/166)) ([3184f21](https://github.com/Theauxm/ChainSharp/commit/3184f218052418823f9f91a2868354851938914c))
+
 # [5.14.0](https://github.com/Theauxm/ChainSharp/compare/v5.13.0...v5.14.0) (2026-02-19)
 
 

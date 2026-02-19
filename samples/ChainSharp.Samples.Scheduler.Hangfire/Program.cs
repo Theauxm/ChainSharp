@@ -6,8 +6,10 @@ using ChainSharp.Effect.Orchestration.Scheduler.Extensions;
 using ChainSharp.Effect.Orchestration.Scheduler.Hangfire.Extensions;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager;
+using ChainSharp.Effect.Provider.Alerting.Extensions;
 using ChainSharp.Effect.Provider.Json.Extensions;
 using ChainSharp.Effect.Provider.Parameter.Extensions;
+using ChainSharp.Samples.Scheduler.Hangfire.Workflows.AlertExample;
 using ChainSharp.Samples.Scheduler.Hangfire.Workflows.ExtractImport;
 using ChainSharp.Samples.Scheduler.Hangfire.Workflows.GoodbyeWorld;
 using ChainSharp.Samples.Scheduler.Hangfire.Workflows.HelloWorld;
@@ -46,6 +48,10 @@ builder.Services.AddChainSharpEffects(
             .AddPostgresEffect(connectionString)
             .AddJsonEffect()
             .SaveWorkflowParameters()
+            // Add Alerting effect with example alert sender
+            .UseAlertingEffect(alertOptions =>
+                alertOptions.AddAlertSender<ExampleAlertSender>()
+            )
             // Add Scheduler with Hangfire as the background task server
             .AddScheduler(scheduler =>
             {
@@ -56,8 +62,18 @@ builder.Services.AddChainSharpEffects(
                         cleanup.AddWorkflowType<IGoodbyeWorldWorkflow>();
                         cleanup.AddWorkflowType<IExtractImportWorkflow>();
                         cleanup.AddWorkflowType<ITransformLoadWorkflow>();
+                        cleanup.AddWorkflowType<IAlertExampleWorkflow>();
                     })
                     .UseHangfire(connectionString)
+                    .Schedule<IAlertExampleWorkflow, AlertExampleInput>(
+                        "sample-alert-example",
+                        new AlertExampleInput
+                        {
+                            ShouldFail = true,
+                            ExceptionType = "TimeoutException"
+                        },
+                        Every.Seconds(30)
+                    )
                     .Schedule<IHelloWorldWorkflow, HelloWorldInput>(
                         "sample-hello-world",
                         new HelloWorldInput { Name = "ChainSharp Scheduler" },

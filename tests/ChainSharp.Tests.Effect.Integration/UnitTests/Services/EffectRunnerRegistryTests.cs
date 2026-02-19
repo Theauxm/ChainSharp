@@ -1,4 +1,5 @@
 using ChainSharp.Effect.Models;
+using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Services.EffectProvider;
 using ChainSharp.Effect.Services.EffectProviderFactory;
 using ChainSharp.Effect.Services.EffectRegistry;
@@ -208,6 +209,9 @@ public class EffectRunnerRegistryTests
         public Task Track(IModel model) => Task.CompletedTask;
 
         public Task Update(IModel model) => Task.CompletedTask;
+
+        public Task OnError(Metadata metadata, Exception exception, CancellationToken cancellationToken)
+            => Task.CompletedTask; 
 
         public void Dispose() { }
     }

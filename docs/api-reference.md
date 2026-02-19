@@ -17,7 +17,7 @@ For conceptual explanations and tutorials, see [Core Concepts]({{ site.baseurl }
 
 Methods available inside `RunInternal` on `Workflow<TInput, TReturn>` — the core building blocks for composing steps into a pipeline.
 
-Includes: `Activate`, `Chain`, `IChain`, `ShortCircuit`, `Extract`, `AddServices`, `Resolve`, `Run` / `RunEither`.
+Includes: `Activate`, `Chain`, `ShortCircuit`, `Extract`, `AddServices`, `Resolve`, `Run` / `RunEither`.
 
 ### [Configuration]({{ site.baseurl }}{% link api-reference/configuration.md %})
 

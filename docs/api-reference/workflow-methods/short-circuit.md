@@ -10,11 +10,9 @@ nav_order: 4
 
 Executes a step that can **return early** from the workflow. If the step succeeds and returns a value of type `TReturn`, that value is captured as the short-circuit result — when [Resolve]({{ site.baseurl }}{% link api-reference/workflow-methods/resolve.md %}) is called, it returns this value instead of looking in Memory, bypassing all remaining steps.
 
-There are also `ShortCircuitChain` overloads that simply **ignore failures** (the step's Left/exception result is discarded and the workflow continues).
+If the step **fails** (returns Left), the failure is **ignored** — no exception is set, the workflow continues normally.
 
-## Signatures
-
-### ShortCircuit\<TStep\>()
+## ShortCircuit\<TStep\>()
 
 Creates and executes a step with short-circuit behavior.
 
@@ -22,7 +20,11 @@ Creates and executes a step with short-circuit behavior.
 public Workflow<TInput, TReturn> ShortCircuit<TStep>() where TStep : class
 ```
 
-### ShortCircuit\<TStep\>(TStep stepInstance)
+| Type Parameter | Constraint | Description |
+|---------------|------------|-------------|
+| `TStep` | `class` | The step type. Must implement `IStep<TIn, TOut>` for some `TIn`/`TOut`. |
+
+## ShortCircuit\<TStep\>(TStep stepInstance)
 
 Executes a pre-created step with short-circuit behavior.
 
@@ -30,17 +32,9 @@ Executes a pre-created step with short-circuit behavior.
 public Workflow<TInput, TReturn> ShortCircuit<TStep>(TStep stepInstance) where TStep : class
 ```
 
-### ShortCircuitChain\<TStep, TIn, TOut\>(TStep step, TIn previousStep, out Either\<Exception, TOut\> outVar)
-
-Executes a step but **ignores failures**. Only stores output in Memory on success.
-
-```csharp
-public Workflow<TInput, TReturn> ShortCircuitChain<TStep, TIn, TOut>(
-    TStep step,
-    TIn previousStep,
-    out Either<Exception, TOut> outVar
-) where TStep : IStep<TIn, TOut>
-```
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `stepInstance` | `TStep` | A pre-created step instance |
 
 ## Example
 
@@ -57,19 +51,12 @@ protected override async Task<Either<Exception, OrderResult>> RunInternal(OrderI
 
 ## Behavior
 
-### ShortCircuit\<TStep\>()
 1. Creates the step instance and extracts input from Memory.
-2. Executes the step via `ShortCircuitChain`.
+2. Executes the step.
 3. If the step **succeeds** and returns a value of type `TReturn`:
    - The value is stored as `ShortCircuitValue`.
    - `Resolve()` will return this value, bypassing Memory lookup.
 4. If the step **fails** (returns Left): the failure is **ignored** — no exception is set, the workflow continues normally.
-
-### ShortCircuitChain\<TStep, TIn, TOut\>()
-1. If there's already an exception, short-circuits.
-2. Executes the step.
-3. On **success** (Right): stores the output in Memory.
-4. On **failure** (Left): the failure is **discarded** — the workflow continues without setting an exception.
 
 ## Remarks
 

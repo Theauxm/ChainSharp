@@ -1,5 +1,6 @@
 using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 using ChainSharp.Effect.Extensions;
+using ChainSharp.Effect.Orchestration.Scheduler.Services.DormantDependentContext;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.JobDispatcherPollingService;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestManagerPollingService;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestScheduler;
@@ -71,6 +72,14 @@ public partial class SchedulerConfigurationBuilder
 
         // Register IManifestScheduler
         _parentBuilder.ServiceCollection.AddScoped<IManifestScheduler, ManifestScheduler>();
+
+        // Register IDormantDependentContext with forwarding so both concrete type
+        // (for ExecuteScheduledWorkflowStep.Initialize) and interface (for user steps)
+        // resolve to the same scoped instance
+        _parentBuilder.ServiceCollection.AddScoped<DormantDependentContext>();
+        _parentBuilder.ServiceCollection.AddScoped<IDormantDependentContext>(
+            sp => sp.GetRequiredService<DormantDependentContext>()
+        );
 
         // Register JobDispatcher workflow (must use AddScopedChainSharpWorkflow for property injection)
         _parentBuilder.ServiceCollection.AddScopedChainSharpWorkflow<

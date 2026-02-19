@@ -168,3 +168,4 @@ The scheduler spans multiple packages. This table lists every public type you're
 | `Schedule` | `ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling` | `Theauxm.ChainSharp.Effect.Orchestration.Scheduler` |
 | `IManifestScheduler` | `ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling` | `Theauxm.ChainSharp.Effect.Orchestration.Scheduler` |
 | `ManifestOptions` | `ChainSharp.Effect.Orchestration.Scheduler.Configuration` | `Theauxm.ChainSharp.Effect.Orchestration.Scheduler` |
+| `IDormantDependentContext` | `ChainSharp.Effect.Orchestration.Scheduler.Services.DormantDependentContext` | `Theauxm.ChainSharp.Effect.Orchestration.Scheduler` |

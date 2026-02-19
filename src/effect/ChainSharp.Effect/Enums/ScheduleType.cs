@@ -65,5 +65,19 @@ public enum ScheduleType
     /// parent's <see cref="Manifest.Manifest.LastSuccessfulRun"/> is newer than the
     /// dependent's own <see cref="Manifest.Manifest.LastSuccessfulRun"/>.
     /// </remarks>
-    Dependent = 4
+    Dependent = 4,
+
+    /// <summary>
+    /// The manifest is declared as a dependent but only fires when explicitly activated
+    /// at runtime by the parent workflow via <c>IDormantDependentContext</c>.
+    /// </summary>
+    /// <remarks>
+    /// Unlike <see cref="Dependent"/>, dormant dependents are never automatically queued
+    /// when the parent succeeds. The parent workflow must explicitly call
+    /// <c>IDormantDependentContext.ActivateAsync</c> with runtime-determined input.
+    /// The <see cref="Manifest.Manifest.DependsOnManifestId"/> property must be set
+    /// to the parent manifest's ID. Use this when the parent needs to decide at runtime
+    /// which dependents fire and with what input.
+    /// </remarks>
+    DormantDependent = 5,
 }

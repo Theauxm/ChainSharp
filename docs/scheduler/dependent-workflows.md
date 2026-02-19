@@ -152,6 +152,76 @@ Dependencies **within** a single group (two manifests in the same `groupId` wher
 
 The dashboard also visualizes the group dependency graph on the ManifestGroups page and each ManifestGroup detail page, making it easy to see the structure at a glance.
 
+## Dormant Dependents
+
+Standard dependents auto-fire whenever their parent succeeds. But sometimes the parent needs to decide at runtime *which* dependents fire and *with what input*. Dormant dependents solve this: they're declared in the fluent API like normal dependents (keeping the topology self-contained), but they never auto-fire. The parent workflow must explicitly activate them at runtime.
+
+### When to Use
+
+- **Delta imports**: A parent detects which tables changed, then activates only those children with partition-specific input
+- **Conditional pipelines**: A parent inspects results and selectively triggers downstream work
+- **Fan-out with runtime input**: The number of children is known at registration, but the input varies per execution
+
+### Registration
+
+Add `.Dormant()` to the options when declaring a dependent:
+
+```csharp
+scheduler
+    .ScheduleMany<IDeltaImportWorkflow, DeltaImportRequest, NetSuiteTable>(
+        "delta", allTables,
+        table => ($"{table}", DeltaImportRequest.Create(table)),
+        Every.Seconds(10),
+        options: o => o.Group(group => group.MaxActiveJobs(4)))
+    .IncludeMany<ICacheBronzeWorkflow, ExtractRequest, (NetSuiteTable, int)>(
+        "delta-bronze", allJobs,
+        item => ($"{item.Table}-{item.Batch}", ExtractRequest.Default(item.Table, item.Batch)),
+        dependsOn: item => $"delta-{item.Table}",
+        options: o => o.Dormant().Group(group => group.MaxActiveJobs(4)));
+```
+
+The `delta-bronze-*` manifests appear in the topology with `ScheduleType.DormantDependent`. The ManifestManager never auto-queues them—neither on a timer nor when their parent succeeds.
+
+### Runtime Activation
+
+Inject `IDormantDependentContext` into any step within the parent workflow:
+
+```csharp
+public class QueueDeltaBronzeTasks(IDormantDependentContext dormants)
+    : Step<(NetSuiteTable Table, Dictionary<int, List<int>> Buckets), Unit>
+{
+    public override async Task<Unit> Run(
+        (NetSuiteTable Table, Dictionary<int, List<int>> Buckets) input)
+    {
+        var activations = input.Buckets
+            .Where(b => b.Value.Count > 0)
+            .Select(b => (
+                ExternalId: $"delta-bronze-{input.Table}-{b.Key}",
+                Input: ExtractRequest.Create(input.Table, b.Key, b.Value)));
+
+        await dormants.ActivateManyAsync<ICacheBronzeWorkflow, ExtractRequest>(activations);
+        return Unit.Default;
+    }
+}
+```
+
+Each call creates a `WorkQueue` entry with the runtime-supplied input. The `DependentPriorityBoost` is applied automatically, and group capacity limits still apply at dispatch time.
+
+### Scoping Rules
+
+- The context is bound to the currently executing parent manifest. You can only activate dormant dependents that declare **this parent** as their `DependsOnManifestId`.
+- Attempting to activate a dormant dependent that belongs to a different parent throws `InvalidOperationException`.
+- Attempting to activate a manifest that isn't `ScheduleType.DormantDependent` throws `InvalidOperationException`.
+
+### Concurrency Guards
+
+If a dormant dependent already has a queued `WorkQueue` entry or an active execution (`Pending`/`InProgress` metadata), the activation is silently skipped with a warning log. This prevents duplicate work when the parent runs faster than its children can complete.
+
+### API Reference
+
+- [`IDormantDependentContext`]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %}#idormantdependentcontext) — `ActivateAsync` and `ActivateManyAsync` signatures
+- [`.Dormant()`]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %}#dormant-option) — `ScheduleOptions` builder method
+
 ## Under the Hood
 
 ### Database
@@ -166,14 +236,14 @@ ALTER TABLE chain_sharp.manifest
 
 It's a self-referencing FK. If the parent manifest is deleted, the dependent's `DependsOnManifestId` is set to `NULL`—it won't fire, but it won't break either.
 
-The `schedule_type` enum gets a new value: `dependent`. Dependent manifests have no `CronExpression` or `IntervalSeconds`—those fields are `NULL`.
+The `schedule_type` enum has two dependency values: `dependent` and `dormant_dependent`. Both have no `CronExpression` or `IntervalSeconds`—those fields are `NULL`. The difference is behavioral: `dependent` manifests auto-fire when their parent succeeds, while `dormant_dependent` manifests must be explicitly activated via `IDormantDependentContext`.
 
 ### Evaluation in ManifestManagerWorkflow
 
 The `DetermineJobsToQueueStep` runs two passes:
 
-1. **Time-based manifests** (Cron, Interval): checked against their schedule as before
-2. **Dependent manifests**: checked against their parent's `LastSuccessfulRun`
+1. **Time-based manifests** (Cron, Interval): checked against their schedule as before. `DormantDependent` manifests are explicitly excluded from this pass.
+2. **Dependent manifests**: only `ScheduleType.Dependent` manifests are checked against their parent's `LastSuccessfulRun`. `DormantDependent` manifests are excluded—they are never auto-queued.
 
 The dependent pass loads all enabled manifests (parents and dependents together), so it can resolve parent references without extra queries. If a parent is disabled or missing from the loaded set, its dependents are skipped.
 
@@ -194,3 +264,6 @@ Each link in the chain is independent. The scheduler doesn't have a concept of "
 | Dependent has a dead letter | Dependent skipped until resolved |
 | Dependent has an active execution | Dependent skipped (no double-queue) |
 | Parent deleted | `DependsOnManifestId` set to NULL, dependent skipped |
+| Parent succeeds, dormant dependent exists | Dormant dependent **not** queued (requires explicit activation) |
+| Parent activates dormant dependent via `IDormantDependentContext` | WorkQueue entry created with runtime input |
+| Parent activates dormant dependent that is already queued/active | Activation silently skipped |

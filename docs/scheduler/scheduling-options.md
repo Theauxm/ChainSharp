@@ -169,6 +169,18 @@ await scheduler.ScheduleAsync<IMyWorkflow, MyInput>(
         .Priority(10));                             // Default: 0
 ```
 
+For dependent manifests that should only fire when explicitly activated by the parent workflow at runtime, add `.Dormant()`:
+
+```csharp
+scheduler
+    .Schedule<IParentWorkflow, ParentInput>("parent", new ParentInput(), Every.Minutes(5))
+    .Include<IChildWorkflow, ChildInput>(
+        "child", new ChildInput(),
+        options: o => o.Dormant());
+```
+
+See [Dormant Dependents](dependent-workflows.md#dormant-dependents) for full details on registration and runtime activation.
+
 *API Reference: [ScheduleAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}), [ScheduleOptions]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}#scheduleoptions)*
 
 ## Schedule Types
@@ -178,6 +190,7 @@ await scheduler.ScheduleAsync<IMyWorkflow, MyInput>(
 | `Interval` | Simple recurring | `Every.Minutes(5)` or `Schedule.FromInterval(TimeSpan)` |
 | `Cron` | Traditional scheduling | `Cron.Daily()` or `Schedule.FromCron("0 3 * * *")` |
 | `Dependent` | Runs after another manifest succeeds | `.ThenInclude()` / `.ThenIncludeMany()` / `.Include()` / `.IncludeMany()` or `ScheduleDependentAsync` |
+| `DormantDependent` | Declared dependent, activated at runtime by parent | `.Include()` / `.IncludeMany()` with `.Dormant()` option, activated via `IDormantDependentContext` |
 | `None` | Manual trigger only | Use `scheduler.TriggerAsync(externalId)` |
 
 See [Dependent Workflows](dependent-workflows.md) for details on chaining workflows.

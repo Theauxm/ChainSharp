@@ -304,12 +304,97 @@ await scheduler.ScheduleDependentAsync<IProcessDataWorkflow, ProcessInput>(
     dependsOnExternalId: "fetch-data");
 ```
 
+## Dormant Option
+
+Add `.Dormant()` to `ScheduleOptions` when declaring a dependent to make it a dormant dependent. Dormant dependents appear in the topology but never auto-fire—they must be explicitly activated at runtime by the parent workflow.
+
+```csharp
+scheduler
+    .Schedule<IParentWorkflow, ParentInput>(
+        "parent", new ParentInput(), Every.Minutes(5))
+    .Include<IChildWorkflow, ChildInput>(
+        "child", new ChildInput(),
+        options: o => o.Dormant());
+```
+
+The manifest is created with `ScheduleType.DormantDependent` instead of `ScheduleType.Dependent`. The ManifestManager excludes it from both time-based and dependent evaluation.
+
+## IDormantDependentContext
+
+A scoped service for activating dormant dependent manifests at runtime. Injected into workflow steps that need to selectively fire dependent workflows with runtime-determined input.
+
+The context is automatically initialized by the `TaskServerExecutor` before the user's workflow runs. Only dormant dependents declared as children of the currently executing parent manifest can be activated.
+
+### ActivateAsync
+
+```csharp
+Task ActivateAsync<TWorkflow, TInput>(
+    string externalId,
+    TInput input,
+    CancellationToken ct = default
+)
+    where TWorkflow : IEffectWorkflow<TInput, Unit>
+    where TInput : IManifestProperties
+```
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `externalId` | `string` | Yes | The external ID of the dormant dependent manifest to activate |
+| `input` | `TInput` | Yes | The runtime-determined input for the dependent workflow |
+| `ct` | `CancellationToken` | No | Cancellation token |
+
+**Exceptions:**
+- `InvalidOperationException` — context not initialized, manifest not found, manifest is not `DormantDependent`, or manifest does not depend on the current parent
+
+**Concurrency:** If the target manifest already has a queued `WorkQueue` entry or an active execution (`Pending`/`InProgress` metadata), the activation is silently skipped with a warning log.
+
+### ActivateManyAsync
+
+```csharp
+Task ActivateManyAsync<TWorkflow, TInput>(
+    IEnumerable<(string ExternalId, TInput Input)> activations,
+    CancellationToken ct = default
+)
+    where TWorkflow : IEffectWorkflow<TInput, Unit>
+    where TInput : IManifestProperties
+```
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `activations` | `IEnumerable<(string, TInput)>` | Yes | Collection of (ExternalId, Input) pairs to activate |
+| `ct` | `CancellationToken` | No | Cancellation token |
+
+All activations are performed in a single database transaction. If any validation fails (wrong parent, not dormant, etc.), the entire batch is rolled back. Concurrency-skipped entries (already queued/active) do not cause a rollback.
+
+### Example
+
+```csharp
+public class SelectiveDispatchStep(IDormantDependentContext dormants)
+    : Step<DispatchInput, Unit>
+{
+    public override async Task<Unit> Run(DispatchInput input)
+    {
+        // Single activation
+        await dormants.ActivateAsync<IChildWorkflow, ChildInput>(
+            "child-1",
+            new ChildInput { Data = input.RuntimeData });
+
+        // Batch activation
+        var activations = input.Items
+            .Select(item => ($"child-{item.Id}", new ChildInput { Data = item.Data }));
+        await dormants.ActivateManyAsync<IChildWorkflow, ChildInput>(activations);
+
+        return Unit.Default;
+    }
+}
+```
+
 ## Remarks
 
 - `ThenInclude()` must follow `Schedule()`, `Include()`, or another `ThenInclude()` — calling it first throws `InvalidOperationException`.
 - `Include()` and `IncludeMany()` (without `dependsOn`) must follow `Schedule()` — calling them without a root throws `InvalidOperationException`.
 - `IncludeMany()` (with `dependsOn`) can follow `ScheduleMany()` for first-level batch dependents. `ThenIncludeMany()` is for deeper chaining after a previous `IncludeMany()`.
-- Dependent manifests have `ScheduleType.Dependent` and no interval/cron schedule of their own — they are triggered solely by their parent's successful completion.
+- Dependent manifests have `ScheduleType.Dependent` and no interval/cron schedule of their own — they are triggered solely by their parent's successful completion. Dormant dependents have `ScheduleType.DormantDependent` and must be explicitly activated via `IDormantDependentContext`.
 - The dependency check compares `parent.LastSuccessfulRun > dependent.LastSuccessfulRun` during each polling cycle.
 - **Cursor vs. Root**: The builder tracks two pointers — the *cursor* (last declared manifest, used by `ThenInclude`) and the *root* (the last `Schedule()`, used by `Include`). `Schedule` sets both. `ThenInclude` and `Include` move the cursor but leave the root unchanged. `ScheduleMany` resets both to null.
 - **Priority boost**: When a dependent manifest's work queue entry is created, `DependentPriorityBoost` (default 16) is added to its base priority. This ensures dependent workflows are dispatched before non-dependent workflows by default. The boost is configurable via [`DependentPriorityBoost`]({{ site.baseurl }}{% link api-reference/scheduler-api/add-scheduler.md %}) on the scheduler builder. The final priority is clamped to [0, 31].

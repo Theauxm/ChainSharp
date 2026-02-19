@@ -24,6 +24,8 @@ services.AddChainSharpEffects(options =>
 );
 ```
 
+*API Reference: [AddJsonEffect]({{ site.baseurl }}{% link api-reference/configuration/add-json-effect.md %})*
+
 No configuration required. The provider uses the JSON serialization options from `IChainSharpEffectConfiguration` and logs at the level configured there.
 
 ## How It Works

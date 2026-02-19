@@ -73,44 +73,11 @@ Deletion uses EF Core's `ExecuteDeleteAsync` for efficient single-statement SQL�
 
 ### Enabling Cleanup
 
-Add `.AddMetadataCleanup()` to your scheduler configuration:
+Add `.AddMetadataCleanup()` to your scheduler configuration. By default this cleans up `ManifestManagerWorkflow`, `JobDispatcherWorkflow`, and `MetadataCleanupWorkflow` metadata older than 1 hour, checking every minute.
 
-```csharp
-builder.Services.AddChainSharpEffects(options => options
-    .AddScheduler(scheduler => scheduler
-        .AddMetadataCleanup()
-    )
-);
-```
+*API Reference: [AddMetadataCleanup]({{ site.baseurl }}{% link api-reference/scheduler-api/add-metadata-cleanup.md %}) — all configuration options including `RetentionPeriod`, `CleanupInterval`, and adding custom workflow types to the whitelist.*
 
-With no configuration, this cleans up `ManifestManagerWorkflow`, `JobDispatcherWorkflow`, and `MetadataCleanupWorkflow` metadata older than 1 hour, checking every minute. See [MetadataCleanup](admin-workflows/metadata-cleanup.md) for details on how the cleanup workflow operates internally.
-
-### Custom Configuration
-
-Override defaults and add your own workflow types to the whitelist:
-
-```csharp
-.AddScheduler(scheduler => scheduler
-    .UseHangfire(connectionString)
-    .AddMetadataCleanup(cleanup =>
-    {
-        cleanup.RetentionPeriod = TimeSpan.FromHours(2);
-        cleanup.CleanupInterval = TimeSpan.FromMinutes(5);
-        cleanup.AddWorkflowType<IMyNoisyWorkflow>();
-        cleanup.AddWorkflowType("LegacyWorkflowName");
-    })
-)
-```
-
-`AddWorkflowType<T>()` uses `typeof(T).Name` to match the `Name` column in the metadata table—the same value workflows record when they execute. You can also pass a raw string for workflows that aren't easily referenced by type.
-
-### Cleanup Configuration Options
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `CleanupInterval` | 1 minute | How often the cleanup service runs |
-| `RetentionPeriod` | 1 hour | How long to keep metadata before it becomes eligible for deletion |
-| `WorkflowTypeWhitelist` | `ManifestManagerWorkflow`, `JobDispatcherWorkflow`, `MetadataCleanupWorkflow` | Workflow names whose metadata can be deleted (append via `AddWorkflowType`) |
+See [MetadataCleanup](admin-workflows/metadata-cleanup.md) for details on how the cleanup workflow operates internally.
 
 ### What Gets Deleted
 

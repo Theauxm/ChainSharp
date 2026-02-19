@@ -50,22 +50,7 @@ services.AddChainSharpEffects(options => options
 
 `ThenInclude` captures the previous call's external ID as the parent. No schedule parameter—dependent manifests don't have one.
 
-Chaining works: `.Schedule(...).ThenInclude(...).ThenInclude(...)` creates A &rarr; B &rarr; C. Each `ThenInclude` depends on the one before it.
-
-```csharp
-scheduler
-    .Schedule<IExtractWorkflow, ExtractInput>(
-        "extract", new ExtractInput(), Every.Hours(1),
-        groupId: "etl")
-    .ThenInclude<ITransformWorkflow, TransformInput>(
-        "transform", new TransformInput(),
-        groupId: "etl")
-    .ThenInclude<ILoadWorkflow, LoadInput>(
-        "load", new LoadInput(),
-        groupId: "etl");
-```
-
-Here, `transform` runs after `extract` succeeds, and `load` runs after `transform` succeeds. If `extract` fails, neither downstream workflow fires.
+Chaining works: `.Schedule(...).ThenInclude(...).ThenInclude(...)` creates A &rarr; B &rarr; C. Each `ThenInclude` depends on the one before it. If `extract` fails, neither downstream workflow fires.
 
 ## Fan-Out: Include
 
@@ -93,27 +78,9 @@ This creates: `extract` &rarr; `transform`, `extract` &rarr; `validate`. When ex
 
 ### Mixing Include and ThenInclude
 
-`Include` and `ThenInclude` compose naturally. `Include` branches from the root, `ThenInclude` chains from wherever you are:
+`Include` and `ThenInclude` compose naturally. The builder tracks two pointers: the **root** (set by `Schedule`) and the **cursor** (moved by every `ThenInclude` or `Include`). `Include` always parents from the root. `ThenInclude` always parents from the cursor.
 
-```csharp
-scheduler
-    .Schedule<IExtractWorkflow, ExtractInput>(
-        "extract", new ExtractInput(), Every.Hours(1),
-        groupId: "etl")
-    // Branch 1: extract → transform → load
-    .Include<ITransformWorkflow, TransformInput>(
-        "transform", new TransformInput(),
-        groupId: "etl")
-        .ThenInclude<ILoadWorkflow, LoadInput>(
-            "load", new LoadInput(),
-            groupId: "etl")
-    // Branch 2: extract → validate (back to root)
-    .Include<IValidateWorkflow, ValidateInput>(
-        "validate", new ValidateInput(),
-        groupId: "etl");
-```
-
-The builder tracks two pointers: the **root** (set by `Schedule`) and the **cursor** (moved by every `ThenInclude` or `Include`). `Include` always parents from the root. `ThenInclude` always parents from the cursor.
+*API Reference: [Dependent Scheduling — mixed fan-out and chaining]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %}) for the full code example.*
 
 ## Bulk Dependencies: IncludeMany
 
@@ -139,39 +106,9 @@ scheduler
 
 The `dependsOn` function maps each source item to its parent's external ID. In this example, `load-0` depends on `extract-0`, `load-1` on `extract-1`, and so on. When `extract-42` succeeds, only `load-42` gets queued—the rest are unaffected.
 
-The mapping is flexible. You aren't limited to 1:1. Multiple dependents can point to the same parent:
+The mapping is flexible. You aren't limited to 1:1—multiple dependents can point to the same parent. The name-based overloads automatically set `groupId` and `prunePrefix` from the `name` parameter. For deeper chaining (a third batch level), use `ThenIncludeMany`.
 
-```csharp
-// All load jobs depend on a single extract job
-.IncludeMany<ILoadWorkflow, LoadInput, int>(
-    "load",
-    Enumerable.Range(0, 10),
-    i => ($"{i}", new LoadInput { Partition = i }),
-    dependsOn: _ => "extract-all");
-```
-
-The name-based overloads automatically set `groupId` and `prunePrefix` from the `name` parameter. When a chain shares a `groupId`, all manifests belong to the same ManifestGroup, sharing per-group dispatch controls. The explicit overloads (without the `name` parameter) are still available when you need full control over `groupId`, `prunePrefix`, and external IDs independently.
-
-For deeper chaining (a third batch level), use `ThenIncludeMany`:
-
-```csharp
-scheduler
-    .ScheduleMany<IExtractWorkflow, ExtractInput, int>(
-        "extract",
-        Enumerable.Range(0, 10),
-        i => ($"{i}", new ExtractInput { Partition = i }),
-        Every.Minutes(30))
-    .IncludeMany<ITransformWorkflow, TransformInput, int>(
-        "transform",
-        Enumerable.Range(0, 10),
-        i => ($"{i}", new TransformInput { Partition = i }),
-        dependsOn: i => $"extract-{i}")
-    .ThenIncludeMany<ILoadWorkflow, LoadInput, int>(
-        "load",
-        Enumerable.Range(0, 10),
-        i => ($"{i}", new LoadInput { Partition = i }),
-        dependsOn: i => $"transform-{i}");
-```
+*API Reference: [IncludeMany / ThenIncludeMany]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %}) — all overloads including many-to-one and batch chaining examples.*
 
 ## Bulk Fan-Out: IncludeMany
 
@@ -196,27 +133,9 @@ All 10 `load-*` manifests depend on `extract-all`. No `dependsOn` function neede
 
 ## Runtime API
 
-For jobs created at runtime rather than startup, use `IManifestScheduler` directly:
+For jobs created at runtime rather than startup, use `IManifestScheduler.ScheduleDependentAsync` (single) or `ScheduleManyDependentAsync` (batch). Both use upsert semantics, same as their non-dependent counterparts. `ScheduleManyDependentAsync` runs in a single transaction.
 
-```csharp
-// Single dependent
-await scheduler.ScheduleDependentAsync<ILoadWorkflow, LoadInput>(
-    "load-customers",
-    new LoadInput { Table = "customers" },
-    dependsOnExternalId: "extract-customers");
-
-// Batch dependent
-await scheduler.ScheduleManyDependentAsync<ILoadWorkflow, LoadInput, string>(
-    tables,
-    table => ($"load-{table}", new LoadInput { Table = table }),
-    dependsOn: table => $"extract-{table}",
-    prunePrefix: "load-",
-    groupId: "load");
-```
-
-*API Reference: [ScheduleDependentAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %}), [ScheduleManyDependentAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %})*
-
-Both methods use upsert semantics, same as their non-dependent counterparts. `ScheduleManyDependentAsync` runs in a single transaction.
+*API Reference: [ScheduleDependentAsync / ScheduleManyDependentAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %}) — signatures, parameters, and examples.*
 
 ## Cycle Detection
 

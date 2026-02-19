@@ -23,6 +23,8 @@ services.AddChainSharpEffects(o =>
 );
 ```
 
+*API Reference: [AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %})*
+
 ## "Unable to resolve service for type 'IStep'"
 
 A step's dependency isn't registered in the DI container.
@@ -62,7 +64,7 @@ Check `FailureException` and `FailureReason` in the metadata record for details.
 
 ## Steps execute out of order or skip unexpectedly
 
-If you're using `ShortCircuit`, remember that throwing an exception means "continue" not "stop." See [ShortCircuit](short-circuit.md) for details.
+If you're using `ShortCircuit`, remember that throwing an exception means "continue" not "stop." See [ShortCircuit](short-circuit.md) for details or [API Reference: ShortCircuit]({{ site.baseurl }}{% link api-reference/workflow-methods/short-circuit.md %}) for all overloads.
 
 ## Scheduled jobs don't execute (no errors)
 

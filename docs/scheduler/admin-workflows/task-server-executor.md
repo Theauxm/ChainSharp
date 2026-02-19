@@ -62,4 +62,6 @@ builder.Services.AddChainSharpEffects(options => options
 );
 ```
 
+*API Reference: [AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %})*
+
 If you forget this, scheduled jobs will silently fail—Hangfire will invoke the TaskServerExecutor, but the WorkflowBus won't find it. No error, just nothing happens.

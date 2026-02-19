@@ -26,18 +26,7 @@ protected override async Task<Either<Exception, User>> RunInternal(CreateUserReq
 
 *API Reference: [Activate]({{ site.baseurl }}{% link api-reference/workflow-methods/activate.md %}), [AddServices]({{ site.baseurl }}{% link api-reference/workflow-methods/add-services.md %}), [Chain]({{ site.baseurl }}{% link api-reference/workflow-methods/chain.md %}), [Resolve]({{ site.baseurl }}{% link api-reference/workflow-methods/resolve.md %})*
 
-## How It Works
-
-Each type argument is stored in Memory with the corresponding instance. Steps that declare `IValidator` or `INotifier` as their `TIn` type will receive these instances.
-
-`AddServices` has overloads for one through several type parameters:
-
-```csharp
-.AddServices<IValidator>(validator)
-.AddServices<IValidator, INotifier>(validator, notifier)
-```
-
-*API Reference: [AddServices]({{ site.baseurl }}{% link api-reference/workflow-methods/add-services.md %})*
+Each type argument is stored in Memory with the corresponding instance. See [API Reference: AddServices]({{ site.baseurl }}{% link api-reference/workflow-methods/add-services.md %}) for all overloads and interface-type storage behavior.
 
 ## When to Use It
 

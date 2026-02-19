@@ -19,18 +19,7 @@ Activate(input)
 
 *API Reference: [Chain]({{ site.baseurl }}{% link api-reference/workflow-methods/chain.md %}), [Extract]({{ site.baseurl }}{% link api-reference/workflow-methods/extract.md %}), [Resolve]({{ site.baseurl }}{% link api-reference/workflow-methods/resolve.md %})*
 
-## How It Works
-
-`Extract` uses reflection to scan the `TSource` type for a property or field whose type matches `TTarget`. If it finds one, it reads the value and adds it to Memory. If it doesn't find a match, the workflow fails.
-
-```csharp
-public record User
-{
-    public string Name { get; init; }
-    public EmailAddress Email { get; init; }  // ← Extract<User, EmailAddress> finds this
-    public Address HomeAddress { get; init; }
-}
-```
+`Extract` uses reflection to find a property or field on `TSource` whose type matches `TTarget` and stores it in Memory. See [API Reference: Extract]({{ site.baseurl }}{% link api-reference/workflow-methods/extract.md %}) for the full search order and failure behavior.
 
 ## When to Use It
 

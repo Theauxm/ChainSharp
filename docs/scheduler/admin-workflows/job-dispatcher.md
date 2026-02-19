@@ -67,6 +67,8 @@ Setting `MaxActiveJobs` to `null` disables the global check entirely—all queue
 )
 ```
 
+*API Reference: [AddScheduler — MaxActiveJobs]({{ site.baseurl }}{% link api-reference/scheduler-api/add-scheduler.md %})*
+
 ### Per-Group MaxActiveJobs
 
 Each `ManifestGroup` can have its own `MaxActiveJobs` limit, configured from the dashboard on the ManifestGroup detail page. A group's active count only includes jobs belonging to that group—limits are completely independent across groups.

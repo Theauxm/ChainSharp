@@ -11,37 +11,9 @@ nav_order: 2
 
 ### Startup Configuration: ScheduleMany
 
-For static bulk jobs, use the builder-time `ScheduleMany` during DI configuration. No async startup code or service resolution needed. The name-based overload is the simplest approach — it derives `groupId`, `prunePrefix`, and the external ID prefix from a single `name` parameter:
+For static bulk jobs, use the builder-time `ScheduleMany` during DI configuration. No async startup code or service resolution needed. The **name-based overload** derives `groupId`, `prunePrefix`, and the external ID prefix from a single `name` parameter. The **explicit overload** gives full control over each independently.
 
-```csharp
-var tables = new[] { "users", "orders", "products", "inventory" };
-
-services.AddChainSharpEffects(options => options
-    .AddScheduler(scheduler => scheduler
-        .UseHangfire(connectionString)
-        .ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
-            "sync",
-            tables,
-            tableName => (tableName, new SyncTableInput { TableName = tableName }),
-            Every.Minutes(5))
-    )
-);
-// Creates: sync-users, sync-orders, sync-products, sync-inventory
-// groupId: "sync", prunePrefix: "sync-"
-```
-
-For full control over `groupId`, `prunePrefix`, and external IDs independently, use the explicit overload:
-
-```csharp
-scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
-    tables,
-    tableName => ($"sync-{tableName}", new SyncTableInput { TableName = tableName }),
-    Every.Minutes(5),
-    prunePrefix: "sync-",
-    groupId: "sync");
-```
-
-*API Reference: [ScheduleMany]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %})*
+*API Reference: [ScheduleMany]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %}) — all overloads, parameter tables, and examples including pruning.*
 
 The builder captures the manifests and seeds them when the `BackgroundService` starts—same upsert semantics as `Schedule`.
 
@@ -82,24 +54,9 @@ The dashboard's **Manifest Groups** page shows each group's settings and aggrega
 
 ### Runtime: ScheduleManyAsync
 
-`ScheduleManyAsync` creates multiple manifests in a single transaction at runtime. If any fails, the entire batch rolls back.
-
-```csharp
-var tables = new[] { "users", "orders", "products", "inventory" };
-
-await scheduler.ScheduleManyAsync<ISyncTableWorkflow, SyncTableInput, string>(
-    tables,
-    tableName => (
-        ExternalId: $"sync-{tableName}",
-        Input: new SyncTableInput { TableName = tableName }
-    ),
-    Every.Minutes(5),
-    groupId: "table-sync");
-```
+Use `ScheduleManyAsync` when the set of jobs is determined at runtime (loaded from a database, config file, or external API). It creates multiple manifests in a single transaction—if any fails, the entire batch rolls back. Both startup and runtime variants accept the same `groupId` parameter and use upsert semantics.
 
 *API Reference: [ScheduleManyAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %})*
-
-Use the builder approach for jobs known at compile time. Use `ScheduleManyAsync` when the set of jobs is determined at runtime (loaded from a database, config file, or external API). Both variants accept the same `groupId` parameter.
 
 ### Configuration Per Item
 
@@ -155,34 +112,9 @@ await scheduler.ScheduleManyAsync<ISyncTableWorkflow, SyncTableInput, (string Ta
 
 ### Pruning Stale Manifests
 
-When the source collection shrinks between deployments—tables removed, slices reduced—old manifests stick around in the database. The name-based overload handles this automatically (pruning is always enabled via `prunePrefix: "{name}-"`):
+When the source collection shrinks between deployments—tables removed, slices reduced—old manifests stick around in the database. The name-based overload handles this automatically (`prunePrefix: "{name}-"`). With the explicit overload, specify `prunePrefix` manually. After upserting the batch, any existing manifests whose `ExternalId` starts with the prefix but weren't in the current batch are deleted—keeping the manifest table in sync with your source data.
 
-```csharp
-// If "partner" was removed from this list since the last deployment,
-// its manifest (sync-partner) will be deleted because it starts with "sync-"
-// but wasn't included in the current batch.
-var tables = new[] { "customer", "user" };
-
-scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
-    "sync",
-    tables,
-    table => (table, new SyncTableInput { TableName = table }),
-    Every.Minutes(5));
-```
-
-With the explicit overload, specify `prunePrefix` manually:
-
-```csharp
-scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
-    tables,
-    table => ($"sync-{table}", new SyncTableInput { TableName = table }),
-    Every.Minutes(5),
-    prunePrefix: "sync-");
-```
-
-*API Reference: [ScheduleMany]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %})*
-
-When `prunePrefix` is specified, after creating or updating the manifests in the batch, the scheduler deletes any existing manifests whose `ExternalId` starts with the prefix but weren't part of the current call. This keeps the manifest table in sync with your source data without manual cleanup.
+*API Reference: [ScheduleMany — prunePrefix]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %})*
 
 ## Per-Group Dispatch Controls
 
@@ -204,28 +136,9 @@ These settings are configured from the dashboard's **Manifest Group detail page*
 
 ## Management Operations
 
-`IManifestScheduler` includes methods for runtime job control:
-
-```csharp
-// Disable a job (e.g., during maintenance)
-await scheduler.DisableAsync("sync-users");
-
-// Re-enable
-await scheduler.EnableAsync("sync-users");
-
-// Trigger immediate execution (doesn't wait for schedule)
-await scheduler.TriggerAsync("sync-users");
-
-// Schedule a dependent job at runtime
-await scheduler.ScheduleDependentAsync<ILoadWorkflow, LoadInput>(
-    "load-users",
-    new LoadInput { Table = "users" },
-    dependsOnExternalId: "sync-users");
-```
+`IManifestScheduler` includes methods for runtime job control: `DisableAsync`, `EnableAsync`, `TriggerAsync`, and `ScheduleDependentAsync`. Disabled jobs remain in the database but are skipped by the ManifestManager until re-enabled.
 
 *API Reference: [DisableAsync / EnableAsync / TriggerAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/manifest-management.md %}), [ScheduleDependentAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %})*
-
-Disabled jobs remain in the database but are skipped by the ManifestManager until re-enabled.
 
 ## Manifest Options
 
@@ -259,15 +172,10 @@ See [Dependent Workflows](dependent-workflows.md) for details on chaining workfl
 
 ## Configuration Options
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `PollingInterval` | 5s | How often ManifestManager checks for pending jobs (supports sub-minute) |
-| `MaxActiveJobs` | 100 | Maximum active jobs (Pending + InProgress) allowed globally. Enforced by the [JobDispatcher](admin-workflows/job-dispatcher.md) at dispatch time. Set to null for unlimited. Per-group `MaxActiveJobs` can also be set from the dashboard's Manifest Group detail page to limit concurrency within individual groups (see [Per-Group Dispatch Controls](#per-group-dispatch-controls)) |
-| `DefaultMaxRetries` | 3 | Retry attempts before dead-lettering |
-| `DefaultRetryDelay` | 5m | Delay between retries |
-| `RetryBackoffMultiplier` | 2.0 | Exponential backoff (delays of 5m, 10m, 20m...) |
-| `MaxRetryDelay` | 1h | Cap on backoff growth |
-| `DefaultJobTimeout` | 1h | When a job is considered stuck |
-| `RecoverStuckJobsOnStartup` | true | Re-evaluate stuck jobs on startup |
+Key options to know:
 
-*API Reference: [AddScheduler]({{ site.baseurl }}{% link api-reference/scheduler-api/add-scheduler.md %})*
+- **`PollingInterval`** (default: 5 seconds) — how often ManifestManager checks for pending jobs; supports sub-minute values
+- **`MaxActiveJobs`** (default: 100) — global concurrent job cap; set to `null` for unlimited. Per-group limits can also be set from the dashboard (see [Per-Group Dispatch Controls](#per-group-dispatch-controls))
+- **`DefaultMaxRetries`** (default: 3) — retry attempts before dead-lettering
+
+*API Reference: [AddScheduler]({{ site.baseurl }}{% link api-reference/scheduler-api/add-scheduler.md %}) — full options table with all defaults including retry backoff, timeouts, and stuck job recovery.*

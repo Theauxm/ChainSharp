@@ -24,6 +24,8 @@ services.AddChainSharpEffects(options =>
 );
 ```
 
+*API Reference: [AddPostgresEffect]({{ site.baseurl }}{% link api-reference/configuration/add-postgres-effect.md %})*
+
 On first startup, the Postgres provider runs automatic migrations to create the `chain_sharp` schema and its tables (`metadata`, `logs`, `manifests`, `dead_letters`). Subsequent startups apply any pending migrations.
 
 The provider uses Entity Framework Core with Npgsql. Workflow states and dead letter statuses are mapped to PostgreSQL enum types. Input and output fields use `jsonb` columns. All timestamps are stored in UTC.
@@ -58,6 +60,8 @@ services.AddChainSharpEffects(options =>
     options.AddInMemoryEffect()
 );
 ```
+
+*API Reference: [AddInMemoryEffect]({{ site.baseurl }}{% link api-reference/configuration/add-in-memory-effect.md %})*
 
 Uses Entity Framework Core's in-memory provider. No connection string, no migrations, no external dependencies. Data is lost when the process exits.
 
@@ -101,3 +105,5 @@ You can also control the log level via the `CHAIN_SHARP_POSTGRES_LOG_LEVEL` envi
 ```
 
 Blacklist entries support exact matches and wildcard patterns.
+
+*API Reference: [AddEffectDataContextLogging]({{ site.baseurl }}{% link api-reference/configuration/add-effect-data-context-logging.md %})*

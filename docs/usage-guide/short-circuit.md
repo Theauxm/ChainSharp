@@ -27,25 +27,9 @@ public class ProcessOrderWorkflow : EffectWorkflow<OrderRequest, OrderResult>
 
 ## The Step
 
-A `ShortCircuit` step returns the result when it wants to short-circuit, and throws when it doesn't:
-
-```csharp
-public class CheckCacheStep(ICache Cache) : Step<OrderRequest, OrderResult>
-{
-    public override async Task<OrderResult> Run(OrderRequest input)
-    {
-        var cached = await Cache.GetAsync<OrderResult>(input.OrderId);
-
-        if (cached != null)
-            return cached;  // This becomes the workflow's final result
-
-        // Throwing signals "no short-circuit, continue the chain"
-        throw new Exception("Cache miss");
-    }
-}
-```
-
 > **This behavior is intentionally inverted from Chain.** A `Chain` step that throws stops the workflow with an error. A `ShortCircuit` step that throws means "no short-circuit available, keep going." The exception is swallowed, not propagated.
+
+See [API Reference: ShortCircuit]({{ site.baseurl }}{% link api-reference/workflow-methods/short-circuit.md %}) for all overloads, the step signature, and a full example.
 
 ## When to Use It
 

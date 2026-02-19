@@ -69,3 +69,5 @@ Administrative workflows are excluded from the active job count by default. If y
     .ExcludeFromMaxActiveJobs<IMyInternalWorkflow>()
 )
 ```
+
+*API Reference: [AddScheduler]({{ site.baseurl }}{% link api-reference/scheduler-api/add-scheduler.md %}), [AddMetadataCleanup]({{ site.baseurl }}{% link api-reference/scheduler-api/add-metadata-cleanup.md %})*

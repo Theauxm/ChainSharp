@@ -22,19 +22,9 @@ protected override async Task<Either<Exception, User>> RunInternal(CreateUserReq
 
 ## How It Works
 
-`Resolve` checks three things in order:
+`Resolve` checks for a captured exception, then a [ShortCircuit](short-circuit.md) value, then looks up `TReturn` in [Memory](../concepts/memory.md)—in that order. See [API Reference: Resolve]({{ site.baseurl }}{% link api-reference/workflow-methods/resolve.md %}) for the full resolution priority and error behavior.
 
-1. **Exception** — If any step in the chain threw, the exception was captured. `Resolve` returns `Left(exception)` and skips everything else.
-2. **Short-circuit** — If a [ShortCircuit](short-circuit.md) step returned a value, that becomes the result. `Resolve` returns `Right(shortCircuitValue)`.
-3. **Memory** — If neither of the above, `Resolve` looks up `TReturn` in [Memory](../concepts/memory.md). If found, it returns `Right(value)`.
-
-If `TReturn` isn't in Memory and there's no exception or short-circuit value, `Resolve` returns a `WorkflowException`:
-
-```
-WorkflowException: Could not find type: (User).
-```
-
-The [Analyzer](../analyzer.md) catches this at compile time with **CHAIN002** before you ever run the code.
+The [Analyzer](../analyzer.md) catches missing return types at compile time with **CHAIN002**.
 
 ## The Parameterized Overload
 

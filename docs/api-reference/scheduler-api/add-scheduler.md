@@ -73,7 +73,7 @@ These methods are available on the `SchedulerConfigurationBuilder` passed to the
 
 | Method | Parameter | Default | Description |
 |--------|-----------|---------|-------------|
-| `PollingInterval(TimeSpan)` | interval | 60 seconds | How often ManifestManager polls for pending jobs |
+| `PollingInterval(TimeSpan)` | interval | 5 seconds | How often ManifestManager polls for pending jobs |
 | `MaxActiveJobs(int?)` | maxJobs | 100 | Max concurrent active jobs (Pending + InProgress) globally. `null` = unlimited. Per-group limits can also be set from the dashboard on each ManifestGroup |
 | `ExcludeFromMaxActiveJobs<TWorkflow>()` | — | — | Excludes a workflow type from the MaxActiveJobs count |
 | `DefaultMaxRetries(int)` | maxRetries | 3 | Retry attempts before dead-lettering |

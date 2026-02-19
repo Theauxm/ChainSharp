@@ -1,3 +1,10 @@
+# [5.16.0](https://github.com/Theauxm/ChainSharp/compare/v5.15.0...v5.16.0) (2026-02-19)
+
+
+### Features
+
+* Dormant Dependant Schedule Type Added. Documentation/Tests updated ([#167](https://github.com/Theauxm/ChainSharp/issues/167)) ([cea6fb2](https://github.com/Theauxm/ChainSharp/commit/cea6fb235bc83df2fdc03d00e9043214342c35ff))
+
 # [5.15.0](https://github.com/Theauxm/ChainSharp/compare/v5.14.0...v5.15.0) (2026-02-19)
 
 

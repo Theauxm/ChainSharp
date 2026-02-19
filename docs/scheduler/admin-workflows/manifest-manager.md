@@ -40,6 +40,8 @@ The decision step. It runs two passes over the loaded manifests:
 
 **Pass 2: Dependent manifests**. For each manifest with `ScheduleType.Dependent`, it finds the parent in the loaded set and checks whether `parent.LastSuccessfulRun > dependent.LastSuccessfulRun`. See [Dependent Workflows](../dependent-workflows.md).
 
+Manifests with `ScheduleType.DormantDependent` are excluded from **both** passes. They are never auto-queued by the ManifestManager—dormant dependents must be explicitly activated at runtime by the parent workflow via [`IDormantDependentContext`](../dependent-workflows.md#dormant-dependents).
+
 Both passes apply the same per-manifest guards before evaluating the schedule:
 - Skip if the manifest's ManifestGroup has `IsEnabled = false`
 - Skip if the manifest was just dead-lettered this cycle

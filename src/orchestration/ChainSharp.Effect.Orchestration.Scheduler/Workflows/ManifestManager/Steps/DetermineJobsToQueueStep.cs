@@ -44,6 +44,7 @@ internal class DetermineJobsToQueueStep(ILogger<DetermineJobsToQueueStep> logger
                 v =>
                     v.Manifest.ScheduleType != ScheduleType.None
                     && v.Manifest.ScheduleType != ScheduleType.Dependent
+                    && v.Manifest.ScheduleType != ScheduleType.DormantDependent
                     && v.ManifestGroup.IsEnabled
             )
             .ToList();

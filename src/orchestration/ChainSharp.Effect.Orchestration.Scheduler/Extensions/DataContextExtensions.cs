@@ -159,6 +159,10 @@ public static class DataContextExtensions
             ct
         );
 
+        var scheduleType = options.IsDormant
+            ? ScheduleType.DormantDependent
+            : ScheduleType.Dependent;
+
         if (existing != null)
         {
             existing.Name = typeof(TWorkflow).FullName!;
@@ -171,7 +175,7 @@ public static class DataContextExtensions
                 : null;
             existing.ManifestGroupId = manifestGroupId;
             existing.Priority = options.Priority;
-            existing.ScheduleType = ScheduleType.Dependent;
+            existing.ScheduleType = scheduleType;
             existing.DependsOnManifestId = dependsOnManifestId;
             existing.CronExpression = null;
             existing.IntervalSeconds = null;
@@ -191,7 +195,7 @@ public static class DataContextExtensions
                 : null,
             ManifestGroupId = manifestGroupId,
             Priority = options.Priority,
-            ScheduleType = ScheduleType.Dependent,
+            ScheduleType = scheduleType,
             DependsOnManifestId = dependsOnManifestId,
         };
         manifest.SetProperties(input);

@@ -26,6 +26,7 @@ public class ScheduleOptions
     internal bool _isEnabled = true;
     internal int _maxRetries = 3;
     internal TimeSpan? _timeout;
+    internal bool _isDormant;
 
     // Group-level state
     internal string? _groupId;
@@ -70,6 +71,22 @@ public class ScheduleOptions
     public ScheduleOptions Timeout(TimeSpan timeout)
     {
         _timeout = timeout;
+        return this;
+    }
+
+    /// <summary>
+    /// Marks this dependent manifest as dormant. Dormant dependents are never auto-fired
+    /// when the parent succeeds; they must be explicitly activated at runtime via
+    /// <see cref="Services.DormantDependentContext.IDormantDependentContext"/>.
+    /// </summary>
+    /// <remarks>
+    /// Only meaningful for dependent manifests created via Include/IncludeMany/ThenInclude.
+    /// The manifest is still registered in the topology (groups, DAG, dashboard) but the
+    /// ManifestManager will not create WorkQueue entries for it on parent success.
+    /// </remarks>
+    public ScheduleOptions Dormant()
+    {
+        _isDormant = true;
         return this;
     }
 
@@ -126,5 +143,6 @@ public class ScheduleOptions
             IsEnabled = _isEnabled,
             MaxRetries = _maxRetries,
             Timeout = _timeout,
+            IsDormant = _isDormant,
         };
 }

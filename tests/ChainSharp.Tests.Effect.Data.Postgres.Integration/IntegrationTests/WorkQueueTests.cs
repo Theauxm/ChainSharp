@@ -10,6 +10,7 @@ using ChainSharp.Effect.Models.WorkQueue.DTOs;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using ManifestGroup = ChainSharp.Effect.Models.ManifestGroup.ManifestGroup;
 
 namespace ChainSharp.Tests.Effect.Data.Postgres.Integration.IntegrationTests;
 
@@ -156,6 +157,16 @@ public class WorkQueueTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
+        var manifestGroup = new ManifestGroup
+        {
+            Name = $"test-group-{Guid.NewGuid():N}",
+            Priority = 0,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+        };
+        context.ManifestGroups.Add(manifestGroup);
+        await context.SaveChanges(CancellationToken.None);
+
         var manifest = Manifest.Create(
             new CreateManifest
             {
@@ -165,6 +176,7 @@ public class WorkQueueTests : TestSetup
                 MaxRetries = 3,
             }
         );
+        manifest.ManifestGroupId = manifestGroup.Id;
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);

@@ -39,7 +39,7 @@ public class UsersController(IWorkflowBus workflowBus) : ControllerBase
 }
 ```
 
-*API Reference: [WorkflowBus.RunAsync]({% link api-reference/mediator-api/workflow-bus.md %})*
+*API Reference: [WorkflowBus.RunAsync]({{ site.baseurl }}{% link api-reference/mediator-api/workflow-bus.md %})*
 
 The `WorkflowBus` looks at the input type (`CreateUserRequest`), finds the workflow registered for that type, and runs it. The controller doesn't need to know which workflow class handles the request—it just sends the input and gets back a result.
 
@@ -57,25 +57,9 @@ builder.Services.AddChainSharpEffects(options => options
 );
 ```
 
-*API Reference: [AddEffectWorkflowBus]({% link api-reference/configuration/add-effect-workflow-bus.md %})*
+*API Reference: [AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %})*
 
-`AddEffectWorkflowBus` scans the given assemblies for all classes implementing `IEffectWorkflow<TIn, TOut>`, builds a mapping from input types to workflow types, and registers everything in DI. Pass multiple assemblies if your workflows live in different projects.
-
-## Input Type Uniqueness
-
-Each input type maps to exactly one workflow. This is enforced at startup—if two workflows accept the same input type, registration fails:
-
-```csharp
-// ❌ This causes a startup error — both accept UserRequest
-public class CreateUserWorkflow : EffectWorkflow<UserRequest, User> { }
-public class UpdateUserWorkflow : EffectWorkflow<UserRequest, User> { }
-
-// ✅ Use distinct input types
-public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User> { }
-public class UpdateUserWorkflow : EffectWorkflow<UpdateUserRequest, User> { }
-```
-
-This constraint is what makes the mediator pattern work—there's no ambiguity about which workflow handles a given input.
+Pass multiple assemblies if your workflows live in different projects. Each input type must map to exactly one workflow—see [API Reference: AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %}) for discovery mechanics, input type uniqueness rules, and lifetime considerations.
 
 ## Using WorkflowBus in a Controller
 
@@ -100,34 +84,13 @@ public class OrdersController(IWorkflowBus workflowBus) : ControllerBase
 }
 ```
 
-*API Reference: [WorkflowBus.RunAsync]({% link api-reference/mediator-api/workflow-bus.md %})*
+*API Reference: [WorkflowBus.RunAsync]({{ site.baseurl }}{% link api-reference/mediator-api/workflow-bus.md %})*
 
 ## Nested Workflows
 
-Steps and workflows can run other workflows through the `WorkflowBus`. Pass the current `Metadata` to establish a parent-child relationship:
+Steps and workflows can run other workflows through the `WorkflowBus`. Pass the current `Metadata` to `RunAsync` to establish a parent-child relationship—the parent's `Metadata.Id` becomes the child's `ParentId`, creating a tree you can query to trace execution across workflows.
 
-```csharp
-public class ParentWorkflow(IWorkflowBus WorkflowBus) : EffectWorkflow<ParentRequest, ParentResult>
-{
-    protected override async Task<Either<Exception, ParentResult>> RunInternal(ParentRequest input)
-    {
-        var childResult = await WorkflowBus.RunAsync<ChildResult>(
-            new ChildRequest { Data = input.ChildData },
-            Metadata  // Links child metadata to this workflow's metadata
-        );
-
-        return new ParentResult
-        {
-            ParentData = input.ParentData,
-            ChildResult = childResult
-        };
-    }
-}
-```
-
-*API Reference: [WorkflowBus.RunAsync]({% link api-reference/mediator-api/workflow-bus.md %})*
-
-The parent's `Metadata.Id` becomes the child's `ParentId`, creating a tree you can query to trace execution across workflows.
+See [API Reference: WorkflowBus.RunAsync]({{ site.baseurl }}{% link api-reference/mediator-api/workflow-bus.md %}) for the full nested workflow example and all method signatures.
 
 ## Direct Injection
 

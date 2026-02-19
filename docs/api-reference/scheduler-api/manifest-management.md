@@ -86,5 +86,5 @@ public class SchedulerController(IManifestScheduler scheduler) : ControllerBase
 ## Remarks
 
 - `DisableAsync` sets `IsEnabled = false` on the manifest. The ManifestManager skips disabled manifests during polling.
-- `TriggerAsync` creates a new execution independent of the regular schedule — the job's normal schedule continues unaffected.
-- All three methods require the manifest to already exist. Use [ScheduleAsync]({% link api-reference/scheduler-api/schedule.md %}) to create manifests first.
+- `TriggerAsync` creates a new execution independent of the regular schedule — the job's normal schedule continues unaffected. The work queue entry inherits the manifest's stored priority (no `DependentPriorityBoost` is applied for manual triggers).
+- All three methods require the manifest to already exist. Use [ScheduleAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}) to create manifests first.

@@ -154,4 +154,4 @@ public Workflow<TInput, TReturn> Chain<TStep, TIn>()
 
 - Steps are created and injected with DI services from Memory via `InitializeStep`. Constructor parameters are resolved from Memory by type.
 - The 1-type-parameter overloads use reflection to discover `TIn`/`TOut` from the step's `IStep<,>` interface at runtime.
-- See [Memory]({% link concepts/memory.md %}) for how type-based lookup works, including tuple handling.
+- See [Memory]({{ site.baseurl }}{% link concepts/memory.md %}) for how type-based lookup works, including tuple handling.

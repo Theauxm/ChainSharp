@@ -1,6 +1,8 @@
 using ChainSharp.Effect.Data.Services.DataContext;
-using ChainSharp.Effect.Models.Manifest;
+using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.WorkQueue.DTOs;
+using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
+using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager;
 using ChainSharp.Effect.Services.EffectStep;
 using LanguageExt;
 using Microsoft.Extensions.Logging;
@@ -17,30 +19,38 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager.St
 /// </remarks>
 internal class CreateWorkQueueEntriesStep(
     IDataContext dataContext,
+    SchedulerConfiguration schedulerConfiguration,
     ILogger<CreateWorkQueueEntriesStep> logger
-) : EffectStep<List<Manifest>, Unit>
+) : EffectStep<List<ManifestDispatchView>, Unit>
 {
-    public override async Task<Unit> Run(List<Manifest> manifests)
+    public override async Task<Unit> Run(List<ManifestDispatchView> views)
     {
         var pollStartTime = DateTime.UtcNow;
         var entriesCreated = 0;
 
         logger.LogDebug(
             "Starting CreateWorkQueueEntriesStep for {ManifestCount} manifests",
-            manifests.Count
+            views.Count
         );
 
-        foreach (var manifest in manifests)
+        foreach (var view in views)
         {
             try
             {
+                var basePriority = view.ManifestGroup.Priority;
+                var effectivePriority =
+                    view.Manifest.ScheduleType == ScheduleType.Dependent
+                        ? basePriority + schedulerConfiguration.DependentPriorityBoost
+                        : basePriority;
+
                 var entry = Models.WorkQueue.WorkQueue.Create(
                     new CreateWorkQueue
                     {
-                        WorkflowName = manifest.Name,
-                        Input = manifest.Properties,
-                        InputTypeName = manifest.PropertyTypeName,
-                        ManifestId = manifest.Id,
+                        WorkflowName = view.Manifest.Name,
+                        Input = view.Manifest.Properties,
+                        InputTypeName = view.Manifest.PropertyTypeName,
+                        ManifestId = view.Manifest.Id,
+                        Priority = effectivePriority,
                     }
                 );
 
@@ -50,8 +60,8 @@ internal class CreateWorkQueueEntriesStep(
                 logger.LogDebug(
                     "Created WorkQueue entry {WorkQueueId} for manifest {ManifestId} (name: {ManifestName})",
                     entry.Id,
-                    manifest.Id,
-                    manifest.Name
+                    view.Manifest.Id,
+                    view.Manifest.Name
                 );
 
                 entriesCreated++;
@@ -61,19 +71,22 @@ internal class CreateWorkQueueEntriesStep(
                 logger.LogError(
                     ex,
                     "Error creating work queue entry for manifest {ManifestId} (name: {ManifestName})",
-                    manifest.Id,
-                    manifest.Name
+                    view.Manifest.Id,
+                    view.Manifest.Name
                 );
             }
         }
 
         var duration = DateTime.UtcNow - pollStartTime;
 
-        logger.LogInformation(
-            "CreateWorkQueueEntriesStep completed: {EntriesCreated} entries created in {Duration}ms",
-            entriesCreated,
-            duration.TotalMilliseconds
-        );
+        if (entriesCreated > 0)
+            logger.LogInformation(
+                "CreateWorkQueueEntriesStep completed: {EntriesCreated} entries created in {Duration}ms",
+                entriesCreated,
+                duration.TotalMilliseconds
+            );
+        else
+            logger.LogDebug("CreateWorkQueueEntriesStep completed: no entries created");
 
         return Unit.Default;
     }

@@ -26,7 +26,7 @@ services.AddChainSharpEffects(options =>
 );
 ```
 
-*API Reference: [AddPostgresEffect]({% link api-reference/configuration/add-postgres-effect.md %}), [AddInMemoryEffect]({% link api-reference/configuration/add-in-memory-effect.md %})*
+*API Reference: [AddPostgresEffect]({{ site.baseurl }}{% link api-reference/configuration/add-postgres-effect.md %}), [AddInMemoryEffect]({{ site.baseurl }}{% link api-reference/configuration/add-in-memory-effect.md %})*
 
 This persists a `Metadata` record for each workflow execution containing:
 - Workflow name and state (Pending → InProgress → Completed/Failed)
@@ -47,7 +47,7 @@ services.AddChainSharpEffects(options =>
 );
 ```
 
-*API Reference: [AddJsonEffect]({% link api-reference/configuration/add-json-effect.md %})*
+*API Reference: [AddJsonEffect]({{ site.baseurl }}{% link api-reference/configuration/add-json-effect.md %})*
 
 This doesn't persist anything—it just logs. Useful for seeing what's happening without setting up a database.
 
@@ -65,7 +65,7 @@ services.AddChainSharpEffects(options =>
 );
 ```
 
-*API Reference: [SaveWorkflowParameters]({% link api-reference/configuration/save-workflow-parameters.md %})*
+*API Reference: [SaveWorkflowParameters]({{ site.baseurl }}{% link api-reference/configuration/save-workflow-parameters.md %})*
 
 Without this, the `Input` and `Output` columns in `Metadata` are null. With it, they contain JSON-serialized versions of your request and response objects.
 
@@ -81,7 +81,7 @@ services.AddChainSharpEffects(options =>
 );
 ```
 
-*API Reference: [AddStepLogger]({% link api-reference/configuration/add-step-logger.md %})*
+*API Reference: [AddStepLogger]({{ site.baseurl }}{% link api-reference/configuration/add-step-logger.md %})*
 
 This hooks into `EffectStep` (not base `Step`) lifecycle events. Before and after each step runs, it logs structured `StepMetadata` containing the step name, input/output types, timing, and Railway state (`Right`/`Left`). When `serializeStepData` is `true`, the step's output is also serialized to JSON in the log entry.
 

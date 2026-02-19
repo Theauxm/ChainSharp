@@ -9,41 +9,41 @@ has_children: true
 
 Complete reference documentation for every user-facing method in ChainSharp. Each page documents the method signature, all parameters, return type, and usage examples.
 
-For conceptual explanations and tutorials, see [Core Concepts]({% link concepts.md %}) and [Usage Guide]({% link usage-guide.md %}).
+For conceptual explanations and tutorials, see [Core Concepts]({{ site.baseurl }}{% link concepts.md %}) and [Usage Guide]({{ site.baseurl }}{% link usage-guide.md %}).
 
 ## Categories
 
-### [Workflow Methods]({% link api-reference/workflow-methods.md %})
+### [Workflow Methods]({{ site.baseurl }}{% link api-reference/workflow-methods.md %})
 
 Methods available inside `RunInternal` on `Workflow<TInput, TReturn>` — the core building blocks for composing steps into a pipeline.
 
 Includes: `Activate`, `Chain`, `IChain`, `ShortCircuit`, `Extract`, `AddServices`, `Resolve`, `Run` / `RunEither`.
 
-### [Configuration]({% link api-reference/configuration.md %})
+### [Configuration]({{ site.baseurl }}{% link api-reference/configuration.md %})
 
 The `AddChainSharpEffects` entry point and every extension method on `ChainSharpEffectConfigurationBuilder` — data providers, effect providers, and orchestration setup.
 
 Includes: `AddPostgresEffect`, `AddInMemoryEffect`, `AddJsonEffect`, `SaveWorkflowParameters`, `AddStepLogger`, `AddEffectWorkflowBus`, `AddEffect`, `AddStepEffect`, `SetEffectLogLevel`.
 
-### [Scheduler API]({% link api-reference/scheduler-api.md %})
+### [Scheduler API]({{ site.baseurl }}{% link api-reference/scheduler-api.md %})
 
 Scheduler configuration (`AddScheduler` + `SchedulerConfigurationBuilder`) and the runtime `IManifestScheduler` interface for scheduling, managing, and monitoring recurring workflows.
 
 Includes: `AddScheduler`, `UseHangfire`, `Schedule`, `ScheduleMany`, dependent scheduling, manifest management, scheduling helpers (`Every`, `Cron`, `ManifestOptions`).
 
-### [Mediator API]({% link api-reference/mediator-api.md %})
+### [Mediator API]({{ site.baseurl }}{% link api-reference/mediator-api.md %})
 
 The `IWorkflowBus` interface for dynamically dispatching workflows by input type.
 
 Includes: `RunAsync`, `InitializeWorkflow`, `AddEffectWorkflowBus`.
 
-### [Dashboard API]({% link api-reference/dashboard-api.md %})
+### [Dashboard API]({{ site.baseurl }}{% link api-reference/dashboard-api.md %})
 
 Setup and configuration for the ChainSharp Blazor dashboard.
 
 Includes: `AddChainSharpDashboard`, `UseChainSharpDashboard`, `DashboardOptions`.
 
-### [DI Registration]({% link api-reference/di-registration.md %})
+### [DI Registration]({{ site.baseurl }}{% link api-reference/di-registration.md %})
 
 Helper methods for registering workflows and steps with `[Inject]` property injection support.
 

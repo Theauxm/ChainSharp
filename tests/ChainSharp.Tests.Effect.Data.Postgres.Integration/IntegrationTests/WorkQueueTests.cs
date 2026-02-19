@@ -10,6 +10,7 @@ using ChainSharp.Effect.Models.WorkQueue.DTOs;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using ManifestGroup = ChainSharp.Effect.Models.ManifestGroup.ManifestGroup;
 
 namespace ChainSharp.Tests.Effect.Data.Postgres.Integration.IntegrationTests;
 
@@ -51,6 +52,100 @@ public class WorkQueueTests : TestSetup
         found.DispatchedAt.Should().BeNull();
         found.ManifestId.Should().BeNull();
         found.MetadataId.Should().BeNull();
+        found.Priority.Should().Be(0);
+    }
+
+    [Theory]
+    public async Task CreateWorkQueue_WithPriority_PersistsToDatabase()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var entry = WorkQueue.Create(
+            new CreateWorkQueue
+            {
+                WorkflowName = "ChainSharp.Tests.TestWorkflow",
+                Input = """{"value":"priority-test"}""",
+                InputTypeName = "ChainSharp.Tests.TestInput",
+                Priority = 15,
+            }
+        );
+
+        // Act
+        await context.Track(entry);
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        var found = await context.WorkQueues.FirstOrDefaultAsync(x => x.Id == entry.Id);
+
+        // Assert
+        found.Should().NotBeNull();
+        found!.Priority.Should().Be(15);
+    }
+
+    [Theory]
+    public async Task CreateWorkQueue_WithOverflowPriority_ClampsToMax()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var entry = WorkQueue.Create(
+            new CreateWorkQueue
+            {
+                WorkflowName = "ChainSharp.Tests.TestWorkflow",
+                Input = """{"value":"clamp-test"}""",
+                InputTypeName = "ChainSharp.Tests.TestInput",
+                Priority = 50,
+            }
+        );
+
+        // Act
+        await context.Track(entry);
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        var found = await context.WorkQueues.FirstOrDefaultAsync(x => x.Id == entry.Id);
+
+        // Assert
+        found.Should().NotBeNull();
+        found!.Priority.Should().Be(WorkQueue.MaxPriority);
+    }
+
+    [Theory]
+    public async Task CreateWorkQueue_WithNegativePriority_ClampsToZero()
+    {
+        // Arrange
+        var postgresContextFactory =
+            Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
+
+        using var context = (IDataContext)postgresContextFactory.Create();
+
+        var entry = WorkQueue.Create(
+            new CreateWorkQueue
+            {
+                WorkflowName = "ChainSharp.Tests.TestWorkflow",
+                Input = """{"value":"negative-test"}""",
+                InputTypeName = "ChainSharp.Tests.TestInput",
+                Priority = -5,
+            }
+        );
+
+        // Act
+        await context.Track(entry);
+        await context.SaveChanges(CancellationToken.None);
+        context.Reset();
+
+        var found = await context.WorkQueues.FirstOrDefaultAsync(x => x.Id == entry.Id);
+
+        // Assert
+        found.Should().NotBeNull();
+        found!.Priority.Should().Be(WorkQueue.MinPriority);
     }
 
     [Theory]
@@ -62,6 +157,16 @@ public class WorkQueueTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
+        var manifestGroup = new ManifestGroup
+        {
+            Name = $"test-group-{Guid.NewGuid():N}",
+            Priority = 0,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+        };
+        context.ManifestGroups.Add(manifestGroup);
+        await context.SaveChanges(CancellationToken.None);
+
         var manifest = Manifest.Create(
             new CreateManifest
             {
@@ -71,6 +176,7 @@ public class WorkQueueTests : TestSetup
                 MaxRetries = 3,
             }
         );
+        manifest.ManifestGroupId = manifestGroup.Id;
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);

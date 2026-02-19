@@ -8,13 +8,13 @@ nav_order: 3
 
 # DashboardOptions
 
-Configuration class for the ChainSharp Dashboard. Passed via the `configure` callback in [AddChainSharpDashboard]({% link api-reference/dashboard-api/add-chainsharp-dashboard.md %}).
+Configuration class for the ChainSharp Dashboard. Passed via the `configure` callback in [AddChainSharpDashboard]({{ site.baseurl }}{% link api-reference/dashboard-api/add-chainsharp-dashboard.md %}).
 
 ## Properties
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `RoutePrefix` | `string` | `"/chainsharp"` | URL prefix where the dashboard is mounted. Set automatically by [UseChainSharpDashboard]({% link api-reference/dashboard-api/use-chainsharp-dashboard.md %}). |
+| `RoutePrefix` | `string` | `"/chainsharp"` | URL prefix where the dashboard is mounted. Set automatically by [UseChainSharpDashboard]({{ site.baseurl }}{% link api-reference/dashboard-api/use-chainsharp-dashboard.md %}). |
 | `Title` | `string` | `"ChainSharp"` | Title displayed in the dashboard header and browser tab. |
 | `EnvironmentName` | `string` | `""` | The hosting environment name (e.g., "Development", "Production"). Auto-populated by `UseChainSharpDashboard`. |
 

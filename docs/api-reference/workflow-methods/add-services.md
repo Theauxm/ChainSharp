@@ -75,5 +75,5 @@ public class ProcessOrderWorkflow(
 ## Remarks
 
 - Use interface types as the generic parameters — `AddServices<IMyService>(myService)`, not `AddServices<MyService>(myService)`.
-- Steps resolve services from Memory by their interface type during construction. See [Steps]({% link usage-guide/steps.md %}) for how constructor injection works.
+- Steps resolve services from Memory by their interface type during construction. See [Steps]({{ site.baseurl }}{% link usage-guide/steps.md %}) for how constructor injection works.
 - For more than 7 services, split across multiple `AddServices` calls.

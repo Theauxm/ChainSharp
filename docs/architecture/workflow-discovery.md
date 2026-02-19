@@ -62,7 +62,7 @@ public class WorkflowBus : IWorkflowBus
 
 ### Input Type Uniqueness
 
-Each input type maps to exactly one workflow. This is enforced at startup by the `WorkflowRegistry`'s `ToDictionary` call—duplicate input types cause an exception. See [Mediator: Input Type Uniqueness](../usage-guide/mediator.md#input-type-uniqueness) for examples and the user-facing explanation.
+Each input type maps to exactly one workflow. This is enforced at startup by the `WorkflowRegistry`'s `ToDictionary` call—duplicate input types cause an exception. See [API Reference: AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %}) for the full uniqueness rules and code examples.
 
 ### Workflow Discovery Rules
 

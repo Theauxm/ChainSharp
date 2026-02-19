@@ -1,3 +1,31 @@
+# [5.16.0](https://github.com/Theauxm/ChainSharp/compare/v5.15.0...v5.16.0) (2026-02-19)
+
+
+### Features
+
+* Dormant Dependant Schedule Type Added. Documentation/Tests updated ([#167](https://github.com/Theauxm/ChainSharp/issues/167)) ([cea6fb2](https://github.com/Theauxm/ChainSharp/commit/cea6fb235bc83df2fdc03d00e9043214342c35ff))
+
+# [5.15.0](https://github.com/Theauxm/ChainSharp/compare/v5.14.0...v5.15.0) (2026-02-19)
+
+
+### Features
+
+* Added Fluent API Configuration updates. Runtime Log Level changing added. Hosted Services cleanup ([#166](https://github.com/Theauxm/ChainSharp/issues/166)) ([3184f21](https://github.com/Theauxm/ChainSharp/commit/3184f218052418823f9f91a2868354851938914c))
+
+# [5.14.0](https://github.com/Theauxm/ChainSharp/compare/v5.13.0...v5.14.0) (2026-02-19)
+
+
+### Features
+
+* Manifest Group ([#164](https://github.com/Theauxm/ChainSharp/issues/164)) ([fe8a860](https://github.com/Theauxm/ChainSharp/commit/fe8a86048dce58b0d59991d45632f69ee5ca4d8d))
+
+# [5.13.0](https://github.com/Theauxm/ChainSharp/compare/v5.12.2...v5.13.0) (2026-02-18)
+
+
+### Features
+
+* Priority added for JobDispatcher ([#163](https://github.com/Theauxm/ChainSharp/issues/163)) ([d256f9e](https://github.com/Theauxm/ChainSharp/commit/d256f9ed2ac3f2188759d262a439f86ee65bb495))
+
 ## [5.12.2](https://github.com/Theauxm/ChainSharp/compare/v5.12.1...v5.12.2) (2026-02-18)
 
 

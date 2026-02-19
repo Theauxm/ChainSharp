@@ -24,6 +24,8 @@ services.AddChainSharpEffects(options =>
 );
 ```
 
+*API Reference: [SaveWorkflowParameters]({{ site.baseurl }}{% link api-reference/configuration/save-workflow-parameters.md %})*
+
 You can pass custom serialization options:
 
 ```csharp

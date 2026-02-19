@@ -18,16 +18,17 @@ AdminWorkflows.Types:
   - MetadataCleanupWorkflow
 ```
 
-## The Polling Loop
+## The Polling Services
 
-The `ManifestPollingService` is the entry point. It's a .NET `BackgroundService` that runs on the configured `PollingInterval` (default: 5 seconds). Each cycle executes two workflows back-to-back:
+The scheduler runs three hosted services:
 
-1. **ManifestManager**: evaluates which manifests are due, writes to the work queue
-2. **JobDispatcher**: reads from the work queue, enforces capacity, dispatches to the background task server
+1. **SchedulerStartupService** (`IHostedService`) — runs once on startup, seeds manifests configured via `.Schedule()`, `.ScheduleMany()`, `.ThenInclude()`, `.ThenIncludeMany()`, `.Include()`, or `.IncludeMany()`, recovers stuck jobs, and cleans up orphaned manifest groups. Seeding failures prevent the host from starting — if your manifest configuration is broken, you want to know immediately.
 
-They run sequentially within a single polling cycle. This matters—ManifestManager writes work queue entries that JobDispatcher reads in the same tick. No waiting for the next cycle.
+2. **ManifestManagerPollingService** (`BackgroundService`) — polls on `ManifestManagerPollingInterval` (default: 5 seconds). Each cycle runs the ManifestManager workflow, which evaluates which manifests are due and writes to the work queue.
 
-On startup, the polling service also seeds any manifests configured via `.Schedule()`, `.ScheduleMany()`, `.Then()`, or `.ThenMany()`. Seeding failures prevent the host from starting, which is intentional—if your manifest configuration is broken, you want to know immediately, not after the first polling cycle silently does nothing.
+3. **JobDispatcherPollingService** (`BackgroundService`) — polls on `JobDispatcherPollingInterval` (default: 5 seconds). Each cycle runs the JobDispatcher workflow, which reads from the work queue, enforces capacity, and dispatches to the background task server.
+
+The ManifestManager and JobDispatcher run independently on their own timers. They communicate through the work queue table — ManifestManager writes entries, JobDispatcher reads them. This means JobDispatcher may not see ManifestManager's freshly-queued entries until its next tick, but no work is lost. Independent intervals allow you to tune each service separately (e.g., fast manifest evaluation with slower dispatch, or vice versa).
 
 ## The Work Queue
 
@@ -69,3 +70,5 @@ Administrative workflows are excluded from the active job count by default. If y
     .ExcludeFromMaxActiveJobs<IMyInternalWorkflow>()
 )
 ```
+
+*API Reference: [AddScheduler]({{ site.baseurl }}{% link api-reference/scheduler-api/add-scheduler.md %}), [AddMetadataCleanup]({{ site.baseurl }}{% link api-reference/scheduler-api/add-metadata-cleanup.md %})*

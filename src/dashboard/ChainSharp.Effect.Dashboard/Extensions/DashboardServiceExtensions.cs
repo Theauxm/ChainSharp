@@ -6,6 +6,7 @@ using ChainSharp.Effect.Dashboard.Services.ThemeState;
 using ChainSharp.Effect.Dashboard.Services.WorkflowDiscovery;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Radzen;
@@ -30,6 +31,11 @@ public static class DashboardServiceExtensions
         // This is idempotent and no-ops when the manifest is absent (e.g. published apps).
         if (!builder.Environment.IsDevelopment())
             builder.WebHost.UseStaticWebAssets();
+
+        // Add a MemoryConfigurationSource as the last (highest priority) source so that
+        // runtime configuration overrides (e.g. log level changes from the dashboard)
+        // survive IConfigurationRoot.Reload() — the memory provider's Load() is a no-op.
+        builder.Configuration.AddInMemoryCollection();
 
         builder.Services.AddChainSharpDashboard(configure);
         return builder;

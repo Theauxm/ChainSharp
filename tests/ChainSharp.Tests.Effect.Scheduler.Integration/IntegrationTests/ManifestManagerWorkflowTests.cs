@@ -3,6 +3,7 @@ using ChainSharp.Effect.Models.DeadLetter;
 using ChainSharp.Effect.Models.DeadLetter.DTOs;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.Manifest.DTOs;
+using ChainSharp.Effect.Models.ManifestGroup;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.Metadata.DTOs;
 using ChainSharp.Effect.Models.WorkQueue;
@@ -902,6 +903,89 @@ public class ManifestManagerWorkflowTests : TestSetup
         cEntries.Should().BeEmpty("C should not be queued because B hasn't succeeded yet");
     }
 
+    [Test]
+    public async Task Run_WhenManifestHasDormantDependentScheduleType_DoesNotAutoEnqueue()
+    {
+        // Arrange - Create a DormantDependent manifest (should never be auto-enqueued)
+        var group = await TestSetup.CreateAndSaveManifestGroup(
+            DataContext,
+            name: $"group-{Guid.NewGuid():N}"
+        );
+
+        var parent = await CreateAndSaveManifest(
+            scheduleType: ScheduleType.Interval,
+            intervalSeconds: 60,
+            inputValue: "Parent"
+        );
+
+        var dormant = await CreateAndSaveDormantDependentManifest(parent, inputValue: "Dormant");
+
+        // Act
+        await _workflow.Run(Unit.Default);
+
+        // Assert - DormantDependent should NOT have any work queue entries
+        DataContext.Reset();
+        var workQueueEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == dormant.Id)
+            .ToListAsync();
+
+        workQueueEntries
+            .Should()
+            .BeEmpty("DormantDependent manifests should never be auto-enqueued by ManifestManager");
+    }
+
+    [Test]
+    public async Task Run_WhenDependentManifestIsDormant_DoesNotEnqueueOnParentSuccess()
+    {
+        // Arrange - Parent ran successfully, dormant dependent has never run
+        var parent = await CreateAndSaveManifest(
+            scheduleType: ScheduleType.Interval,
+            intervalSeconds: 3600,
+            inputValue: "Parent"
+        );
+
+        var trackedParent = await DataContext.Manifests.FirstAsync(m => m.Id == parent.Id);
+        trackedParent.LastSuccessfulRun = DateTime.UtcNow;
+        await DataContext.SaveChanges(CancellationToken.None);
+        DataContext.Reset();
+
+        // Create a dormant dependent (unlike normal Dependent, should NOT auto-fire)
+        var dormant = await CreateAndSaveDormantDependentManifest(
+            parent,
+            inputValue: "DormantChild"
+        );
+
+        // Also create a normal dependent for comparison (should be queued)
+        var normalDependent = await CreateAndSaveDependentManifest(
+            parent,
+            inputValue: "NormalChild"
+        );
+
+        // Act
+        await _workflow.Run(Unit.Default);
+
+        // Assert
+        DataContext.Reset();
+
+        // Normal dependent SHOULD be queued (parent succeeded, dependent never ran)
+        var normalEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == normalDependent.Id)
+            .ToListAsync();
+        normalEntries
+            .Should()
+            .HaveCount(1, "normal dependent should be queued after parent success");
+
+        // Dormant dependent should NOT be queued (requires explicit activation)
+        var dormantEntries = await DataContext
+            .WorkQueues.Where(q => q.ManifestId == dormant.Id)
+            .ToListAsync();
+        dormantEntries
+            .Should()
+            .BeEmpty(
+                "dormant dependents must be explicitly activated via IDormantDependentContext"
+            );
+    }
+
     #endregion
 
     #region Helper Methods
@@ -915,6 +999,11 @@ public class ManifestManagerWorkflowTests : TestSetup
         string inputValue = "TestValue"
     )
     {
+        var group = await TestSetup.CreateAndSaveManifestGroup(
+            DataContext,
+            name: $"group-{Guid.NewGuid():N}"
+        );
+
         var manifest = Manifest.Create(
             new CreateManifest
             {
@@ -927,6 +1016,8 @@ public class ManifestManagerWorkflowTests : TestSetup
                 Properties = new SchedulerTestInput { Value = inputValue }
             }
         );
+
+        manifest.ManifestGroupId = group.Id;
 
         await DataContext.Track(manifest);
         await DataContext.SaveChanges(CancellationToken.None);
@@ -945,6 +1036,11 @@ public class ManifestManagerWorkflowTests : TestSetup
         bool isEnabled = true
     )
     {
+        var group = await TestSetup.CreateAndSaveManifestGroup(
+            DataContext,
+            name: $"group-{Guid.NewGuid():N}"
+        );
+
         var manifest = Manifest.Create(
             new CreateManifest
             {
@@ -957,6 +1053,8 @@ public class ManifestManagerWorkflowTests : TestSetup
                 Properties = new SchedulerTestInput { Value = "EdgeCase" }
             }
         );
+
+        manifest.ManifestGroupId = group.Id;
 
         await DataContext.Track(manifest);
         await DataContext.SaveChanges(CancellationToken.None);
@@ -1017,6 +1115,11 @@ public class ManifestManagerWorkflowTests : TestSetup
         string inputValue = "Dependent"
     )
     {
+        var group = await TestSetup.CreateAndSaveManifestGroup(
+            DataContext,
+            name: $"group-{Guid.NewGuid():N}"
+        );
+
         var manifest = Manifest.Create(
             new CreateManifest
             {
@@ -1028,6 +1131,8 @@ public class ManifestManagerWorkflowTests : TestSetup
                 DependsOnManifestId = parent.Id,
             }
         );
+
+        manifest.ManifestGroupId = group.Id;
 
         await DataContext.Track(manifest);
         await DataContext.SaveChanges(CancellationToken.None);
@@ -1053,6 +1158,37 @@ public class ManifestManagerWorkflowTests : TestSetup
         DataContext.Reset();
 
         return entry;
+    }
+
+    private async Task<Manifest> CreateAndSaveDormantDependentManifest(
+        Manifest parent,
+        string inputValue = "Dormant"
+    )
+    {
+        var group = await TestSetup.CreateAndSaveManifestGroup(
+            DataContext,
+            name: $"group-{Guid.NewGuid():N}"
+        );
+
+        var manifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(SchedulerTestWorkflow),
+                IsEnabled = true,
+                ScheduleType = ScheduleType.DormantDependent,
+                MaxRetries = 3,
+                Properties = new SchedulerTestInput { Value = inputValue },
+                DependsOnManifestId = parent.Id,
+            }
+        );
+
+        manifest.ManifestGroupId = group.Id;
+
+        await DataContext.Track(manifest);
+        await DataContext.SaveChanges(CancellationToken.None);
+        DataContext.Reset();
+
+        return manifest;
     }
 
     #endregion

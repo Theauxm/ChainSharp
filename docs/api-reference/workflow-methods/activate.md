@@ -67,4 +67,4 @@ If `input` is `null`, the workflow's exception is set to `"Input ({typeof(TInput
 
 - Memory is initialized with `Unit.Default` under `typeof(Unit)`, allowing parameterless step invocations.
 - The `otherInputs` parameter follows the same tuple/interface storage rules as the primary input.
-- See [Memory]({% link concepts/memory.md %}) for details on how the type-keyed dictionary works.
+- See [Memory]({{ site.baseurl }}{% link concepts/memory.md %}) for details on how the type-keyed dictionary works.

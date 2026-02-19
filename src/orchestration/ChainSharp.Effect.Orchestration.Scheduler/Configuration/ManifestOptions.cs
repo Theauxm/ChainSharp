@@ -52,4 +52,25 @@ public class ManifestOptions
     /// Null uses the global default from SchedulerConfiguration.
     /// </remarks>
     public TimeSpan? Timeout { get; set; }
+
+    /// <summary>
+    /// Gets or sets the default dispatch priority for this manifest's work queue entries.
+    /// </summary>
+    /// <remarks>
+    /// Range: 0 (lowest) to 31 (highest). Higher-priority entries are dispatched first
+    /// by the JobDispatcher. For dependent manifests, a configurable boost is applied
+    /// on top of this value (see <see cref="SchedulerConfiguration.DependentPriorityBoost"/>).
+    /// </remarks>
+    public int Priority { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether this dependent manifest is dormant.
+    /// </summary>
+    /// <remarks>
+    /// Dormant dependents are declared in the fluent API like normal dependents but are
+    /// never auto-fired when the parent succeeds. They must be explicitly activated at
+    /// runtime by the parent workflow via <c>IDormantDependentContext</c>. Only meaningful
+    /// for dependent manifests (created via Include/ThenInclude).
+    /// </remarks>
+    public bool IsDormant { get; set; }
 }

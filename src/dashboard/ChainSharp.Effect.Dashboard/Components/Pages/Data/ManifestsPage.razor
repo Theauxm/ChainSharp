@@ -30,7 +30,7 @@
                               Title="External Id"
                               Width="200px" />
         <RadzenDataGridColumn TItem="Manifest"
-                              Property="GroupId"
+                              Property="ManifestGroup.Name"
                               Title="Group"
                               Width="180px" />
         <RadzenDataGridColumn TItem="Manifest"
@@ -71,7 +71,7 @@
     protected override async Task LoadDataAsync(CancellationToken cancellationToken)
     {
         using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
-        IQueryable<Manifest> query = context.Manifests.AsNoTracking();
+        IQueryable<Manifest> query = context.Manifests.Include(m => m.ManifestGroup).AsNoTracking();
 
         if (DashboardSettings.HideAdminWorkflows)
             query = query.ExcludeAdmin(DashboardSettings.AdminWorkflowNames);

@@ -40,7 +40,7 @@ services.AddChainSharpEffects(options => options
 - Suitable for unit/integration testing and local development.
 - Data does not persist between application restarts.
 - Registers an `IDataContext` backed by an in-memory EF Core provider.
-- For production use, use [AddPostgresEffect]({% link api-reference/configuration/add-postgres-effect.md %}) instead.
+- For production use, use [AddPostgresEffect]({{ site.baseurl }}{% link api-reference/configuration/add-postgres-effect.md %}) instead.
 
 ## Package
 

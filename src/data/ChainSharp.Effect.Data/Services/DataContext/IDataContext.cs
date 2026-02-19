@@ -5,6 +5,7 @@ using ChainSharp.Effect.Models;
 using ChainSharp.Effect.Models.DeadLetter;
 using ChainSharp.Effect.Models.Log;
 using ChainSharp.Effect.Models.Manifest;
+using ChainSharp.Effect.Models.ManifestGroup;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.WorkQueue;
 using ChainSharp.Effect.Services.EffectProvider;
@@ -83,6 +84,8 @@ public interface IDataContext : IEffectProvider
     DbSet<DeadLetter> DeadLetters { get; }
 
     DbSet<WorkQueue> WorkQueues { get; }
+
+    DbSet<ManifestGroup> ManifestGroups { get; }
 
     #endregion
 

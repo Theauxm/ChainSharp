@@ -6,7 +6,8 @@ namespace ChainSharp.Samples.Scheduler.Hangfire.Workflows.ExtractImport;
 
 /// <summary>
 /// Simulates an extract-import pipeline for a given table and index partition.
-/// Validates the table, extracts data from the source, and imports it to the destination.
+/// Validates the table, extracts data from the source, imports it to the destination,
+/// and conditionally activates a dormant dependent quality check when anomalies are detected.
 /// </summary>
 public class ExtractImportWorkflow
     : EffectWorkflow<ExtractImportInput, Unit>,
@@ -17,5 +18,6 @@ public class ExtractImportWorkflow
             .Chain<ValidateTableStep>()
             .Chain<ExtractDataStep>()
             .Chain<ImportDataStep>()
+            .Chain<CheckAndActivateQualityStep>()
             .Resolve();
 }

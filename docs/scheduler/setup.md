@@ -63,7 +63,9 @@ app.UseHangfireDashboard("/hangfire");
 app.Run();
 ```
 
-`AddScheduler` registers a `BackgroundService` that handles manifest seeding and polling automatically—no extra startup call needed. Hangfire is configured internally; you only need to provide the connection string. Hangfire's automatic retries are disabled since the scheduler manages retries through the manifest system.
+*API Reference: [AddScheduler]({{ site.baseurl }}{% link api-reference/scheduler-api/add-scheduler.md %}), [UseHangfire]({{ site.baseurl }}{% link api-reference/scheduler-api/use-hangfire.md %}), [Schedule]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %})*
+
+`AddScheduler` registers three hosted services — `SchedulerStartupService` (seeds manifests and recovers stuck jobs on startup), `ManifestManagerPollingService` (evaluates manifests on a timer), and `JobDispatcherPollingService` (dispatches work queue entries on a timer). No extra startup call needed. Hangfire is configured internally; you only need to provide the connection string. Hangfire's automatic retries are disabled since the scheduler manages retries through the manifest system.
 
 > **`TaskServerExecutorWorkflow.Assembly` is required.** The `WorkflowBus` discovers workflows by scanning assemblies. `TaskServerExecutorWorkflow` is the internal workflow that Hangfire invokes when a job fires—if its assembly isn't registered, scheduled jobs will silently fail to execute with no error message. Always include it alongside your own assemblies.
 
@@ -140,46 +142,14 @@ Both approaches use upsert semantics—the ExternalId determines whether to crea
 
 ## Schedule Helpers
 
-The `Schedule` type defines when a job runs. Two helper classes make common patterns readable.
+The `Schedule` type defines when a job runs. Two static factory classes create `Schedule` objects:
 
-### Interval-Based: Every
+- **`Every`** — interval-based: `Every.Seconds(30)`, `Every.Minutes(5)`, `Every.Hours(1)`, `Every.Days(1)`
+- **`Cron`** — cron-based: `Cron.Minutely()`, `Cron.Daily(hour: 3)`, `Cron.Weekly(DayOfWeek.Sunday, hour: 2)`, `Cron.Expression("0 */6 * * *")`
 
-For simple recurring jobs:
+*API Reference: [Scheduling Helpers]({{ site.baseurl }}{% link api-reference/scheduler-api/scheduling-helpers.md %}) — all method signatures, cron expression format, and `ManifestOptions`.*
 
-```csharp
-Every.Seconds(30)    // Every 30 seconds
-Every.Minutes(5)     // Every 5 minutes
-Every.Hours(1)       // Every hour
-Every.Days(1)        // Every day
-```
-
-### Cron-Based: Cron
-
-For traditional cron schedules:
-
-```csharp
-Cron.Minutely()                           // * * * * *
-Cron.Hourly(minute: 30)                   // 30 * * * *
-Cron.Daily(hour: 3, minute: 0)            // 0 3 * * *
-Cron.Weekly(DayOfWeek.Sunday, hour: 2)    // 0 2 * * 0
-Cron.Monthly(day: 1, hour: 0)             // 0 0 1 * *
-Cron.Expression("0 */6 * * *")            // Custom expression
-```
-
-Full signatures with defaults:
-
-```csharp
-Cron.Minutely()
-Cron.Hourly(int minute = 0)
-Cron.Daily(int hour = 0, int minute = 0)
-Cron.Weekly(DayOfWeek day, int hour = 0, int minute = 0)
-Cron.Monthly(int day = 1, int hour = 0, int minute = 0)
-Cron.Expression(string cronExpression)
-```
-
-Note that `Weekly` requires a `DayOfWeek`—there's no parameterless overload.
-
-> **Namespace conflict with Hangfire.** Both ChainSharp and Hangfire export a `Cron` class. If your project references both, you'll get ambiguous reference errors. Use the full namespace to disambiguate:
+> **Namespace conflict with Hangfire.** Both ChainSharp and Hangfire export a `Cron` class. Use a namespace alias to disambiguate:
 >
 > ```csharp
 > using Cron = ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling.Cron;
@@ -198,3 +168,4 @@ The scheduler spans multiple packages. This table lists every public type you're
 | `Schedule` | `ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling` | `Theauxm.ChainSharp.Effect.Orchestration.Scheduler` |
 | `IManifestScheduler` | `ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling` | `Theauxm.ChainSharp.Effect.Orchestration.Scheduler` |
 | `ManifestOptions` | `ChainSharp.Effect.Orchestration.Scheduler.Configuration` | `Theauxm.ChainSharp.Effect.Orchestration.Scheduler` |
+| `IDormantDependentContext` | `ChainSharp.Effect.Orchestration.Scheduler.Services.DormantDependentContext` | `Theauxm.ChainSharp.Effect.Orchestration.Scheduler` |

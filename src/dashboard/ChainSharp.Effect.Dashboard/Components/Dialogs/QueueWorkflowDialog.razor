@@ -51,6 +51,15 @@
         </Tabs>
     </RadzenTabs>
 
+    <RadzenFormField Text="Priority" Variant="Variant.Outlined" class="rz-w-100">
+        <RadzenNumeric TValue="int"
+                       Min="@WorkQueue.MinPriority"
+                       Max="@WorkQueue.MaxPriority"
+                       @bind-Value="_priority"
+                       Disabled="@_running"
+                       Placeholder="0 (lowest) – 31 (highest)" />
+    </RadzenFormField>
+
     @if (_error is not null)
     {
         <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" Variant="Variant.Flat">

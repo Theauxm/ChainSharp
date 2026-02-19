@@ -99,7 +99,7 @@ public async Task CreateUserWorkflow_CreatesUser()
 }
 ```
 
-*API Reference: [AddEffectWorkflowBus]({% link api-reference/configuration/add-effect-workflow-bus.md %}), [WorkflowBus.RunAsync]({% link api-reference/mediator-api/workflow-bus.md %})*
+*API Reference: [AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %}), [WorkflowBus.RunAsync]({{ site.baseurl }}{% link api-reference/mediator-api/workflow-bus.md %})*
 
 ## Integration Testing with InMemory Provider
 
@@ -132,4 +132,4 @@ public async Task Workflow_PersistsMetadata()
 }
 ```
 
-*API Reference: [AddInMemoryEffect]({% link api-reference/configuration/add-in-memory-effect.md %}), [AddEffectWorkflowBus]({% link api-reference/configuration/add-effect-workflow-bus.md %})*
+*API Reference: [AddInMemoryEffect]({{ site.baseurl }}{% link api-reference/configuration/add-in-memory-effect.md %}), [AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %})*

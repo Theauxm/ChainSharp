@@ -22,6 +22,8 @@ services.AddChainSharpEffects(options =>
 );
 ```
 
+*API Reference: [AddStepLogger]({{ site.baseurl }}{% link api-reference/configuration/add-step-logger.md %})*
+
 ## The `serializeStepData` Option
 
 When `serializeStepData` is `false` (the default), the step logger records timing, types, and Railway state but not the actual output values.

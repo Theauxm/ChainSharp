@@ -37,9 +37,14 @@ public class SchedulerConfiguration
     public bool JobDispatcherEnabled { get; set; } = true;
 
     /// <summary>
-    /// The interval at which the ManifestManager polls for pending jobs.
+    /// The interval at which the ManifestManagerPollingService polls for pending jobs.
     /// </summary>
-    public TimeSpan PollingInterval { get; set; } = TimeSpan.FromSeconds(5);
+    public TimeSpan ManifestManagerPollingInterval { get; set; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>
+    /// The interval at which the JobDispatcherPollingService polls the work queue.
+    /// </summary>
+    public TimeSpan JobDispatcherPollingInterval { get; set; } = TimeSpan.FromSeconds(2);
 
     /// <summary>
     /// The maximum number of active jobs (Pending + InProgress Metadata) allowed across all manifests.
@@ -54,6 +59,16 @@ public class SchedulerConfiguration
     /// Set to null to disable this limit (unlimited).
     /// </remarks>
     public int? MaxActiveJobs { get; set; } = 10;
+
+    /// <summary>
+    /// Priority boost automatically applied to dependent workflow work queue entries.
+    /// </summary>
+    /// <remarks>
+    /// When the ManifestManager creates work queue entries for dependent manifests
+    /// (ScheduleType.Dependent), this value is added to the manifest's base priority,
+    /// clamped to [0, 31]. Set to 0 to disable the automatic boost.
+    /// </remarks>
+    public int DependentPriorityBoost { get; set; } = 16;
 
     /// <summary>
     /// Workflow type names excluded from the MaxActiveJobs count.

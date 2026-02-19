@@ -10,11 +10,29 @@ using ChainSharp.Effect.Models.Metadata.DTOs;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using ManifestGroup = ChainSharp.Effect.Models.ManifestGroup.ManifestGroup;
 
 namespace ChainSharp.Tests.Effect.Data.Postgres.Integration.IntegrationTests;
 
 public class DeadLetterTests : TestSetup
 {
+    private static async Task<ManifestGroup> CreateTestManifestGroup(
+        IDataContext context,
+        string name = "test-group"
+    )
+    {
+        var group = new ManifestGroup
+        {
+            Name = $"{name}-{Guid.NewGuid():N}",
+            Priority = 0,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+        };
+        context.ManifestGroups.Add(group);
+        await context.SaveChanges(CancellationToken.None);
+        return group;
+    }
+
     [Theory]
     public async Task TestPostgresProviderCanCreateDeadLetter()
     {
@@ -23,6 +41,8 @@ public class DeadLetterTests : TestSetup
             Scope.ServiceProvider.GetRequiredService<IDataContextProviderFactory>();
 
         using var context = (IDataContext)postgresContextFactory.Create();
+
+        var manifestGroup = await CreateTestManifestGroup(context);
 
         // Create a manifest record first (the job definition)
         var manifest = Manifest.Create(
@@ -34,6 +54,7 @@ public class DeadLetterTests : TestSetup
                 MaxRetries = 3,
             }
         );
+        manifest.ManifestGroupId = manifestGroup.Id;
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);
@@ -74,6 +95,8 @@ public class DeadLetterTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
+        var manifestGroup = await CreateTestManifestGroup(context);
+
         // Create a manifest record
         var manifest = Manifest.Create(
             new CreateManifest
@@ -84,6 +107,7 @@ public class DeadLetterTests : TestSetup
                 MaxRetries = 3,
             }
         );
+        manifest.ManifestGroupId = manifestGroup.Id;
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);
@@ -123,6 +147,8 @@ public class DeadLetterTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
+        var manifestGroup = await CreateTestManifestGroup(context);
+
         // Create manifest and dead letter
         var manifest = Manifest.Create(
             new CreateManifest
@@ -133,6 +159,7 @@ public class DeadLetterTests : TestSetup
                 MaxRetries = 3,
             }
         );
+        manifest.ManifestGroupId = manifestGroup.Id;
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);
@@ -180,6 +207,8 @@ public class DeadLetterTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
+        var manifestGroup = await CreateTestManifestGroup(context);
+
         // Create manifest
         var manifest = Manifest.Create(
             new CreateManifest
@@ -190,6 +219,7 @@ public class DeadLetterTests : TestSetup
                 MaxRetries = 3,
             }
         );
+        manifest.ManifestGroupId = manifestGroup.Id;
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);
@@ -254,6 +284,8 @@ public class DeadLetterTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
+        var manifestGroup = await CreateTestManifestGroup(context);
+
         // Create manifests for multiple dead letters
         var manifest1 = Manifest.Create(
             new CreateManifest
@@ -264,6 +296,7 @@ public class DeadLetterTests : TestSetup
                 MaxRetries = 3,
             }
         );
+        manifest1.ManifestGroupId = manifestGroup.Id;
         var manifest2 = Manifest.Create(
             new CreateManifest
             {
@@ -273,6 +306,7 @@ public class DeadLetterTests : TestSetup
                 MaxRetries = 3,
             }
         );
+        manifest2.ManifestGroupId = manifestGroup.Id;
         var manifest3 = Manifest.Create(
             new CreateManifest
             {
@@ -282,6 +316,7 @@ public class DeadLetterTests : TestSetup
                 MaxRetries = 3,
             }
         );
+        manifest3.ManifestGroupId = manifestGroup.Id;
 
         await context.Track(manifest1);
         await context.Track(manifest2);

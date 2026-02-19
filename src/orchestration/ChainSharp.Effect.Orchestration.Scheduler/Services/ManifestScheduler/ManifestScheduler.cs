@@ -28,7 +28,7 @@ public class ManifestScheduler(
         string externalId,
         TInput input,
         Schedule schedule,
-        Action<ManifestOptions>? configure = null,
+        Action<ScheduleOptions>? options = null,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -36,18 +36,19 @@ public class ManifestScheduler(
     {
         workflowRegistry.ValidateWorkflowRegistration<TInput>();
 
-        var options = new ManifestOptions();
-        configure?.Invoke(options);
+        var resolved = ResolveOptions(options);
 
-        using var context =
-            dataContextFactory.Create() as IDataContext
-            ?? throw new InvalidOperationException("Failed to create data context");
+        using var context = CreateContext();
 
         var manifest = await context.UpsertManifestAsync<TWorkflow, TInput>(
             externalId,
             input,
             schedule,
-            options,
+            resolved.ManifestOptions,
+            groupId: resolved.GroupId ?? externalId,
+            groupPriority: resolved.GroupPriority,
+            groupMaxActiveJobs: resolved.GroupMaxActiveJobs,
+            groupIsEnabled: resolved.GroupEnabled,
             ct: ct
         );
 
@@ -67,9 +68,8 @@ public class ManifestScheduler(
         IEnumerable<TSource> sources,
         Func<TSource, (string ExternalId, TInput Input)> map,
         Schedule schedule,
-        Action<TSource, ManifestOptions>? configure = null,
-        string? prunePrefix = null,
-        string? groupId = null,
+        Action<ScheduleOptions>? options = null,
+        Action<TSource, ManifestOptions>? configureEach = null,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -77,32 +77,40 @@ public class ManifestScheduler(
     {
         workflowRegistry.ValidateWorkflowRegistration<TInput>();
 
-        var results = new List<Manifest>();
+        var resolved = ResolveOptions(options);
         var sourceList = sources.ToList();
 
         if (sourceList.Count == 0)
-            return results;
+            return [];
 
-        using var context =
-            dataContextFactory.Create() as IDataContext
-            ?? throw new InvalidOperationException("Failed to create data context");
-
+        using var context = CreateContext();
         var transaction = await context.BeginTransaction();
 
         try
         {
+            var effectiveGroupId =
+                resolved.GroupId
+                ?? resolved.PrunePrefix
+                ?? sourceList.Select(s => map(s).ExternalId).FirstOrDefault()
+                ?? "batch";
+
+            var results = new List<Manifest>(sourceList.Count);
+
             foreach (var source in sourceList)
             {
                 var (externalId, input) = map(source);
-                var options = new ManifestOptions();
-                configure?.Invoke(source, options);
+                var itemOptions = CreateItemOptions(resolved.ManifestOptions);
+                configureEach?.Invoke(source, itemOptions);
 
                 var manifest = await context.UpsertManifestAsync<TWorkflow, TInput>(
                     externalId,
                     input,
                     schedule,
-                    options,
-                    groupId: groupId,
+                    itemOptions,
+                    groupId: effectiveGroupId,
+                    groupPriority: resolved.GroupPriority,
+                    groupMaxActiveJobs: resolved.GroupMaxActiveJobs,
+                    groupIsEnabled: resolved.GroupEnabled,
                     ct: ct
                 );
                 results.Add(manifest);
@@ -110,43 +118,10 @@ public class ManifestScheduler(
 
             await context.SaveChanges(ct);
 
-            if (prunePrefix is not null)
+            if (resolved.PrunePrefix is not null)
             {
                 var keepIds = results.Select(m => m.ExternalId).ToHashSet();
-
-                // Collect the manifest IDs to prune
-                var staleManifestIds = await context
-                    .Manifests.Where(
-                        m => m.ExternalId.StartsWith(prunePrefix) && !keepIds.Contains(m.ExternalId)
-                    )
-                    .Select(m => m.Id)
-                    .ToListAsync(ct);
-
-                if (staleManifestIds.Count > 0)
-                {
-                    // Delete in FK-dependency order: dead_letters → metadata → manifests
-                    await context
-                        .DeadLetters.Where(d => staleManifestIds.Contains(d.ManifestId))
-                        .ExecuteDeleteAsync(ct);
-
-                    await context
-                        .Metadatas.Where(
-                            m =>
-                                m.ManifestId.HasValue
-                                && staleManifestIds.Contains(m.ManifestId.Value)
-                        )
-                        .ExecuteDeleteAsync(ct);
-
-                    var pruned = await context
-                        .Manifests.Where(m => staleManifestIds.Contains(m.Id))
-                        .ExecuteDeleteAsync(ct);
-
-                    logger.LogInformation(
-                        "Pruned {Count} stale manifests with prefix '{Prefix}'",
-                        pruned,
-                        prunePrefix
-                    );
-                }
+                await PruneStaleManifestsAsync(context, resolved.PrunePrefix, keepIds, ct);
             }
 
             await context.CommitTransaction();
@@ -175,7 +150,7 @@ public class ManifestScheduler(
         string externalId,
         TInput input,
         string dependsOnExternalId,
-        Action<ManifestOptions>? configure = null,
+        Action<ScheduleOptions>? options = null,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -183,12 +158,9 @@ public class ManifestScheduler(
     {
         workflowRegistry.ValidateWorkflowRegistration<TInput>();
 
-        var options = new ManifestOptions();
-        configure?.Invoke(options);
+        var resolved = ResolveOptions(options);
 
-        using var context =
-            dataContextFactory.Create() as IDataContext
-            ?? throw new InvalidOperationException("Failed to create data context");
+        using var context = CreateContext();
 
         var parentManifest =
             await context.Manifests.FirstOrDefaultAsync(
@@ -204,7 +176,11 @@ public class ManifestScheduler(
             externalId,
             input,
             parentManifest.Id,
-            options,
+            resolved.ManifestOptions,
+            groupId: resolved.GroupId ?? externalId,
+            groupPriority: resolved.GroupPriority,
+            groupMaxActiveJobs: resolved.GroupMaxActiveJobs,
+            groupIsEnabled: resolved.GroupEnabled,
             ct: ct
         );
 
@@ -229,9 +205,8 @@ public class ManifestScheduler(
         IEnumerable<TSource> sources,
         Func<TSource, (string ExternalId, TInput Input)> map,
         Func<TSource, string> dependsOn,
-        Action<TSource, ManifestOptions>? configure = null,
-        string? prunePrefix = null,
-        string? groupId = null,
+        Action<ScheduleOptions>? options = null,
+        Action<TSource, ManifestOptions>? configureEach = null,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -239,25 +214,30 @@ public class ManifestScheduler(
     {
         workflowRegistry.ValidateWorkflowRegistration<TInput>();
 
-        var results = new List<Manifest>();
+        var resolved = ResolveOptions(options);
         var sourceList = sources.ToList();
 
         if (sourceList.Count == 0)
-            return results;
+            return [];
 
-        using var context =
-            dataContextFactory.Create() as IDataContext
-            ?? throw new InvalidOperationException("Failed to create data context");
-
+        using var context = CreateContext();
         var transaction = await context.BeginTransaction();
 
         try
         {
-            // Collect all unique parent external IDs and resolve them in one pass
+            var effectiveGroupId =
+                resolved.GroupId
+                ?? resolved.PrunePrefix
+                ?? sourceList.Select(s => map(s).ExternalId).FirstOrDefault()
+                ?? "batch";
+
+            // Resolve all parent manifests in one query
             var parentExternalIds = sourceList.Select(dependsOn).Distinct().ToList();
             var parentManifests = await context
                 .Manifests.Where(m => parentExternalIds.Contains(m.ExternalId))
                 .ToDictionaryAsync(m => m.ExternalId, ct);
+
+            var results = new List<Manifest>(sourceList.Count);
 
             foreach (var source in sourceList)
             {
@@ -270,15 +250,18 @@ public class ManifestScheduler(
                             + "Ensure parent manifests are scheduled before their dependents."
                     );
 
-                var options = new ManifestOptions();
-                configure?.Invoke(source, options);
+                var itemOptions = CreateItemOptions(resolved.ManifestOptions);
+                configureEach?.Invoke(source, itemOptions);
 
                 var manifest = await context.UpsertDependentManifestAsync<TWorkflow, TInput>(
                     externalId,
                     input,
                     parentManifest.Id,
-                    options,
-                    groupId: groupId,
+                    itemOptions,
+                    groupId: effectiveGroupId,
+                    groupPriority: resolved.GroupPriority,
+                    groupMaxActiveJobs: resolved.GroupMaxActiveJobs,
+                    groupIsEnabled: resolved.GroupEnabled,
                     ct: ct
                 );
                 results.Add(manifest);
@@ -286,41 +269,10 @@ public class ManifestScheduler(
 
             await context.SaveChanges(ct);
 
-            if (prunePrefix is not null)
+            if (resolved.PrunePrefix is not null)
             {
                 var keepIds = results.Select(m => m.ExternalId).ToHashSet();
-
-                var staleManifestIds = await context
-                    .Manifests.Where(
-                        m => m.ExternalId.StartsWith(prunePrefix) && !keepIds.Contains(m.ExternalId)
-                    )
-                    .Select(m => m.Id)
-                    .ToListAsync(ct);
-
-                if (staleManifestIds.Count > 0)
-                {
-                    await context
-                        .DeadLetters.Where(d => staleManifestIds.Contains(d.ManifestId))
-                        .ExecuteDeleteAsync(ct);
-
-                    await context
-                        .Metadatas.Where(
-                            m =>
-                                m.ManifestId.HasValue
-                                && staleManifestIds.Contains(m.ManifestId.Value)
-                        )
-                        .ExecuteDeleteAsync(ct);
-
-                    var pruned = await context
-                        .Manifests.Where(m => staleManifestIds.Contains(m.Id))
-                        .ExecuteDeleteAsync(ct);
-
-                    logger.LogInformation(
-                        "Pruned {Count} stale dependent manifests with prefix '{Prefix}'",
-                        pruned,
-                        prunePrefix
-                    );
-                }
+                await PruneStaleManifestsAsync(context, resolved.PrunePrefix, keepIds, ct);
             }
 
             await context.CommitTransaction();
@@ -347,16 +299,9 @@ public class ManifestScheduler(
     /// <inheritdoc />
     public async Task DisableAsync(string externalId, CancellationToken ct = default)
     {
-        using var context =
-            dataContextFactory.Create() as IDataContext
-            ?? throw new InvalidOperationException("Failed to create data context");
+        using var context = CreateContext();
 
-        var manifest =
-            await context.Manifests.FirstOrDefaultAsync(m => m.ExternalId == externalId, ct)
-            ?? throw new InvalidOperationException(
-                $"No manifest found with ExternalId '{externalId}'"
-            );
-
+        var manifest = await GetManifestByExternalIdAsync(context, externalId, ct);
         manifest.IsEnabled = false;
         await context.SaveChanges(ct);
 
@@ -366,16 +311,9 @@ public class ManifestScheduler(
     /// <inheritdoc />
     public async Task EnableAsync(string externalId, CancellationToken ct = default)
     {
-        using var context =
-            dataContextFactory.Create() as IDataContext
-            ?? throw new InvalidOperationException("Failed to create data context");
+        using var context = CreateContext();
 
-        var manifest =
-            await context.Manifests.FirstOrDefaultAsync(m => m.ExternalId == externalId, ct)
-            ?? throw new InvalidOperationException(
-                $"No manifest found with ExternalId '{externalId}'"
-            );
-
+        var manifest = await GetManifestByExternalIdAsync(context, externalId, ct);
         manifest.IsEnabled = true;
         await context.SaveChanges(ct);
 
@@ -385,17 +323,10 @@ public class ManifestScheduler(
     /// <inheritdoc />
     public async Task TriggerAsync(string externalId, CancellationToken ct = default)
     {
-        using var context =
-            dataContextFactory.Create() as IDataContext
-            ?? throw new InvalidOperationException("Failed to create data context");
+        using var context = CreateContext();
 
-        var manifest =
-            await context.Manifests.FirstOrDefaultAsync(m => m.ExternalId == externalId, ct)
-            ?? throw new InvalidOperationException(
-                $"No manifest found with ExternalId '{externalId}'"
-            );
+        var manifest = await GetManifestByExternalIdAsync(context, externalId, ct);
 
-        // Create a work queue entry instead of directly creating metadata + enqueueing
         var entry = WorkQueue.Create(
             new CreateWorkQueue
             {
@@ -403,6 +334,7 @@ public class ManifestScheduler(
                 Input = manifest.Properties,
                 InputTypeName = manifest.PropertyTypeName,
                 ManifestId = manifest.Id,
+                Priority = manifest.Priority,
             }
         );
         context.WorkQueues.Add(entry);
@@ -414,4 +346,93 @@ public class ManifestScheduler(
             entry.Id
         );
     }
+
+    // ── Private helpers ──────────────────────────────────────────────────
+
+    private IDataContext CreateContext() =>
+        dataContextFactory.Create() as IDataContext
+        ?? throw new InvalidOperationException("Failed to create data context");
+
+    private static ResolvedOptions ResolveOptions(Action<ScheduleOptions>? options)
+    {
+        var opts = new ScheduleOptions();
+        options?.Invoke(opts);
+
+        var manifestOptions = opts.ToManifestOptions();
+
+        return new ResolvedOptions(
+            ManifestOptions: manifestOptions,
+            GroupId: opts._groupId,
+            GroupPriority: opts._groupOptions?._priority ?? manifestOptions.Priority,
+            GroupMaxActiveJobs: opts._groupOptions?._maxActiveJobs,
+            GroupEnabled: opts._groupOptions?._isEnabled ?? true,
+            PrunePrefix: opts._prunePrefix
+        );
+    }
+
+    private static ManifestOptions CreateItemOptions(ManifestOptions baseOptions) =>
+        new()
+        {
+            Priority = baseOptions.Priority,
+            IsEnabled = baseOptions.IsEnabled,
+            MaxRetries = baseOptions.MaxRetries,
+            Timeout = baseOptions.Timeout,
+            IsDormant = baseOptions.IsDormant,
+        };
+
+    private static async Task<Manifest> GetManifestByExternalIdAsync(
+        IDataContext context,
+        string externalId,
+        CancellationToken ct
+    ) =>
+        await context.Manifests.FirstOrDefaultAsync(m => m.ExternalId == externalId, ct)
+        ?? throw new InvalidOperationException($"No manifest found with ExternalId '{externalId}'");
+
+    private async Task PruneStaleManifestsAsync(
+        IDataContext context,
+        string prunePrefix,
+        System.Collections.Generic.HashSet<string> keepExternalIds,
+        CancellationToken ct
+    )
+    {
+        var staleManifestIds = await context
+            .Manifests.Where(
+                m => m.ExternalId.StartsWith(prunePrefix) && !keepExternalIds.Contains(m.ExternalId)
+            )
+            .Select(m => m.Id)
+            .ToListAsync(ct);
+
+        if (staleManifestIds.Count == 0)
+            return;
+
+        // Delete in FK-dependency order: dead_letters → metadata → manifests
+        await context
+            .DeadLetters.Where(d => staleManifestIds.Contains(d.ManifestId))
+            .ExecuteDeleteAsync(ct);
+
+        await context
+            .Metadatas.Where(
+                m => m.ManifestId.HasValue && staleManifestIds.Contains(m.ManifestId.Value)
+            )
+            .ExecuteDeleteAsync(ct);
+
+        var pruned = await context
+            .Manifests.Where(m => staleManifestIds.Contains(m.Id))
+            .ExecuteDeleteAsync(ct);
+
+        logger.LogInformation(
+            "Pruned {Count} stale manifests with prefix '{Prefix}'",
+            pruned,
+            prunePrefix
+        );
+    }
+
+    private record ResolvedOptions(
+        ManifestOptions ManifestOptions,
+        string? GroupId,
+        int GroupPriority,
+        int? GroupMaxActiveJobs,
+        bool GroupEnabled,
+        string? PrunePrefix
+    );
 }

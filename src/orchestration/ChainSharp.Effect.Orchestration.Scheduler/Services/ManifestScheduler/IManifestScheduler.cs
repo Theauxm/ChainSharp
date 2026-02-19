@@ -28,7 +28,7 @@ public interface IManifestScheduler
     /// </param>
     /// <param name="input">The input data that will be passed to the workflow on each execution.</param>
     /// <param name="schedule">The schedule definition (interval or cron-based).</param>
-    /// <param name="configure">Optional action to configure additional manifest options.</param>
+    /// <param name="options">Optional callback to configure manifest and group options via <see cref="ScheduleOptions"/>.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The created or updated manifest.</returns>
     /// <exception cref="InvalidOperationException">
@@ -38,7 +38,7 @@ public interface IManifestScheduler
         string externalId,
         TInput input,
         Schedule schedule,
-        Action<ManifestOptions>? configure = null,
+        Action<ScheduleOptions>? options = null,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -61,13 +61,10 @@ public interface IManifestScheduler
     /// A function that transforms each source item into an ExternalId and Input pair.
     /// </param>
     /// <param name="schedule">The schedule definition applied to all manifests.</param>
-    /// <param name="configure">
-    /// Optional action to configure additional manifest options per source item.
-    /// </param>
-    /// <param name="prunePrefix">
-    /// When specified, deletes any existing manifests whose ExternalId starts with this prefix
-    /// but were not included in the current batch. This enables automatic cleanup of stale
-    /// manifests when the source collection shrinks between deployments.
+    /// <param name="options">Optional callback to configure manifest and group options via <see cref="ScheduleOptions"/>.</param>
+    /// <param name="configureEach">
+    /// Optional action to configure per-item manifest options. Invoked for each source item
+    /// after the base options from <paramref name="options"/> are applied, allowing per-item overrides.
     /// </param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>
@@ -75,8 +72,8 @@ public interface IManifestScheduler
     /// </returns>
     /// <remarks>
     /// All manifests are created/updated in a single transaction. If any manifest
-    /// fails to save, the entire batch is rolled back. Pruning (if enabled) is also
-    /// included in the same transaction.
+    /// fails to save, the entire batch is rolled back. Pruning (if enabled via
+    /// <see cref="ScheduleOptions.PrunePrefix"/>) is also included in the same transaction.
     /// </remarks>
     /// <exception cref="InvalidOperationException">
     /// Thrown when the workflow is not registered in the WorkflowRegistry.
@@ -85,9 +82,8 @@ public interface IManifestScheduler
         IEnumerable<TSource> sources,
         Func<TSource, (string ExternalId, TInput Input)> map,
         Schedule schedule,
-        Action<TSource, ManifestOptions>? configure = null,
-        string? prunePrefix = null,
-        string? groupId = null,
+        Action<ScheduleOptions>? options = null,
+        Action<TSource, ManifestOptions>? configureEach = null,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -101,14 +97,14 @@ public interface IManifestScheduler
     /// <param name="externalId">A unique identifier for this dependent job.</param>
     /// <param name="input">The input data that will be passed to the workflow on each execution.</param>
     /// <param name="dependsOnExternalId">The external ID of the parent manifest this job depends on.</param>
-    /// <param name="configure">Optional action to configure additional manifest options.</param>
+    /// <param name="options">Optional callback to configure manifest and group options via <see cref="ScheduleOptions"/>.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The created or updated manifest.</returns>
     Task<Manifest> ScheduleDependentAsync<TWorkflow, TInput>(
         string externalId,
         TInput input,
         string dependsOnExternalId,
-        Action<ManifestOptions>? configure = null,
+        Action<ScheduleOptions>? options = null,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -123,18 +119,16 @@ public interface IManifestScheduler
     /// <param name="sources">The collection of source items to create manifests from.</param>
     /// <param name="map">A function that transforms each source item into an ExternalId and Input pair.</param>
     /// <param name="dependsOn">A function that maps each source item to the external ID of its parent manifest.</param>
-    /// <param name="configure">Optional action to configure additional manifest options per source item.</param>
-    /// <param name="prunePrefix">When specified, deletes stale manifests with this prefix not in the current batch.</param>
-    /// <param name="groupId">Optional group identifier for dashboard grouping.</param>
+    /// <param name="options">Optional callback to configure manifest and group options via <see cref="ScheduleOptions"/>.</param>
+    /// <param name="configureEach">Optional action to configure per-item manifest options.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A read-only list of the created or updated manifests.</returns>
     Task<IReadOnlyList<Manifest>> ScheduleManyDependentAsync<TWorkflow, TInput, TSource>(
         IEnumerable<TSource> sources,
         Func<TSource, (string ExternalId, TInput Input)> map,
         Func<TSource, string> dependsOn,
-        Action<TSource, ManifestOptions>? configure = null,
-        string? prunePrefix = null,
-        string? groupId = null,
+        Action<ScheduleOptions>? options = null,
+        Action<TSource, ManifestOptions>? configureEach = null,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>

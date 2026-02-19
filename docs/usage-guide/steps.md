@@ -76,6 +76,8 @@ The implementation is identical—just swap the base class. `EffectStep` only ad
 
 Use `EffectStep` when you want step-level observability (timing, logging via `AddStepLogger`). Use `Step` when you don't need it.
 
+*API Reference: [AddStepLogger]({{ site.baseurl }}{% link api-reference/configuration/add-step-logger.md %})*
+
 ## Dependency Injection in Steps
 
 Steps use standard constructor injection for their dependencies. Do **not** use the `[Inject]` attribute—that's used internally by the `EffectWorkflow` base class for its own framework-level services.

@@ -106,7 +106,7 @@ public class AlertingOptionsBuilder
     /// application instance (not shared across multiple servers).
     ///
     /// Example scenarios:
-    /// 
+    ///
     /// WITHOUT debouncing:
     /// - Workflow fails 5 times in 10 minutes (MinimumFailures = 2)
     /// - Alerts sent: 4 (at failure 2, 3, 4, and 5)

@@ -77,12 +77,14 @@ public class AlertConfigurationRegistry : IAlertConfigurationRegistry
             var alertingWorkflowTypes = assembly
                 .GetTypes()
                 .Where(t => t.IsClass && !t.IsAbstract)
-                .Where(t =>
-                    t.GetInterfaces()
-                        .Any(i =>
-                            i.IsGenericType
-                            && i.GetGenericTypeDefinition() == alertingWorkflowInterface
-                        )
+                .Where(
+                    t =>
+                        t.GetInterfaces()
+                            .Any(
+                                i =>
+                                    i.IsGenericType
+                                    && i.GetGenericTypeDefinition() == alertingWorkflowInterface
+                            )
                 );
 
             foreach (var workflowType in alertingWorkflowTypes)
@@ -132,8 +134,8 @@ public class AlertConfigurationRegistry : IAlertConfigurationRegistry
                     registeredCount++;
 
                     _logger.LogDebug(
-                        "Registered alert configuration for workflow {Workflow} " +
-                        "(MinFailures: {MinFailures}, TimeWindow: {TimeWindow})",
+                        "Registered alert configuration for workflow {Workflow} "
+                            + "(MinFailures: {MinFailures}, TimeWindow: {TimeWindow})",
                         workflowType.Name,
                         config.MinimumFailures,
                         config.TimeWindow
@@ -143,10 +145,10 @@ public class AlertConfigurationRegistry : IAlertConfigurationRegistry
                 {
                     // Workflow has no parameterless constructor
                     _logger.LogWarning(
-                        "Could not register alert configuration for {Workflow}: " +
-                        "No parameterless constructor found. The workflow will function normally " +
-                        "but alerting will not be enabled. Consider adding a parameterless constructor " +
-                        "or implementing ConfigureAlerting as a static method in future versions.",
+                        "Could not register alert configuration for {Workflow}: "
+                            + "No parameterless constructor found. The workflow will function normally "
+                            + "but alerting will not be enabled. Consider adding a parameterless constructor "
+                            + "or implementing ConfigureAlerting as a static method in future versions.",
                         workflowType.Name
                     );
                 }
@@ -155,8 +157,8 @@ public class AlertConfigurationRegistry : IAlertConfigurationRegistry
                     // Other instantiation or configuration errors
                     _logger.LogWarning(
                         ex,
-                        "Failed to register alert configuration for {Workflow}: {Error}. " +
-                        "The workflow will function normally but alerting will not be enabled.",
+                        "Failed to register alert configuration for {Workflow}: {Error}. "
+                            + "The workflow will function normally but alerting will not be enabled.",
                         workflowType.Name,
                         ex.Message
                     );
@@ -165,8 +167,8 @@ public class AlertConfigurationRegistry : IAlertConfigurationRegistry
         }
 
         _logger.LogInformation(
-            "Alert configuration registry initialized. Scanned {ScannedCount} workflows, " +
-            "registered {RegisteredCount} with alerting enabled.",
+            "Alert configuration registry initialized. Scanned {ScannedCount} workflows, "
+                + "registered {RegisteredCount} with alerting enabled.",
             scannedCount,
             registeredCount
         );

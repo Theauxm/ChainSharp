@@ -22,7 +22,7 @@ namespace ChainSharp.Effect.Provider.Alerting.Interfaces;
 ///
 /// Example implementation:
 /// <code>
-/// public class MySyncWorkflow : EffectWorkflow&lt;SyncInput, Unit&gt;, 
+/// public class MySyncWorkflow : EffectWorkflow&lt;SyncInput, Unit&gt;,
 ///     IAlertingWorkflow&lt;SyncInput, Unit&gt;
 /// {
 ///     public AlertConfiguration ConfigureAlerting() =>

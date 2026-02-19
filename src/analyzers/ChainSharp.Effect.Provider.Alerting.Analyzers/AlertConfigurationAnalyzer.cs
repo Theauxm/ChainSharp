@@ -56,11 +56,11 @@ public sealed class AlertConfigurationAnalyzer : DiagnosticAnalyzer
 
         // Walk backward through the fluent chain to check for required calls
         var chain = CollectFluentChain(invocation);
-        var hasTimeWindow = chain.Any(name =>
-            name == "WithinTimeSpan" || name == "AlertOnEveryFailure"
+        var hasTimeWindow = chain.Any(
+            name => name == "WithinTimeSpan" || name == "AlertOnEveryFailure"
         );
-        var hasMinimumFailures = chain.Any(name =>
-            name == "MinimumFailures" || name == "AlertOnEveryFailure"
+        var hasMinimumFailures = chain.Any(
+            name => name == "MinimumFailures" || name == "AlertOnEveryFailure"
         );
 
         // Report diagnostic if either required field is missing
@@ -116,8 +116,7 @@ public sealed class AlertConfigurationAnalyzer : DiagnosticAnalyzer
             // Get the method name from the current invocation
             var methodName = current.Expression switch
             {
-                MemberAccessExpressionSyntax memberAccess
-                    => memberAccess.Name.Identifier.Text,
+                MemberAccessExpressionSyntax memberAccess => memberAccess.Name.Identifier.Text,
                 IdentifierNameSyntax identifier => identifier.Identifier.Text,
                 _ => null
             };
@@ -126,8 +125,9 @@ public sealed class AlertConfigurationAnalyzer : DiagnosticAnalyzer
                 methodNames.Add(methodName);
 
             // Move to the previous call in the chain
-            current = (current.Expression as MemberAccessExpressionSyntax)
-                ?.Expression as InvocationExpressionSyntax;
+            current =
+                (current.Expression as MemberAccessExpressionSyntax)?.Expression
+                as InvocationExpressionSyntax;
         }
 
         return methodNames;

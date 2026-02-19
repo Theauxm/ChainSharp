@@ -25,15 +25,15 @@ namespace ChainSharp.Effect.Provider.Alerting.Models;
 ///     var criticalExceptions = context.ExceptionFrequency
 ///         .Where(kv => kv.Key == "DatabaseException")
 ///         .Sum(kv => kv.Value);
-///     
+///
 ///     var severity = criticalExceptions > 0 ? "CRITICAL" : "WARNING";
-///     
+///
 ///     // Format message with context
 ///     var message = $"Workflow {context.WorkflowName} failed {context.FailureCount} times " +
 ///                  $"in the last {context.TimeWindow.TotalMinutes} minutes.\n\n" +
 ///                  $"Latest: {context.TriggerMetadata.FailureReason}\n" +
 ///                  $"Total runs: {context.TotalExecutions}";
-///     
+///
 ///     await SendToChannel(severity, message, cancellationToken);
 /// }
 /// </code>

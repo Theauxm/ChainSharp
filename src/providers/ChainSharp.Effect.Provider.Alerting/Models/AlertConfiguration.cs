@@ -65,10 +65,10 @@ public class AlertConfiguration
     ///
     /// Multiple filters are combined with OR logic.
     /// </remarks>
-    public required List<(string? exactMatch, Func<string, bool>? predicate)> StepFilters {
-        get;
-        init;
-    } = new();
+    public required List<(
+        string? exactMatch,
+        Func<string, bool>? predicate
+    )> StepFilters { get; init; } = new();
 
     /// <summary>
     /// Gets or sets the list of custom filter predicates applied to Metadata objects.

@@ -7,7 +7,6 @@ using ChainSharp.Effect.Services.EffectProviderFactory;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-
 // Alias to avoid namespace collision
 using AlertingEffectProvider = ChainSharp.Effect.Provider.Alerting.Services.AlertingEffect.AlertingEffect;
 
@@ -56,8 +55,7 @@ public class AlertingEffectProviderFactory : IEffectProviderFactory
         var dataContext = _serviceProvider.GetService<IDataContext>();
         var cache = _serviceProvider.GetRequiredService<IMemoryCache>();
         var alertSenders = _serviceProvider.GetServices<IAlertSender>();
-        var configRegistry =
-            _serviceProvider.GetRequiredService<IAlertConfigurationRegistry>();
+        var configRegistry = _serviceProvider.GetRequiredService<IAlertConfigurationRegistry>();
         var options = _serviceProvider.GetRequiredService<AlertingOptionsBuilder>();
         var logger = _serviceProvider.GetRequiredService<ILogger<AlertingEffectProvider>>();
 

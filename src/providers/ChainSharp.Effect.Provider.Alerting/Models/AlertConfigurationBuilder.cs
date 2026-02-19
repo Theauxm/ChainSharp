@@ -37,8 +37,7 @@ public class AlertConfigurationBuilder
     private TimeSpan? _timeWindow;
     private int? _minimumFailures;
     private readonly List<Type> _exceptionTypes = new();
-    private readonly List<(string? exactMatch, Func<string, bool>? predicate)> _stepFilters =
-        new();
+    private readonly List<(string? exactMatch, Func<string, bool>? predicate)> _stepFilters = new();
     private readonly List<Func<Metadata, bool>> _customFilters = new();
 
     /// <summary>

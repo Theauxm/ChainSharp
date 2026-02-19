@@ -21,7 +21,7 @@ public static class ServiceExtensions
     /// </summary>
     /// <param name="builder">The ChainSharp effect configuration builder</param>
     /// <param name="configure">
-    /// Action to configure alerting options. 
+    /// Action to configure alerting options.
     /// REQUIRED: Must call AddAlertSender&lt;T&gt;() at least once.
     /// The analyzer will enforce this at compile time.
     /// </param>
@@ -32,7 +32,7 @@ public static class ServiceExtensions
     /// <returns>The configuration builder for method chaining</returns>
     /// <remarks>
     /// This method registers the alerting effect and scans for workflow alert configurations.
-    /// 
+    ///
     /// Registration steps:
     /// 1. Validates that at least one alert sender is configured
     /// 2. Registers all IAlertSender implementations with DI (as Scoped)
@@ -44,7 +44,7 @@ public static class ServiceExtensions
     /// Example usage with explicit assemblies:
     /// <code>
     /// var assemblies = new[] { typeof(Program).Assembly };
-    /// 
+    ///
     /// services.AddChainSharpEffects(options =>
     ///     options
     ///         .AddPostgresEffect(connectionString)
@@ -65,7 +65,7 @@ public static class ServiceExtensions
     ///         .AddPostgresEffect(connectionString)
     ///         .SaveWorkflowParameters()
     ///         .AddEffectWorkflowBus(typeof(Program).Assembly)
-    ///         .UseAlertingEffect(alertOptions => 
+    ///         .UseAlertingEffect(alertOptions =>
     ///             alertOptions.AddAlertSender&lt;SnsSender&gt;())
     ///         // No assemblies passed - will extract from WorkflowRegistry
     /// );
@@ -85,8 +85,8 @@ public static class ServiceExtensions
         // Runtime validation as fallback (analyzer should catch this at compile time)
         if (optionsBuilder.AlertSenderTypes.Count == 0)
             throw new InvalidOperationException(
-                "At least one alert sender must be registered. " +
-                "Call options.AddAlertSender<TYourSender>() in the configure action."
+                "At least one alert sender must be registered. "
+                    + "Call options.AddAlertSender<TYourSender>() in the configure action."
             );
 
         // Register all alert senders as Scoped
@@ -105,9 +105,8 @@ public static class ServiceExtensions
         // Register alert configuration registry
         builder.ServiceCollection.AddSingleton<IAlertConfigurationRegistry>(sp =>
         {
-            var logger = sp.GetRequiredService<
-                Microsoft.Extensions.Logging.ILogger<AlertConfigurationRegistry>
-            >();
+            var logger =
+                sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AlertConfigurationRegistry>>();
             var registry = new AlertConfigurationRegistry(logger);
 
             // Determine which assemblies to scan
@@ -132,8 +131,8 @@ public static class ServiceExtensions
                 else
                 {
                     throw new InvalidOperationException(
-                        "No assemblies provided to UseAlertingEffect and AddEffectWorkflowBus not called. " +
-                        "Either pass assemblies explicitly or call AddEffectWorkflowBus before UseAlertingEffect."
+                        "No assemblies provided to UseAlertingEffect and AddEffectWorkflowBus not called. "
+                            + "Either pass assemblies explicitly or call AddEffectWorkflowBus before UseAlertingEffect."
                     );
                 }
             }

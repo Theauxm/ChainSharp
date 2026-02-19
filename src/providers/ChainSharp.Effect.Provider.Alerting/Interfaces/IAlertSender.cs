@@ -45,7 +45,7 @@ namespace ChainSharp.Effect.Provider.Alerting.Interfaces;
 ///                      $"times in the last {context.TimeWindow.TotalMinutes} minutes.\n\n" +
 ///                      $"Latest failure: {context.TriggerMetadata.FailureReason}";
 ///
-///         var topicArn = severity == "CRITICAL" 
+///         var topicArn = severity == "CRITICAL"
 ///             ? "arn:aws:sns:us-east-1:123456789012:critical-alerts"
 ///             : "arn:aws:sns:us-east-1:123456789012:standard-alerts";
 ///
@@ -62,7 +62,7 @@ namespace ChainSharp.Effect.Provider.Alerting.Interfaces;
 ///     }
 /// }
 /// </code>
-/// 
+///
 /// Registration:
 /// <code>
 /// services.AddChainSharpEffects(options =>
@@ -85,7 +85,7 @@ public interface IAlertSender
     /// <remarks>
     /// This method is called when a workflow's alert conditions are met.
     /// Implementations should:
-    /// 
+    ///
     /// 1. Extract relevant information from the AlertContext
     /// 2. Format the alert message appropriately for the target system
     /// 3. Send the alert to the configured destination

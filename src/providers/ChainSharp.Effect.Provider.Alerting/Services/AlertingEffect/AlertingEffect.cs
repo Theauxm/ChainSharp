@@ -96,10 +96,7 @@ public class AlertingEffect : IEffectProvider
             return;
         }
 
-        _logger.LogDebug(
-            "Evaluating alert conditions for workflow {Workflow}",
-            metadata.Name
-        );
+        _logger.LogDebug("Evaluating alert conditions for workflow {Workflow}", metadata.Name);
 
         // Check debounce if enabled
         if (_options.DebounceEnabled && _options.CooldownPeriod.HasValue)
@@ -131,10 +128,10 @@ public class AlertingEffect : IEffectProvider
         if (_dataContext == null)
         {
             _logger.LogWarning(
-                "Alert configuration for {Workflow} requires database queries " +
-                "(MinimumFailures > 1) but no IDataContext is available. " +
-                "Alert will not be sent. Consider configuring a data provider " +
-                "or setting MinimumFailures to 1.",
+                "Alert configuration for {Workflow} requires database queries "
+                    + "(MinimumFailures > 1) but no IDataContext is available. "
+                    + "Alert will not be sent. Consider configuring a data provider "
+                    + "or setting MinimumFailures to 1.",
                 metadata.Name
             );
             return;
@@ -143,11 +140,12 @@ public class AlertingEffect : IEffectProvider
         // Single database query to get all relevant metadata in the time window
         var windowStart = DateTime.UtcNow - config.TimeWindow;
         var historicalMetadata = await _dataContext
-            .Metadatas.Where(m =>
-                m.Name == metadata.Name
-                && m.StartTime >= windowStart
-                && m.WorkflowState != WorkflowState.Pending
-                && m.WorkflowState != WorkflowState.InProgress
+            .Metadatas.Where(
+                m =>
+                    m.Name == metadata.Name
+                    && m.StartTime >= windowStart
+                    && m.WorkflowState != WorkflowState.Pending
+                    && m.WorkflowState != WorkflowState.InProgress
             )
             .OrderByDescending(m => m.StartTime)
             .ToListAsync(cancellationToken);
@@ -189,14 +187,11 @@ public class AlertingEffect : IEffectProvider
     private bool MatchesFilters(Metadata metadata, AlertConfiguration config)
     {
         // Check exception type filter (OR logic - match ANY)
-        if (
-            config.ExceptionTypes.Count > 0
-            && !string.IsNullOrEmpty(metadata.FailureException)
-        )
+        if (config.ExceptionTypes.Count > 0 && !string.IsNullOrEmpty(metadata.FailureException))
         {
-            var matches = config.ExceptionTypes.Any(et =>
-                et.Name == metadata.FailureException
-                || et.FullName == metadata.FailureException
+            var matches = config.ExceptionTypes.Any(
+                et =>
+                    et.Name == metadata.FailureException || et.FullName == metadata.FailureException
             );
             if (!matches)
                 return false;
@@ -332,8 +327,8 @@ public class AlertingEffect : IEffectProvider
                 // Log error but continue to other senders
                 _logger.LogError(
                     ex,
-                    "Alert sender {Sender} failed for workflow {Workflow}. " +
-                    "Error will be logged but other senders will still be notified.",
+                    "Alert sender {Sender} failed for workflow {Workflow}. "
+                        + "Error will be logged but other senders will still be notified.",
                     sender.GetType().Name,
                     context.WorkflowName
                 );

@@ -58,7 +58,7 @@ internal class LoadDispatchCapacityStep(
         // Check global capacity — return empty entries to short-circuit dispatch
         if (config.MaxActiveJobs.HasValue && activeMetadataCount >= config.MaxActiveJobs.Value)
         {
-            logger.LogInformation(
+            logger.LogDebug(
                 "MaxActiveJobs limit reached ({ActiveCount}/{MaxActiveJobs}). Skipping dispatch this cycle.",
                 activeMetadataCount,
                 config.MaxActiveJobs.Value

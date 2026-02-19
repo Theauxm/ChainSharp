@@ -127,10 +127,13 @@ internal class DetermineJobsToQueueStep(ILogger<DetermineJobsToQueueStep> logger
             }
         }
 
-        logger.LogInformation(
-            "DetermineJobsToQueueStep completed: {ManifestsToQueueCount} manifests are due for execution",
-            viewsToQueue.Count
-        );
+        if (viewsToQueue.Count > 0)
+            logger.LogInformation(
+                "DetermineJobsToQueueStep completed: {ManifestsToQueueCount} manifests are due for execution",
+                viewsToQueue.Count
+            );
+        else
+            logger.LogDebug("DetermineJobsToQueueStep completed: no manifests due for execution");
 
         return viewsToQueue;
     }

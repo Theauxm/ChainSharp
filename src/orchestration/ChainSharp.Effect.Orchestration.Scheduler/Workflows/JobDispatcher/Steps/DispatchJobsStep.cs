@@ -80,7 +80,7 @@ internal class DispatchJobsStep(
                 else
                     backgroundTaskId = await backgroundTaskServer.EnqueueAsync(metadata.Id);
 
-                logger.LogInformation(
+                logger.LogDebug(
                     "Dispatched work queue entry {WorkQueueId} as background task {BackgroundTaskId} (Metadata: {MetadataId})",
                     entry.Id,
                     backgroundTaskId,
@@ -102,11 +102,14 @@ internal class DispatchJobsStep(
 
         var duration = DateTime.UtcNow - dispatchStartTime;
 
-        logger.LogInformation(
-            "DispatchJobsStep completed: {JobsDispatched} jobs dispatched in {Duration}ms",
-            jobsDispatched,
-            duration.TotalMilliseconds
-        );
+        if (jobsDispatched > 0)
+            logger.LogInformation(
+                "DispatchJobsStep completed: {JobsDispatched} jobs dispatched in {Duration}ms",
+                jobsDispatched,
+                duration.TotalMilliseconds
+            );
+        else
+            logger.LogDebug("DispatchJobsStep completed: no jobs dispatched");
 
         return Unit.Default;
     }

@@ -1,8 +1,10 @@
 using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 using ChainSharp.Effect.Extensions;
-using ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestPollingService;
+using ChainSharp.Effect.Orchestration.Scheduler.Services.JobDispatcherPollingService;
+using ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestManagerPollingService;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestScheduler;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.MetadataCleanupPollingService;
+using ChainSharp.Effect.Orchestration.Scheduler.Services.SchedulerStartupService;
 using ChainSharp.Effect.Orchestration.Scheduler.Utilities;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.JobDispatcher;
 using Microsoft.Extensions.DependencyInjection;
@@ -79,8 +81,11 @@ public partial class SchedulerConfigurationBuilder
         // Register task server if configured
         _taskServerRegistration?.Invoke(_parentBuilder.ServiceCollection);
 
-        // Register the background polling service (seeds manifests on startup, then polls)
-        _parentBuilder.ServiceCollection.AddHostedService<ManifestPollingService>();
+        // Registration order matters: .NET starts IHostedService instances sequentially in registration order.
+        // SchedulerStartupService must complete before the polling services begin.
+        _parentBuilder.ServiceCollection.AddHostedService<SchedulerStartupService>();
+        _parentBuilder.ServiceCollection.AddHostedService<ManifestManagerPollingService>();
+        _parentBuilder.ServiceCollection.AddHostedService<JobDispatcherPollingService>();
 
         // Register the metadata cleanup service if configured
         if (_configuration.MetadataCleanup is not null)

@@ -16,8 +16,8 @@ public partial class SchedulerConfigurationBuilder
     /// <param name="sources">The collection of source items to create manifests from</param>
     /// <param name="map">A function that transforms each source item into an ExternalId and Input pair</param>
     /// <param name="schedule">The schedule definition applied to all manifests</param>
-    /// <param name="configure">Optional action to configure additional manifest options per source item</param>
-    /// <param name="priority">The dispatch priority (0-31, default 0) applied to all items. Per-item configure callback can override.</param>
+    /// <param name="options">Optional callback to configure manifest and group options via <see cref="ScheduleOptions"/></param>
+    /// <param name="configureEach">Optional action to configure per-item manifest options</param>
     /// <returns>The builder for method chaining</returns>
     /// <remarks>
     /// The manifests are not created immediately. They are captured and will be seeded
@@ -32,7 +32,10 @@ public partial class SchedulerConfigurationBuilder
     ///         .ScheduleMany&lt;ISyncTableWorkflow, SyncTableInput, string&gt;(
     ///             new[] { "users", "orders", "products" },
     ///             table => ($"sync-{table}", new SyncTableInput { TableName = table }),
-    ///             Every.Minutes(5))
+    ///             Every.Minutes(5),
+    ///             options => options
+    ///                 .Group("sync", group => group.MaxActiveJobs(3))
+    ///                 .PrunePrefix("sync-"))
     ///     )
     /// );
     /// </code>
@@ -41,10 +44,8 @@ public partial class SchedulerConfigurationBuilder
         IEnumerable<TSource> sources,
         Func<TSource, (string ExternalId, TInput Input)> map,
         Schedule schedule,
-        Action<TSource, ManifestOptions>? configure = null,
-        string? prunePrefix = null,
-        string? groupId = null,
-        int priority = 0
+        Action<ScheduleOptions>? options = null,
+        Action<TSource, ManifestOptions>? configureEach = null
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
@@ -53,10 +54,13 @@ public partial class SchedulerConfigurationBuilder
         var sourceList = sources.ToList();
         var firstId = sourceList.Select(s => map(s).ExternalId).FirstOrDefault() ?? "batch";
 
+        var resolved = new ScheduleOptions();
+        options?.Invoke(resolved);
+
         foreach (var source in sourceList)
         {
             var (extId, _) = map(source);
-            _externalIdToGroupId[extId] = groupId ?? extId;
+            _externalIdToGroupId[extId] = resolved._groupId ?? extId;
         }
 
         _configuration.PendingManifests.Add(
@@ -69,14 +73,12 @@ public partial class SchedulerConfigurationBuilder
                         sourceList,
                         map,
                         schedule,
-                        configure,
-                        prunePrefix: prunePrefix,
-                        groupId: groupId,
-                        priority: priority,
+                        options,
+                        configureEach,
                         ct: ct
                     );
                     return results.FirstOrDefault()!;
-                }
+                },
             }
         );
 
@@ -98,8 +100,8 @@ public partial class SchedulerConfigurationBuilder
     /// <param name="sources">The collection of items to create manifests from</param>
     /// <param name="map">A function that transforms each source item into a <c>Suffix</c> and <c>Input</c> pair. The full external ID is <c>"{name}-{suffix}"</c>.</param>
     /// <param name="schedule">The schedule definition applied to all manifests</param>
-    /// <param name="configure">Optional callback to set per-item manifest options</param>
-    /// <param name="priority">The dispatch priority (0-31, default 0) applied to all items. Per-item configure callback can override.</param>
+    /// <param name="options">Optional callback to configure manifest and group options via <see cref="ScheduleOptions"/></param>
+    /// <param name="configureEach">Optional callback to set per-item manifest options</param>
     /// <returns>The builder for method chaining</returns>
     /// <example>
     /// <code>
@@ -107,7 +109,10 @@ public partial class SchedulerConfigurationBuilder
     ///     "sync-table",
     ///     new[] { "users", "orders" },
     ///     table => (table, new SyncTableInput { TableName = table }),
-    ///     Every.Minutes(5));
+    ///     Every.Minutes(5),
+    ///     options => options
+    ///         .Priority(10)
+    ///         .Group(group => group.MaxActiveJobs(5)));
     /// // Creates manifests: sync-table-users, sync-table-orders
     /// // groupId: "sync-table", prunePrefix: "sync-table-"
     /// </code>
@@ -117,8 +122,8 @@ public partial class SchedulerConfigurationBuilder
         IEnumerable<TSource> sources,
         Func<TSource, (string Suffix, TInput Input)> map,
         Schedule schedule,
-        Action<TSource, ManifestOptions>? configure = null,
-        int priority = 0
+        Action<ScheduleOptions>? options = null,
+        Action<TSource, ManifestOptions>? configureEach = null
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties =>
@@ -130,15 +135,18 @@ public partial class SchedulerConfigurationBuilder
                 return ($"{name}-{suffix}", input);
             },
             schedule,
-            configure,
-            prunePrefix: $"{name}-",
-            groupId: name,
-            priority: priority
+            opts =>
+            {
+                opts.Group(name);
+                opts.PrunePrefix($"{name}-");
+                options?.Invoke(opts);
+            },
+            configureEach
         );
 
     /// <summary>
     /// Schedules multiple dependent workflow instances for deeper chaining after a previous
-    /// <see cref="IncludeMany{TWorkflow,TInput,TSource}(IEnumerable{TSource},Func{TSource,ValueTuple{string,TInput}},Func{TSource,string},Action{TSource,ManifestOptions},string,string,int)"/>.
+    /// <c>IncludeMany</c>.
     /// Each dependent manifest is linked to its parent via the <paramref name="dependsOn"/> function.
     /// For first-level batch dependents after <see cref="ScheduleMany{TWorkflow,TInput,TSource}"/>,
     /// use the <c>IncludeMany</c> overload with <c>dependsOn</c> instead.
@@ -149,10 +157,8 @@ public partial class SchedulerConfigurationBuilder
     /// <param name="sources">The collection of source items to create dependent manifests from</param>
     /// <param name="map">A function that transforms each source item into an ExternalId and Input pair</param>
     /// <param name="dependsOn">A function that maps each source item to the external ID of its parent manifest</param>
-    /// <param name="configure">Optional action to configure additional manifest options per source item</param>
-    /// <param name="prunePrefix">When specified, deletes stale manifests with this prefix not in the current batch</param>
-    /// <param name="groupId">Optional group identifier for dashboard grouping</param>
-    /// <param name="priority">The base dispatch priority (0-31, default 0) applied to all items. DependentPriorityBoost is added on top at dispatch time. Per-item configure callback can override.</param>
+    /// <param name="options">Optional callback to configure manifest and group options via <see cref="ScheduleOptions"/></param>
+    /// <param name="configureEach">Optional action to configure per-item manifest options</param>
     /// <returns>The builder for method chaining</returns>
     /// <example>
     /// <code>
@@ -164,17 +170,15 @@ public partial class SchedulerConfigurationBuilder
     ///         Enumerable.Range(0, 10),
     ///         i => ($"load-{i}", new LoadInput { Index = i }),
     ///         dependsOn: i => $"transform-{i}",
-    ///         groupId: "load")
+    ///         options => options.Group("load", group => group.MaxActiveJobs(3)))
     /// </code>
     /// </example>
     public SchedulerConfigurationBuilder ThenIncludeMany<TWorkflow, TInput, TSource>(
         IEnumerable<TSource> sources,
         Func<TSource, (string ExternalId, TInput Input)> map,
         Func<TSource, string> dependsOn,
-        Action<TSource, ManifestOptions>? configure = null,
-        string? prunePrefix = null,
-        string? groupId = null,
-        int priority = 0
+        Action<ScheduleOptions>? options = null,
+        Action<TSource, ManifestOptions>? configureEach = null
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
@@ -182,11 +186,14 @@ public partial class SchedulerConfigurationBuilder
         var sourceList = sources.ToList();
         var firstId = sourceList.Select(s => map(s).ExternalId).FirstOrDefault() ?? "batch";
 
+        var resolved = new ScheduleOptions();
+        options?.Invoke(resolved);
+
         foreach (var source in sourceList)
         {
             var (extId, _) = map(source);
             var parentExtId = dependsOn(source);
-            _externalIdToGroupId[extId] = groupId ?? extId;
+            _externalIdToGroupId[extId] = resolved._groupId ?? extId;
             _dependencyEdges.Add((parentExtId, extId));
         }
 
@@ -200,18 +207,9 @@ public partial class SchedulerConfigurationBuilder
                         TWorkflow,
                         TInput,
                         TSource
-                    >(
-                        sourceList,
-                        map,
-                        dependsOn,
-                        configure,
-                        prunePrefix: prunePrefix,
-                        groupId: groupId,
-                        priority: priority,
-                        ct: ct
-                    );
+                    >(sourceList, map, dependsOn, options, configureEach, ct: ct);
                     return results.FirstOrDefault()!;
-                }
+                },
             }
         );
 
@@ -221,7 +219,7 @@ public partial class SchedulerConfigurationBuilder
     }
 
     /// <summary>
-    /// Name-based overload of <see cref="ThenIncludeMany{TWorkflow,TInput,TSource}(IEnumerable{TSource},Func{TSource,ValueTuple{string,TInput}},Func{TSource,string},Action{TSource,ManifestOptions},string,string,int)"/>.
+    /// Name-based overload of <c>ThenIncludeMany</c>.
     /// The <paramref name="name"/> automatically derives <c>groupId</c>, <c>prunePrefix</c>, and
     /// the external ID prefix — reducing boilerplate when the naming follows the <c>{name}-{suffix}</c> pattern.
     /// </summary>
@@ -232,8 +230,8 @@ public partial class SchedulerConfigurationBuilder
     /// <param name="sources">The collection of source items to create dependent manifests from</param>
     /// <param name="map">A function that transforms each source item into a <c>Suffix</c> and <c>Input</c> pair. The full external ID is <c>"{name}-{suffix}"</c>.</param>
     /// <param name="dependsOn">A function that maps each source item to the external ID of its parent manifest</param>
-    /// <param name="configure">Optional action to configure additional manifest options per source item</param>
-    /// <param name="priority">The base dispatch priority (0-31, default 0). DependentPriorityBoost is added on top at dispatch time. Per-item configure callback can override.</param>
+    /// <param name="options">Optional callback to configure manifest and group options via <see cref="ScheduleOptions"/></param>
+    /// <param name="configureEach">Optional action to configure per-item manifest options</param>
     /// <returns>The builder for method chaining</returns>
     /// <example>
     /// <code>
@@ -252,8 +250,8 @@ public partial class SchedulerConfigurationBuilder
         IEnumerable<TSource> sources,
         Func<TSource, (string Suffix, TInput Input)> map,
         Func<TSource, string> dependsOn,
-        Action<TSource, ManifestOptions>? configure = null,
-        int priority = 0
+        Action<ScheduleOptions>? options = null,
+        Action<TSource, ManifestOptions>? configureEach = null
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties =>
@@ -265,10 +263,13 @@ public partial class SchedulerConfigurationBuilder
                 return ($"{name}-{suffix}", input);
             },
             dependsOn,
-            configure,
-            prunePrefix: $"{name}-",
-            groupId: name,
-            priority: priority
+            opts =>
+            {
+                opts.Group(name);
+                opts.PrunePrefix($"{name}-");
+                options?.Invoke(opts);
+            },
+            configureEach
         );
 
     /// <summary>
@@ -281,10 +282,8 @@ public partial class SchedulerConfigurationBuilder
     /// <typeparam name="TSource">The type of elements in the source collection</typeparam>
     /// <param name="sources">The collection of source items to create dependent manifests from</param>
     /// <param name="map">A function that transforms each source item into an ExternalId and Input pair</param>
-    /// <param name="configure">Optional action to configure additional manifest options per source item</param>
-    /// <param name="prunePrefix">When specified, deletes stale manifests with this prefix not in the current batch</param>
-    /// <param name="groupId">Optional group identifier for dashboard grouping</param>
-    /// <param name="priority">The base dispatch priority (0-31, default 0). DependentPriorityBoost is added on top at dispatch time. Per-item configure callback can override.</param>
+    /// <param name="options">Optional callback to configure manifest and group options via <see cref="ScheduleOptions"/></param>
+    /// <param name="configureEach">Optional action to configure per-item manifest options</param>
     /// <returns>The builder for method chaining</returns>
     /// <remarks>
     /// Must be called after <see cref="Schedule{TWorkflow,TInput}"/>.
@@ -293,17 +292,15 @@ public partial class SchedulerConfigurationBuilder
     /// .IncludeMany&lt;B, InputB, int&gt;(
     ///     Enumerable.Range(0, 10),
     ///     i =&gt; ($"child-{i}", new InputB { Index = i }),
-    ///     groupId: "children")
+    ///     options => options.Group("children", group => group.MaxActiveJobs(5)))
     /// // All 10 child manifests depend on "root" (A)
     /// </code>
     /// </remarks>
     public SchedulerConfigurationBuilder IncludeMany<TWorkflow, TInput, TSource>(
         IEnumerable<TSource> sources,
         Func<TSource, (string ExternalId, TInput Input)> map,
-        Action<TSource, ManifestOptions>? configure = null,
-        string? prunePrefix = null,
-        string? groupId = null,
-        int priority = 0
+        Action<ScheduleOptions>? options = null,
+        Action<TSource, ManifestOptions>? configureEach = null
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
@@ -318,10 +315,13 @@ public partial class SchedulerConfigurationBuilder
         var sourceList = sources.ToList();
         var firstId = sourceList.Select(s => map(s).ExternalId).FirstOrDefault() ?? "batch";
 
+        var resolved = new ScheduleOptions();
+        options?.Invoke(resolved);
+
         foreach (var source in sourceList)
         {
             var (extId, _) = map(source);
-            _externalIdToGroupId[extId] = groupId ?? extId;
+            _externalIdToGroupId[extId] = resolved._groupId ?? extId;
             _dependencyEdges.Add((rootExternalId, extId));
         }
 
@@ -335,18 +335,9 @@ public partial class SchedulerConfigurationBuilder
                         TWorkflow,
                         TInput,
                         TSource
-                    >(
-                        sourceList,
-                        map,
-                        _ => rootExternalId,
-                        configure,
-                        prunePrefix: prunePrefix,
-                        groupId: groupId,
-                        priority: priority,
-                        ct: ct
-                    );
+                    >(sourceList, map, _ => rootExternalId, options, configureEach, ct: ct);
                     return results.FirstOrDefault()!;
-                }
+                },
             }
         );
 
@@ -356,7 +347,7 @@ public partial class SchedulerConfigurationBuilder
     }
 
     /// <summary>
-    /// Name-based overload of <see cref="IncludeMany{TWorkflow,TInput,TSource}(IEnumerable{TSource},Func{TSource,ValueTuple{string,TInput}},Action{TSource,ManifestOptions},string,string,int)"/>.
+    /// Name-based overload of <c>IncludeMany</c> (root-based).
     /// The <paramref name="name"/> automatically derives <c>groupId</c>, <c>prunePrefix</c>, and
     /// the external ID prefix — reducing boilerplate when the naming follows the <c>{name}-{suffix}</c> pattern.
     /// All items automatically depend on the root <see cref="Schedule{TWorkflow,TInput}"/> manifest.
@@ -367,8 +358,8 @@ public partial class SchedulerConfigurationBuilder
     /// <param name="name">The batch name. Used as <c>groupId</c>, <c>prunePrefix</c> is <c>"{name}-"</c>, and each external ID is <c>"{name}-{suffix}"</c>.</param>
     /// <param name="sources">The collection of source items to create dependent manifests from</param>
     /// <param name="map">A function that transforms each source item into a <c>Suffix</c> and <c>Input</c> pair. The full external ID is <c>"{name}-{suffix}"</c>.</param>
-    /// <param name="configure">Optional action to configure additional manifest options per source item</param>
-    /// <param name="priority">The base dispatch priority (0-31, default 0). DependentPriorityBoost is added on top at dispatch time. Per-item configure callback can override.</param>
+    /// <param name="options">Optional callback to configure manifest and group options via <see cref="ScheduleOptions"/></param>
+    /// <param name="configureEach">Optional action to configure per-item manifest options</param>
     /// <returns>The builder for method chaining</returns>
     /// <example>
     /// <code>
@@ -377,7 +368,8 @@ public partial class SchedulerConfigurationBuilder
     ///         "extract-all", new ExtractInput(), Every.Hours(1))
     ///     .IncludeMany&lt;ILoadWorkflow, LoadInput, int&gt;("load",
     ///         Enumerable.Range(0, 10),
-    ///         i => ($"{i}", new LoadInput { Partition = i }))
+    ///         i => ($"{i}", new LoadInput { Partition = i }),
+    ///         options => options.Group(group => group.MaxActiveJobs(5)))
     /// // Creates: load-0, load-1, ... load-9 (all depend on extract-all)
     /// // groupId: "load", prunePrefix: "load-"
     /// </code>
@@ -386,8 +378,8 @@ public partial class SchedulerConfigurationBuilder
         string name,
         IEnumerable<TSource> sources,
         Func<TSource, (string Suffix, TInput Input)> map,
-        Action<TSource, ManifestOptions>? configure = null,
-        int priority = 0
+        Action<ScheduleOptions>? options = null,
+        Action<TSource, ManifestOptions>? configureEach = null
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties =>
@@ -398,10 +390,13 @@ public partial class SchedulerConfigurationBuilder
                 var (suffix, input) = map(source);
                 return ($"{name}-{suffix}", input);
             },
-            configure,
-            prunePrefix: $"{name}-",
-            groupId: name,
-            priority: priority
+            opts =>
+            {
+                opts.Group(name);
+                opts.PrunePrefix($"{name}-");
+                options?.Invoke(opts);
+            },
+            configureEach
         );
 
     /// <summary>
@@ -409,7 +404,7 @@ public partial class SchedulerConfigurationBuilder
     /// explicitly maps to its parent via the <paramref name="dependsOn"/> function.
     /// Use after <see cref="ScheduleMany{TWorkflow,TInput,TSource}"/> for first-level batch dependents,
     /// or after <see cref="Schedule{TWorkflow,TInput}"/> when explicit per-item parent mapping is needed.
-    /// For deeper chaining after a previous <c>IncludeMany</c>, use <see cref="ThenIncludeMany{TWorkflow,TInput,TSource}"/>.
+    /// For deeper chaining after a previous <c>IncludeMany</c>, use <c>ThenIncludeMany</c>.
     /// </summary>
     /// <typeparam name="TWorkflow">The workflow interface type</typeparam>
     /// <typeparam name="TInput">The input type for the workflow (must implement IManifestProperties)</typeparam>
@@ -417,10 +412,8 @@ public partial class SchedulerConfigurationBuilder
     /// <param name="sources">The collection of source items to create dependent manifests from</param>
     /// <param name="map">A function that transforms each source item into an ExternalId and Input pair</param>
     /// <param name="dependsOn">A function that maps each source item to the external ID of its parent manifest</param>
-    /// <param name="configure">Optional action to configure additional manifest options per source item</param>
-    /// <param name="prunePrefix">When specified, deletes stale manifests with this prefix not in the current batch</param>
-    /// <param name="groupId">Optional group identifier for dashboard grouping</param>
-    /// <param name="priority">The base dispatch priority (0-31, default 0). DependentPriorityBoost is added on top at dispatch time. Per-item configure callback can override.</param>
+    /// <param name="options">Optional callback to configure manifest and group options via <see cref="ScheduleOptions"/></param>
+    /// <param name="configureEach">Optional action to configure per-item manifest options</param>
     /// <returns>The builder for method chaining</returns>
     /// <example>
     /// <code>
@@ -429,22 +422,20 @@ public partial class SchedulerConfigurationBuilder
     ///         Enumerable.Range(0, 10),
     ///         i => ($"extract-{i}", new ExtractInput { Index = i }),
     ///         Every.Minutes(5),
-    ///         groupId: "extract")
+    ///         options => options.Group("extract"))
     ///     .IncludeMany&lt;ITransformWorkflow, TransformInput, int&gt;(
     ///         Enumerable.Range(0, 10),
     ///         i => ($"transform-{i}", new TransformInput { Index = i }),
     ///         dependsOn: i => $"extract-{i}",
-    ///         groupId: "transform")
+    ///         options => options.Group("transform", group => group.MaxActiveJobs(5)))
     /// </code>
     /// </example>
     public SchedulerConfigurationBuilder IncludeMany<TWorkflow, TInput, TSource>(
         IEnumerable<TSource> sources,
         Func<TSource, (string ExternalId, TInput Input)> map,
         Func<TSource, string> dependsOn,
-        Action<TSource, ManifestOptions>? configure = null,
-        string? prunePrefix = null,
-        string? groupId = null,
-        int priority = 0
+        Action<ScheduleOptions>? options = null,
+        Action<TSource, ManifestOptions>? configureEach = null
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
@@ -452,11 +443,14 @@ public partial class SchedulerConfigurationBuilder
         var sourceList = sources.ToList();
         var firstId = sourceList.Select(s => map(s).ExternalId).FirstOrDefault() ?? "batch";
 
+        var resolved = new ScheduleOptions();
+        options?.Invoke(resolved);
+
         foreach (var source in sourceList)
         {
             var (extId, _) = map(source);
             var parentExtId = dependsOn(source);
-            _externalIdToGroupId[extId] = groupId ?? extId;
+            _externalIdToGroupId[extId] = resolved._groupId ?? extId;
             _dependencyEdges.Add((parentExtId, extId));
         }
 
@@ -470,18 +464,9 @@ public partial class SchedulerConfigurationBuilder
                         TWorkflow,
                         TInput,
                         TSource
-                    >(
-                        sourceList,
-                        map,
-                        dependsOn,
-                        configure,
-                        prunePrefix: prunePrefix,
-                        groupId: groupId,
-                        priority: priority,
-                        ct: ct
-                    );
+                    >(sourceList, map, dependsOn, options, configureEach, ct: ct);
                     return results.FirstOrDefault()!;
-                }
+                },
             }
         );
 
@@ -491,7 +476,7 @@ public partial class SchedulerConfigurationBuilder
     }
 
     /// <summary>
-    /// Name-based overload of <see cref="IncludeMany{TWorkflow,TInput,TSource}(IEnumerable{TSource},Func{TSource,ValueTuple{string,TInput}},Func{TSource,string},Action{TSource,ManifestOptions},string,string,int)"/>.
+    /// Name-based overload of <c>IncludeMany</c> (with dependsOn).
     /// The <paramref name="name"/> automatically derives <c>groupId</c>, <c>prunePrefix</c>, and
     /// the external ID prefix — reducing boilerplate when the naming follows the <c>{name}-{suffix}</c> pattern.
     /// Each item explicitly maps to its parent via the <paramref name="dependsOn"/> function.
@@ -503,8 +488,8 @@ public partial class SchedulerConfigurationBuilder
     /// <param name="sources">The collection of source items to create dependent manifests from</param>
     /// <param name="map">A function that transforms each source item into a <c>Suffix</c> and <c>Input</c> pair. The full external ID is <c>"{name}-{suffix}"</c>.</param>
     /// <param name="dependsOn">A function that maps each source item to the external ID of its parent manifest</param>
-    /// <param name="configure">Optional action to configure additional manifest options per source item</param>
-    /// <param name="priority">The base dispatch priority (0-31, default 0). DependentPriorityBoost is added on top at dispatch time. Per-item configure callback can override.</param>
+    /// <param name="options">Optional callback to configure manifest and group options via <see cref="ScheduleOptions"/></param>
+    /// <param name="configureEach">Optional action to configure per-item manifest options</param>
     /// <returns>The builder for method chaining</returns>
     /// <example>
     /// <code>
@@ -521,8 +506,8 @@ public partial class SchedulerConfigurationBuilder
         IEnumerable<TSource> sources,
         Func<TSource, (string Suffix, TInput Input)> map,
         Func<TSource, string> dependsOn,
-        Action<TSource, ManifestOptions>? configure = null,
-        int priority = 0
+        Action<ScheduleOptions>? options = null,
+        Action<TSource, ManifestOptions>? configureEach = null
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties =>
@@ -534,9 +519,12 @@ public partial class SchedulerConfigurationBuilder
                 return ($"{name}-{suffix}", input);
             },
             dependsOn,
-            configure,
-            prunePrefix: $"{name}-",
-            groupId: name,
-            priority: priority
+            opts =>
+            {
+                opts.Group(name);
+                opts.PrunePrefix($"{name}-");
+                options?.Invoke(opts);
+            },
+            configureEach
         );
 }

@@ -52,17 +52,17 @@ public class CyclicDependencyValidationTests
                             "job-a",
                             new FakeManifestInputA(),
                             Every.Minutes(5),
-                            groupId: "group-a"
+                            options => options.Group("group-a")
                         )
                         .ThenInclude<IFakeSchedulerWorkflowB, FakeManifestInputB>(
                             "job-b",
                             new FakeManifestInputB(),
-                            groupId: "group-b"
+                            options => options.Group("group-b")
                         )
                         .ThenInclude<IFakeSchedulerWorkflowC, FakeManifestInputC>(
                             "job-c",
                             new FakeManifestInputC(),
-                            groupId: "group-c"
+                            options => options.Group("group-c")
                         )
             );
 
@@ -82,12 +82,12 @@ public class CyclicDependencyValidationTests
                             "job-a",
                             new FakeManifestInputA(),
                             Every.Minutes(5),
-                            groupId: "same-group"
+                            options => options.Group("same-group")
                         )
                         .ThenInclude<IFakeSchedulerWorkflowB, FakeManifestInputB>(
                             "job-b",
                             new FakeManifestInputB(),
-                            groupId: "same-group"
+                            options => options.Group("same-group")
                         )
             );
 
@@ -107,23 +107,23 @@ public class CyclicDependencyValidationTests
                             "job-a",
                             new FakeManifestInputA(),
                             Every.Minutes(5),
-                            groupId: "group-a"
+                            options => options.Group("group-a")
                         )
                         .ThenInclude<IFakeSchedulerWorkflowB, FakeManifestInputB>(
                             "job-b",
                             new FakeManifestInputB(),
-                            groupId: "group-b"
+                            options => options.Group("group-b")
                         )
                         .Schedule<IFakeSchedulerWorkflowC, FakeManifestInputC>(
                             "job-c",
                             new FakeManifestInputC(),
                             Every.Minutes(5),
-                            groupId: "group-a"
+                            options => options.Group("group-a")
                         )
                         .ThenInclude<IFakeSchedulerWorkflowD, FakeManifestInputD>(
                             "job-d",
                             new FakeManifestInputD(),
-                            groupId: "group-c"
+                            options => options.Group("group-c")
                         )
             );
 
@@ -148,24 +148,24 @@ public class CyclicDependencyValidationTests
                             "job-a",
                             new FakeManifestInputA(),
                             Every.Minutes(5),
-                            groupId: "group-a"
+                            options => options.Group("group-a")
                         )
                         .ThenInclude<IFakeSchedulerWorkflowB, FakeManifestInputB>(
                             "job-b",
                             new FakeManifestInputB(),
-                            groupId: "group-b"
+                            options => options.Group("group-b")
                         )
                         // Chain 2: group-b → group-a (creates cycle)
                         .Schedule<IFakeSchedulerWorkflowC, FakeManifestInputC>(
                             "job-c",
                             new FakeManifestInputC(),
                             Every.Minutes(5),
-                            groupId: "group-b"
+                            options => options.Group("group-b")
                         )
                         .ThenInclude<IFakeSchedulerWorkflowD, FakeManifestInputD>(
                             "job-d",
                             new FakeManifestInputD(),
-                            groupId: "group-a"
+                            options => options.Group("group-a")
                         )
             );
 
@@ -187,29 +187,29 @@ public class CyclicDependencyValidationTests
                             "job-a",
                             new FakeManifestInputA(),
                             Every.Minutes(5),
-                            groupId: "group-a"
+                            options => options.Group("group-a")
                         )
                         .ThenInclude<IFakeSchedulerWorkflowB, FakeManifestInputB>(
                             "job-b",
                             new FakeManifestInputB(),
-                            groupId: "group-b"
+                            options => options.Group("group-b")
                         )
                         .ThenInclude<IFakeSchedulerWorkflowC, FakeManifestInputC>(
                             "job-c",
                             new FakeManifestInputC(),
-                            groupId: "group-c"
+                            options => options.Group("group-c")
                         )
                         // Close the cycle: group-c → group-a
                         .Schedule<IFakeSchedulerWorkflowD, FakeManifestInputD>(
                             "job-d",
                             new FakeManifestInputD(),
                             Every.Minutes(5),
-                            groupId: "group-c"
+                            options => options.Group("group-c")
                         )
                         .ThenInclude<IFakeSchedulerWorkflowA, FakeManifestInputA>(
                             "job-a2",
                             new FakeManifestInputA(),
-                            groupId: "group-a"
+                            options => options.Group("group-a")
                         )
             );
 

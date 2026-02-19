@@ -23,6 +23,8 @@ public static class DataContextExtensions
         this IDataContext context,
         string groupName,
         int priority,
+        int? maxActiveJobs = null,
+        bool isEnabled = true,
         CancellationToken ct = default
     )
     {
@@ -34,6 +36,8 @@ public static class DataContextExtensions
         if (existing != null)
         {
             existing.Priority = priority;
+            existing.MaxActiveJobs = maxActiveJobs;
+            existing.IsEnabled = isEnabled;
             existing.UpdatedAt = DateTime.UtcNow;
             return existing.Id;
         }
@@ -42,6 +46,8 @@ public static class DataContextExtensions
         {
             Name = groupName,
             Priority = priority,
+            MaxActiveJobs = maxActiveJobs,
+            IsEnabled = isEnabled,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
         };
@@ -61,12 +67,21 @@ public static class DataContextExtensions
         Schedule schedule,
         ManifestOptions options,
         string groupId,
+        int groupPriority,
+        int? groupMaxActiveJobs = null,
+        bool groupIsEnabled = true,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
     {
-        var manifestGroupId = await context.EnsureManifestGroupAsync(groupId, options.Priority, ct);
+        var manifestGroupId = await context.EnsureManifestGroupAsync(
+            groupId,
+            groupPriority,
+            groupMaxActiveJobs,
+            groupIsEnabled,
+            ct
+        );
 
         var existing = await context.Manifests.FirstOrDefaultAsync(
             m => m.ExternalId == externalId,
@@ -123,12 +138,21 @@ public static class DataContextExtensions
         int dependsOnManifestId,
         ManifestOptions options,
         string groupId,
+        int groupPriority,
+        int? groupMaxActiveJobs = null,
+        bool groupIsEnabled = true,
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
     {
-        var manifestGroupId = await context.EnsureManifestGroupAsync(groupId, options.Priority, ct);
+        var manifestGroupId = await context.EnsureManifestGroupAsync(
+            groupId,
+            groupPriority,
+            groupMaxActiveJobs,
+            groupIsEnabled,
+            ct
+        );
 
         var existing = await context.Manifests.FirstOrDefaultAsync(
             m => m.ExternalId == externalId,

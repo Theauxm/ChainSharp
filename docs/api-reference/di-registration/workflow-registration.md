@@ -90,6 +90,6 @@ Without `AddChainSharpWorkflow`, these properties would remain `null` after DI r
 
 ## Remarks
 
-- If your workflows are discovered via [AddEffectWorkflowBus]({% link api-reference/configuration/add-effect-workflow-bus.md %}), you don't need to register them manually — the bus handles registration automatically.
+- If your workflows are discovered via [AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %}), you don't need to register them manually — the bus handles registration automatically.
 - These methods are primarily useful for workflows registered outside of assembly scanning, or when you need explicit control over the DI lifetime.
 - The non-generic overloads accept `Type` parameters for dynamic/reflection-based registration scenarios.

@@ -6,6 +6,7 @@ using ChainSharp.Effect.Models;
 using ChainSharp.Effect.Models.DeadLetter;
 using ChainSharp.Effect.Models.Log;
 using ChainSharp.Effect.Models.Manifest;
+using ChainSharp.Effect.Models.ManifestGroup;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.WorkQueue;
 using Microsoft.EntityFrameworkCore;
@@ -89,6 +90,8 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
     public DbSet<DeadLetter> DeadLetters { get; set; }
 
     public DbSet<WorkQueue> WorkQueues { get; set; }
+
+    public DbSet<ManifestGroup> ManifestGroups { get; set; }
 
     #endregion
 

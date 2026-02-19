@@ -49,11 +49,40 @@ services.AddChainSharpEffects(options => options
 3. Registers `IWorkflowBus` for dynamic workflow dispatch
 4. Registers `IWorkflowRegistry` for workflow type lookup
 
+## How Discovery Works
+
+1. Scans the specified assemblies for all types implementing `IEffectWorkflow<TIn, TOut>`.
+2. For each discovered type, extracts the `TIn` (input) type.
+3. Registers the workflow in the `IWorkflowRegistry` keyed by `TIn`.
+4. Registers the workflow in the DI container with the specified lifetime.
+
+## Input Type Uniqueness
+
+Each input type must map to **exactly one** workflow. If two workflows accept the same `TIn`, registration will throw an exception.
+
+```csharp
+// This is fine — different input types
+public class CreateOrderWorkflow : EffectWorkflow<CreateOrderInput, OrderResult> { }
+public class CancelOrderWorkflow : EffectWorkflow<CancelOrderInput, OrderResult> { }
+
+// This will FAIL — both accept OrderInput
+public class CreateOrderWorkflow : EffectWorkflow<OrderInput, OrderResult> { }
+public class UpdateOrderWorkflow : EffectWorkflow<OrderInput, OrderResult> { }
+```
+
+## Lifetime Considerations
+
+| Lifetime | When to Use |
+|----------|-------------|
+| `Transient` (default) | Most workflows — each execution gets a fresh instance |
+| `Scoped` | When the workflow needs to share state with other scoped services in the same request |
+| `Singleton` | Rarely appropriate — workflows typically have per-execution state |
+
 ## Remarks
 
-- Each input type must map to **exactly one** workflow. If two workflows accept the same input type, registration will fail.
-- The assembly scanning discovers workflows by their `IEffectWorkflow<TIn, TOut>` interface, not by convention.
-- See [WorkflowBus]({% link api-reference/mediator-api/workflow-bus.md %}) for the runtime dispatch API.
+- The assembly scanning uses reflection to find `IEffectWorkflow<,>` implementations. Ensure the assemblies containing your workflows are passed to the `assemblies` parameter.
+- Workflows registered here are available both through `IWorkflowBus.RunAsync` and through the scheduler system.
+- See [WorkflowBus]({{ site.baseurl }}{% link api-reference/mediator-api/workflow-bus.md %}) for the runtime dispatch API.
 
 ## Package
 

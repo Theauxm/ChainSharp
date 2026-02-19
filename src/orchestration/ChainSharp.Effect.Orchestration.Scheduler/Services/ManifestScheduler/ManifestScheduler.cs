@@ -29,6 +29,7 @@ public class ManifestScheduler(
         TInput input,
         Schedule schedule,
         Action<ManifestOptions>? configure = null,
+        string? groupId = null,
         int priority = 0,
         CancellationToken ct = default
     )
@@ -49,6 +50,7 @@ public class ManifestScheduler(
             input,
             schedule,
             options,
+            groupId: groupId ?? externalId,
             ct: ct
         );
 
@@ -93,6 +95,12 @@ public class ManifestScheduler(
 
         try
         {
+            var effectiveGroupId =
+                groupId
+                ?? prunePrefix
+                ?? sourceList.Select(s => map(s).ExternalId).FirstOrDefault()
+                ?? "batch";
+
             foreach (var source in sourceList)
             {
                 var (externalId, input) = map(source);
@@ -104,7 +112,7 @@ public class ManifestScheduler(
                     input,
                     schedule,
                     options,
-                    groupId: groupId,
+                    groupId: effectiveGroupId,
                     ct: ct
                 );
                 results.Add(manifest);
@@ -178,6 +186,7 @@ public class ManifestScheduler(
         TInput input,
         string dependsOnExternalId,
         Action<ManifestOptions>? configure = null,
+        string? groupId = null,
         int priority = 0,
         CancellationToken ct = default
     )
@@ -208,6 +217,7 @@ public class ManifestScheduler(
             input,
             parentManifest.Id,
             options,
+            groupId: groupId ?? externalId,
             ct: ct
         );
 
@@ -257,6 +267,12 @@ public class ManifestScheduler(
 
         try
         {
+            var effectiveGroupId =
+                groupId
+                ?? prunePrefix
+                ?? sourceList.Select(s => map(s).ExternalId).FirstOrDefault()
+                ?? "batch";
+
             // Collect all unique parent external IDs and resolve them in one pass
             var parentExternalIds = sourceList.Select(dependsOn).Distinct().ToList();
             var parentManifests = await context
@@ -282,7 +298,7 @@ public class ManifestScheduler(
                     input,
                     parentManifest.Id,
                     options,
-                    groupId: groupId,
+                    groupId: effectiveGroupId,
                     ct: ct
                 );
                 results.Add(manifest);

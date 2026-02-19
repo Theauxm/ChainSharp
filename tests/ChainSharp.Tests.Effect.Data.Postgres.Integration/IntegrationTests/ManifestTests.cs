@@ -9,6 +9,7 @@ using FluentAssertions;
 using LanguageExt;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using MG = ChainSharp.Effect.Models.ManifestGroup;
 
 namespace ChainSharp.Tests.Effect.Data.Postgres.Integration.IntegrationTests;
 
@@ -23,7 +24,19 @@ public class ManifestTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
+        var group = new MG.ManifestGroup
+        {
+            Name = $"group-{Guid.NewGuid():N}",
+            Priority = 0,
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await context.Track(group);
+        await context.SaveChanges(CancellationToken.None);
+
         var manifest = Manifest.Create(new CreateManifest { Name = typeof(Unit) });
+        manifest.ManifestGroupId = group.Id;
 
         await context.Track(manifest);
 
@@ -54,9 +67,21 @@ public class ManifestTests : TestSetup
             Enabled = true
         };
 
+        var group = new MG.ManifestGroup
+        {
+            Name = $"group-{Guid.NewGuid():N}",
+            Priority = 0,
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await context.Track(group);
+        await context.SaveChanges(CancellationToken.None);
+
         var manifest = Manifest.Create(
             new CreateManifest { Name = typeof(Unit), Properties = config }
         );
+        manifest.ManifestGroupId = group.Id;
 
         await context.Track(manifest);
 
@@ -86,7 +111,19 @@ public class ManifestTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
+        var group = new MG.ManifestGroup
+        {
+            Name = $"group-{Guid.NewGuid():N}",
+            Priority = 0,
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await context.Track(group);
+        await context.SaveChanges(CancellationToken.None);
+
         var manifest = Manifest.Create(new CreateManifest { Name = typeof(Unit) });
+        manifest.ManifestGroupId = group.Id;
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);
@@ -119,9 +156,21 @@ public class ManifestTests : TestSetup
             Enabled = false
         };
 
+        var group = new MG.ManifestGroup
+        {
+            Name = $"group-{Guid.NewGuid():N}",
+            Priority = 0,
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await context.Track(group);
+        await context.SaveChanges(CancellationToken.None);
+
         var manifest = Manifest.Create(
             new CreateManifest { Name = typeof(Unit), Properties = initialConfig }
         );
+        manifest.ManifestGroupId = group.Id;
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);
@@ -169,9 +218,21 @@ public class ManifestTests : TestSetup
             Enabled = true
         };
 
+        var group = new MG.ManifestGroup
+        {
+            Name = $"group-{Guid.NewGuid():N}",
+            Priority = 0,
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await context.Track(group);
+        await context.SaveChanges(CancellationToken.None);
+
         var manifest = Manifest.Create(
             new CreateManifest { Name = typeof(Unit), Properties = config }
         );
+        manifest.ManifestGroupId = group.Id;
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);
@@ -194,6 +255,17 @@ public class ManifestTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
+        var group = new MG.ManifestGroup
+        {
+            Name = $"group-{Guid.NewGuid():N}",
+            Priority = 0,
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await context.Track(group);
+        await context.SaveChanges(CancellationToken.None);
+
         // Create a manifest (job definition)
         var manifest = Manifest.Create(
             new CreateManifest
@@ -207,6 +279,7 @@ public class ManifestTests : TestSetup
                 }
             }
         );
+        manifest.ManifestGroupId = group.Id;
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);
@@ -247,6 +320,17 @@ public class ManifestTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
+        var group = new MG.ManifestGroup
+        {
+            Name = $"group-{Guid.NewGuid():N}",
+            Priority = 0,
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await context.Track(group);
+        await context.SaveChanges(CancellationToken.None);
+
         // Create a manifest (job definition)
         var manifest = Manifest.Create(
             new CreateManifest
@@ -260,6 +344,7 @@ public class ManifestTests : TestSetup
                 }
             }
         );
+        manifest.ManifestGroupId = group.Id;
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);
@@ -311,7 +396,19 @@ public class ManifestTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
+        var group = new MG.ManifestGroup
+        {
+            Name = $"group-{Guid.NewGuid():N}",
+            Priority = 0,
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await context.Track(group);
+        await context.SaveChanges(CancellationToken.None);
+
         var manifest = Manifest.Create(new CreateManifest { Name = typeof(Unit) });
+        manifest.ManifestGroupId = group.Id;
 
         // Override the auto-generated GUID with a non-GUID external ID
         var customExternalId = "custom-external-id-that-is-not-a-guid";
@@ -340,7 +437,19 @@ public class ManifestTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
+        var group = new MG.ManifestGroup
+        {
+            Name = $"group-{Guid.NewGuid():N}",
+            Priority = 0,
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await context.Track(group);
+        await context.SaveChanges(CancellationToken.None);
+
         var manifest = Manifest.Create(new CreateManifest { Name = typeof(Unit) });
+        manifest.ManifestGroupId = group.Id;
 
         // Override with an external ID longer than the previous char(32) limit
         var longExternalId =
@@ -370,7 +479,19 @@ public class ManifestTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
+        var group = new MG.ManifestGroup
+        {
+            Name = $"group-{Guid.NewGuid():N}",
+            Priority = 0,
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await context.Track(group);
+        await context.SaveChanges(CancellationToken.None);
+
         var manifest = Manifest.Create(new CreateManifest { Name = typeof(Unit) });
+        manifest.ManifestGroupId = group.Id;
 
         // Override with a short external ID
         var shortExternalId = "abc";
@@ -401,6 +522,17 @@ public class ManifestTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
+        var group = new MG.ManifestGroup
+        {
+            Name = $"group-{Guid.NewGuid():N}",
+            Priority = 0,
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await context.Track(group);
+        await context.SaveChanges(CancellationToken.None);
+
         var manifest = Manifest.Create(
             new CreateManifest
             {
@@ -412,6 +544,7 @@ public class ManifestTests : TestSetup
                 TimeoutSeconds = 3600
             }
         );
+        manifest.ManifestGroupId = group.Id;
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);
@@ -438,6 +571,17 @@ public class ManifestTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
+        var group = new MG.ManifestGroup
+        {
+            Name = $"group-{Guid.NewGuid():N}",
+            Priority = 0,
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await context.Track(group);
+        await context.SaveChanges(CancellationToken.None);
+
         var manifest = Manifest.Create(
             new CreateManifest
             {
@@ -446,6 +590,7 @@ public class ManifestTests : TestSetup
                 IntervalSeconds = 300 // Every 5 minutes
             }
         );
+        manifest.ManifestGroupId = group.Id;
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);
@@ -469,6 +614,17 @@ public class ManifestTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
+        var group = new MG.ManifestGroup
+        {
+            Name = $"group-{Guid.NewGuid():N}",
+            Priority = 0,
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await context.Track(group);
+        await context.SaveChanges(CancellationToken.None);
+
         var manifest = Manifest.Create(
             new CreateManifest
             {
@@ -478,6 +634,7 @@ public class ManifestTests : TestSetup
                 CronExpression = "0 0 * * *"
             }
         );
+        manifest.ManifestGroupId = group.Id;
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);
@@ -500,9 +657,21 @@ public class ManifestTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
+        var group = new MG.ManifestGroup
+        {
+            Name = $"group-{Guid.NewGuid():N}",
+            Priority = 0,
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await context.Track(group);
+        await context.SaveChanges(CancellationToken.None);
+
         var manifest = Manifest.Create(
             new CreateManifest { Name = typeof(Unit), ScheduleType = ScheduleType.OnDemand }
         );
+        manifest.ManifestGroupId = group.Id;
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);
@@ -533,6 +702,17 @@ public class ManifestTests : TestSetup
 
         using var context = (IDataContext)postgresContextFactory.Create();
 
+        var group = new MG.ManifestGroup
+        {
+            Name = $"group-{Guid.NewGuid():N}",
+            Priority = 0,
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await context.Track(group);
+        await context.SaveChanges(CancellationToken.None);
+
         var enabledManifest = Manifest.Create(
             new CreateManifest
             {
@@ -542,6 +722,7 @@ public class ManifestTests : TestSetup
                 CronExpression = "0 * * * *"
             }
         );
+        enabledManifest.ManifestGroupId = group.Id;
 
         var disabledManifest = Manifest.Create(
             new CreateManifest
@@ -552,6 +733,7 @@ public class ManifestTests : TestSetup
                 CronExpression = "0 * * * *"
             }
         );
+        disabledManifest.ManifestGroupId = group.Id;
 
         await context.Track(enabledManifest);
         await context.Track(disabledManifest);
@@ -643,9 +825,21 @@ public class ManifestTests : TestSetup
             Values = [1, 2, 3]
         };
 
+        var group = new MG.ManifestGroup
+        {
+            Name = $"group-{Guid.NewGuid():N}",
+            Priority = 0,
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await context.Track(group);
+        await context.SaveChanges(CancellationToken.None);
+
         var manifest = Manifest.Create(
             new CreateManifest { Name = typeof(Unit), Properties = config }
         );
+        manifest.ManifestGroupId = group.Id;
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);
@@ -678,9 +872,21 @@ public class ManifestTests : TestSetup
             Values = [10, 20]
         };
 
+        var group = new MG.ManifestGroup
+        {
+            Name = $"group-{Guid.NewGuid():N}",
+            Priority = 0,
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await context.Track(group);
+        await context.SaveChanges(CancellationToken.None);
+
         var manifest = Manifest.Create(
             new CreateManifest { Name = typeof(Unit), Properties = config }
         );
+        manifest.ManifestGroupId = group.Id;
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);
@@ -714,9 +920,21 @@ public class ManifestTests : TestSetup
             Values = [100, 200, 300, 400, 500]
         };
 
+        var group = new MG.ManifestGroup
+        {
+            Name = $"group-{Guid.NewGuid():N}",
+            Priority = 0,
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        await context.Track(group);
+        await context.SaveChanges(CancellationToken.None);
+
         var manifest = Manifest.Create(
             new CreateManifest { Name = typeof(Unit), Properties = config }
         );
+        manifest.ManifestGroupId = group.Id;
 
         await context.Track(manifest);
         await context.SaveChanges(CancellationToken.None);

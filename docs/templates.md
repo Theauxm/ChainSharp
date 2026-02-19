@@ -78,7 +78,7 @@ public class HelloWorldWorkflow : EffectWorkflow<HelloWorldInput, Unit>, IHelloW
 }
 ```
 
-*API Reference: [Activate]({% link api-reference/workflow-methods/activate.md %}), [Chain]({% link api-reference/workflow-methods/chain.md %}), [Resolve]({% link api-reference/workflow-methods/resolve.md %})*
+*API Reference: [Activate]({{ site.baseurl }}{% link api-reference/workflow-methods/activate.md %}), [Chain]({{ site.baseurl }}{% link api-reference/workflow-methods/chain.md %}), [Resolve]({{ site.baseurl }}{% link api-reference/workflow-methods/resolve.md %})*
 
 ### Package References
 
@@ -152,7 +152,7 @@ scheduler
     );
 ```
 
-*API Reference: [AddMetadataCleanup]({% link api-reference/scheduler-api/add-metadata-cleanup.md %}), [UseHangfire]({% link api-reference/scheduler-api/use-hangfire.md %}), [Schedule]({% link api-reference/scheduler-api/schedule.md %})*
+*API Reference: [AddMetadataCleanup]({{ site.baseurl }}{% link api-reference/scheduler-api/add-metadata-cleanup.md %}), [UseHangfire]({{ site.baseurl }}{% link api-reference/scheduler-api/use-hangfire.md %}), [Schedule]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %})*
 
 See [Scheduling](scheduler.md) for dependent workflows, bulk scheduling, and dead letter handling.
 

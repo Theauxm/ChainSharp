@@ -17,18 +17,9 @@ Activate(input)
     .Resolve();
 ```
 
-*API Reference: [Activate]({% link api-reference/workflow-methods/activate.md %}), [Chain]({% link api-reference/workflow-methods/chain.md %}), [Resolve]({% link api-reference/workflow-methods/resolve.md %})*
+*API Reference: [Activate]({{ site.baseurl }}{% link api-reference/workflow-methods/activate.md %}), [Chain]({{ site.baseurl }}{% link api-reference/workflow-methods/chain.md %}), [Resolve]({{ site.baseurl }}{% link api-reference/workflow-methods/resolve.md %})*
 
-## How It Works
-
-When the chain reaches `.Chain<TStep>()`:
-
-1. The step's `TIn` type is looked up in Memory
-2. The step is resolved from the DI container and executed with that value
-3. The step's `TOut` is stored in Memory
-4. If `TIn` is not in Memory, the workflow fails
-
-The [Analyzer](../analyzer.md) catches missing types at compile time, so you'll see these errors in your IDE before you ever run the code.
+For all 12 overloads, type parameter constraints, and step-wiring behavior, see [API Reference: Chain]({{ site.baseurl }}{% link api-reference/workflow-methods/chain.md %}). The [Analyzer](../analyzer.md) catches missing types at compile time, so you'll see these errors in your IDE before you ever run the code.
 
 ## Railway Behavior
 
@@ -42,7 +33,7 @@ Activate(input)
     .Resolve();                    // Returns Left(ValidationException)
 ```
 
-*API Reference: [Chain]({% link api-reference/workflow-methods/chain.md %}), [Resolve]({% link api-reference/workflow-methods/resolve.md %})*
+*API Reference: [Chain]({{ site.baseurl }}{% link api-reference/workflow-methods/chain.md %}), [Resolve]({{ site.baseurl }}{% link api-reference/workflow-methods/resolve.md %})*
 
 This is the core of Railway Oriented Programming—see [Railway Programming](../concepts/railway-programming.md) for the full explanation.
 

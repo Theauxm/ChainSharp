@@ -23,15 +23,21 @@ public abstract class PollingComponentBase : ComponentBase, IAsyncDisposable
 
     protected override async Task OnInitializedAsync()
     {
+        _cts?.Cancel();
+        _cts?.Dispose();
         _cts = new CancellationTokenSource();
+        var token = _cts.Token;
 
         await DashboardSettings.InitializeAsync();
 
-        await LoadDataAsync(_cts.Token);
+        if (token.IsCancellationRequested)
+            return;
+
+        await LoadDataAsync(token);
         DashboardSettings.NotifyPolled();
         IsLoading = false;
 
-        _ = PollAsync(_cts.Token);
+        _ = PollAsync(token);
     }
 
     private async Task PollAsync(CancellationToken ct)

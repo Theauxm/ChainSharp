@@ -14,7 +14,27 @@ Batch-schedules multiple instances of a workflow from a collection. All manifest
 
 ## Signatures
 
-### Startup (SchedulerConfigurationBuilder)
+### Startup: Name-Based (Recommended)
+
+```csharp
+public SchedulerConfigurationBuilder ScheduleMany<TWorkflow, TInput, TSource>(
+    string name,
+    IEnumerable<TSource> sources,
+    Func<TSource, (string Suffix, TInput Input)> map,
+    Schedule schedule,
+    Action<TSource, ManifestOptions>? configure = null,
+    int priority = 0
+)
+    where TWorkflow : IEffectWorkflow<TInput, Unit>
+    where TInput : IManifestProperties
+```
+
+The `name` parameter automatically derives:
+- **`groupId`** = `name`
+- **`prunePrefix`** = `"{name}-"`
+- **`externalId`** = `"{name}-{suffix}"` (where `suffix` comes from the `map` function)
+
+### Startup: Explicit
 
 ```csharp
 public SchedulerConfigurationBuilder ScheduleMany<TWorkflow, TInput, TSource>(
@@ -57,14 +77,27 @@ Task<IReadOnlyList<Manifest>> ScheduleManyAsync<TWorkflow, TInput, TSource>(
 
 ## Parameters
 
+### Name-Based Overload
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `name` | `string` | Yes | — | The batch name. Automatically derives `groupId` = `name`, `prunePrefix` = `"{name}-"`, and each external ID = `"{name}-{suffix}"`. |
+| `sources` | `IEnumerable<TSource>` | Yes | — | The collection of items to create manifests from. Each item becomes one scheduled manifest. |
+| `map` | `Func<TSource, (string Suffix, TInput Input)>` | Yes | — | A function that transforms each source item into a `Suffix` and `Input` pair. The full external ID is `"{name}-{suffix}"`. |
+| `schedule` | `Schedule` | Yes | — | The schedule definition applied to **all** manifests in the batch. Use [Every]({{ site.baseurl }}{% link api-reference/scheduler-api/scheduling-helpers.md %}) or [Cron]({{ site.baseurl }}{% link api-reference/scheduler-api/scheduling-helpers.md %}) helpers. |
+| `configure` | `Action<TSource, ManifestOptions>?` | No | `null` | Optional callback to set per-item manifest options. |
+| `priority` | `int` | No | `0` | Dispatch priority (0-31) applied to **all** items in the batch. Higher values are dispatched first. Per-item `configure` callback can override. |
+
+### Explicit Overload
+
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `sources` | `IEnumerable<TSource>` | Yes | — | The collection of items to create manifests from. Each item becomes one scheduled manifest. |
 | `map` | `Func<TSource, (string ExternalId, TInput Input)>` | Yes | — | A function that transforms each source item into an `ExternalId` (unique identifier) and `Input` (workflow input data) pair. |
-| `schedule` | `Schedule` | Yes | — | The schedule definition applied to **all** manifests in the batch. Use [Every]({% link api-reference/scheduler-api/scheduling-helpers.md %}) or [Cron]({% link api-reference/scheduler-api/scheduling-helpers.md %}) helpers. |
+| `schedule` | `Schedule` | Yes | — | The schedule definition applied to **all** manifests in the batch. Use [Every]({{ site.baseurl }}{% link api-reference/scheduler-api/scheduling-helpers.md %}) or [Cron]({{ site.baseurl }}{% link api-reference/scheduler-api/scheduling-helpers.md %}) helpers. |
 | `configure` | `Action<TSource, ManifestOptions>?` | No | `null` | Optional callback to set per-item manifest options. Unlike `Schedule`'s `Action<ManifestOptions>`, this receives **both** the source item and the options, allowing per-item configuration. |
 | `prunePrefix` | `string?` | No | `null` | When specified, deletes any existing manifests whose `ExternalId` starts with this prefix but were **not** included in the current batch. Enables automatic cleanup when items are removed from the source collection between deployments. |
-| `groupId` | `string?` | No | `null` | Optional group identifier for dashboard grouping. All manifests in the batch are tagged with this group. |
+| `groupId` | `string?` | No | `null` | Manifest group name. All manifests in the batch belong to this ManifestGroup, which provides per-group dispatch controls (MaxActiveJobs, Priority, IsEnabled) configurable from the dashboard. When null, defaults to prunePrefix or the first externalId in the batch. |
 | `priority` | `int` | No | `0` | Dispatch priority (0-31) applied to **all** items in the batch. Higher values are dispatched first. Per-item `configure` callback can override. |
 | `ct` | `CancellationToken` | No | `default` | Cancellation token (runtime API only). |
 
@@ -75,7 +108,26 @@ Task<IReadOnlyList<Manifest>> ScheduleManyAsync<TWorkflow, TInput, TSource>(
 
 ## Examples
 
-### Basic Batch Scheduling
+### Basic Batch Scheduling (Name-Based)
+
+```csharp
+var tables = new[] { "customers", "orders", "products" };
+
+services.AddChainSharpEffects(options => options
+    .AddScheduler(scheduler => scheduler
+        .UseHangfire(connectionString)
+        .ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
+            "sync",
+            tables,
+            table => (table, new SyncTableInput { TableName = table }),
+            Every.Minutes(5))
+    )
+);
+// Creates: sync-customers, sync-orders, sync-products
+// groupId: "sync", prunePrefix: "sync-"
+```
+
+### Basic Batch Scheduling (Explicit)
 
 ```csharp
 var tables = new[] { "customers", "orders", "products" };
@@ -96,12 +148,22 @@ services.AddChainSharpEffects(options => options
 
 ### With Pruning (Automatic Stale Cleanup)
 
+The name-based overload includes pruning automatically (`prunePrefix: "{name}-"`). With the explicit overload, specify it manually:
+
 ```csharp
 // If "partners" was in a previous deployment but removed from this list,
 // its manifest ("sync-partners") will be deleted because it starts with
 // "sync-" but wasn't included in the current batch.
 var tables = new[] { "customers", "orders" };
 
+// Name-based: pruning is automatic
+scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
+    "sync",
+    tables,
+    table => (table, new SyncTableInput { TableName = table }),
+    Every.Minutes(5));
+
+// Explicit: specify prunePrefix manually
 scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
     tables,
     table => ($"sync-{table}", new SyncTableInput { TableName = table }),
@@ -154,4 +216,5 @@ public class TenantSyncService(IManifestScheduler scheduler)
 - Pruning is included in the same transaction — stale manifests are deleted atomically with the new batch.
 - The `configure` callback receives `Action<TSource, ManifestOptions>` (not `Action<ManifestOptions>` like `Schedule`) — this lets you customize options based on the source item.
 - The source collection is materialized (`.ToList()`) internally to avoid multiple enumeration.
-- `ScheduleMany` cannot be followed by `.Then()` — use [ThenMany]({% link api-reference/scheduler-api/dependent-scheduling.md %}) instead for batch dependent scheduling.
+- The `groupId` creates or updates a ManifestGroup entity. Per-group settings (MaxActiveJobs, Priority, IsEnabled) are managed from the dashboard — not from code. See [Per-Group Dispatch Controls]({{ site.baseurl }}{% link scheduler/scheduling-options.md %}#per-group-dispatch-controls).
+- `ScheduleMany` cannot be followed by `.ThenInclude()` — use [IncludeMany]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %}) (with `dependsOn`) instead for batch dependent scheduling.

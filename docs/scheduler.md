@@ -30,13 +30,13 @@ await scheduler.ScheduleAsync<ISyncCustomersWorkflow, SyncCustomersInput>(
 
 // For bulk scheduling from a collection, use ScheduleMany:
 scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
+    "sync",
     tables,
-    table => ($"sync-{table}", new SyncTableInput { TableName = table }),
-    Every.Minutes(5),
-    prunePrefix: "sync-");
+    table => (table, new SyncTableInput { TableName = table }),
+    Every.Minutes(5));
 ```
 
-*API Reference: [ScheduleAsync]({% link api-reference/scheduler-api/schedule.md %}), [ScheduleMany]({% link api-reference/scheduler-api/schedule-many.md %})*
+*API Reference: [ScheduleAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}), [ScheduleMany]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %})*
 
 The scheduler creates the manifest, resolves the correct type names, and serializes the input automatically. Every call is an upsert—safe to run on every startup without duplicating jobs.
 
@@ -76,11 +76,27 @@ A manifest can depend on another manifest. Instead of running on a timer, it fir
 scheduler
     .Schedule<IExtractWorkflow, ExtractInput>(
         "extract", new ExtractInput(), Every.Hours(1))
-    .Then<ILoadWorkflow, LoadInput>(
+    .Include<ILoadWorkflow, LoadInput>(
         "load", new LoadInput());
 ```
 
-*API Reference: [Schedule]({% link api-reference/scheduler-api/schedule.md %}), [Then]({% link api-reference/scheduler-api/dependent-scheduling.md %})*
+*API Reference: [Schedule]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}), [Include]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %})*
+
+### Manifest Groups
+
+Every manifest belongs to a `ManifestGroup`. Groups provide per-group dispatch controls — `MaxActiveJobs`, `Priority`, and `IsEnabled` — configurable from the dashboard. When a group hits its concurrency cap, the dispatcher skips it and continues processing other groups, preventing starvation.
+
+```csharp
+scheduler
+    .Schedule<ISyncWorkflow, SyncInput>(
+        "sync-data", new SyncInput(), Every.Hours(1),
+        groupId: "data-sync")
+    .Include<ILoadWorkflow, LoadInput>(
+        "load-data", new LoadInput(),
+        groupId: "data-sync");
+```
+
+When `groupId` is not specified, it defaults to the manifest's `externalId`. See [Scheduling Options](scheduler/scheduling-options.md#per-group-dispatch-controls).
 
 ## Architecture
 
@@ -97,8 +113,8 @@ scheduler
 │                              │  │                               │
 │  LoadManifests               │  │  LoadQueuedJobs               │
 │  → ReapFailedJobs            │  │  → DispatchJobs               │
-│  → DetermineJobsToQueue      │  │    (enforces MaxActiveJobs)   │
-│  → CreateWorkQueueEntries    │  │                               │
+│  → DetermineJobsToQueue      │  │    (enforces global and       │
+│  → CreateWorkQueueEntries    │  │     per-group MaxActiveJobs)  │
 └──────────────┬───────────────┘  └──────────────┬────────────────┘
                │                                  │
                │ writes to                        │ reads from
@@ -124,11 +140,11 @@ scheduler
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-The **ManifestPollingService** is a .NET `BackgroundService` that runs two workflows each cycle: the ManifestManager first, then the JobDispatcher. It supports sub-minute polling (e.g., every 5 seconds). On startup, it seeds any manifests configured via `.Schedule()`, `.ScheduleMany()`, `.Then()`, or `.ThenMany()`.
+The **ManifestPollingService** is a .NET `BackgroundService` that runs two workflows each cycle: the ManifestManager first, then the JobDispatcher. It supports sub-minute polling (e.g., every 5 seconds). On startup, it seeds any manifests configured via `.Schedule()`, `.ScheduleMany()`, `.ThenInclude()`, `.ThenIncludeMany()`, `.Include()`, or `.IncludeMany()`.
 
 The **ManifestManagerWorkflow** loads enabled manifests, dead-letters any that have exceeded their retry limit, determines which are due for execution (including [dependent manifests](scheduler/dependent-workflows.md) whose parent has a newer `LastSuccessfulRun`), and writes them to the work queue. It doesn't enqueue anything directly—it just records intent.
 
-The **JobDispatcherWorkflow** reads from the work queue, enforces the `MaxActiveJobs` limit, creates `Metadata` records, and enqueues to the background task server (Hangfire). This is the single gateway to execution. Everything goes through the work queue first—manifest schedules, `TriggerAsync` calls, dashboard re-runs—so capacity enforcement happens in one place.
+The **JobDispatcherWorkflow** reads from the work queue, enforces both global and per-group `MaxActiveJobs` limits, creates `Metadata` records, and enqueues to the background task server (Hangfire). This is the single gateway to execution. Everything goes through the work queue first—manifest schedules, `TriggerAsync` calls, dashboard re-runs—so capacity enforcement happens in one place.
 
 The **TaskServerExecutorWorkflow** runs on Hangfire workers for each enqueued job. It loads the Metadata and Manifest, validates the job is still pending, executes the target workflow via `IWorkflowBus`, and updates `LastSuccessfulRun` on success.
 
@@ -136,13 +152,13 @@ See [Administrative Workflows](scheduler/admin-workflows.md) for detailed docume
 
 ## API Reference
 
-For complete method signatures, all parameters, and detailed usage examples for every scheduling function, see the [Scheduler API Reference]({% link api-reference/scheduler-api.md %}):
+For complete method signatures, all parameters, and detailed usage examples for every scheduling function, see the [Scheduler API Reference]({{ site.baseurl }}{% link api-reference/scheduler-api.md %}):
 
-- [Schedule / ScheduleAsync]({% link api-reference/scheduler-api/schedule.md %}) — single recurring workflow
-- [ScheduleMany / ScheduleManyAsync]({% link api-reference/scheduler-api/schedule-many.md %}) — batch scheduling with pruning
-- [Dependent Scheduling]({% link api-reference/scheduler-api/dependent-scheduling.md %}) — Then, ThenMany, ScheduleDependentAsync
-- [Manifest Management]({% link api-reference/scheduler-api/manifest-management.md %}) — DisableAsync, EnableAsync, TriggerAsync
-- [Scheduling Helpers]({% link api-reference/scheduler-api/scheduling-helpers.md %}) — Every, Cron, Schedule record, ManifestOptions
+- [Schedule / ScheduleAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}) — single recurring workflow
+- [ScheduleMany / ScheduleManyAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %}) — batch scheduling with pruning
+- [Dependent Scheduling]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %}) — ThenInclude, ThenIncludeMany, Include, IncludeMany, ScheduleDependentAsync
+- [Manifest Management]({{ site.baseurl }}{% link api-reference/scheduler-api/manifest-management.md %}) — DisableAsync, EnableAsync, TriggerAsync
+- [Scheduling Helpers]({{ site.baseurl }}{% link api-reference/scheduler-api/scheduling-helpers.md %}) — Every, Cron, Schedule record, ManifestOptions
 
 ## Sample Project
 

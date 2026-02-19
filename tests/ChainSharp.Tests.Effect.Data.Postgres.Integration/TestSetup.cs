@@ -98,6 +98,9 @@ public abstract class TestSetup
             .ExecuteUpdateAsync(s => s.SetProperty(m => m.DependsOnManifestId, (int?)null));
         await dataContext.Manifests.ExecuteDeleteAsync();
 
+        // Delete manifest groups after manifests (FK dependency)
+        await dataContext.ManifestGroups.ExecuteDeleteAsync();
+
         dataContext.Reset();
     }
 

@@ -1,4 +1,4 @@
-@page "/chainsharp/data/manifest-groups/{GroupId}"
+@page "/chainsharp/data/manifest-groups/{ManifestGroupId:int}"
 @inherits PollingComponentBase
 
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" class="rz-mb-4">
@@ -6,9 +6,9 @@
                   Variant="Variant.Text"
                   Click="@(() => Navigation.NavigateTo("chainsharp/data/manifest-groups"))" />
     <RadzenText TextStyle="TextStyle.H4" Style="margin: 0;">
-        @if (_manifests.Count > 0)
+        @if (_group is not null)
         {
-            @GroupId
+            @_group.Name
         }
         else if (!IsLoading)
         {
@@ -23,11 +23,62 @@
     return;
 }
 
-@if (_manifests.Count == 0)
+@if (_group is null)
 {
-    <RadzenText TextStyle="TextStyle.Body1">No manifests found in group "@GroupId".</RadzenText>
+    <RadzenText TextStyle="TextStyle.Body1">No manifest group found with ID @ManifestGroupId.</RadzenText>
     return;
 }
+
+@* ── Dependency Graph ── *@
+@if (_dagLayout is not null && _dagLayout.Nodes.Count > 1)
+{
+    <RadzenCard class="rz-mb-4">
+        <RadzenText TextStyle="TextStyle.H6" class="rz-mb-2">Dependencies</RadzenText>
+        <DagGraph Layout="@_dagLayout" OnNodeClick="@OnDagNodeClick" />
+    </RadzenCard>
+}
+
+@* ── Group Settings ── *@
+<RadzenFieldset Text="Group Settings" class="@(IsSettingsDirty ? "cs-fieldset-dirty rz-mb-4" : "rz-mb-4")">
+    <RadzenStack Gap="1.5rem">
+        <RadzenStack Gap="0.25rem">
+            <RadzenLabel Text="Enabled" />
+            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                When disabled, manifests in this group will not be queued or dispatched.
+            </RadzenText>
+            <RadzenSwitch @bind-Value="_group.IsEnabled" />
+        </RadzenStack>
+
+        <RadzenStack Gap="0.25rem">
+            <RadzenLabel Text="Priority" Component="GroupPriority" />
+            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                Dispatch priority for this group (0–31). Higher values are dispatched first.
+            </RadzenText>
+            <RadzenNumeric @bind-Value="_group.Priority" TValue="int" Min="0" Max="31" Style="max-width: 400px;" Name="GroupPriority" />
+        </RadzenStack>
+
+        <RadzenStack Gap="0.25rem">
+            <RadzenLabel Text="Max Active Jobs" Component="GroupMaxActiveJobs" />
+            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                Maximum number of concurrent active jobs for this group. Leave empty for no per-group limit.
+            </RadzenText>
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem" Style="max-width: 400px;">
+                <RadzenNumeric @bind-Value="_group.MaxActiveJobs" TValue="int?" Min="1" Style="flex: 1;" Name="GroupMaxActiveJobs" />
+                @if (_group.MaxActiveJobs.HasValue)
+                {
+                    <RadzenButton Icon="close" Variant="Variant.Text" Size="ButtonSize.Small"
+                                  Click="@(() => _group.MaxActiveJobs = null)"
+                                  title="Clear limit" />
+                }
+            </RadzenStack>
+        </RadzenStack>
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+            <RadzenButton Text="Save" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="@SaveSettings" Disabled="@(!IsSettingsDirty)" />
+            <RadzenButton Text="Reset" Icon="undo" ButtonStyle="ButtonStyle.Light" Click="@ResetSettings" Disabled="@(!IsSettingsDirty)" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenFieldset>
 
 @* ── Summary Cards ── *@
 <RadzenRow Gap="1rem" class="rz-mb-4">

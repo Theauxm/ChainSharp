@@ -44,14 +44,14 @@ services.AddChainSharpEffects(options => options
 2. Creates an `NpgsqlDataSource` with enum mappings (`WorkflowState`, `LogLevel`, `ScheduleType`, `DeadLetterStatus`, `WorkQueueStatus`)
 3. Registers `IDbContextFactory<PostgresContext>` for creating database contexts
 4. Registers `IDataContext` (scoped) for direct database access
-5. Enables data context logging support (for [AddEffectDataContextLogging]({% link api-reference/configuration/add-effect-data-context-logging.md %}))
+5. Enables data context logging support (for [AddEffectDataContextLogging]({{ site.baseurl }}{% link api-reference/configuration/add-effect-data-context-logging.md %}))
 6. Registers `PostgresContextProviderFactory` as a **non-toggleable** effect
 
 ## Remarks
 
 - Must be called **before** `AddEffectDataContextLogging` (which requires a data provider to be registered).
 - The database migration runs synchronously on startup. Ensure the database server is accessible at application start time.
-- For testing/development without a database, use [AddInMemoryEffect]({% link api-reference/configuration/add-in-memory-effect.md %}) instead.
+- For testing/development without a database, use [AddInMemoryEffect]({{ site.baseurl }}{% link api-reference/configuration/add-in-memory-effect.md %}) instead.
 
 ## Package
 

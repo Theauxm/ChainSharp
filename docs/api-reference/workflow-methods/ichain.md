@@ -8,7 +8,7 @@ nav_order: 3
 
 # IChain
 
-Resolves a step from Memory by its **interface type**, then executes it. Unlike `Chain<TStep>()` which creates a new step instance, `IChain<TStep>()` looks up an existing instance already stored in Memory (typically placed there via [AddServices]({% link api-reference/workflow-methods/add-services.md %}) or [Activate]({% link api-reference/workflow-methods/activate.md %})).
+Resolves a step from Memory by its **interface type**, then executes it. Unlike `Chain<TStep>()` which creates a new step instance, `IChain<TStep>()` looks up an existing instance already stored in Memory (typically placed there via [AddServices]({{ site.baseurl }}{% link api-reference/workflow-methods/add-services.md %}) or [Activate]({{ site.baseurl }}{% link api-reference/workflow-methods/activate.md %})).
 
 ## Signature
 
@@ -52,4 +52,4 @@ public class MyWorkflow(IMyStep myStep) : Workflow<MyInput, MyOutput>
 
 - Use `IChain` when you want to inject step implementations via DI and resolve them at runtime by interface. This enables swapping step implementations without changing the workflow.
 - The step instance must already be in Memory before calling `IChain`. Use `AddServices` or `Activate` with extra inputs to place it there.
-- For creating a new step instance (the common case), use [Chain\<TStep\>()]({% link api-reference/workflow-methods/chain.md %}) instead.
+- For creating a new step instance (the common case), use [Chain\<TStep\>()]({{ site.baseurl }}{% link api-reference/workflow-methods/chain.md %}) instead.

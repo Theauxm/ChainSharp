@@ -47,6 +47,8 @@ Enable cleanup with `.AddMetadataCleanup()`:
 )
 ```
 
+*API Reference: [AddMetadataCleanup]({{ site.baseurl }}{% link api-reference/scheduler-api/add-metadata-cleanup.md %})*
+
 With no arguments, this cleans up `ManifestManagerWorkflow`, `JobDispatcherWorkflow`, and `MetadataCleanupWorkflow` metadata older than 1 hour, checking every minute.
 
 ### Custom Configuration

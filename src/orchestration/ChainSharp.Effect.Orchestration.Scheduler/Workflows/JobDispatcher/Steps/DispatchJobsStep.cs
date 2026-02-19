@@ -3,30 +3,20 @@ using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.Metadata.DTOs;
 using ChainSharp.Effect.Models.WorkQueue;
-using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.BackgroundTaskServer;
 using ChainSharp.Effect.Services.EffectStep;
 using ChainSharp.Effect.Utils;
 using LanguageExt;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.JobDispatcher.Steps;
 
 /// <summary>
-/// Dispatches queued work queue entries by creating Metadata records and enqueueing
-/// them to the background task server.
+/// Creates Metadata records and enqueues each entry to the background task server.
 /// </summary>
-/// <remarks>
-/// Enforces the global MaxActiveJobs limit at dispatch time by counting active
-/// (Pending + InProgress) Metadata before dispatching. This is the correct
-/// bottleneck since the JobDispatcher is the single gateway to the BackgroundTaskServer,
-/// and all sources (ManifestManager, Dashboard, ManifestScheduler) write to the WorkQueue.
-/// </remarks>
 internal class DispatchJobsStep(
     IDataContext dataContext,
     IBackgroundTaskServer backgroundTaskServer,
-    SchedulerConfiguration config,
     ILogger<DispatchJobsStep> logger
 ) : EffectStep<List<WorkQueue>, Unit>
 {
@@ -35,43 +25,7 @@ internal class DispatchJobsStep(
         var dispatchStartTime = DateTime.UtcNow;
         var jobsDispatched = 0;
 
-        logger.LogDebug("Starting DispatchJobsStep for {EntryCount} queued entries", entries.Count);
-
-        // Enforce MaxActiveJobs at dispatch time
-        if (config.MaxActiveJobs.HasValue)
-        {
-            // Exclude blacklisted workflow types (internal scheduler workflows by default).
-            // Additional types can be excluded via ExcludeFromMaxActiveJobs<T>().
-            var excluded = config.ExcludedWorkflowTypeNames;
-            var activeMetadataCount = await dataContext.Metadatas.CountAsync(
-                m =>
-                    !excluded.Contains(m.Name)
-                    && (
-                        m.WorkflowState == WorkflowState.Pending
-                        || m.WorkflowState == WorkflowState.InProgress
-                    )
-            );
-
-            var remainingCapacity = config.MaxActiveJobs.Value - activeMetadataCount;
-
-            if (remainingCapacity <= 0)
-            {
-                logger.LogInformation(
-                    "MaxActiveJobs limit reached ({ActiveCount}/{MaxActiveJobs}). Skipping dispatch this cycle.",
-                    activeMetadataCount,
-                    config.MaxActiveJobs.Value
-                );
-                return Unit.Default;
-            }
-
-            entries = entries.Take(remainingCapacity).ToList();
-            logger.LogDebug(
-                "MaxActiveJobs capacity: {ActiveCount}/{MaxActiveJobs}, dispatching up to {RemainingCapacity} entries",
-                activeMetadataCount,
-                config.MaxActiveJobs.Value,
-                remainingCapacity
-            );
-        }
+        logger.LogDebug("Starting DispatchJobsStep for {EntryCount} entries", entries.Count);
 
         foreach (var entry in entries)
         {

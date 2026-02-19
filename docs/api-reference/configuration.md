@@ -52,12 +52,12 @@ These properties can be set directly on the `ChainSharpEffectConfigurationBuilde
 
 | Method | Description |
 |--------|-------------|
-| [AddPostgresEffect]({% link api-reference/configuration/add-postgres-effect.md %}) | Adds PostgreSQL database support for metadata persistence |
-| [AddInMemoryEffect]({% link api-reference/configuration/add-in-memory-effect.md %}) | Adds in-memory database support for testing/development |
-| [AddEffectDataContextLogging]({% link api-reference/configuration/add-effect-data-context-logging.md %}) | Enables logging for database operations |
-| [AddJsonEffect]({% link api-reference/configuration/add-json-effect.md %}) | Adds JSON change detection for tracking model mutations |
-| [SaveWorkflowParameters]({% link api-reference/configuration/save-workflow-parameters.md %}) | Serializes workflow input/output to JSON for persistence |
-| [AddStepLogger]({% link api-reference/configuration/add-step-logger.md %}) | Adds per-step execution logging |
-| [AddEffectWorkflowBus]({% link api-reference/configuration/add-effect-workflow-bus.md %}) | Registers the WorkflowBus and discovers workflows via assembly scanning |
-| [AddEffect / AddStepEffect]({% link api-reference/configuration/add-effect.md %}) | Registers custom effect provider factories |
-| [SetEffectLogLevel]({% link api-reference/configuration/set-effect-log-level.md %}) | Sets the minimum log level for effect logging |
+| [AddPostgresEffect]({{ site.baseurl }}{% link api-reference/configuration/add-postgres-effect.md %}) | Adds PostgreSQL database support for metadata persistence |
+| [AddInMemoryEffect]({{ site.baseurl }}{% link api-reference/configuration/add-in-memory-effect.md %}) | Adds in-memory database support for testing/development |
+| [AddEffectDataContextLogging]({{ site.baseurl }}{% link api-reference/configuration/add-effect-data-context-logging.md %}) | Enables logging for database operations |
+| [AddJsonEffect]({{ site.baseurl }}{% link api-reference/configuration/add-json-effect.md %}) | Adds JSON change detection for tracking model mutations |
+| [SaveWorkflowParameters]({{ site.baseurl }}{% link api-reference/configuration/save-workflow-parameters.md %}) | Serializes workflow input/output to JSON for persistence |
+| [AddStepLogger]({{ site.baseurl }}{% link api-reference/configuration/add-step-logger.md %}) | Adds per-step execution logging |
+| [AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %}) | Registers the WorkflowBus and discovers workflows via assembly scanning |
+| [AddEffect / AddStepEffect]({{ site.baseurl }}{% link api-reference/configuration/add-effect.md %}) | Registers custom effect provider factories |
+| [SetEffectLogLevel]({{ site.baseurl }}{% link api-reference/configuration/set-effect-log-level.md %}) | Sets the minimum log level for effect logging |

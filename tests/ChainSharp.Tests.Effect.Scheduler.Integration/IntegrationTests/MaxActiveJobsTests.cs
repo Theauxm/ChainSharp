@@ -6,6 +6,7 @@ using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.Manifest.DTOs;
+using ChainSharp.Effect.Models.ManifestGroup;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.Metadata.DTOs;
 using ChainSharp.Effect.Models.WorkQueue;
@@ -764,6 +765,11 @@ public class MaxActiveJobsTests
         // Create many active metadata (well over the default limit of 10)
         for (var i = 0; i < 15; i++)
         {
+            var activeGroup = await TestSetup.CreateAndSaveManifestGroup(
+                dataContext,
+                name: $"group-active-{Guid.NewGuid():N}"
+            );
+
             var activeManifest = Manifest.Create(
                 new CreateManifest
                 {
@@ -774,6 +780,7 @@ public class MaxActiveJobsTests
                     Properties = new SchedulerTestInput { Value = $"Active_{i}" }
                 }
             );
+            activeManifest.ManifestGroupId = activeGroup.Id;
             await dataContext.Track(activeManifest);
             await dataContext.SaveChanges(CancellationToken.None);
 
@@ -796,6 +803,11 @@ public class MaxActiveJobsTests
         var entryIds = new List<int>();
         for (var i = 0; i < entryCount; i++)
         {
+            var queuedGroup = await TestSetup.CreateAndSaveManifestGroup(
+                dataContext,
+                name: $"group-queued-{Guid.NewGuid():N}"
+            );
+
             var manifest = Manifest.Create(
                 new CreateManifest
                 {
@@ -806,6 +818,7 @@ public class MaxActiveJobsTests
                     Properties = new SchedulerTestInput { Value = $"Queued_{i}" }
                 }
             );
+            manifest.ManifestGroupId = queuedGroup.Id;
             await dataContext.Track(manifest);
             await dataContext.SaveChanges(CancellationToken.None);
 
@@ -852,6 +865,11 @@ public class MaxActiveJobsTests
 
     private async Task<Manifest> CreateAndSaveManifest(string inputValue = "TestValue")
     {
+        var group = await TestSetup.CreateAndSaveManifestGroup(
+            _dataContext,
+            name: $"group-{Guid.NewGuid():N}"
+        );
+
         var manifest = Manifest.Create(
             new CreateManifest
             {
@@ -862,6 +880,8 @@ public class MaxActiveJobsTests
                 Properties = new SchedulerTestInput { Value = inputValue }
             }
         );
+
+        manifest.ManifestGroupId = group.Id;
 
         await _dataContext.Track(manifest);
         await _dataContext.SaveChanges(CancellationToken.None);

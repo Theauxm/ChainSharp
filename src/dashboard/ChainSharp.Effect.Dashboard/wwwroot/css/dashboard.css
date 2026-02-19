@@ -90,3 +90,61 @@
     z-index: 1;
     margin-top: auto;
 }
+
+/* ── DAG Graph ── */
+
+.cs-dag-container {
+    overflow-x: auto;
+    border: 1px solid var(--rz-base-200, rgba(255, 255, 255, 0.1));
+    border-radius: var(--rz-border-radius, 4px);
+    background-color: var(--rz-base-background-color, #121212);
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.cs-dag-svg {
+    display: block;
+}
+
+.cs-dag-node rect {
+    fill: var(--rz-base-background-color, #1e1e1e);
+    stroke: var(--rz-primary, #2E7D32);
+    stroke-width: 2;
+    transition: fill 0.15s ease;
+}
+
+.cs-dag-node:hover rect {
+    fill: var(--rz-primary-lighter, #388E3C);
+}
+
+.cs-dag-node text {
+    fill: var(--rz-text-color, #ffffff);
+    font-size: 12px;
+    font-family: var(--rz-body-font-family, sans-serif);
+    pointer-events: none;
+}
+
+.cs-dag-node:hover text {
+    fill: var(--rz-on-primary-lighter, #ffffff);
+}
+
+.cs-dag-node--highlighted rect {
+    fill: var(--cs-primary, #2E7D32);
+    stroke: var(--cs-primary-lighter, #388E3C);
+    stroke-width: 3;
+}
+
+.cs-dag-node--highlighted text {
+    fill: #ffffff;
+    font-weight: 600;
+}
+
+.cs-dag-edge {
+    fill: none;
+    stroke: var(--rz-text-disabled-color, rgba(255, 255, 255, 0.3));
+    stroke-width: 1.5;
+}
+
+.cs-dag-arrowhead {
+    fill: var(--rz-text-disabled-color, rgba(255, 255, 255, 0.3));
+}

@@ -8,7 +8,7 @@ nav_order: 4
 
 # ShortCircuit
 
-Executes a step that can **return early** from the workflow. If the step succeeds and returns a value of type `TReturn`, that value is captured as the short-circuit result — when [Resolve]({% link api-reference/workflow-methods/resolve.md %}) is called, it returns this value instead of looking in Memory, bypassing all remaining steps.
+Executes a step that can **return early** from the workflow. If the step succeeds and returns a value of type `TReturn`, that value is captured as the short-circuit result — when [Resolve]({{ site.baseurl }}{% link api-reference/workflow-methods/resolve.md %}) is called, it returns this value instead of looking in Memory, bypassing all remaining steps.
 
 There are also `ShortCircuitChain` overloads that simply **ignore failures** (the step's Left/exception result is discarded and the workflow continues).
 

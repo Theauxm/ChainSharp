@@ -18,23 +18,13 @@ protected override async Task<Either<Exception, User>> RunInternal(CreateUserReq
         .Resolve();
 ```
 
-*API Reference: [Activate]({% link api-reference/workflow-methods/activate.md %}), [Chain]({% link api-reference/workflow-methods/chain.md %}), [Resolve]({% link api-reference/workflow-methods/resolve.md %})*
+*API Reference: [Activate]({{ site.baseurl }}{% link api-reference/workflow-methods/activate.md %}), [Chain]({{ site.baseurl }}{% link api-reference/workflow-methods/chain.md %}), [Resolve]({{ site.baseurl }}{% link api-reference/workflow-methods/resolve.md %})*
 
 ## How It Works
 
-`Resolve` checks three things in order:
+`Resolve` checks for a captured exception, then a [ShortCircuit](short-circuit.md) value, then looks up `TReturn` in [Memory](../concepts/memory.md)—in that order. See [API Reference: Resolve]({{ site.baseurl }}{% link api-reference/workflow-methods/resolve.md %}) for the full resolution priority and error behavior.
 
-1. **Exception** — If any step in the chain threw, the exception was captured. `Resolve` returns `Left(exception)` and skips everything else.
-2. **Short-circuit** — If a [ShortCircuit](short-circuit.md) step returned a value, that becomes the result. `Resolve` returns `Right(shortCircuitValue)`.
-3. **Memory** — If neither of the above, `Resolve` looks up `TReturn` in [Memory](../concepts/memory.md). If found, it returns `Right(value)`.
-
-If `TReturn` isn't in Memory and there's no exception or short-circuit value, `Resolve` returns a `WorkflowException`:
-
-```
-WorkflowException: Could not find type: (User).
-```
-
-The [Analyzer](../analyzer.md) catches this at compile time with **CHAIN002** before you ever run the code.
+The [Analyzer](../analyzer.md) catches missing return types at compile time with **CHAIN002**.
 
 ## The Parameterized Overload
 
@@ -58,7 +48,7 @@ protected override async Task<Either<Exception, ParentResult>> RunInternal(Paren
 }
 ```
 
-*API Reference: [Resolve]({% link api-reference/workflow-methods/resolve.md %}), [WorkflowBus.RunAsync]({% link api-reference/mediator-api/workflow-bus.md %})*
+*API Reference: [Resolve]({{ site.baseurl }}{% link api-reference/workflow-methods/resolve.md %}), [WorkflowBus.RunAsync]({{ site.baseurl }}{% link api-reference/mediator-api/workflow-bus.md %})*
 
 This skips the Memory lookup—you're providing the result directly. If an exception exists from the chain, it still takes precedence and the provided value is ignored. This is useful when you need to construct the return value manually, like combining results from nested workflows with the chain's output.
 

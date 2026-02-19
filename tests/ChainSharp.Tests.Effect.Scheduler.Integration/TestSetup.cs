@@ -3,6 +3,7 @@ using ChainSharp.Effect.Data.Postgres.Extensions;
 using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Extensions;
+using ChainSharp.Effect.Models.ManifestGroup;
 using ChainSharp.Effect.Orchestration.Mediator.Extensions;
 using ChainSharp.Effect.Orchestration.Mediator.Services.WorkflowBus;
 using ChainSharp.Effect.Orchestration.Scheduler.Extensions;
@@ -113,7 +114,36 @@ public abstract class TestSetup
             .ExecuteUpdateAsync(s => s.SetProperty(m => m.DependsOnManifestId, (int?)null));
         await dataContext.Manifests.ExecuteDeleteAsync();
 
+        // Delete manifest groups after manifests (FK dependency)
+        await dataContext.ManifestGroups.ExecuteDeleteAsync();
+
         dataContext.Reset();
+    }
+
+    /// <summary>
+    /// Creates and persists a ManifestGroup for test use.
+    /// </summary>
+    public static async Task<ManifestGroup> CreateAndSaveManifestGroup(
+        IDataContext dataContext,
+        string name = "test-group",
+        int? maxActiveJobs = null,
+        int priority = 0,
+        bool isEnabled = true
+    )
+    {
+        var group = new ManifestGroup
+        {
+            Name = name,
+            MaxActiveJobs = maxActiveJobs,
+            Priority = priority,
+            IsEnabled = isEnabled,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+        };
+        await dataContext.Track(group);
+        await dataContext.SaveChanges(CancellationToken.None);
+        dataContext.Reset();
+        return group;
     }
 
     [TearDown]

@@ -1,8 +1,7 @@
 using ChainSharp.Effect.Data.Services.DataContext;
-using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.DeadLetter;
 using ChainSharp.Effect.Models.DeadLetter.DTOs;
-using ChainSharp.Effect.Models.Manifest;
+using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager;
 using ChainSharp.Effect.Services.EffectStep;
 using Microsoft.Extensions.Logging;
 
@@ -22,9 +21,9 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager.St
 /// to DetermineJobsToQueueStep so it can exclude just-dead-lettered manifests.
 /// </remarks>
 internal class ReapFailedJobsStep(IDataContext dataContext, ILogger<ReapFailedJobsStep> logger)
-    : EffectStep<List<Manifest>, List<DeadLetter>>
+    : EffectStep<List<ManifestDispatchView>, List<DeadLetter>>
 {
-    public override async Task<List<DeadLetter>> Run(List<Manifest> manifests)
+    public override async Task<List<DeadLetter>> Run(List<ManifestDispatchView> views)
     {
         logger.LogDebug("Starting ReapFailedJobsStep to identify and dead-letter failed jobs");
 
@@ -32,47 +31,37 @@ internal class ReapFailedJobsStep(IDataContext dataContext, ILogger<ReapFailedJo
 
         logger.LogDebug(
             "Evaluating {ManifestCount} enabled manifests for dead-lettering",
-            manifests.Count
+            views.Count
         );
 
-        foreach (var manifest in manifests)
+        foreach (var view in views)
         {
-            // Check if any dead letter already exists for this manifest (AwaitingIntervention)
-            var existingDeadLetter = manifest.DeadLetters.FirstOrDefault(
-                dl => dl.Status == DeadLetterStatus.AwaitingIntervention
-            );
-
-            if (existingDeadLetter != null)
+            if (view.HasAwaitingDeadLetter)
             {
                 logger.LogTrace(
                     "Skipping manifest {ManifestId}: already has AwaitingIntervention dead letter",
-                    manifest.Id
+                    view.Manifest.Id
                 );
                 continue;
             }
 
-            // Count failed executions for this manifest using in-memory data
-            var failedCount = manifest.Metadatas.Count(
-                m => m.WorkflowState == WorkflowState.Failed
-            );
-
-            if (failedCount >= manifest.MaxRetries)
+            if (view.FailedCount >= view.Manifest.MaxRetries)
             {
                 logger.LogWarning(
                     "Manifest {ManifestId} (name: {ManifestName}) exceeds max retries ({FailedCount}/{MaxRetries}). Creating dead letter.",
-                    manifest.Id,
-                    manifest.Name,
-                    failedCount,
-                    manifest.MaxRetries
+                    view.Manifest.Id,
+                    view.Manifest.Name,
+                    view.FailedCount,
+                    view.Manifest.MaxRetries
                 );
 
                 var deadLetter = DeadLetter.Create(
                     new CreateDeadLetter
                     {
-                        Manifest = manifest,
+                        Manifest = view.Manifest,
                         Reason =
-                            $"Max retries exceeded: ({failedCount}) failures >= ({manifest.MaxRetries}) max retries",
-                        RetryCount = failedCount
+                            $"Max retries exceeded: ({view.FailedCount}) failures >= ({view.Manifest.MaxRetries}) max retries",
+                        RetryCount = view.FailedCount
                     }
                 );
 

@@ -44,6 +44,6 @@ services.AddChainSharpEffects(options => options
 
 ## Remarks
 
-- **Must** be called after a data provider ([AddPostgresEffect]({% link api-reference/configuration/add-postgres-effect.md %}) or [AddInMemoryEffect]({% link api-reference/configuration/add-in-memory-effect.md %})). Throws an `Exception` if no data provider is registered.
+- **Must** be called after a data provider ([AddPostgresEffect]({{ site.baseurl }}{% link api-reference/configuration/add-postgres-effect.md %}) or [AddInMemoryEffect]({{ site.baseurl }}{% link api-reference/configuration/add-in-memory-effect.md %})). Throws an `Exception` if no data provider is registered.
 - The `CHAIN_SHARP_POSTGRES_LOG_LEVEL` environment variable takes precedence over the `minimumLogLevel` parameter if set.
 - Registers `DataContextLoggingProvider` as an `ILoggerProvider`.

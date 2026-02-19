@@ -57,78 +57,95 @@ builder.Services.AddChainSharpEffects(
                         cleanup.AddWorkflowType<IExtractImportWorkflow>();
                         cleanup.AddWorkflowType<ITransformLoadWorkflow>();
                     })
-                    .UseHangfire(connectionString)
+                    .UseHangfire(connectionString);
+
+                scheduler
                     .Schedule<IHelloWorldWorkflow, HelloWorldInput>(
                         "sample-hello-world",
                         new HelloWorldInput { Name = "ChainSharp Scheduler" },
                         Every.Seconds(20)
                     )
-                    // Dependent: GoodbyeWorld runs after HelloWorld succeeds
-                    .Then<IGoodbyeWorldWorkflow, GoodbyeWorldInput>(
+                    .IncludeMany<IGoodbyeWorldWorkflow, GoodbyeWorldInput, string>(
+                        Enumerable.Range(0, 10).Select(i => ($"ChainSharp {i}")),
+                        source =>
+                            ("sample-goodbye-number", new GoodbyeWorldInput() { Name = source })
+                    )
+                    // Fan-out: both GoodbyeWorld variants run after HelloWorld succeeds
+                    // Include always branches from the root Schedule (HelloWorld)
+                    .Include<IGoodbyeWorldWorkflow, GoodbyeWorldInput>(
                         "sample-goodbye-world",
                         new GoodbyeWorldInput { Name = "ChainSharp Scheduler" }
                     )
+                    .Include<IGoodbyeWorldWorkflow, GoodbyeWorldInput>(
+                        "sample-farewell-world",
+                        new GoodbyeWorldInput { Name = "ChainSharp Farewell" }
+                    )
+                    .ThenInclude<IGoodbyeWorldWorkflow, GoodbyeWorldInput>(
+                        "sample-otherword-world",
+                        new GoodbyeWorldInput { Name = "ChainSharp otherword" }
+                    );
+
+                scheduler
                     // Schedule ExtractImport for Customer table (10 indexes)
                     .ScheduleMany<
                         IExtractImportWorkflow,
                         ExtractImportInput,
                         (string Table, int Index)
                     >(
+                        "extract-import-customer",
                         Enumerable.Range(0, 10).Select(i => ("Customer", i)),
                         source =>
                             (
-                                $"extract-import-customer-{source.Index}",
+                                $"{source.Index}",
                                 new ExtractImportInput
                                 {
                                     TableName = source.Table,
                                     Index = source.Index,
                                 }
                             ),
-                        Every.Minutes(5),
-                        prunePrefix: "extract-import-customer-",
-                        groupId: "extract-import-customer"
+                        Every.Minutes(5)
                     )
-                    // Dependent: TransformLoad runs after each Customer ExtractImport succeeds
-                    .ThenMany<
+                    // First-level dependents: TransformLoad runs after each Customer ExtractImport succeeds
+                    .IncludeMany<
                         ITransformLoadWorkflow,
                         TransformLoadInput,
                         (string Table, int Index)
                     >(
+                        "transform-load-customer",
                         Enumerable.Range(0, 10).Select(i => ("Customer", i)),
                         source =>
                             (
-                                $"transform-load-customer-{source.Index}",
+                                $"{source.Index}",
                                 new TransformLoadInput
                                 {
                                     TableName = source.Table,
                                     Index = source.Index,
                                 }
                             ),
-                        dependsOn: source => $"extract-import-customer-{source.Index}",
-                        prunePrefix: "transform-load-customer-",
-                        groupId: "transform-load-customer"
-                    )
-                    // Schedule ExtractImport for Transaction table (30 indexes)
-                    .ScheduleMany<
-                        IExtractImportWorkflow,
-                        ExtractImportInput,
-                        (string Table, int Index)
-                    >(
-                        Enumerable.Range(0, 30).Select(i => ("Transaction", i)),
-                        source =>
-                            (
-                                $"extract-import-transaction-{source.Index}",
-                                new ExtractImportInput
-                                {
-                                    TableName = source.Table,
-                                    Index = source.Index,
-                                }
-                            ),
-                        Every.Minutes(5),
-                        prunePrefix: "extract-import-transaction-",
-                        groupId: "extract-import-transaction",
-                        priority: 24
+                        dependsOn: source => $"extract-import-customer-{source.Index}"
                     );
+
+                scheduler
+                // Schedule ExtractImport for Transaction table (30 indexes)
+                .ScheduleMany<
+                    IExtractImportWorkflow,
+                    ExtractImportInput,
+                    (string Table, int Index)
+                >(
+                    "extract-import-transaction",
+                    Enumerable.Range(0, 30).Select(i => ("Transaction", i)),
+                    source =>
+                        (
+                            $"{source.Index}",
+                            new ExtractImportInput
+                            {
+                                TableName = source.Table,
+                                Index = source.Index,
+                            }
+                        ),
+                    Every.Minutes(5),
+                    priority: 24
+                );
             })
 );
 

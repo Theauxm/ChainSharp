@@ -27,7 +27,7 @@ The `ManifestPollingService` is the entry point. It's a .NET `BackgroundService`
 
 They run sequentially within a single polling cycle. This matters—ManifestManager writes work queue entries that JobDispatcher reads in the same tick. No waiting for the next cycle.
 
-On startup, the polling service also seeds any manifests configured via `.Schedule()`, `.ScheduleMany()`, `.Then()`, or `.ThenMany()`. Seeding failures prevent the host from starting, which is intentional—if your manifest configuration is broken, you want to know immediately, not after the first polling cycle silently does nothing.
+On startup, the polling service also seeds any manifests configured via `.Schedule()`, `.ScheduleMany()`, `.ThenInclude()`, `.ThenIncludeMany()`, `.Include()`, or `.IncludeMany()`. Seeding failures prevent the host from starting, which is intentional—if your manifest configuration is broken, you want to know immediately, not after the first polling cycle silently does nothing.
 
 ## The Work Queue
 
@@ -69,3 +69,5 @@ Administrative workflows are excluded from the active job count by default. If y
     .ExcludeFromMaxActiveJobs<IMyInternalWorkflow>()
 )
 ```
+
+*API Reference: [AddScheduler]({{ site.baseurl }}{% link api-reference/scheduler-api/add-scheduler.md %}), [AddMetadataCleanup]({{ site.baseurl }}{% link api-reference/scheduler-api/add-metadata-cleanup.md %})*

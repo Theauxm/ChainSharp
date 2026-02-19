@@ -3,6 +3,7 @@ using ChainSharp.Effect.Models.DeadLetter;
 using ChainSharp.Effect.Models.DeadLetter.DTOs;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.Manifest.DTOs;
+using ChainSharp.Effect.Models.ManifestGroup;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.Metadata.DTOs;
 using ChainSharp.Effect.Models.WorkQueue;
@@ -915,6 +916,11 @@ public class ManifestManagerWorkflowTests : TestSetup
         string inputValue = "TestValue"
     )
     {
+        var group = await TestSetup.CreateAndSaveManifestGroup(
+            DataContext,
+            name: $"group-{Guid.NewGuid():N}"
+        );
+
         var manifest = Manifest.Create(
             new CreateManifest
             {
@@ -927,6 +933,8 @@ public class ManifestManagerWorkflowTests : TestSetup
                 Properties = new SchedulerTestInput { Value = inputValue }
             }
         );
+
+        manifest.ManifestGroupId = group.Id;
 
         await DataContext.Track(manifest);
         await DataContext.SaveChanges(CancellationToken.None);
@@ -945,6 +953,11 @@ public class ManifestManagerWorkflowTests : TestSetup
         bool isEnabled = true
     )
     {
+        var group = await TestSetup.CreateAndSaveManifestGroup(
+            DataContext,
+            name: $"group-{Guid.NewGuid():N}"
+        );
+
         var manifest = Manifest.Create(
             new CreateManifest
             {
@@ -957,6 +970,8 @@ public class ManifestManagerWorkflowTests : TestSetup
                 Properties = new SchedulerTestInput { Value = "EdgeCase" }
             }
         );
+
+        manifest.ManifestGroupId = group.Id;
 
         await DataContext.Track(manifest);
         await DataContext.SaveChanges(CancellationToken.None);
@@ -1017,6 +1032,11 @@ public class ManifestManagerWorkflowTests : TestSetup
         string inputValue = "Dependent"
     )
     {
+        var group = await TestSetup.CreateAndSaveManifestGroup(
+            DataContext,
+            name: $"group-{Guid.NewGuid():N}"
+        );
+
         var manifest = Manifest.Create(
             new CreateManifest
             {
@@ -1028,6 +1048,8 @@ public class ManifestManagerWorkflowTests : TestSetup
                 DependsOnManifestId = parent.Id,
             }
         );
+
+        manifest.ManifestGroupId = group.Id;
 
         await DataContext.Track(manifest);
         await DataContext.SaveChanges(CancellationToken.None);

@@ -198,6 +198,11 @@ public class TaskServerExecutorTests : TestSetup
 
     private async Task<Manifest> CreateAndSaveManifest(string inputValue = "TestValue")
     {
+        var group = await TestSetup.CreateAndSaveManifestGroup(
+            DataContext,
+            name: $"group-{Guid.NewGuid():N}"
+        );
+
         var manifest = Manifest.Create(
             new CreateManifest
             {
@@ -208,6 +213,7 @@ public class TaskServerExecutorTests : TestSetup
                 Properties = new SchedulerTestInput { Value = inputValue }
             }
         );
+        manifest.ManifestGroupId = group.Id;
 
         await DataContext.Track(manifest);
         await DataContext.SaveChanges(CancellationToken.None);

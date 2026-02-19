@@ -14,6 +14,7 @@ public class DataContext<TDbContext> : DbContext, IDataContext
     where TDbContext : DbContext
 {
     public DbSet<Metadata> Metadatas { get; set; }
+    public DbSet<ManifestGroup> ManifestGroups { get; set; }
     public DbSet<Log> Logs { get; set; }
 
     // IEffectProvider implementation
@@ -38,6 +39,20 @@ public class DataContext<TDbContext> : DbContext, IDataContext
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
+│                       MANIFEST_GROUP                               │
+├──────────────────────────────────────────────────────────────────┤
+│ Id (PK)              │ int                                       │
+│ Name                 │ string (unique)                           │
+│ MaxActiveJobs        │ int?                                      │
+│ Priority             │ smallint (0-31)                           │
+│ IsEnabled            │ bool                                      │
+│ CreatedAt            │ datetime                                  │
+│ UpdatedAt            │ datetime                                  │
+└──────────────────────────────────────────────────────────────────┘
+       │
+       │ 1:N
+       ▼
+┌──────────────────────────────────────────────────────────────────┐
 │                           MANIFEST                                │
 ├──────────────────────────────────────────────────────────────────┤
 │ Id (PK)              │ int                                       │
@@ -52,7 +67,7 @@ public class DataContext<TDbContext> : DbContext, IDataContext
 │ MaxRetries           │ int                                       │
 │ TimeoutSeconds       │ int?                                      │
 │ LastSuccessfulRun    │ datetime?                                 │
-│ GroupId              │ string?                                   │
+│ ManifestGroupId      │ int → ManifestGroup                       │
 │ DependsOnManifestId  │ int? → Self                               │
 └──────────────────────────────────────────────────────────────────┘
        │              │                  │
@@ -95,7 +110,7 @@ public class DataContext<TDbContext> : DbContext, IDataContext
                                 └─────────────────────────────────┘
 ```
 
-The **WorkQueue** table sits between scheduling and dispatch. When a manifest is due (or `TriggerAsync` is called), a `Queued` entry is created. The JobDispatcher reads these, creates a Metadata record, enqueues to the background task server, and flips the status to `Dispatched`. Both the Manifest and Metadata FKs use `ON DELETE RESTRICT`.
+The **WorkQueue** table sits between scheduling and dispatch. When a manifest is due (or `TriggerAsync` is called), a `Queued` entry is created. The JobDispatcher reads these, creates a Metadata record, enqueues to the background task server, and flips the status to `Dispatched`. Both the Manifest and Metadata FKs use `ON DELETE RESTRICT`. The **ManifestGroup** table provides per-group dispatch controls. Every manifest belongs to exactly one group. Groups are auto-created during scheduling and orphaned groups (with no manifests) are cleaned up on startup.
 
 Additionally, **StepMetadata** tracks individual step executions within a workflow (not persisted to the database, used in-memory during workflow execution):
 

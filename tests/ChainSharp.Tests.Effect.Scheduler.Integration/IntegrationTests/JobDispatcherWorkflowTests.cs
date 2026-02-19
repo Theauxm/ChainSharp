@@ -1,9 +1,12 @@
+using System.Text.Json;
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.Manifest.DTOs;
+using ChainSharp.Effect.Models.ManifestGroup;
 using ChainSharp.Effect.Models.WorkQueue;
 using ChainSharp.Effect.Models.WorkQueue.DTOs;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.JobDispatcher;
+using ChainSharp.Effect.Utils;
 using ChainSharp.Tests.Effect.Scheduler.Integration.Examples.Workflows;
 using FluentAssertions;
 using LanguageExt;
@@ -18,8 +21,10 @@ namespace ChainSharp.Tests.Effect.Scheduler.Integration.IntegrationTests;
 /// </summary>
 /// <remarks>
 /// The JobDispatcherWorkflow runs through the following steps:
-/// 1. LoadQueuedJobsStep - Loads all WorkQueue entries with Status == Queued, prioritizing dependent workflows then ordered by CreatedAt
-/// 2. DispatchJobsStep - For each entry: creates Metadata, updates status to Dispatched, enqueues to BackgroundTaskServer
+/// 1. LoadQueuedJobsStep - Loads all WorkQueue entries with Status == Queued, ordered by group priority, entry priority, then CreatedAt
+/// 2. LoadDispatchCapacityStep - Loads global and per-group active counts and limits
+/// 3. ApplyCapacityLimitsStep - Filters entries respecting global and per-group capacity limits
+/// 4. DispatchJobsStep - For each entry: creates Metadata, updates status to Dispatched, enqueues to BackgroundTaskServer
 /// </remarks>
 [TestFixture]
 public class JobDispatcherWorkflowTests : TestSetup
@@ -279,10 +284,135 @@ public class JobDispatcherWorkflowTests : TestSetup
 
     #endregion
 
+    #region Manual Queue Tests (No Manifest)
+
+    [Test]
+    public async Task Run_ManualQueueEntry_WithNoManifest_GetsDispatched()
+    {
+        // Arrange - Create a work queue entry without a manifest (simulates dashboard manual queue)
+        var entry = await CreateAndSaveManualWorkQueueEntry();
+
+        // Act
+        await _workflow.Run(Unit.Default);
+
+        // Assert - Entry should be dispatched despite having no manifest
+        DataContext.Reset();
+        var updatedEntry = await DataContext.WorkQueues.FirstAsync(q => q.Id == entry.Id);
+
+        updatedEntry.Status.Should().Be(WorkQueueStatus.Dispatched);
+        updatedEntry.DispatchedAt.Should().NotBeNull();
+    }
+
+    [Test]
+    public async Task Run_ManualQueueEntry_CreatesMetadataWithNullManifestId()
+    {
+        // Arrange
+        var entry = await CreateAndSaveManualWorkQueueEntry();
+
+        // Act
+        await _workflow.Run(Unit.Default);
+
+        // Assert - Metadata should be created with null ManifestId
+        DataContext.Reset();
+        var updatedEntry = await DataContext
+            .WorkQueues.Include(q => q.Metadata)
+            .FirstAsync(q => q.Id == entry.Id);
+
+        updatedEntry.MetadataId.Should().NotBeNull();
+        updatedEntry.Metadata.Should().NotBeNull();
+        updatedEntry.Metadata!.ManifestId.Should().BeNull();
+    }
+
+    [Test]
+    public async Task Run_ManualAndManifestEntries_BothGetDispatched()
+    {
+        // Arrange - One manifest-based entry and one manual entry
+        var manifest = await CreateAndSaveManifest();
+        var manifestEntry = await CreateAndSaveWorkQueueEntry(manifest);
+        var manualEntry = await CreateAndSaveManualWorkQueueEntry(inputValue: "ManualJob");
+
+        // Act
+        await _workflow.Run(Unit.Default);
+
+        // Assert - Both should be dispatched
+        DataContext.Reset();
+
+        var updatedManifest = await DataContext.WorkQueues.FirstAsync(
+            q => q.Id == manifestEntry.Id
+        );
+        updatedManifest.Status.Should().Be(WorkQueueStatus.Dispatched);
+
+        var updatedManual = await DataContext.WorkQueues.FirstAsync(q => q.Id == manualEntry.Id);
+        updatedManual.Status.Should().Be(WorkQueueStatus.Dispatched);
+    }
+
+    [Test]
+    public async Task Run_ManualEntry_NotBlockedByDisabledGroup()
+    {
+        // Arrange - A disabled group entry and a manual entry (no manifest)
+        var disabledGroup = await TestSetup.CreateAndSaveManifestGroup(
+            DataContext,
+            name: "disabled-group",
+            isEnabled: false
+        );
+        var disabledManifest = await CreateAndSaveManifestInGroup(disabledGroup);
+        var disabledEntry = await CreateAndSaveWorkQueueEntry(disabledManifest);
+        var manualEntry = await CreateAndSaveManualWorkQueueEntry(inputValue: "ManualJob");
+
+        // Act
+        await _workflow.Run(Unit.Default);
+
+        // Assert - Manual entry dispatches, disabled group entry stays queued
+        DataContext.Reset();
+
+        var updatedDisabled = await DataContext.WorkQueues.FirstAsync(
+            q => q.Id == disabledEntry.Id
+        );
+        updatedDisabled.Status.Should().Be(WorkQueueStatus.Queued);
+
+        var updatedManual = await DataContext.WorkQueues.FirstAsync(q => q.Id == manualEntry.Id);
+        updatedManual.Status.Should().Be(WorkQueueStatus.Dispatched);
+    }
+
+    [Test]
+    public async Task Run_ManualEntry_OrderedByPriorityThenCreatedAt()
+    {
+        // Arrange - Manual entries with different priorities
+        var lowEntry = await CreateAndSaveManualWorkQueueEntry(inputValue: "Low", priority: 0);
+        await Task.Delay(50);
+        var highEntry = await CreateAndSaveManualWorkQueueEntry(inputValue: "High", priority: 31);
+
+        // Act
+        await _workflow.Run(Unit.Default);
+
+        // Assert - Both dispatched, higher priority first (lower MetadataId)
+        DataContext.Reset();
+
+        var entries = await DataContext
+            .WorkQueues.Where(q => new[] { lowEntry.Id, highEntry.Id }.Contains(q.Id))
+            .ToListAsync();
+
+        entries.Should().AllSatisfy(e => e.Status.Should().Be(WorkQueueStatus.Dispatched));
+
+        var highMeta = entries.First(e => e.Id == highEntry.Id).MetadataId!.Value;
+        var lowMeta = entries.First(e => e.Id == lowEntry.Id).MetadataId!.Value;
+
+        highMeta
+            .Should()
+            .BeLessThan(lowMeta, "higher priority manual entry should be dispatched first");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private async Task<Manifest> CreateAndSaveManifest(string inputValue = "TestValue")
     {
+        var group = await TestSetup.CreateAndSaveManifestGroup(
+            DataContext,
+            name: $"group-{Guid.NewGuid():N}"
+        );
+
         var manifest = Manifest.Create(
             new CreateManifest
             {
@@ -293,6 +423,7 @@ public class JobDispatcherWorkflowTests : TestSetup
                 Properties = new SchedulerTestInput { Value = inputValue },
             }
         );
+        manifest.ManifestGroupId = group.Id;
 
         await DataContext.Track(manifest);
         await DataContext.SaveChanges(CancellationToken.None);
@@ -324,6 +455,58 @@ public class JobDispatcherWorkflowTests : TestSetup
         DataContext.Reset();
 
         return entry;
+    }
+
+    /// <summary>
+    /// Creates a work queue entry without a ManifestId, simulating a manual queue
+    /// from the dashboard or a re-run from the Metadata page.
+    /// </summary>
+    private async Task<WorkQueue> CreateAndSaveManualWorkQueueEntry(
+        string inputValue = "ManualTestValue",
+        int priority = 0
+    )
+    {
+        var serializedInput = JsonSerializer.Serialize(
+            new SchedulerTestInput { Value = inputValue },
+            ChainSharpJsonSerializationOptions.ManifestProperties
+        );
+
+        var entry = WorkQueue.Create(
+            new CreateWorkQueue
+            {
+                WorkflowName = typeof(SchedulerTestWorkflow).FullName!,
+                Input = serializedInput,
+                InputTypeName = typeof(SchedulerTestInput).AssemblyQualifiedName,
+                Priority = priority,
+            }
+        );
+
+        await DataContext.Track(entry);
+        await DataContext.SaveChanges(CancellationToken.None);
+        DataContext.Reset();
+
+        return entry;
+    }
+
+    private async Task<Manifest> CreateAndSaveManifestInGroup(ManifestGroup group)
+    {
+        var manifest = Manifest.Create(
+            new CreateManifest
+            {
+                Name = typeof(SchedulerTestWorkflow),
+                IsEnabled = true,
+                ScheduleType = ScheduleType.None,
+                MaxRetries = 3,
+                Properties = new SchedulerTestInput { Value = "TestValue" },
+            }
+        );
+        manifest.ManifestGroupId = group.Id;
+
+        await DataContext.Track(manifest);
+        await DataContext.SaveChanges(CancellationToken.None);
+        DataContext.Reset();
+
+        return manifest;
     }
 
     #endregion

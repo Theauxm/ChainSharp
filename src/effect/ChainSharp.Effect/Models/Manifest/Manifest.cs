@@ -122,15 +122,14 @@ public class Manifest : IModel
     public DateTime? LastSuccessfulRun { get; set; }
 
     /// <summary>
-    /// Gets or sets an optional group identifier for manifests scheduled together.
+    /// Gets or sets the ID of the ManifestGroup this manifest belongs to.
     /// </summary>
     /// <remarks>
-    /// When manifests are created via <c>ScheduleMany</c>, they can be assigned a common
-    /// GroupId to indicate they belong to the same logical batch. This enables grouping
-    /// and aggregate visualization in the dashboard.
+    /// Every manifest must belong to a ManifestGroup. Groups provide per-group dispatch
+    /// controls (MaxActiveJobs, Priority, IsEnabled) and dashboard grouping.
     /// </remarks>
-    [Column("group_id")]
-    public string? GroupId { get; set; }
+    [Column("manifest_group_id")]
+    public int ManifestGroupId { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the parent manifest that this manifest depends on.
@@ -158,6 +157,11 @@ public class Manifest : IModel
     #endregion
 
     #region ForeignKeys
+
+    /// <summary>
+    /// Gets or sets the ManifestGroup this manifest belongs to.
+    /// </summary>
+    public ManifestGroup.ManifestGroup ManifestGroup { get; set; } = null!;
 
     /// <summary>
     /// Gets or sets the parent manifest that this manifest depends on.

@@ -25,7 +25,7 @@ public static WebApplication UseChainSharpDashboard(
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `routePrefix` | `string` | No | `"/chainsharp"` | URL prefix where the dashboard is mounted. Leading/trailing slashes are normalized. |
-| `title` | `string?` | No | `null` | Overrides the dashboard title. `null` keeps the title from [DashboardOptions]({% link api-reference/dashboard-api/dashboard-options.md %}). |
+| `title` | `string?` | No | `null` | Overrides the dashboard title. `null` keeps the title from [DashboardOptions]({{ site.baseurl }}{% link api-reference/dashboard-api/dashboard-options.md %}). |
 
 ## Returns
 
@@ -56,4 +56,4 @@ The dashboard will be accessible at `https://yourapp/admin/workflows`.
 
 - Must be called **after** `builder.Build()` and **before** `app.Run()`.
 - The `routePrefix` is normalized: `"chainsharp"`, `"/chainsharp"`, and `"/chainsharp/"` all resolve to `"/chainsharp"`.
-- The dashboard requires a data provider ([AddPostgresEffect]({% link api-reference/configuration/add-postgres-effect.md %}) or [AddInMemoryEffect]({% link api-reference/configuration/add-in-memory-effect.md %})) to be configured for metadata and manifest pages to function.
+- The dashboard requires a data provider ([AddPostgresEffect]({{ site.baseurl }}{% link api-reference/configuration/add-postgres-effect.md %}) or [AddInMemoryEffect]({{ site.baseurl }}{% link api-reference/configuration/add-in-memory-effect.md %})) to be configured for metadata and manifest pages to function.

@@ -20,7 +20,7 @@ LoadManifests → ReapFailedJobs → DetermineJobsToQueue → CreateWorkQueueEnt
 
 ### LoadManifestsStep
 
-Loads all enabled manifests from the database in a single query, eagerly including their metadata, dead letters, and work queue entries. Uses `AsSplitQuery()` to avoid cartesian explosion from multiple `Include` calls.
+Loads all enabled manifests from the database in a single query, eagerly including their ManifestGroup, metadata, dead letters, and work queue entries. Uses `AsSplitQuery()` to avoid cartesian explosion from multiple `Include` calls.
 
 The full object graph is loaded once and passed through the chain. Later steps don't hit the database again to check manifest state—they use the navigations already in memory.
 
@@ -41,6 +41,7 @@ The decision step. It runs two passes over the loaded manifests:
 **Pass 2: Dependent manifests**. For each manifest with `ScheduleType.Dependent`, it finds the parent in the loaded set and checks whether `parent.LastSuccessfulRun > dependent.LastSuccessfulRun`. See [Dependent Workflows](../dependent-workflows.md).
 
 Both passes apply the same per-manifest guards before evaluating the schedule:
+- Skip if the manifest's ManifestGroup has `IsEnabled = false`
 - Skip if the manifest was just dead-lettered this cycle
 - Skip if it has an `AwaitingIntervention` dead letter
 - Skip if it has a `Queued` work queue entry (already waiting to be dispatched)
@@ -54,7 +55,10 @@ For each manifest identified as due, creates a `WorkQueue` entry with:
 - `WorkflowName` from the manifest's `Name`
 - `Input` / `InputTypeName` from the manifest's `Properties` / `PropertyTypeName`
 - `ManifestId` linking back to the source manifest
+- `Priority` set from `ManifestGroup.Priority` (the group's priority, not an individual manifest priority)
 - `Status = Queued`
+
+For dependent manifests, `DependentPriorityBoost` is still added on top of the group priority at dispatch time.
 
 Each entry is saved individually. If one fails (e.g., a serialization issue for a specific manifest), the others still get queued. Errors are logged per-manifest.
 

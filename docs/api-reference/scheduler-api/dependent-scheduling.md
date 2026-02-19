@@ -25,9 +25,7 @@ Dependent manifests are evaluated during polling — when a parent's `LastSucces
 public SchedulerConfigurationBuilder ThenInclude<TWorkflow, TInput>(
     string externalId,
     TInput input,
-    Action<ManifestOptions>? configure = null,
-    string? groupId = null,
-    int priority = 0
+    Action<ScheduleOptions>? options = null
 )
     where TWorkflow : IEffectWorkflow<TInput, Unit>
     where TInput : IManifestProperties
@@ -39,9 +37,7 @@ public SchedulerConfigurationBuilder ThenInclude<TWorkflow, TInput>(
 public SchedulerConfigurationBuilder Include<TWorkflow, TInput>(
     string externalId,
     TInput input,
-    Action<ManifestOptions>? configure = null,
-    string? groupId = null,
-    int priority = 0
+    Action<ScheduleOptions>? options = null
 )
     where TWorkflow : IEffectWorkflow<TInput, Unit>
     where TInput : IManifestProperties
@@ -56,8 +52,8 @@ public SchedulerConfigurationBuilder IncludeMany<TWorkflow, TInput, TSource>(
     IEnumerable<TSource> sources,
     Func<TSource, (string Suffix, TInput Input)> map,
     Func<TSource, string> dependsOn,
-    Action<TSource, ManifestOptions>? configure = null,
-    int priority = 0
+    Action<ScheduleOptions>? options = null,
+    Action<TSource, ManifestOptions>? configureEach = null
 )
 
 // Root-based (no dependsOn) — all items depend on the root Schedule
@@ -65,8 +61,8 @@ public SchedulerConfigurationBuilder IncludeMany<TWorkflow, TInput, TSource>(
     string name,
     IEnumerable<TSource> sources,
     Func<TSource, (string Suffix, TInput Input)> map,
-    Action<TSource, ManifestOptions>? configure = null,
-    int priority = 0
+    Action<ScheduleOptions>? options = null,
+    Action<TSource, ManifestOptions>? configureEach = null
 )
 ```
 
@@ -80,20 +76,16 @@ public SchedulerConfigurationBuilder IncludeMany<TWorkflow, TInput, TSource>(
     IEnumerable<TSource> sources,
     Func<TSource, (string ExternalId, TInput Input)> map,
     Func<TSource, string> dependsOn,
-    Action<TSource, ManifestOptions>? configure = null,
-    string? prunePrefix = null,
-    string? groupId = null,
-    int priority = 0
+    Action<ScheduleOptions>? options = null,
+    Action<TSource, ManifestOptions>? configureEach = null
 )
 
 // Root-based (no dependsOn) — all items depend on the root Schedule
 public SchedulerConfigurationBuilder IncludeMany<TWorkflow, TInput, TSource>(
     IEnumerable<TSource> sources,
     Func<TSource, (string ExternalId, TInput Input)> map,
-    Action<TSource, ManifestOptions>? configure = null,
-    string? prunePrefix = null,
-    string? groupId = null,
-    int priority = 0
+    Action<ScheduleOptions>? options = null,
+    Action<TSource, ManifestOptions>? configureEach = null
 )
 ```
 
@@ -105,8 +97,8 @@ public SchedulerConfigurationBuilder ThenIncludeMany<TWorkflow, TInput, TSource>
     IEnumerable<TSource> sources,
     Func<TSource, (string Suffix, TInput Input)> map,
     Func<TSource, string> dependsOn,
-    Action<TSource, ManifestOptions>? configure = null,
-    int priority = 0
+    Action<ScheduleOptions>? options = null,
+    Action<TSource, ManifestOptions>? configureEach = null
 )
 ```
 
@@ -117,10 +109,8 @@ public SchedulerConfigurationBuilder ThenIncludeMany<TWorkflow, TInput, TSource>
     IEnumerable<TSource> sources,
     Func<TSource, (string ExternalId, TInput Input)> map,
     Func<TSource, string> dependsOn,
-    Action<TSource, ManifestOptions>? configure = null,
-    string? prunePrefix = null,
-    string? groupId = null,
-    int priority = 0
+    Action<ScheduleOptions>? options = null,
+    Action<TSource, ManifestOptions>? configureEach = null
 )
 ```
 
@@ -131,9 +121,7 @@ Task<Manifest> ScheduleDependentAsync<TWorkflow, TInput>(
     string externalId,
     TInput input,
     string dependsOnExternalId,
-    Action<ManifestOptions>? configure = null,
-    string? groupId = null,
-    int priority = 0,
+    Action<ScheduleOptions>? options = null,
     CancellationToken ct = default
 )
     where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -147,10 +135,8 @@ Task<IReadOnlyList<Manifest>> ScheduleManyDependentAsync<TWorkflow, TInput, TSou
     IEnumerable<TSource> sources,
     Func<TSource, (string ExternalId, TInput Input)> map,
     Func<TSource, string> dependsOn,
-    Action<TSource, ManifestOptions>? configure = null,
-    string? prunePrefix = null,
-    string? groupId = null,
-    int priority = 0,
+    Action<ScheduleOptions>? options = null,
+    Action<TSource, ManifestOptions>? configureEach = null,
     CancellationToken ct = default
 )
     where TWorkflow : IEffectWorkflow<TInput, Unit>
@@ -165,9 +151,7 @@ Task<IReadOnlyList<Manifest>> ScheduleManyDependentAsync<TWorkflow, TInput, TSou
 |-----------|------|----------|-------------|
 | `externalId` | `string` | Yes | Unique identifier for this dependent job |
 | `input` | `TInput` | Yes | Input data passed to the workflow on each execution |
-| `configure` | `Action<ManifestOptions>?` | No | Per-job options (MaxRetries, Timeout, Priority, etc.) |
-| `groupId` | `string?` | No | Manifest group name. Defaults to externalId when null. See [ManifestGroup]({{ site.baseurl }}{% link scheduler/scheduling-options.md %}#per-group-dispatch-controls). |
-| `priority` | `int` | No | Base dispatch priority (0-31, default 0). `DependentPriorityBoost` is added on top at dispatch time. `configure` can override. |
+| `options` | `Action<ScheduleOptions>?` | No | Optional callback to configure all scheduling options via a fluent builder. Includes manifest-level settings (`Priority`, `Enabled`, `MaxRetries`, `Timeout`) and group-level settings (`.Group(...)` with `MaxActiveJobs`, `Priority`, `Enabled`). See [ScheduleOptions]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}#scheduleoptions). |
 
 `ThenInclude` links to the **cursor** — the most recently declared manifest (the last `Schedule`, `ThenInclude`, or `Include`). Must be called after `Schedule()`, `Include()`, or another `ThenInclude()`.
 
@@ -180,9 +164,7 @@ Task<IReadOnlyList<Manifest>> ScheduleManyDependentAsync<TWorkflow, TInput, TSou
 | `externalId` | `string` | Yes | Unique identifier for this dependent job |
 | `input` | `TInput` | Yes | Input data passed to the workflow on each execution |
 | `dependsOnExternalId` | `string` | Yes | The `ExternalId` of the parent manifest this job depends on |
-| `configure` | `Action<ManifestOptions>?` | No | Per-job options |
-| `groupId` | `string?` | No | Manifest group name. Defaults to externalId when null. |
-| `priority` | `int` | No | Base dispatch priority (0-31, default 0). `DependentPriorityBoost` is added on top at dispatch time. `configure` can override. |
+| `options` | `Action<ScheduleOptions>?` | No | Optional callback to configure all scheduling options via a fluent builder. See [ScheduleOptions]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}#scheduleoptions). |
 | `ct` | `CancellationToken` | No | Cancellation token |
 
 ### IncludeMany / ThenIncludeMany / ScheduleManyDependentAsync (Batch)
@@ -214,18 +196,19 @@ services.AddChainSharpEffects(options => options
             "etl-extract",
             new ExtractInput(),
             Every.Minutes(5),
-            groupId: "etl-pipeline")
+            options => options.Group("etl-pipeline"))
         // B: Transform runs after Extract succeeds (priority 5 + DependentPriorityBoost)
         .ThenInclude<ITransformWorkflow, TransformInput>(
             "etl-transform",
             new TransformInput(),
-            groupId: "etl-pipeline",
-            priority: 5)
+            options => options
+                .Group("etl-pipeline")
+                .Priority(5))
         // C: Load runs after Transform succeeds
         .ThenInclude<ILoadWorkflow, LoadInput>(
             "etl-load",
             new LoadInput(),
-            groupId: "etl-pipeline")
+            options => options.Group("etl-pipeline"))
     )
 );
 ```
@@ -238,14 +221,14 @@ Use `Include` to create multiple branches from a single root. Each `Include` dep
 scheduler
     .Schedule<IExtractWorkflow, ExtractInput>(
         "extract", new ExtractInput(), Every.Hours(1),
-        groupId: "etl")
+        options => options.Group("etl"))
     // Both Transform and Validate depend on Extract (fan-out)
     .Include<ITransformWorkflow, TransformInput>(
         "transform", new TransformInput(),
-        groupId: "etl")
+        options => options.Group("etl"))
     .Include<IValidateWorkflow, ValidateInput>(
         "validate", new ValidateInput(),
-        groupId: "etl")
+        options => options.Group("etl"))
 ```
 
 ### Mixed Fan-Out and Chaining
@@ -256,18 +239,18 @@ scheduler
 scheduler
     .Schedule<IExtractWorkflow, ExtractInput>(
         "extract", new ExtractInput(), Every.Hours(1),
-        groupId: "etl")
+        options => options.Group("etl"))
     // Branch 1: Extract → Transform → Load
     .Include<ITransformWorkflow, TransformInput>(
         "transform", new TransformInput(),
-        groupId: "etl")
+        options => options.Group("etl"))
         .ThenInclude<ILoadWorkflow, LoadInput>(
             "load", new LoadInput(),
-            groupId: "etl")
+            options => options.Group("etl"))
     // Branch 2: Extract → Validate (back to root)
     .Include<IValidateWorkflow, ValidateInput>(
         "validate", new ValidateInput(),
-        groupId: "etl")
+        options => options.Group("etl"))
 ```
 
 Result: `Extract → Transform → Load`, `Extract → Validate`
@@ -298,7 +281,7 @@ All items in the batch depend on a single root `Schedule`:
 scheduler
     .Schedule<IExtractWorkflow, ExtractInput>(
         "extract-all", new ExtractInput(), Every.Hours(1),
-        groupId: "extract")
+        options => options.Group("extract"))
     .IncludeMany<ILoadWorkflow, LoadInput, int>(
         "load",
         Enumerable.Range(0, 10),

@@ -1,6 +1,7 @@
 using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
 using ChainSharp.Effect.Services.EffectRegistry;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Radzen;
 
@@ -49,6 +50,23 @@ public partial class ServerSettingsPage
     private bool _effectsAvailable;
     private List<EffectEntry> _effects = [];
     private Dictionary<Type, bool> _savedEffectStates = new();
+
+    // ── Logging state ──
+    private IConfigurationRoot? _configRoot;
+    private bool _loggingAvailable;
+    private List<LogLevelEntry> _logLevels = [];
+    private Dictionary<string, string> _savedLogLevels = new();
+
+    private static readonly List<string> LogLevelValues =
+    [
+        "Trace",
+        "Debug",
+        "Information",
+        "Warning",
+        "Error",
+        "Critical",
+        "None",
+    ];
 
     // ── Dirty tracking ──
     private bool IsAdminWorkflowsDirty =>
@@ -102,6 +120,12 @@ public partial class ServerSettingsPage
             e => e.Toggleable && e.Enabled != _savedEffectStates.GetValueOrDefault(e.FactoryType)
         );
 
+    private bool IsLoggingDirty =>
+        _loggingAvailable
+        && _logLevels.Any(
+            e => e.Level != _savedLogLevels.GetValueOrDefault(e.Category, "Information")
+        );
+
     protected override void OnInitialized()
     {
         // Scheduler
@@ -123,13 +147,26 @@ public partial class ServerSettingsPage
             LoadEffects();
             SnapshotEffectState();
         }
+
+        // Logging
+        _configRoot = ServiceProvider.GetService<IConfiguration>() as IConfigurationRoot;
+        var loggingSection = _configRoot?.GetSection("Logging:LogLevel");
+        _loggingAvailable = _configRoot is not null && loggingSection?.GetChildren().Any() == true;
+
+        if (_loggingAvailable)
+        {
+            LoadLogging();
+            SnapshotLoggingState();
+        }
     }
 
     // ── Scheduler helpers ──
 
     private void LoadSchedulerFromConfig()
     {
-        _pollingInterval = TimeSpanField.FromTimeSpan(_schedulerConfig!.PollingInterval);
+        _pollingInterval = TimeSpanField.FromTimeSpan(
+            _schedulerConfig!.ManifestManagerPollingInterval
+        );
         _defaultRetryDelay = TimeSpanField.FromTimeSpan(_schedulerConfig.DefaultRetryDelay);
         _maxRetryDelay = TimeSpanField.FromTimeSpan(_schedulerConfig.MaxRetryDelay);
         _defaultJobTimeout = TimeSpanField.FromTimeSpan(_schedulerConfig.DefaultJobTimeout);
@@ -153,7 +190,8 @@ public partial class ServerSettingsPage
         if (_schedulerConfig is null)
             return;
 
-        _schedulerConfig.PollingInterval = _pollingInterval.ToTimeSpan();
+        _schedulerConfig.ManifestManagerPollingInterval = _pollingInterval.ToTimeSpan();
+        _schedulerConfig.JobDispatcherPollingInterval = _pollingInterval.ToTimeSpan();
         _schedulerConfig.DefaultRetryDelay = _defaultRetryDelay.ToTimeSpan();
         _schedulerConfig.MaxRetryDelay = _maxRetryDelay.ToTimeSpan();
         _schedulerConfig.DefaultJobTimeout = _defaultJobTimeout.ToTimeSpan();
@@ -175,7 +213,8 @@ public partial class ServerSettingsPage
 
         _schedulerConfig.ManifestManagerEnabled = true;
         _schedulerConfig.JobDispatcherEnabled = true;
-        _schedulerConfig.PollingInterval = TimeSpan.FromSeconds(5);
+        _schedulerConfig.ManifestManagerPollingInterval = TimeSpan.FromSeconds(5);
+        _schedulerConfig.JobDispatcherPollingInterval = TimeSpan.FromSeconds(5);
         _schedulerConfig.MaxActiveJobs = 10;
         _schedulerConfig.DefaultMaxRetries = 3;
         _schedulerConfig.DefaultRetryDelay = TimeSpan.FromMinutes(5);
@@ -200,7 +239,7 @@ public partial class ServerSettingsPage
     {
         _savedManifestManagerEnabled = _schedulerConfig!.ManifestManagerEnabled;
         _savedJobDispatcherEnabled = _schedulerConfig.JobDispatcherEnabled;
-        _savedPollingInterval = _schedulerConfig.PollingInterval;
+        _savedPollingInterval = _schedulerConfig.ManifestManagerPollingInterval;
         _savedMaxActiveJobs = _schedulerConfig.MaxActiveJobs;
         _savedDefaultMaxRetries = _schedulerConfig.DefaultMaxRetries;
         _savedDefaultRetryDelay = _schedulerConfig.DefaultRetryDelay;
@@ -278,6 +317,48 @@ public partial class ServerSettingsPage
         _savedEffectStates = _effects.ToDictionary(e => e.FactoryType, e => e.Enabled);
     }
 
+    // ── Logging helpers ──
+
+    private void LoadLogging()
+    {
+        _logLevels = _configRoot!
+            .GetSection("Logging:LogLevel")
+            .GetChildren()
+            .Select(
+                section =>
+                    new LogLevelEntry
+                    {
+                        Category = section.Key,
+                        Level = section.Value ?? "Information",
+                    }
+            )
+            .OrderBy(e => e.Category == "Default" ? "" : e.Category)
+            .ToList();
+    }
+
+    private void SaveLogging()
+    {
+        if (_configRoot is null)
+            return;
+
+        foreach (var entry in _logLevels)
+            _configRoot[$"Logging:LogLevel:{entry.Category}"] = entry.Level;
+
+        _configRoot.Reload();
+        SnapshotLoggingState();
+    }
+
+    private void ResetLoggingDefaults()
+    {
+        foreach (var entry in _logLevels)
+            entry.Level = _savedLogLevels.GetValueOrDefault(entry.Category, "Information");
+    }
+
+    private void SnapshotLoggingState()
+    {
+        _savedLogLevels = _logLevels.ToDictionary(e => e.Category, e => e.Level);
+    }
+
     // ── Combined actions ──
 
     private void Save()
@@ -287,6 +368,9 @@ public partial class ServerSettingsPage
 
         if (_effectsAvailable)
             SaveEffects();
+
+        if (_loggingAvailable)
+            SaveLogging();
 
         NotificationService.Notify(
             new NotificationMessage
@@ -306,6 +390,9 @@ public partial class ServerSettingsPage
 
         if (_effectsAvailable)
             ResetEffectDefaults();
+
+        if (_loggingAvailable)
+            ResetLoggingDefaults();
 
         NotificationService.Notify(
             new NotificationMessage
@@ -353,5 +440,11 @@ public partial class ServerSettingsPage
         public required string FullName { get; init; }
         public bool Enabled { get; set; }
         public required bool Toggleable { get; init; }
+    }
+
+    private class LogLevelEntry
+    {
+        public required string Category { get; init; }
+        public string Level { get; set; } = "Information";
     }
 }

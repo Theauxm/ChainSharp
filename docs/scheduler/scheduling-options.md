@@ -21,23 +21,23 @@ The builder captures the manifests and seeds them when the `BackgroundService` s
 
 Every manifest belongs to a **ManifestGroup**. A ManifestGroup is a first-class entity that ties related manifests together and exposes per-group dispatch controls (see [Per-Group Dispatch Controls](#per-group-dispatch-controls) below).
 
-The `groupId` parameter is available on `Schedule`, `ThenInclude`, `Include`, `ScheduleMany`, `ThenIncludeMany`, and `IncludeMany`. When you don't specify a `groupId`, it defaults to the manifest's `externalId`—so every manifest always has a group, even if it's a group of one. ManifestGroups are upserted by name during scheduling: if a group with that name already exists it's reused, otherwise a new one is created automatically. Orphaned groups (groups with no remaining manifests) are cleaned up on startup.
+The group is set via the `ScheduleOptions` fluent builder using `.Group(...)`. When you don't specify a group, it defaults to the manifest's `externalId`—so every manifest always has a group, even if it's a group of one. ManifestGroups are upserted by name during scheduling: if a group with that name already exists it's reused, otherwise a new one is created automatically. Orphaned groups (groups with no remaining manifests) are cleaned up on startup.
 
 ```csharp
 services.AddChainSharpEffects(options => options
     .AddScheduler(scheduler => scheduler
         .UseHangfire(connectionString)
-        // Single manifest — explicit groupId shared with other related jobs
+        // Single manifest — explicit group shared with other related jobs
         .Schedule<IExtractWorkflow, ExtractInput>(
             "extract-users",
             new ExtractInput { Table = "users" },
             Every.Minutes(5),
-            groupId: "user-pipeline")
+            options => options.Group("user-pipeline"))
         // Dependent manifest in the same group
         .Include<ILoadWorkflow, LoadInput>(
             "load-users",
             new LoadInput { Table = "users" },
-            groupId: "user-pipeline")
+            options => options.Group("user-pipeline"))
         // Bulk scheduling — name-based overload sets groupId automatically
         .ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
             "table-sync",
@@ -54,13 +54,13 @@ The dashboard's **Manifest Groups** page shows each group's settings and aggrega
 
 ### Runtime: ScheduleManyAsync
 
-Use `ScheduleManyAsync` when the set of jobs is determined at runtime (loaded from a database, config file, or external API). It creates multiple manifests in a single transaction—if any fails, the entire batch rolls back. Both startup and runtime variants accept the same `groupId` parameter and use upsert semantics.
+Use `ScheduleManyAsync` when the set of jobs is determined at runtime (loaded from a database, config file, or external API). It creates multiple manifests in a single transaction—if any fails, the entire batch rolls back. Both startup and runtime variants accept the same `ScheduleOptions` builder and use upsert semantics.
 
 *API Reference: [ScheduleManyAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %})*
 
 ### Configuration Per Item
 
-The optional `configure` parameter receives each source item, so you can vary settings:
+The optional `configureEach` parameter receives each source item, so you can vary per-item settings. Use the `ScheduleOptions` builder for settings shared across the batch:
 
 ```csharp
 var tableConfigs = new[]
@@ -77,11 +77,11 @@ foreach (var config in tableConfigs)
         $"sync-{config.Name}",
         new SyncTableInput { TableName = config.Name },
         Schedule.FromInterval(config.Interval),
-        opts => opts.MaxRetries = config.Retries);
+        options => options.MaxRetries(config.Retries));
 }
 ```
 
-*API Reference: [ScheduleAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}), [ManifestOptions]({{ site.baseurl }}{% link api-reference/scheduler-api/scheduling-helpers.md %})*
+*API Reference: [ScheduleAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}), [ScheduleOptions]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}#scheduleoptions)*
 
 ### Multi-Dimensional Bulk Jobs
 
@@ -126,7 +126,20 @@ Each ManifestGroup has three configurable properties that govern how its manifes
 | `Priority` | `int` (0–31) | `0` | Dispatch ordering between groups—higher values are dispatched first |
 | `IsEnabled` | `bool` | `true` | When `false`, all manifests in the group are skipped during queuing and dispatch |
 
-These settings are configured from the dashboard's **Manifest Group detail page**, not from code. This keeps scheduling declarations in code focused on *what* runs and *when*, while operators control *how much* and *in what order* from the dashboard.
+These settings can be configured both from code via the `.Group(...)` builder on `ScheduleOptions`, and from the dashboard's **Manifest Group detail page**. Code-level configuration is applied during scheduling (upsert semantics), while the dashboard allows operators to adjust settings at runtime without redeployment.
+
+```csharp
+scheduler.Schedule<IMyWorkflow, MyInput>(
+    "my-job",
+    new MyInput { ... },
+    Every.Minutes(5),
+    options => options
+        .Priority(10)
+        .Group("my-group", group => group
+            .MaxActiveJobs(5)
+            .Priority(20)
+            .Enabled(true)));
+```
 
 **MaxActiveJobs** limits concurrent active jobs within a single group. When a group hits its cap, the [JobDispatcher](admin-workflows/job-dispatcher.md) skips it and moves on to the next group—so other groups can still dispatch normally. This prevents a single high-throughput group from monopolizing all capacity. The global `MaxActiveJobs` (configured in code) still applies as an overall ceiling across all groups.
 
@@ -142,22 +155,21 @@ These settings are configured from the dashboard's **Manifest Group detail page*
 
 ## Manifest Options
 
-Configure per-job settings via the `ManifestOptions` callback:
+Configure per-job settings via the `ScheduleOptions` fluent builder:
 
 ```csharp
 await scheduler.ScheduleAsync<IMyWorkflow, MyInput>(
     "my-job",
     new MyInput { ... },
     Every.Hours(1),
-    opts =>
-    {
-        opts.IsEnabled = true;      // Default: true
-        opts.MaxRetries = 5;        // Default: 3
-        opts.Timeout = TimeSpan.FromMinutes(30);  // Null uses global default
-    });
+    options => options
+        .Enabled(true)                              // Default: true
+        .MaxRetries(5)                              // Default: 3
+        .Timeout(TimeSpan.FromMinutes(30))          // Null uses global default
+        .Priority(10));                             // Default: 0
 ```
 
-*API Reference: [ScheduleAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}), [ManifestOptions]({{ site.baseurl }}{% link api-reference/scheduler-api/scheduling-helpers.md %})*
+*API Reference: [ScheduleAsync]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}), [ScheduleOptions]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}#scheduleoptions)*
 
 ## Schedule Types
 
@@ -174,8 +186,8 @@ See [Dependent Workflows](dependent-workflows.md) for details on chaining workfl
 
 Key options to know:
 
-- **`PollingInterval`** (default: 5 seconds) — how often ManifestManager checks for pending jobs; supports sub-minute values
-- **`MaxActiveJobs`** (default: 100) — global concurrent job cap; set to `null` for unlimited. Per-group limits can also be set from the dashboard (see [Per-Group Dispatch Controls](#per-group-dispatch-controls))
+- **`ManifestManagerPollingInterval`** / **`JobDispatcherPollingInterval`** (default: 5 seconds each) — how often the ManifestManager and JobDispatcher poll independently. Use `PollingInterval` to set both to the same value
+- **`MaxActiveJobs`** (default: 100) — global concurrent job cap; set to `null` for unlimited. Per-group limits can be set from code via `.Group(group => group.MaxActiveJobs(...))` or from the dashboard (see [Per-Group Dispatch Controls](#per-group-dispatch-controls))
 - **`DefaultMaxRetries`** (default: 3) — retry attempts before dead-lettering
 
 *API Reference: [AddScheduler]({{ site.baseurl }}{% link api-reference/scheduler-api/add-scheduler.md %}) — full options table with all defaults including retry backoff, timeouts, and stuck job recovery.*

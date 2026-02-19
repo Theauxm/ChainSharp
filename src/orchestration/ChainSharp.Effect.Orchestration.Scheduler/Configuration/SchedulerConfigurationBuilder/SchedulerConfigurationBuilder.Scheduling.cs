@@ -15,8 +15,7 @@ public partial class SchedulerConfigurationBuilder
     /// <param name="externalId">A unique identifier for this scheduled job</param>
     /// <param name="input">The input data that will be passed to the workflow on each execution</param>
     /// <param name="schedule">The schedule definition (interval or cron-based)</param>
-    /// <param name="configure">Optional action to configure additional manifest options</param>
-    /// <param name="priority">The dispatch priority (0-31, default 0). Higher values are dispatched first. Can be overridden by the configure callback.</param>
+    /// <param name="options">Optional callback to configure manifest and group options via <see cref="ScheduleOptions"/></param>
     /// <returns>The builder for method chaining</returns>
     /// <remarks>
     /// The manifest is not created immediately. It is captured and will be seeded
@@ -31,7 +30,10 @@ public partial class SchedulerConfigurationBuilder
     ///         .Schedule&lt;IHelloWorldWorkflow, HelloWorldInput&gt;(
     ///             "hello-world",
     ///             new HelloWorldInput { Name = "Scheduler" },
-    ///             Every.Minutes(1))
+    ///             Every.Minutes(1),
+    ///             options => options
+    ///                 .Priority(10)
+    ///                 .Group(group => group.MaxActiveJobs(5)))
     ///     )
     /// );
     /// </code>
@@ -40,14 +42,14 @@ public partial class SchedulerConfigurationBuilder
         string externalId,
         TInput input,
         Schedule schedule,
-        Action<ManifestOptions>? configure = null,
-        string? groupId = null,
-        int priority = 0
+        Action<ScheduleOptions>? options = null
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
     {
-        _externalIdToGroupId[externalId] = groupId ?? externalId;
+        var resolved = new ScheduleOptions();
+        options?.Invoke(resolved);
+        _externalIdToGroupId[externalId] = resolved._groupId ?? externalId;
 
         _configuration.PendingManifests.Add(
             new PendingManifest
@@ -58,11 +60,9 @@ public partial class SchedulerConfigurationBuilder
                         externalId,
                         input,
                         schedule,
-                        configure,
-                        groupId: groupId,
-                        priority: priority,
+                        options,
                         ct: ct
-                    )
+                    ),
             }
         );
 
@@ -79,8 +79,7 @@ public partial class SchedulerConfigurationBuilder
     /// <typeparam name="TInput">The input type for the workflow (must implement IManifestProperties)</typeparam>
     /// <param name="externalId">A unique identifier for this dependent job</param>
     /// <param name="input">The input data that will be passed to the workflow on each execution</param>
-    /// <param name="configure">Optional action to configure additional manifest options</param>
-    /// <param name="priority">The base dispatch priority (0-31, default 0). DependentPriorityBoost is added on top at dispatch time. Can be overridden by the configure callback.</param>
+    /// <param name="options">Optional callback to configure manifest and group options via <see cref="ScheduleOptions"/></param>
     /// <returns>The builder for method chaining</returns>
     /// <remarks>
     /// Must be called after <see cref="Schedule{TWorkflow,TInput}"/>, <see cref="Include{TWorkflow,TInput}"/>,
@@ -91,9 +90,7 @@ public partial class SchedulerConfigurationBuilder
     public SchedulerConfigurationBuilder ThenInclude<TWorkflow, TInput>(
         string externalId,
         TInput input,
-        Action<ManifestOptions>? configure = null,
-        string? groupId = null,
-        int priority = 0
+        Action<ScheduleOptions>? options = null
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
@@ -105,7 +102,9 @@ public partial class SchedulerConfigurationBuilder
                     + "No parent manifest external ID is available."
             );
 
-        _externalIdToGroupId[externalId] = groupId ?? externalId;
+        var resolved = new ScheduleOptions();
+        options?.Invoke(resolved);
+        _externalIdToGroupId[externalId] = resolved._groupId ?? externalId;
         _dependencyEdges.Add((parentExternalId, externalId));
 
         _configuration.PendingManifests.Add(
@@ -117,9 +116,7 @@ public partial class SchedulerConfigurationBuilder
                         externalId,
                         input,
                         parentExternalId,
-                        configure,
-                        groupId: groupId,
-                        priority: priority,
+                        options,
                         ct: ct
                     ),
             }
@@ -139,9 +136,7 @@ public partial class SchedulerConfigurationBuilder
     /// <typeparam name="TInput">The input type for the workflow (must implement IManifestProperties)</typeparam>
     /// <param name="externalId">A unique identifier for this dependent job</param>
     /// <param name="input">The input data that will be passed to the workflow on each execution</param>
-    /// <param name="configure">Optional action to configure additional manifest options</param>
-    /// <param name="groupId">Optional group identifier for dashboard grouping</param>
-    /// <param name="priority">The base dispatch priority (0-31, default 0). DependentPriorityBoost is added on top at dispatch time. Can be overridden by the configure callback.</param>
+    /// <param name="options">Optional callback to configure manifest and group options via <see cref="ScheduleOptions"/></param>
     /// <returns>The builder for method chaining</returns>
     /// <remarks>
     /// Must be called after <see cref="Schedule{TWorkflow,TInput}"/>.
@@ -157,9 +152,7 @@ public partial class SchedulerConfigurationBuilder
     public SchedulerConfigurationBuilder Include<TWorkflow, TInput>(
         string externalId,
         TInput input,
-        Action<ManifestOptions>? configure = null,
-        string? groupId = null,
-        int priority = 0
+        Action<ScheduleOptions>? options = null
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
         where TInput : IManifestProperties
@@ -171,7 +164,9 @@ public partial class SchedulerConfigurationBuilder
                     + "No root manifest external ID is available."
             );
 
-        _externalIdToGroupId[externalId] = groupId ?? externalId;
+        var resolved = new ScheduleOptions();
+        options?.Invoke(resolved);
+        _externalIdToGroupId[externalId] = resolved._groupId ?? externalId;
         _dependencyEdges.Add((parentExternalId, externalId));
 
         _configuration.PendingManifests.Add(
@@ -183,9 +178,7 @@ public partial class SchedulerConfigurationBuilder
                         externalId,
                         input,
                         parentExternalId,
-                        configure,
-                        groupId: groupId,
-                        priority: priority,
+                        options,
                         ct: ct
                     ),
             }

@@ -79,11 +79,14 @@ internal class CreateWorkQueueEntriesStep(
 
         var duration = DateTime.UtcNow - pollStartTime;
 
-        logger.LogInformation(
-            "CreateWorkQueueEntriesStep completed: {EntriesCreated} entries created in {Duration}ms",
-            entriesCreated,
-            duration.TotalMilliseconds
-        );
+        if (entriesCreated > 0)
+            logger.LogInformation(
+                "CreateWorkQueueEntriesStep completed: {EntriesCreated} entries created in {Duration}ms",
+                entriesCreated,
+                duration.TotalMilliseconds
+            );
+        else
+            logger.LogDebug("CreateWorkQueueEntriesStep completed: no entries created");
 
         return Unit.Default;
     }

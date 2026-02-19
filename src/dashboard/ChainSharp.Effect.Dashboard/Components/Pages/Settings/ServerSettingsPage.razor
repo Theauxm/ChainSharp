@@ -258,6 +258,43 @@
         </RadzenFieldset>
     }
 
+    @* ══════════════════════════════════════════════════════════ *@
+    @* ── Logging ── *@
+    @* ══════════════════════════════════════════════════════════ *@
+
+    @if (_loggingAvailable)
+    {
+        <RadzenFieldset Text="Logging" class="@(IsLoggingDirty ? "cs-fieldset-dirty" : "")">
+            <RadzenStack Gap="1rem">
+                <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" AllowClose="false" Variant="Variant.Flat">
+                    Log level changes take effect immediately for all loggers. These are runtime overrides and will reset on application restart.
+                </RadzenAlert>
+
+                <RadzenDataGrid Data="@_logLevels"
+                                TItem="LogLevelEntry"
+                                AllowColumnResize="true"
+                                class="rz-datatable-striped">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="LogLevelEntry"
+                                              Property="Category"
+                                              Title="Category"
+                                              Width="250px" />
+                        <RadzenDataGridColumn TItem="LogLevelEntry"
+                                              Title="Level"
+                                              Width="200px"
+                                              Sortable="false">
+                            <Template Context="entry">
+                                <RadzenDropDown @bind-Value="entry.Level"
+                                                Data="LogLevelValues"
+                                                Style="width: 100%;" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </RadzenStack>
+        </RadzenFieldset>
+    }
+
     @* ── Actions ── *@
     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End" class="cs-settings-actions">
         <RadzenButton Text="Reset Default"

@@ -65,7 +65,7 @@ internal class EnqueueJobsStep(
                 // Enqueue the job to the background task server
                 var backgroundTaskId = await backgroundTaskServer.EnqueueAsync(metadata.Id);
 
-                logger.LogInformation(
+                logger.LogDebug(
                     "Enqueued manifest {ManifestId} as background task {BackgroundTaskId} (Metadata: {MetadataId})",
                     manifest.Id,
                     backgroundTaskId,
@@ -89,11 +89,14 @@ internal class EnqueueJobsStep(
         var pollEndTime = DateTime.UtcNow;
         var duration = pollEndTime - pollStartTime;
 
-        logger.LogInformation(
-            "EnqueueJobsStep completed: {JobsEnqueued} jobs enqueued in {Duration}ms",
-            jobsEnqueued,
-            duration.TotalMilliseconds
-        );
+        if (jobsEnqueued > 0)
+            logger.LogInformation(
+                "EnqueueJobsStep completed: {JobsEnqueued} jobs enqueued in {Duration}ms",
+                jobsEnqueued,
+                duration.TotalMilliseconds
+            );
+        else
+            logger.LogDebug("EnqueueJobsStep completed: no jobs enqueued");
 
         return Unit.Default;
     }

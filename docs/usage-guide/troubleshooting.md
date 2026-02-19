@@ -80,7 +80,7 @@ The most common cause: `TaskServerExecutorWorkflow.Assembly` isn't registered wi
 
 Other causes:
 - The manifest's `IsEnabled` is `false`—check via `IManifestScheduler` or the database
-- `PollingInterval` is set too high and the job hasn't been picked up yet
+- `ManifestManagerPollingInterval` or `JobDispatcherPollingInterval` is set too high and the job hasn't been picked up yet
 - The workflow's input type doesn't implement `IManifestProperties`
 
 ## "Ambiguous reference" between Cron types

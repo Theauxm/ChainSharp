@@ -102,12 +102,16 @@ When `groupId` is not specified, it defaults to the manifest's `externalId`. See
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│              ManifestPollingService (BackgroundService)           │
-│     Runs ManifestManager then JobDispatcher each cycle           │
-└─────────────────────────────────┬───────────────────────────────┘
-                                  │
-                      ┌───────────┴───────────┐
-                      ▼                       ▼
+│            SchedulerStartupService (IHostedService)              │
+│     RecoverStuckJobs + SeedPendingManifests (runs once)          │
+└─────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────┐  ┌──────────────────────────────┐
+│ ManifestManagerPollingService│  │ JobDispatcherPollingService   │
+│ (BackgroundService)          │  │ (BackgroundService)           │
+│ Polls on its own interval    │  │ Polls on its own interval     │
+└──────────────┬───────────────┘  └──────────────┬────────────────┘
+               ▼                                  ▼
 ┌──────────────────────────────┐  ┌──────────────────────────────┐
 │   ManifestManagerWorkflow    │  │    JobDispatcherWorkflow      │
 │                              │  │                               │
@@ -140,7 +144,9 @@ When `groupId` is not specified, it defaults to the manifest's `externalId`. See
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-The **ManifestPollingService** is a .NET `BackgroundService` that runs two workflows each cycle: the ManifestManager first, then the JobDispatcher. It supports sub-minute polling (e.g., every 5 seconds). On startup, it seeds any manifests configured via `.Schedule()`, `.ScheduleMany()`, `.ThenInclude()`, `.ThenIncludeMany()`, `.Include()`, or `.IncludeMany()`.
+The **SchedulerStartupService** is an `IHostedService` that runs once on startup. It seeds any manifests configured via `.Schedule()`, `.ScheduleMany()`, `.ThenInclude()`, `.ThenIncludeMany()`, `.Include()`, or `.IncludeMany()`, recovers stuck jobs, and cleans up orphaned manifest groups. It completes before the polling services start.
+
+The **ManifestManagerPollingService** and **JobDispatcherPollingService** are independent `BackgroundService` instances, each with their own configurable polling interval (default: 5 seconds). They communicate via the work queue — ManifestManager writes entries, JobDispatcher reads them. Running independently means JobDispatcher may not see ManifestManager's freshly-queued entries until its next tick, but no work is lost.
 
 The **ManifestManagerWorkflow** loads enabled manifests, dead-letters any that have exceeded their retry limit, determines which are due for execution (including [dependent manifests](scheduler/dependent-workflows.md) whose parent has a newer `LastSuccessfulRun`), and writes them to the work queue. It doesn't enqueue anything directly—it just records intent.
 

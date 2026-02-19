@@ -25,7 +25,6 @@ var connectionString =
 builder.Services.AddLogging(logging =>
 {
     logging.AddConsole();
-    logging.SetMinimumLevel(LogLevel.Information);
 });
 
 // Add ChainSharp Effects with Postgres persistence, Scheduler, and Hangfire in one fluent call
@@ -57,6 +56,7 @@ builder.Services.AddChainSharpEffects(
                         cleanup.AddWorkflowType<IExtractImportWorkflow>();
                         cleanup.AddWorkflowType<ITransformLoadWorkflow>();
                     })
+                    .JobDispatcherPollingInterval(TimeSpan.FromSeconds(2))
                     .UseHangfire(connectionString);
 
                 scheduler
@@ -127,6 +127,7 @@ builder.Services.AddChainSharpEffects(
 
                 scheduler
                 // Schedule ExtractImport for Transaction table (30 indexes)
+                // Demonstrates per-group MaxActiveJobs via the new ScheduleOptions API
                 .ScheduleMany<
                     IExtractImportWorkflow,
                     ExtractImportInput,
@@ -144,7 +145,7 @@ builder.Services.AddChainSharpEffects(
                             }
                         ),
                     Every.Minutes(5),
-                    priority: 24
+                    options => options.Priority(24).Group(group => group.MaxActiveJobs(10))
                 );
             })
 );

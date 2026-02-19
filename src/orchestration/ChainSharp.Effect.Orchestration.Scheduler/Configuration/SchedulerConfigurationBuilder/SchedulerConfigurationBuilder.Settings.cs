@@ -7,13 +7,37 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Configuration;
 public partial class SchedulerConfigurationBuilder
 {
     /// <summary>
-    /// Sets the interval at which the ManifestManager polls for pending jobs.
+    /// Sets the polling interval for both ManifestManager and JobDispatcher.
+    /// For independent control, use <see cref="ManifestManagerPollingInterval"/> and <see cref="JobDispatcherPollingInterval"/>.
     /// </summary>
-    /// <param name="interval">The polling interval (default: 60 seconds)</param>
+    /// <param name="interval">The polling interval (default: 5 seconds)</param>
     /// <returns>The builder for method chaining</returns>
     public SchedulerConfigurationBuilder PollingInterval(TimeSpan interval)
     {
-        _configuration.PollingInterval = interval;
+        _configuration.ManifestManagerPollingInterval = interval;
+        _configuration.JobDispatcherPollingInterval = interval;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the interval at which ManifestManagerPollingService evaluates manifests and writes to the work queue.
+    /// </summary>
+    /// <param name="interval">The polling interval (default: 5 seconds)</param>
+    /// <returns>The builder for method chaining</returns>
+    public SchedulerConfigurationBuilder ManifestManagerPollingInterval(TimeSpan interval)
+    {
+        _configuration.ManifestManagerPollingInterval = interval;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the interval at which JobDispatcherPollingService reads the work queue and dispatches jobs.
+    /// </summary>
+    /// <param name="interval">The polling interval (default: 5 seconds)</param>
+    /// <returns>The builder for method chaining</returns>
+    public SchedulerConfigurationBuilder JobDispatcherPollingInterval(TimeSpan interval)
+    {
+        _configuration.JobDispatcherPollingInterval = interval;
         return this;
     }
 

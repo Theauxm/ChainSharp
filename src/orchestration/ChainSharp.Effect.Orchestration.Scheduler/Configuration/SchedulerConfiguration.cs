@@ -37,9 +37,14 @@ public class SchedulerConfiguration
     public bool JobDispatcherEnabled { get; set; } = true;
 
     /// <summary>
-    /// The interval at which the ManifestManager polls for pending jobs.
+    /// The interval at which the ManifestManagerPollingService polls for pending jobs.
     /// </summary>
-    public TimeSpan PollingInterval { get; set; } = TimeSpan.FromSeconds(5);
+    public TimeSpan ManifestManagerPollingInterval { get; set; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>
+    /// The interval at which the JobDispatcherPollingService polls the work queue.
+    /// </summary>
+    public TimeSpan JobDispatcherPollingInterval { get; set; } = TimeSpan.FromSeconds(2);
 
     /// <summary>
     /// The maximum number of active jobs (Pending + InProgress Metadata) allowed across all manifests.

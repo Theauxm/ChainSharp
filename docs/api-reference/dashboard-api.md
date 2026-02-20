@@ -8,7 +8,9 @@ has_children: true
 
 # Dashboard API
 
-The ChainSharp dashboard is a Blazor Server UI that provides real-time visibility into workflow execution, metadata, manifests, and dead letters. It's distributed as a Razor Class Library and mounted into your existing ASP.NET Core application.
+The ChainSharp dashboard is a Blazor Server UI that provides real-time visibility into workflow execution, metadata, manifests, dead letters, and effect provider configuration. It's distributed as a Razor Class Library and mounted into your existing ASP.NET Core application.
+
+Effect providers that implement `IConfigurableEffectProviderFactory<TConfiguration>` (or `IConfigurableStepEffectProviderFactory<TConfiguration>`) expose a settings button on the dashboard's **Effects** page, where their configuration properties can be modified at runtime.
 
 ```csharp
 // In Program.cs

@@ -1,9 +1,11 @@
 using System.Text.Json;
 using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 using ChainSharp.Effect.Extensions;
+using ChainSharp.Effect.Provider.Parameter.Configuration;
 using ChainSharp.Effect.Provider.Parameter.Services.ParameterEffectProviderFactory;
 using ChainSharp.Effect.Services.EffectProviderFactory;
 using ChainSharp.Effect.Utils;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ChainSharp.Effect.Provider.Parameter.Extensions;
 
@@ -60,14 +62,30 @@ public static class ServiceExtensions
     ///     options.SaveWorkflowParameters(jsonOptions)
     /// );
     /// ```
+    ///
+    /// Or with parameter configuration to control which parameters are saved:
+    /// ```csharp
+    /// services.AddChainSharpEffects(options =>
+    ///     options.SaveWorkflowParameters(configure: cfg =>
+    ///     {
+    ///         cfg.SaveInputs = true;
+    ///         cfg.SaveOutputs = false;
+    ///     })
+    /// );
+    /// ```
     /// </remarks>
     public static ChainSharpEffectConfigurationBuilder SaveWorkflowParameters(
         this ChainSharpEffectConfigurationBuilder builder,
-        JsonSerializerOptions? jsonSerializerOptions = null
+        JsonSerializerOptions? jsonSerializerOptions = null,
+        Action<ParameterEffectConfiguration>? configure = null
     )
     {
         jsonSerializerOptions ??= ChainSharpJsonSerializationOptions.Default;
 
+        var effectConfiguration = new ParameterEffectConfiguration();
+        configure?.Invoke(effectConfiguration);
+
+        builder.ServiceCollection.AddSingleton(effectConfiguration);
         builder.WorkflowParameterJsonSerializerOptions = jsonSerializerOptions;
 
         return builder.AddEffect<ParameterEffectProviderFactory>();

@@ -56,7 +56,7 @@ These properties can be set directly on the `ChainSharpEffectConfigurationBuilde
 | [AddInMemoryEffect]({{ site.baseurl }}{% link api-reference/configuration/add-in-memory-effect.md %}) | Adds in-memory database support for testing/development |
 | [AddEffectDataContextLogging]({{ site.baseurl }}{% link api-reference/configuration/add-effect-data-context-logging.md %}) | Enables logging for database operations |
 | [AddJsonEffect]({{ site.baseurl }}{% link api-reference/configuration/add-json-effect.md %}) | Adds JSON change detection for tracking model mutations |
-| [SaveWorkflowParameters]({{ site.baseurl }}{% link api-reference/configuration/save-workflow-parameters.md %}) | Serializes workflow input/output to JSON for persistence |
+| [SaveWorkflowParameters]({{ site.baseurl }}{% link api-reference/configuration/save-workflow-parameters.md %}) | Serializes workflow input/output to JSON for persistence (optionally configurable) |
 | [AddStepLogger]({{ site.baseurl }}{% link api-reference/configuration/add-step-logger.md %}) | Adds per-step execution logging |
 | [AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %}) | Registers the WorkflowBus and discovers workflows via assembly scanning |
 | [AddEffect / AddStepEffect]({{ site.baseurl }}{% link api-reference/configuration/add-effect.md %}) | Registers custom effect provider factories |

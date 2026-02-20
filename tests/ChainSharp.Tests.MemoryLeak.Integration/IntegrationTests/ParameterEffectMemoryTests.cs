@@ -1,5 +1,6 @@
 using System.Text.Json;
 using ChainSharp.Effect.Models.Metadata;
+using ChainSharp.Effect.Provider.Parameter.Configuration;
 using ChainSharp.Effect.Provider.Parameter.Services.ParameterEffectProviderFactory;
 using ChainSharp.Tests.MemoryLeak.Integration.TestWorkflows.TestModels;
 using ChainSharp.Tests.MemoryLeak.Integration.Utils;
@@ -36,7 +37,10 @@ public class ParameterEffectMemoryTests
             {
                 for (int i = 0; i < 50; i++)
                 {
-                    using var parameterEffect = new ParameterEffect(_jsonOptions);
+                    using var parameterEffect = new ParameterEffect(
+                        _jsonOptions,
+                        new ParameterEffectConfiguration()
+                    );
 
                     // Track multiple metadata objects
                     for (int j = 0; j < 20; j++)
@@ -107,7 +111,10 @@ public class ParameterEffectMemoryTests
         var result = await MemoryProfiler.MonitorMemoryUsageAsync(
             async () =>
             {
-                using var parameterEffect = new ParameterEffect(_jsonOptions);
+                using var parameterEffect = new ParameterEffect(
+                    _jsonOptions,
+                    new ParameterEffectConfiguration()
+                );
 
                 // Track many metadata objects with large parameter serialization
                 for (int i = 0; i < 100; i++)
@@ -188,7 +195,10 @@ public class ParameterEffectMemoryTests
         var result = await MemoryProfiler.MonitorMemoryUsageAsync(
             async () =>
             {
-                using var parameterEffect = new ParameterEffect(_jsonOptions);
+                using var parameterEffect = new ParameterEffect(
+                    _jsonOptions,
+                    new ParameterEffectConfiguration()
+                );
 
                 // Track metadata and repeatedly update to create new JsonDocuments
                 var metadata = new Metadata { Name = "JsonDocumentTest" };
@@ -243,7 +253,10 @@ public class ParameterEffectMemoryTests
         var result = await MemoryProfiler.MonitorMemoryUsageAsync(
             async () =>
             {
-                using var parameterEffect = new ParameterEffect(_jsonOptions);
+                using var parameterEffect = new ParameterEffect(
+                    _jsonOptions,
+                    new ParameterEffectConfiguration()
+                );
 
                 var tasks = Enumerable
                     .Range(0, 8)
@@ -310,7 +323,10 @@ public class ParameterEffectMemoryTests
         var result = await MemoryProfiler.MonitorMemoryUsageAsync(
             async () =>
             {
-                using var parameterEffect = new ParameterEffect(_jsonOptions);
+                using var parameterEffect = new ParameterEffect(
+                    _jsonOptions,
+                    new ParameterEffectConfiguration()
+                );
 
                 // Track a few metadata objects
                 var metadataList = new List<Metadata>();
@@ -371,7 +387,7 @@ public class ParameterEffectMemoryTests
     public void ParameterEffect_DisposedState_ShouldStopTracking()
     {
         // Test that disposed ParameterEffect stops tracking metadata
-        var parameterEffect = new ParameterEffect(_jsonOptions);
+        var parameterEffect = new ParameterEffect(_jsonOptions, new ParameterEffectConfiguration());
 
         // Track a metadata object before disposal
         var metadata1 = new Metadata { Name = "BeforeDisposal" };
@@ -405,7 +421,10 @@ public class ParameterEffectMemoryTests
         var result = await MemoryProfiler.MonitorMemoryUsageAsync(
             async () =>
             {
-                using var parameterEffect = new ParameterEffect(_jsonOptions);
+                using var parameterEffect = new ParameterEffect(
+                    _jsonOptions,
+                    new ParameterEffectConfiguration()
+                );
 
                 // Track metadata with very large parameter data
                 for (int i = 0; i < 20; i++)
@@ -467,7 +486,10 @@ public class ParameterEffectMemoryTests
                 // Create multiple ParameterEffect instances without tracking anything
                 for (int i = 0; i < 50; i++)
                 {
-                    using var parameterEffect = new ParameterEffect(_jsonOptions);
+                    using var parameterEffect = new ParameterEffect(
+                        _jsonOptions,
+                        new ParameterEffectConfiguration()
+                    );
 
                     // Call SaveChanges without tracking anything
                     await parameterEffect.SaveChanges(CancellationToken.None);
@@ -506,7 +528,10 @@ public class ParameterEffectMemoryTests
                 // Create and dispose multiple ParameterEffect instances
                 for (int i = 0; i < 25; i++)
                 {
-                    var parameterEffect = new ParameterEffect(_jsonOptions);
+                    var parameterEffect = new ParameterEffect(
+                        _jsonOptions,
+                        new ParameterEffectConfiguration()
+                    );
 
                     // Track some metadata before disposal
                     var metadata = new Metadata { Name = $"PreDisposalTest_{i}" };

@@ -3,17 +3,28 @@
    The .cs-dashboard wrapper scopes Radzen variable overrides to this dashboard. */
 
 :root {
+    /* ── ChainSharp custom tokens ── */
     --cs-header-bg: #1B5E20;
     --cs-header-text: #ffffff;
     --cs-primary: #2E7D32;
     --cs-primary-lighter: #388E3C;
     --cs-grid-row-selected-bg: var(--rz-secondary-lighter, rgba(255, 255, 255, 0.1));
     --cs-grid-row-hover-bg: var(--rz-base-background-color-hover, rgba(255, 255, 255, 0.18));
+
+    /* ── Override Radzen primary colour palette ──
+       !important is required because <RadzenTheme> injects a <style> block
+       that sets --rz-primary on :root AFTER our stylesheet loads, winning
+       the cascade by source order.  !important flips the priority. */
+    --rz-primary: #2E7D32 !important;
+    --rz-primary-light: #388E3C !important;
+    --rz-primary-lighter: #4CAF50 !important;
+    --rz-primary-dark: #1B5E20 !important;
+    --rz-primary-darker: #145A1E !important;
+    --rz-on-primary: #ffffff !important;
+    --rz-on-primary-lighter: #ffffff !important;
 }
 
-/* Override Radzen's panel menu active-state variables within our scope.
-   --rz-text-contrast-color resolves to black in light mode and white in dark mode,
-   so the active item text automatically matches the theme. */
+/* Panel menu active states — scoped to the dashboard wrapper. */
 .cs-dashboard {
     --rz-panel-menu-item-active-background-color: var(--cs-primary);
     --rz-panel-menu-item-active-color: var(--rz-text-contrast-color);
@@ -89,6 +100,17 @@
     border-top: 1px solid var(--rz-base-200, rgba(255, 255, 255, 0.1));
     z-index: 1;
     margin-top: auto;
+}
+
+/* Prevent datagrid cells from clipping switches / toggles */
+.cs-dashboard .rz-data-grid td .rz-switch {
+    vertical-align: middle;
+    margin: 0.25rem 0;
+}
+
+/* Shrink the oversized focus ripple on switches inside grids */
+.cs-dashboard .rz-data-grid .rz-switch-circle::before {
+    transform: scale(0.6);
 }
 
 /* ── DAG Graph ── */

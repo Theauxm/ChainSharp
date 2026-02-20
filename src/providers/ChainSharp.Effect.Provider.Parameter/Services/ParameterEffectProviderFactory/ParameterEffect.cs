@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ChainSharp.Effect.Models;
 using ChainSharp.Effect.Models.Metadata;
+using ChainSharp.Effect.Provider.Parameter.Configuration;
 using ChainSharp.Effect.Services.EffectProvider;
 
 namespace ChainSharp.Effect.Provider.Parameter.Services.ParameterEffectProviderFactory;
@@ -24,7 +25,11 @@ namespace ChainSharp.Effect.Provider.Parameter.Services.ParameterEffectProviderF
 /// of workflow executions, which can be used for auditing, debugging, and analytics purposes.
 /// </remarks>
 /// <param name="options">The JSON serializer options to use for parameter serialization</param>
-public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
+/// <param name="configuration">Runtime configuration controlling which parameters are serialized</param>
+public class ParameterEffect(
+    JsonSerializerOptions options,
+    ParameterEffectConfiguration configuration
+) : IEffectProvider
 {
     private readonly HashSet<Metadata> _trackedMetadatas = [];
     private readonly object _lock = new();
@@ -117,35 +122,41 @@ public class ParameterEffect(JsonSerializerOptions options) : IEffectProvider
     /// </remarks>
     private void SerializeParameters(Metadata metadata)
     {
-        var inputObject = metadata.GetInputObject();
-        if (inputObject is not null)
+        if (configuration.SaveInputs)
         {
-            try
+            var inputObject = metadata.GetInputObject();
+            if (inputObject is not null)
             {
-                metadata.Input = JsonSerializer.Serialize(inputObject, options);
-            }
-            catch (ObjectDisposedException)
-            {
-                // Input object contains disposed JsonDocument, skip serialization
-                // This can happen when metadata contains disposed JsonDocument objects
-                metadata.Input ??=
-                    """{"_disposed": true, "_message": "Input object contained disposed JsonDocument objects"}""";
+                try
+                {
+                    metadata.Input = JsonSerializer.Serialize(inputObject, options);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Input object contains disposed JsonDocument, skip serialization
+                    // This can happen when metadata contains disposed JsonDocument objects
+                    metadata.Input ??=
+                        """{"_disposed": true, "_message": "Input object contained disposed JsonDocument objects"}""";
+                }
             }
         }
 
-        var outputObject = metadata.GetOutputObject();
-        if (outputObject is not null)
+        if (configuration.SaveOutputs)
         {
-            try
+            var outputObject = metadata.GetOutputObject();
+            if (outputObject is not null)
             {
-                metadata.Output = JsonSerializer.Serialize(outputObject, options);
-            }
-            catch (ObjectDisposedException)
-            {
-                // Output object contains disposed JsonDocument, skip serialization
-                // This can happen when metadata contains disposed JsonDocument objects
-                metadata.Output ??=
-                    """{"_disposed": true, "_message": "Output object contained disposed JsonDocument objects"}""";
+                try
+                {
+                    metadata.Output = JsonSerializer.Serialize(outputObject, options);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Output object contains disposed JsonDocument, skip serialization
+                    // This can happen when metadata contains disposed JsonDocument objects
+                    metadata.Output ??=
+                        """{"_disposed": true, "_message": "Output object contained disposed JsonDocument objects"}""";
+                }
             }
         }
     }

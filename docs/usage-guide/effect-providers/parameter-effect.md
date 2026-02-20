@@ -36,13 +36,40 @@ You can pass custom serialization options:
 })
 ```
 
+## Configuration
+
+By default, both inputs and outputs are serialized. You can control this with the `configure` parameter:
+
+```csharp
+// Save only inputs (skip output serialization)
+.SaveWorkflowParameters(configure: cfg =>
+{
+    cfg.SaveInputs = true;
+    cfg.SaveOutputs = false;
+})
+
+// Save only outputs
+.SaveWorkflowParameters(configure: cfg =>
+{
+    cfg.SaveInputs = false;
+    cfg.SaveOutputs = true;
+})
+```
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `SaveInputs` | `bool` | `true` | Whether to serialize workflow input parameters to `Metadata.Input` |
+| `SaveOutputs` | `bool` | `true` | Whether to serialize workflow output parameters to `Metadata.Output` |
+
+The configuration is registered as a singleton and can be modified at runtime via the [Dashboard Effects page](../../dashboard.md#effects-page). Changes take effect on the next workflow execution scope.
+
 ## How It Works
 
 The parameter effect only cares about `Metadata` objects—it ignores other tracked models. When `SaveChanges` runs:
 
 1. It iterates through every tracked `Metadata` instance.
-2. It calls `metadata.GetInputObject()` and `metadata.GetOutputObject()` to retrieve the raw workflow input and output.
-3. It serializes both to JSON strings and assigns them to `metadata.Input` and `metadata.Output`.
+2. If `SaveInputs` is enabled, it calls `metadata.GetInputObject()`, serializes it to JSON, and assigns it to `metadata.Input`.
+3. If `SaveOutputs` is enabled, it calls `metadata.GetOutputObject()`, serializes it to JSON, and assigns it to `metadata.Output`.
 
 These fields are then persisted by whatever data provider you have registered (Postgres or InMemory). When you later inspect workflow executions—through the [Dashboard](../../dashboard.md), direct database queries, or the metadata API—you can see exactly what went in and what came out.
 

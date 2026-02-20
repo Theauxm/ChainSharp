@@ -2,6 +2,7 @@ using System.Text.Json;
 using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Provider.Json.Services.JsonEffect;
+using ChainSharp.Effect.Provider.Parameter.Configuration;
 using ChainSharp.Effect.Provider.Parameter.Services.ParameterEffectProviderFactory;
 using ChainSharp.Effect.Services.EffectProviderFactory;
 using ChainSharp.Effect.Services.EffectRegistry;
@@ -62,7 +63,10 @@ public class CrossComponentMemoryTests
                 for (int iteration = 0; iteration < 30; iteration++)
                 {
                     // Create effect providers directly
-                    using var parameterEffect = new ParameterEffect(_jsonOptions);
+                    using var parameterEffect = new ParameterEffect(
+                        _jsonOptions,
+                        new ParameterEffectConfiguration()
+                    );
                     using var jsonEffect = new JsonEffectProvider(
                         _serviceProvider.GetService<ILogger<JsonEffectProvider>>(),
                         _configuration
@@ -241,7 +245,10 @@ public class CrossComponentMemoryTests
                 {
                     try
                     {
-                        using var parameterEffect = new ParameterEffect(_jsonOptions);
+                        using var parameterEffect = new ParameterEffect(
+                            _jsonOptions,
+                            new ParameterEffectConfiguration()
+                        );
                         using var jsonEffect = new JsonEffectProvider(
                             _serviceProvider.GetService<ILogger<JsonEffectProvider>>(),
                             _configuration
@@ -330,7 +337,10 @@ public class CrossComponentMemoryTests
                     {
                         for (int iteration = 0; iteration < 15; iteration++)
                         {
-                            using var parameterEffect = new ParameterEffect(_jsonOptions);
+                            using var parameterEffect = new ParameterEffect(
+                                _jsonOptions,
+                                new ParameterEffectConfiguration()
+                            );
                             using var jsonEffect = new JsonEffectProvider(
                                 null, // No logger for concurrent test to reduce complexity
                                 _configuration
@@ -418,7 +428,7 @@ public class TestParameterEffectProviderFactory(JsonSerializerOptions options)
 {
     public ChainSharp.Effect.Services.EffectProvider.IEffectProvider Create()
     {
-        return new ParameterEffect(options);
+        return new ParameterEffect(options, new ParameterEffectConfiguration());
     }
 }
 

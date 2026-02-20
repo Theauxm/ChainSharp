@@ -67,9 +67,19 @@ services.AddChainSharpEffects(options =>
 
 *API Reference: [SaveWorkflowParameters]({{ site.baseurl }}{% link api-reference/configuration/save-workflow-parameters.md %})*
 
-Without this, the `Input` and `Output` columns in `Metadata` are null. With it, they contain JSON-serialized versions of your request and response objects.
+Without this, the `Input` and `Output` columns in `Metadata` are null. With it, they contain JSON-serialized versions of your request and response objects. You can control which parameters are saved:
 
-See [Parameter Effect](effect-providers/parameter-effect.md) for details and custom serialization options.
+```csharp
+.SaveWorkflowParameters(configure: cfg =>
+{
+    cfg.SaveInputs = true;
+    cfg.SaveOutputs = false;  // Skip output serialization
+})
+```
+
+This configuration can also be changed at runtime from the dashboard's [Effects page](../dashboard.md#effects-page).
+
+See [Parameter Effect](effect-providers/parameter-effect.md) for details, custom serialization options, and configuration properties.
 
 ## Step Logger (`AddStepLogger`)
 

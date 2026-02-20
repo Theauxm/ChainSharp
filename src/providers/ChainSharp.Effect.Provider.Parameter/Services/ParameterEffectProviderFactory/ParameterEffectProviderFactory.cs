@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
+using ChainSharp.Effect.Provider.Parameter.Configuration;
 using ChainSharp.Effect.Services.EffectProvider;
 
 namespace ChainSharp.Effect.Provider.Parameter.Services.ParameterEffectProviderFactory;
@@ -21,9 +22,15 @@ namespace ChainSharp.Effect.Provider.Parameter.Services.ParameterEffectProviderF
 /// directly depending on the concrete implementation.
 /// </remarks>
 /// <param name="configuration">The ChainSharp effect configuration containing JSON serialization options</param>
-public class ParameterEffectProviderFactory(IChainSharpEffectConfiguration configuration)
-    : IParameterEffectProviderFactory
+/// <param name="effectConfiguration">Runtime configuration controlling which parameters are serialized</param>
+public class ParameterEffectProviderFactory(
+    IChainSharpEffectConfiguration configuration,
+    ParameterEffectConfiguration effectConfiguration
+) : IParameterEffectProviderFactory
 {
+    /// <inheritdoc />
+    public ParameterEffectConfiguration Configuration => effectConfiguration;
+
     /// <summary>
     /// Gets a list of all parameter effect providers created by this factory.
     /// </summary>
@@ -55,7 +62,10 @@ public class ParameterEffectProviderFactory(IChainSharpEffectConfiguration confi
     /// </remarks>
     public IEffectProvider Create()
     {
-        var parameterEffect = new ParameterEffect(configuration.SystemJsonSerializerOptions);
+        var parameterEffect = new ParameterEffect(
+            configuration.SystemJsonSerializerOptions,
+            effectConfiguration
+        );
 
         Providers.Add(parameterEffect);
 

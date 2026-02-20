@@ -87,6 +87,38 @@ services.AddChainSharpEffects(options => options
 );
 ```
 
+## Configurable Factories
+
+Factories can optionally expose runtime-configurable settings by implementing `IConfigurableEffectProviderFactory<TConfiguration>` (or `IConfigurableStepEffectProviderFactory<TConfiguration>` for step effects). The configuration type is a POCO class registered as a singleton in DI.
+
+```csharp
+public class MyEffectConfiguration
+{
+    public bool EnableDetailedLogging { get; set; } = false;
+}
+
+public class MyEffectProviderFactory(MyEffectConfiguration config)
+    : IConfigurableEffectProviderFactory<MyEffectConfiguration>
+{
+    public MyEffectConfiguration Configuration => config;
+
+    public IEffectProvider Create() => new MyEffectProvider(config);
+}
+```
+
+Register the configuration alongside the factory:
+
+```csharp
+services.AddChainSharpEffects(options =>
+{
+    var config = new MyEffectConfiguration { EnableDetailedLogging = true };
+    options.ServiceCollection.AddSingleton(config);
+    options.AddEffect<MyEffectProviderFactory>();
+});
+```
+
+Configurable factories appear with a settings button on the dashboard's [Effects page]({{ site.baseurl }}{% link dashboard.md %}#effects-page), where their configuration properties can be modified at runtime.
+
 ## Remarks
 
 - **Workflow-level effects** (`AddEffect`): Implement `IEffectProviderFactory`. Called at workflow start and end. Used for cross-cutting concerns like data persistence, audit logging, etc.

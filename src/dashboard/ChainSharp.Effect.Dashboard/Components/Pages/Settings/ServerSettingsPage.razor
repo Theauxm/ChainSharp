@@ -3,7 +3,7 @@
 <RadzenText TextStyle="TextStyle.H4" class="rz-mb-4">Server Settings</RadzenText>
 
 <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" AllowClose="true" class="rz-mb-4">
-    These settings affect all users. Scheduler changes take effect on the next polling cycle. Effect changes apply to the next workflow execution scope.
+    These settings affect all users. Scheduler changes take effect on the next polling cycle.
 </RadzenAlert>
 
 <RadzenStack Gap="1.5rem" class="cs-settings-page">
@@ -189,73 +189,6 @@
                 </RadzenStack>
             </RadzenFieldset>
         }
-    }
-
-    @* ══════════════════════════════════════════════════════════ *@
-    @* ── Effects ── *@
-    @* ══════════════════════════════════════════════════════════ *@
-
-    @if (!_effectsAvailable)
-    {
-        <RadzenAlert AlertStyle="AlertStyle.Warning" Shade="Shade.Lighter" AllowClose="false">
-            Effect Registry is not available. Ensure <code>.AddChainSharpEffects()</code> is configured in your service registration.
-        </RadzenAlert>
-    }
-    else if (_effects.Count == 0)
-    {
-        <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" AllowClose="false">
-            No effects are registered. Ensure effects are added via <code>.AddChainSharpEffects()</code> configuration.
-        </RadzenAlert>
-    }
-    else
-    {
-        <RadzenFieldset Text="Registered Effects" class="@(IsEffectsDirty ? "cs-fieldset-dirty" : "")">
-            <RadzenStack Gap="1rem">
-                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
-                    <RadzenButton Text="Enable All"
-                                  Icon="toggle_on"
-                                  ButtonStyle="ButtonStyle.Success"
-                                  Size="ButtonSize.Small"
-                                  Click="EnableAllEffects" />
-                    <RadzenButton Text="Disable All"
-                                  Icon="toggle_off"
-                                  ButtonStyle="ButtonStyle.Danger"
-                                  Size="ButtonSize.Small"
-                                  Click="DisableAllEffects" />
-                </RadzenStack>
-
-                <RadzenDataGrid Data="@_effects"
-                                TItem="EffectEntry"
-                                AllowSorting="true"
-                                AllowColumnResize="true"
-                                class="rz-datatable-striped">
-                    <Columns>
-                        <RadzenDataGridColumn TItem="EffectEntry"
-                                              Property="Name"
-                                              Title="Effect Factory"
-                                              Width="250px" />
-                        <RadzenDataGridColumn TItem="EffectEntry"
-                                              Property="FullName"
-                                              Title="Full Type Name" />
-                        <RadzenDataGridColumn TItem="EffectEntry"
-                                              Title="Status"
-                                              Width="150px"
-                                              Sortable="false">
-                            <Template Context="entry">
-                                @if (entry.Toggleable)
-                                {
-                                    <RadzenSwitch @bind-Value="entry.Enabled" />
-                                }
-                                else
-                                {
-                                    <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Always On" />
-                                }
-                            </Template>
-                        </RadzenDataGridColumn>
-                    </Columns>
-                </RadzenDataGrid>
-            </RadzenStack>
-        </RadzenFieldset>
     }
 
     @* ══════════════════════════════════════════════════════════ *@

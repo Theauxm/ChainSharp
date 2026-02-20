@@ -13,11 +13,12 @@
 
                         @if (underlying == typeof(bool))
                         {
-                            <RadzenFormField Text="@FormatLabel(prop.Name)" Variant="Variant.Outlined" class="rz-w-100">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem" Style="padding: 0.75rem 1rem; border: 1px solid var(--rz-input-border); border-radius: var(--rz-border-radius);">
+                                <RadzenLabel Text="@FormatLabel(prop.Name)" />
                                 <RadzenSwitch Value="@(GetFormValue<bool>(prop.Name))"
                                               ValueChanged="@((bool v) => SetFormValue(prop.Name, v))"
                                               Disabled="@_running" />
-                            </RadzenFormField>
+                            </RadzenStack>
                         }
                         else if (underlying.IsEnum)
                         {

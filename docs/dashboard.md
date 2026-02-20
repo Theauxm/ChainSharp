@@ -75,6 +75,17 @@ When `ChainSharp.Effect.Data` is registered, the dashboard exposes pages for bro
 
 These pages are accessible from the **Data** section in the sidebar navigation.
 
+### Effects Page
+
+The **Effects** page (`/chainsharp/settings/effects`) shows all registered effect and step effect provider factories. From this page you can:
+
+- **Enable/disable** toggleable effects at runtime (changes apply to the next workflow execution scope)
+- **Configure** effects that expose runtime settings — click the gear icon to open a dynamic form dialog
+
+Configurable effects (those whose factory implements `IConfigurableEffectProviderFactory<TConfiguration>`) show a settings button in the grid. Clicking it opens a form auto-generated from the configuration type's properties. For example, the [Parameter Effect](usage-guide/effect-providers/parameter-effect.md) exposes `SaveInputs` and `SaveOutputs` toggles.
+
+The Effects page was previously a section within Server Settings and has been moved to its own dedicated page under **Settings > Effects** in the sidebar.
+
 ### Manifest Groups
 
 Every manifest belongs to a **ManifestGroup** — a first-class entity with per-group dispatch controls. The **Manifest Groups** page shows one row per group with its settings and aggregate stats: manifest count, total executions, completed, failed, and last run time.

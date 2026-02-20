@@ -1,5 +1,4 @@
 using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
-using ChainSharp.Effect.Services.EffectRegistry;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -44,12 +43,6 @@ public partial class ServerSettingsPage
     private bool _savedAutoPurgeDeadLetters;
     private TimeSpan _savedCleanupInterval;
     private TimeSpan _savedCleanupRetentionPeriod;
-
-    // ── Effects state ──
-    private IEffectRegistry? _effectRegistry;
-    private bool _effectsAvailable;
-    private List<EffectEntry> _effects = [];
-    private Dictionary<Type, bool> _savedEffectStates = new();
 
     // ── Logging state ──
     private IConfigurationRoot? _configRoot;
@@ -114,12 +107,6 @@ public partial class ServerSettingsPage
             || _cleanupRetentionPeriod.ToTimeSpan() != _savedCleanupRetentionPeriod
         );
 
-    private bool IsEffectsDirty =>
-        _effectsAvailable
-        && _effects.Any(
-            e => e.Toggleable && e.Enabled != _savedEffectStates.GetValueOrDefault(e.FactoryType)
-        );
-
     private bool IsLoggingDirty =>
         _loggingAvailable
         && _logLevels.Any(
@@ -136,16 +123,6 @@ public partial class ServerSettingsPage
         {
             LoadSchedulerFromConfig();
             SnapshotSchedulerState();
-        }
-
-        // Effects
-        _effectRegistry = ServiceProvider.GetService<IEffectRegistry>();
-        _effectsAvailable = _effectRegistry is not null;
-
-        if (_effectsAvailable)
-        {
-            LoadEffects();
-            SnapshotEffectState();
         }
 
         // Logging
@@ -257,66 +234,6 @@ public partial class ServerSettingsPage
         }
     }
 
-    // ── Effect helpers ──
-
-    private void LoadEffects()
-    {
-        _effects = _effectRegistry!
-            .GetAll()
-            .Select(
-                kvp =>
-                    new EffectEntry
-                    {
-                        FactoryType = kvp.Key,
-                        Name = kvp.Key.Name,
-                        FullName = kvp.Key.FullName ?? kvp.Key.Name,
-                        Enabled = kvp.Value,
-                        Toggleable = _effectRegistry.IsToggleable(kvp.Key),
-                    }
-            )
-            .OrderBy(e => e.Name)
-            .ToList();
-    }
-
-    private void EnableAllEffects()
-    {
-        foreach (var entry in _effects.Where(e => e.Toggleable))
-            entry.Enabled = true;
-    }
-
-    private void DisableAllEffects()
-    {
-        foreach (var entry in _effects.Where(e => e.Toggleable))
-            entry.Enabled = false;
-    }
-
-    private void SaveEffects()
-    {
-        if (_effectRegistry is null)
-            return;
-
-        foreach (var entry in _effects.Where(e => e.Toggleable))
-        {
-            if (entry.Enabled)
-                _effectRegistry.Enable(entry.FactoryType);
-            else
-                _effectRegistry.Disable(entry.FactoryType);
-        }
-
-        SnapshotEffectState();
-    }
-
-    private void ResetEffectDefaults()
-    {
-        foreach (var entry in _effects.Where(e => e.Toggleable))
-            entry.Enabled = _savedEffectStates.GetValueOrDefault(entry.FactoryType);
-    }
-
-    private void SnapshotEffectState()
-    {
-        _savedEffectStates = _effects.ToDictionary(e => e.FactoryType, e => e.Enabled);
-    }
-
     // ── Logging helpers ──
 
     private void LoadLogging()
@@ -366,9 +283,6 @@ public partial class ServerSettingsPage
         if (_schedulerAvailable)
             SaveScheduler();
 
-        if (_effectsAvailable)
-            SaveEffects();
-
         if (_loggingAvailable)
             SaveLogging();
 
@@ -387,9 +301,6 @@ public partial class ServerSettingsPage
     {
         if (_schedulerAvailable)
             ResetSchedulerDefaults();
-
-        if (_effectsAvailable)
-            ResetEffectDefaults();
 
         if (_loggingAvailable)
             ResetLoggingDefaults();
@@ -431,15 +342,6 @@ public partial class ServerSettingsPage
                 return new() { Value = ts.TotalMinutes, Unit = "minutes" };
             return new() { Value = ts.TotalSeconds, Unit = "seconds" };
         }
-    }
-
-    private class EffectEntry
-    {
-        public required Type FactoryType { get; init; }
-        public required string Name { get; init; }
-        public required string FullName { get; init; }
-        public bool Enabled { get; set; }
-        public required bool Toggleable { get; init; }
     }
 
     private class LogLevelEntry

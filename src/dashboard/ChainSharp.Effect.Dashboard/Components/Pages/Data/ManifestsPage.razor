@@ -28,7 +28,8 @@
         <RadzenDataGridColumn TItem="Manifest"
                               Property="ExternalId"
                               Title="External Id"
-                              Width="200px" />
+                              Width="200px"
+                              Visible="false" />
         <RadzenDataGridColumn TItem="Manifest"
                               Property="ManifestGroup.Name"
                               Title="Group"
@@ -40,27 +41,31 @@
         <RadzenDataGridColumn TItem="Manifest"
                               Property="ScheduleType"
                               Title="Schedule Type"
-                              Width="130px" />
+                              Width="150px" />
         <RadzenDataGridColumn TItem="Manifest"
                               Property="CronExpression"
                               Title="Cron Expression"
-                              Width="150px" />
+                              Width="170px"
+                              Visible="false" />
         <RadzenDataGridColumn TItem="Manifest"
                               Property="IntervalSeconds"
                               Title="Interval (s)"
-                              Width="120px" />
+                              Width="130px"
+                              Visible="false" />
         <RadzenDataGridColumn TItem="Manifest"
                               Property="MaxRetries"
                               Title="Max Retries"
-                              Width="110px" />
+                              Width="140px"
+                              Visible="false" />
         <RadzenDataGridColumn TItem="Manifest"
                               Property="TimeoutSeconds"
                               Title="Timeout (s)"
-                              Width="110px" />
+                              Width="130px"
+                              Visible="false" />
         <RadzenDataGridColumn TItem="Manifest"
                               Property="LastSuccessfulRun"
                               Title="Last Successful Run"
-                              Width="180px"
+                              Width="200px"
                               FormatString="{0:yyyy-MM-dd HH:mm:ss}" />
     </Columns>
 </ChainSharpDataGrid>

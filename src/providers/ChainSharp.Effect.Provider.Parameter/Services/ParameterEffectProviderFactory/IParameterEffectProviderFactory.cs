@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ChainSharp.Effect.Provider.Parameter.Configuration;
 using ChainSharp.Effect.Services.EffectProviderFactory;
 
 namespace ChainSharp.Effect.Provider.Parameter.Services.ParameterEffectProviderFactory;
@@ -17,7 +18,8 @@ namespace ChainSharp.Effect.Provider.Parameter.Services.ParameterEffectProviderF
 /// Implementations of this interface are responsible for creating instances of
 /// ParameterEffect, which serialize workflow input and output parameters to JSON format.
 /// </remarks>
-public interface IParameterEffectProviderFactory : IEffectProviderFactory
+public interface IParameterEffectProviderFactory
+    : IConfigurableEffectProviderFactory<ParameterEffectConfiguration>
 {
     /// <summary>
     /// Gets a list of all parameter effect providers created by this factory.

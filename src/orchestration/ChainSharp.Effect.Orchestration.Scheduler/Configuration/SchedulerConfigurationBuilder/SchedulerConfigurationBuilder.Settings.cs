@@ -184,4 +184,20 @@ public partial class SchedulerConfigurationBuilder
         _taskServerRegistration = registration;
         return this;
     }
+
+    /// <summary>
+    /// Sets whether to automatically prune orphaned manifests on startup.
+    /// </summary>
+    /// <param name="prune">True to prune orphaned manifests (default: true)</param>
+    /// <returns>The builder for method chaining</returns>
+    /// <remarks>
+    /// When enabled, manifests in the database that are not defined in the startup
+    /// configuration are deleted along with their related data. Disable this if you
+    /// create manifests dynamically at runtime.
+    /// </remarks>
+    public SchedulerConfigurationBuilder PruneOrphanedManifests(bool prune = true)
+    {
+        _configuration.PruneOrphanedManifests = prune;
+        return this;
+    }
 }

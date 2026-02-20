@@ -67,6 +67,7 @@ public partial class SchedulerConfigurationBuilder
             new PendingManifest
             {
                 ExternalId = $"{firstId}... (batch of {sourceList.Count})",
+                ExpectedExternalIds = sourceList.Select(s => map(s).ExternalId).ToList(),
                 ScheduleFunc = async (scheduler, ct) =>
                 {
                     var results = await scheduler.ScheduleManyAsync<TWorkflow, TInput, TSource>(
@@ -201,6 +202,7 @@ public partial class SchedulerConfigurationBuilder
             new PendingManifest
             {
                 ExternalId = $"{firstId}... (dependent batch of {sourceList.Count})",
+                ExpectedExternalIds = sourceList.Select(s => map(s).ExternalId).ToList(),
                 ScheduleFunc = async (scheduler, ct) =>
                 {
                     var results = await scheduler.ScheduleManyDependentAsync<
@@ -329,6 +331,7 @@ public partial class SchedulerConfigurationBuilder
             new PendingManifest
             {
                 ExternalId = $"{firstId}... (dependent batch of {sourceList.Count})",
+                ExpectedExternalIds = sourceList.Select(s => map(s).ExternalId).ToList(),
                 ScheduleFunc = async (scheduler, ct) =>
                 {
                     var results = await scheduler.ScheduleManyDependentAsync<
@@ -458,6 +461,7 @@ public partial class SchedulerConfigurationBuilder
             new PendingManifest
             {
                 ExternalId = $"{firstId}... (dependent batch of {sourceList.Count})",
+                ExpectedExternalIds = sourceList.Select(s => map(s).ExternalId).ToList(),
                 ScheduleFunc = async (scheduler, ct) =>
                 {
                     var results = await scheduler.ScheduleManyDependentAsync<

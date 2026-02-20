@@ -147,4 +147,19 @@ public class SchedulerConfiguration
     /// Null means metadata cleanup is disabled.
     /// </remarks>
     public MetadataCleanupConfiguration? MetadataCleanup { get; set; }
+
+    /// <summary>
+    /// Whether to automatically prune manifests from the database that are no longer
+    /// defined in the startup configuration.
+    /// </summary>
+    /// <remarks>
+    /// When enabled, the startup service compares the set of ExternalIds defined via
+    /// the fluent configuration API against all manifests in the database. Any manifest
+    /// whose ExternalId is not in the configured set is deleted along with its related
+    /// WorkQueue, DeadLetter, and Metadata records. This ensures that removing a schedule
+    /// definition from code also removes it from the database on the next startup.
+    /// Disable this if you create manifests dynamically at runtime via
+    /// <see cref="Services.ManifestScheduler.IManifestScheduler"/>.
+    /// </remarks>
+    public bool PruneOrphanedManifests { get; set; } = true;
 }

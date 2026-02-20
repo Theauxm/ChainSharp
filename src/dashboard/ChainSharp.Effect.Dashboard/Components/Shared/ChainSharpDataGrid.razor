@@ -1,11 +1,12 @@
 @typeparam TItem
 @using System.Linq.Dynamic.Core
+@implements IAsyncDisposable
 
 <RadzenDataGrid @ref="_grid"
                 TItem="TItem"
                 Data="@_view"
                 Count="@_count"
-                IsLoading="@IsLoading"
+                IsLoading="@(IsLoading || _serverLoading)"
                 LoadData="@OnLoadData"
                 AllowFiltering="@AllowFiltering"
                 AllowSorting="@AllowSorting"
@@ -27,9 +28,17 @@
     private IEnumerable<TItem> _view = [];
     private int _count;
     private IEnumerable<TItem>? _previousData;
+    private CancellationTokenSource? _loadCts;
+    private bool _serverLoading;
+    private bool _serverLoadStarted;
 
-    [Parameter, EditorRequired]
+    // ── Client-side mode (existing) ──
+    [Parameter]
     public IEnumerable<TItem>? Data { get; set; }
+
+    // ── Server-side mode ──
+    [Parameter]
+    public Func<LoadDataArgs, CancellationToken, Task<ServerDataResult<TItem>>>? ServerLoadData { get; set; }
 
     [Parameter]
     public RenderFragment? Columns { get; set; }
@@ -55,8 +64,28 @@
     [Parameter]
     public string? Style { get; set; }
 
+    private bool IsServerMode => ServerLoadData is not null;
+
+    public async Task ReloadAsync()
+    {
+        if (_grid is not null)
+            await _grid.Reload();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Safety net: if Radzen didn't fire LoadData on init, trigger it ourselves.
+        if (firstRender && IsServerMode && !_serverLoadStarted)
+        {
+            await _grid.Reload();
+        }
+    }
+
     protected override async Task OnParametersSetAsync()
     {
+        if (IsServerMode)
+            return;
+
         if (!ReferenceEquals(Data, _previousData))
         {
             _previousData = Data;
@@ -72,24 +101,77 @@
         }
     }
 
+    // IMPORTANT: This stays as void so client-side mode behavior is identical
+    // to the original. Server-side async work is fire-and-forget with explicit
+    // StateHasChanged once complete.
     private void OnLoadData(LoadDataArgs args)
     {
-        var query = (Data ?? []).AsQueryable();
+        if (IsServerMode)
+        {
+            _serverLoadStarted = true;
+            _ = InvokeServerLoadAsync(args);
+        }
+        else
+        {
+            var query = (Data ?? []).AsQueryable();
 
-        if (!string.IsNullOrEmpty(args.Filter))
-            query = query.Where(args.Filter);
+            if (!string.IsNullOrEmpty(args.Filter))
+                query = query.Where(args.Filter);
 
-        if (!string.IsNullOrEmpty(args.OrderBy))
-            query = query.OrderBy(args.OrderBy);
+            if (!string.IsNullOrEmpty(args.OrderBy))
+                query = query.OrderBy(args.OrderBy);
 
-        _count = query.Count();
+            _count = query.Count();
 
-        if (args.Skip.HasValue)
-            query = query.Skip(args.Skip.Value);
+            if (args.Skip.HasValue)
+                query = query.Skip(args.Skip.Value);
 
-        if (args.Top.HasValue)
-            query = query.Take(args.Top.Value);
+            if (args.Top.HasValue)
+                query = query.Take(args.Top.Value);
 
-        _view = query.ToList();
+            _view = query.ToList();
+        }
+    }
+
+    private async Task InvokeServerLoadAsync(LoadDataArgs args)
+    {
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
+        _loadCts = new CancellationTokenSource();
+
+        try
+        {
+            _serverLoading = true;
+            await InvokeAsync(StateHasChanged);
+
+            var result = await ServerLoadData!(args, _loadCts.Token);
+
+            await InvokeAsync(() =>
+            {
+                _view = result.Items;
+                _count = result.TotalCount;
+                _serverLoading = false;
+                StateHasChanged();
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded by a newer request — ignore.
+        }
+        catch (Exception)
+        {
+            await InvokeAsync(() =>
+            {
+                _serverLoading = false;
+                StateHasChanged();
+            });
+        }
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
+        return ValueTask.CompletedTask;
     }
 }

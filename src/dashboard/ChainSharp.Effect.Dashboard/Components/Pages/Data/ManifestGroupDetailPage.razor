@@ -86,7 +86,7 @@
         <RadzenCard>
             <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
                 <RadzenIcon Icon="description" Style="font-size: 2rem; color: var(--rz-primary);" />
-                <RadzenText TextStyle="TextStyle.H3" Style="margin: 0;">@_manifests.Count</RadzenText>
+                <RadzenText TextStyle="TextStyle.H3" Style="margin: 0;">@_manifestCount</RadzenText>
                 <RadzenText TextStyle="TextStyle.Caption" Style="text-align: center;">Manifests</RadzenText>
             </RadzenStack>
         </RadzenCard>
@@ -95,7 +95,7 @@
         <RadzenCard>
             <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
                 <RadzenIcon Icon="check_circle" Style="font-size: 2rem; color: var(--rz-success);" />
-                <RadzenText TextStyle="TextStyle.H3" Style="margin: 0;">@_executions.Count(m => m.WorkflowState == WorkflowState.Completed)</RadzenText>
+                <RadzenText TextStyle="TextStyle.H3" Style="margin: 0;">@_completedCount</RadzenText>
                 <RadzenText TextStyle="TextStyle.Caption" Style="text-align: center;">Completed</RadzenText>
             </RadzenStack>
         </RadzenCard>
@@ -104,7 +104,7 @@
         <RadzenCard>
             <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
                 <RadzenIcon Icon="error" Style="font-size: 2rem; color: var(--rz-danger);" />
-                <RadzenText TextStyle="TextStyle.H3" Style="margin: 0;">@_executions.Count(m => m.WorkflowState == WorkflowState.Failed)</RadzenText>
+                <RadzenText TextStyle="TextStyle.H3" Style="margin: 0;">@_failedCount</RadzenText>
                 <RadzenText TextStyle="TextStyle.Caption" Style="text-align: center;">Failed</RadzenText>
             </RadzenStack>
         </RadzenCard>
@@ -113,7 +113,7 @@
         <RadzenCard>
             <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
                 <RadzenIcon Icon="sync" Style="font-size: 2rem; color: var(--rz-info);" />
-                <RadzenText TextStyle="TextStyle.H3" Style="margin: 0;">@_executions.Count(m => m.WorkflowState == WorkflowState.InProgress)</RadzenText>
+                <RadzenText TextStyle="TextStyle.H3" Style="margin: 0;">@_inProgressCount</RadzenText>
                 <RadzenText TextStyle="TextStyle.Caption" Style="text-align: center;">In Progress</RadzenText>
             </RadzenStack>
         </RadzenCard>
@@ -123,8 +123,9 @@
 @* ── Manifests in Group ── *@
 <RadzenCard class="rz-mb-4">
     <RadzenText TextStyle="TextStyle.H6" class="rz-mb-2">Manifests</RadzenText>
-    <ChainSharpDataGrid Data="@_manifests"
+    <ChainSharpDataGrid @ref="_manifestsGrid"
                         TItem="Manifest"
+                        ServerLoadData="@LoadManifestPageAsync"
                         RowClick="@OnManifestRowClick"
                         Style="cursor: pointer;">
         <Columns>
@@ -162,66 +163,58 @@
 
 @* ── Recent Executions ── *@
 <RadzenCard>
-    <RadzenText TextStyle="TextStyle.H6" class="rz-mb-2">Recent Executions</RadzenText>
-    @if (_executions.Count > 0)
-    {
-        <ChainSharpDataGrid Data="@_executions"
-                            TItem="Metadata"
-                            RowClick="@OnMetadataRowClick"
-                            Style="cursor: pointer;">
-            <Columns>
-                <RadzenDataGridColumn TItem="Metadata"
-                                      Property="Id"
-                                      Title="Id"
-                                      Width="80px"
-                                      SortOrder="SortOrder.Descending" />
-                <RadzenDataGridColumn TItem="Metadata"
-                                      Property="WorkflowState"
-                                      Title="State"
-                                      Width="120px">
-                    <Template Context="m">
-                        <RadzenBadge BadgeStyle="@GetStateBadgeStyle(m.WorkflowState)"
-                                     Text="@m.WorkflowState.ToString()" />
-                    </Template>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="Metadata"
-                                      Property="Name"
-                                      Title="Workflow"
-                                      Width="200px">
-                    <Template Context="m">@ShortName(m.Name)</Template>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="Metadata"
-                                      Property="StartTime"
-                                      Title="Start Time"
-                                      Width="180px"
-                                      FormatString="{0:yyyy-MM-dd HH:mm:ss}" />
-                <RadzenDataGridColumn TItem="Metadata"
-                                      Property="EndTime"
-                                      Title="End Time"
-                                      Width="180px"
-                                      FormatString="{0:yyyy-MM-dd HH:mm:ss}" />
-                <RadzenDataGridColumn TItem="Metadata"
-                                      Title="Duration"
-                                      Width="120px"
-                                      Sortable="false"
-                                      Filterable="false">
-                    <Template Context="m">@FormatDuration(m)</Template>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="Metadata"
-                                      Property="FailureStep"
-                                      Title="Failure Step"
-                                      Width="150px" />
-                <RadzenDataGridColumn TItem="Metadata"
-                                      Property="FailureReason"
-                                      Title="Failure Reason"
-                                      Width="250px" />
-            </Columns>
-        </ChainSharpDataGrid>
-    }
-    else
-    {
-        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-disabled-color); text-align: center; padding: 2rem;">
-            No executions found for this group.
-        </RadzenText>
-    }
+    <RadzenText TextStyle="TextStyle.H6" class="rz-mb-2">Executions</RadzenText>
+    <ChainSharpDataGrid @ref="_executionsGrid"
+                        TItem="Metadata"
+                        ServerLoadData="@LoadExecutionPageAsync"
+                        RowClick="@OnMetadataRowClick"
+                        Style="cursor: pointer;">
+        <Columns>
+            <RadzenDataGridColumn TItem="Metadata"
+                                  Property="Id"
+                                  Title="Id"
+                                  Width="80px"
+                                  SortOrder="SortOrder.Descending" />
+            <RadzenDataGridColumn TItem="Metadata"
+                                  Property="WorkflowState"
+                                  Title="State"
+                                  Width="120px">
+                <Template Context="m">
+                    <RadzenBadge BadgeStyle="@GetStateBadgeStyle(m.WorkflowState)"
+                                 Text="@m.WorkflowState.ToString()" />
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Metadata"
+                                  Property="Name"
+                                  Title="Workflow"
+                                  Width="200px">
+                <Template Context="m">@ShortName(m.Name)</Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Metadata"
+                                  Property="StartTime"
+                                  Title="Start Time"
+                                  Width="180px"
+                                  FormatString="{0:yyyy-MM-dd HH:mm:ss}" />
+            <RadzenDataGridColumn TItem="Metadata"
+                                  Property="EndTime"
+                                  Title="End Time"
+                                  Width="180px"
+                                  FormatString="{0:yyyy-MM-dd HH:mm:ss}" />
+            <RadzenDataGridColumn TItem="Metadata"
+                                  Title="Duration"
+                                  Width="120px"
+                                  Sortable="false"
+                                  Filterable="false">
+                <Template Context="m">@FormatDuration(m)</Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Metadata"
+                                  Property="FailureStep"
+                                  Title="Failure Step"
+                                  Width="150px" />
+            <RadzenDataGridColumn TItem="Metadata"
+                                  Property="FailureReason"
+                                  Title="Failure Reason"
+                                  Width="250px" />
+        </Columns>
+    </ChainSharpDataGrid>
 </RadzenCard>

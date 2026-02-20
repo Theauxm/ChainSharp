@@ -55,6 +55,7 @@ public partial class SchedulerConfigurationBuilder
             new PendingManifest
             {
                 ExternalId = externalId,
+                ExpectedExternalIds = [externalId],
                 ScheduleFunc = (scheduler, ct) =>
                     scheduler.ScheduleAsync<TWorkflow, TInput>(
                         externalId,
@@ -111,6 +112,7 @@ public partial class SchedulerConfigurationBuilder
             new PendingManifest
             {
                 ExternalId = externalId,
+                ExpectedExternalIds = [externalId],
                 ScheduleFunc = (scheduler, ct) =>
                     scheduler.ScheduleDependentAsync<TWorkflow, TInput>(
                         externalId,
@@ -173,6 +175,7 @@ public partial class SchedulerConfigurationBuilder
             new PendingManifest
             {
                 ExternalId = externalId,
+                ExpectedExternalIds = [externalId],
                 ScheduleFunc = (scheduler, ct) =>
                     scheduler.ScheduleDependentAsync<TWorkflow, TInput>(
                         externalId,

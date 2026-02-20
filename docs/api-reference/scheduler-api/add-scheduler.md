@@ -85,6 +85,7 @@ These methods are available on the `SchedulerConfigurationBuilder` passed to the
 | `MaxRetryDelay(TimeSpan)` | maxDelay | 1 hour | Caps retry delay to prevent unbounded growth |
 | `DefaultJobTimeout(TimeSpan)` | timeout | 1 hour | Timeout after which a running job is considered stuck |
 | `RecoverStuckJobsOnStartup(bool)` | recover | `true` | Whether to auto-recover stuck jobs on startup |
+| `PruneOrphanedManifests(bool)` | prune | `true` | Whether to [delete manifests]({{ site.baseurl }}{% link scheduler/orphan-manifest-cleanup.md %}) from the database that are no longer defined in the startup configuration. Disable if you create manifests dynamically at runtime via `IManifestScheduler` |
 | `DependentPriorityBoost(int)` | boost | 16 | Priority boost added to dependent workflow work queue entries at dispatch time. Range: 0-31. Ensures dependent workflows are dispatched before non-dependent ones by default |
 
 ### Startup Schedules

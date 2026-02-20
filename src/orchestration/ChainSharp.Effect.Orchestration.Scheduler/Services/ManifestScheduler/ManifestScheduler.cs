@@ -38,7 +38,7 @@ public class ManifestScheduler(
 
         var resolved = ResolveOptions(options);
 
-        using var context = CreateContext();
+        await using var context = CreateContext();
 
         var manifest = await context.UpsertManifestAsync<TWorkflow, TInput>(
             externalId,
@@ -83,7 +83,7 @@ public class ManifestScheduler(
         if (sourceList.Count == 0)
             return [];
 
-        using var context = CreateContext();
+        await using var context = CreateContext();
         var transaction = await context.BeginTransaction();
 
         try
@@ -160,7 +160,7 @@ public class ManifestScheduler(
 
         var resolved = ResolveOptions(options);
 
-        using var context = CreateContext();
+        await using var context = CreateContext();
 
         var parentManifest =
             await context.Manifests.FirstOrDefaultAsync(
@@ -220,7 +220,7 @@ public class ManifestScheduler(
         if (sourceList.Count == 0)
             return [];
 
-        using var context = CreateContext();
+        await using var context = CreateContext();
         var transaction = await context.BeginTransaction();
 
         try
@@ -299,7 +299,7 @@ public class ManifestScheduler(
     /// <inheritdoc />
     public async Task DisableAsync(string externalId, CancellationToken ct = default)
     {
-        using var context = CreateContext();
+        await using var context = CreateContext();
 
         var manifest = await GetManifestByExternalIdAsync(context, externalId, ct);
         manifest.IsEnabled = false;
@@ -311,7 +311,7 @@ public class ManifestScheduler(
     /// <inheritdoc />
     public async Task EnableAsync(string externalId, CancellationToken ct = default)
     {
-        using var context = CreateContext();
+        await using var context = CreateContext();
 
         var manifest = await GetManifestByExternalIdAsync(context, externalId, ct);
         manifest.IsEnabled = true;
@@ -323,7 +323,7 @@ public class ManifestScheduler(
     /// <inheritdoc />
     public async Task TriggerAsync(string externalId, CancellationToken ct = default)
     {
-        using var context = CreateContext();
+        await using var context = CreateContext();
 
         var manifest = await GetManifestByExternalIdAsync(context, externalId, ct);
 
@@ -405,7 +405,13 @@ public class ManifestScheduler(
         if (staleManifestIds.Count == 0)
             return;
 
-        // Delete in FK-dependency order: dead_letters → metadata → manifests
+        // Delete in FK-dependency order: work_queue → dead_letters → metadata → manifests
+        await context
+            .WorkQueues.Where(
+                w => w.ManifestId.HasValue && staleManifestIds.Contains(w.ManifestId.Value)
+            )
+            .ExecuteDeleteAsync(ct);
+
         await context
             .DeadLetters.Where(d => staleManifestIds.Contains(d.ManifestId))
             .ExecuteDeleteAsync(ct);

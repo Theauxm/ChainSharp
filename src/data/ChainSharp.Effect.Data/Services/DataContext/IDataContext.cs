@@ -31,7 +31,7 @@ namespace ChainSharp.Effect.Data.Services.DataContext;
 /// Different database implementations (PostgreSQL, InMemory, etc.) implement this interface
 /// to provide consistent behavior while leveraging specific database features.
 /// </remarks>
-public interface IDataContext : IEffectProvider
+public interface IDataContext : IEffectProvider, IAsyncDisposable
 {
     #region Tables
 

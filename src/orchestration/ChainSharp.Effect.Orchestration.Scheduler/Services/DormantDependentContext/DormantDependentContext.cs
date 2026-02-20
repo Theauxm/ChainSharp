@@ -51,7 +51,7 @@ internal class DormantDependentContext(
     {
         EnsureInitialized();
 
-        using var context = CreateContext();
+        await using var context = CreateContext();
         await ActivateSingleAsync<TInput>(context, externalId, input, ct);
         await context.SaveChanges(ct);
     }
@@ -70,7 +70,7 @@ internal class DormantDependentContext(
         if (activationList.Count == 0)
             return;
 
-        using var context = CreateContext();
+        await using var context = CreateContext();
         var transaction = await context.BeginTransaction();
 
         try

@@ -117,5 +117,8 @@ internal class SchedulerStartupService(
 
         if (orphanedCount > 0)
             logger.LogInformation("Cleaned up {Count} orphaned manifest group(s)", orphanedCount);
+
+        // Release closures and captured batch lists that are no longer needed
+        configuration.PendingManifests.Clear();
     }
 }

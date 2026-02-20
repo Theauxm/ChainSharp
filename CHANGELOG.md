@@ -1,3 +1,10 @@
+# [5.17.0](https://github.com/Theauxm/ChainSharp/compare/v5.16.1...v5.17.0) (2026-02-20)
+
+
+### Features
+
+* Dialog ([44e06a8](https://github.com/Theauxm/ChainSharp/commit/44e06a82aefe77c2b9da909a180cc381f49af57a))
+
 ## [5.16.1](https://github.com/Theauxm/ChainSharp/compare/v5.16.0...v5.16.1) (2026-02-20)
 
 

@@ -1,3 +1,10 @@
+## [5.16.1](https://github.com/Theauxm/ChainSharp/compare/v5.16.0...v5.16.1) (2026-02-20)
+
+
+### Bug Fixes
+
+* chain internal ([#168](https://github.com/Theauxm/ChainSharp/issues/168)) ([5057da6](https://github.com/Theauxm/ChainSharp/commit/5057da68f273e1fd487102c62c4b45337a9e132c))
+
 # [5.16.0](https://github.com/Theauxm/ChainSharp/compare/v5.15.0...v5.16.0) (2026-02-19)
 
 

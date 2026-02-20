@@ -1,6 +1,6 @@
 <Project>
     <PropertyGroup>
-        <Version>5.16.0</Version>
+        <Version>5.16.1</Version>
     </PropertyGroup>
 
     <!-- Propagate the ChainSharp analyzer to all projects in the solution -->

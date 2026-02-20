@@ -26,20 +26,8 @@ public partial class WorkQueueDetailPage
     private WorkQueue? _entry;
     private bool _cancelling;
     private string? _error;
-    private int _previousId;
 
-    protected override async Task OnParametersSetAsync()
-    {
-        if (_previousId != 0 && _previousId != WorkQueueId)
-        {
-            IsLoading = true;
-            await LoadDataAsync(CancellationToken.None);
-            IsLoading = false;
-            StateHasChanged();
-        }
-
-        _previousId = WorkQueueId;
-    }
+    protected override object? GetRouteKey() => WorkQueueId;
 
     protected override async Task LoadDataAsync(CancellationToken cancellationToken)
     {

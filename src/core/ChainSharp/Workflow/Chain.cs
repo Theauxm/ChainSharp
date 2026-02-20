@@ -29,7 +29,7 @@ public partial class Workflow<TInput, TReturn>
     /// 3. If the step fails (returns Left), sets the exception
     /// 4. If the step succeeds (returns Right), stores the result in Memory
     /// </remarks>
-    public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(
+    internal Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(
         TStep step,
         Either<Exception, TIn> previousStep,
         out Either<Exception, TOut> outVar
@@ -77,7 +77,7 @@ public partial class Workflow<TInput, TReturn>
     /// 2. If the input is not found, short-circuits
     /// 3. Otherwise, executes the step with the extracted input
     /// </remarks>
-    public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(TStep step)
+    internal Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(TStep step)
         where TStep : IStep<TIn, TOut>
     {
         // Extract the input from Memory
@@ -98,7 +98,7 @@ public partial class Workflow<TInput, TReturn>
     /// <param name="previousStep">The input for the step</param>
     /// <param name="outVar">The output from the step</param>
     /// <returns>The workflow instance for method chaining</returns>
-    public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(
+    internal Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>(
         Either<Exception, TIn> previousStep,
         out Either<Exception, TOut> outVar
     )
@@ -112,7 +112,7 @@ public partial class Workflow<TInput, TReturn>
     /// <typeparam name="TIn">The input type for the step</typeparam>
     /// <typeparam name="TOut">The output type from the step</typeparam>
     /// <returns>The workflow instance for method chaining</returns>
-    public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>()
+    internal Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>()
         where TStep : IStep<TIn, TOut>, new() => Chain<TStep, TIn, TOut>(new TStep());
 
     #endregion
@@ -131,7 +131,7 @@ public partial class Workflow<TInput, TReturn>
     /// 3. Executes the step
     /// </remarks>
     // ReSharper disable once InconsistentNaming
-    public Workflow<TInput, TReturn> IChain<TStep>()
+    internal Workflow<TInput, TReturn> IChain<TStep>()
         where TStep : class
     {
         var stepType = typeof(TStep);
@@ -227,7 +227,7 @@ public partial class Workflow<TInput, TReturn>
     /// <remarks>
     /// This is a convenience method for steps that return Unit.
     /// </remarks>
-    public Workflow<TInput, TReturn> Chain<TStep, TIn>(
+    internal Workflow<TInput, TReturn> Chain<TStep, TIn>(
         TStep step,
         Either<Exception, TIn> previousStep
     )
@@ -243,7 +243,7 @@ public partial class Workflow<TInput, TReturn>
     /// <remarks>
     /// This is a convenience method for steps that return Unit.
     /// </remarks>
-    public Workflow<TInput, TReturn> Chain<TStep, TIn>(TStep step)
+    internal Workflow<TInput, TReturn> Chain<TStep, TIn>(TStep step)
         where TStep : IStep<TIn, Unit> => Chain<TStep, TIn, Unit>(step);
 
     /// <summary>
@@ -256,7 +256,7 @@ public partial class Workflow<TInput, TReturn>
     /// <remarks>
     /// This is a convenience method for steps that return Unit.
     /// </remarks>
-    public Workflow<TInput, TReturn> Chain<TStep, TIn>(Either<Exception, TIn> previousStep)
+    internal Workflow<TInput, TReturn> Chain<TStep, TIn>(Either<Exception, TIn> previousStep)
         where TStep : IStep<TIn, Unit>, new() =>
         Chain<TStep, TIn, Unit>(new TStep(), previousStep, out var x);
 
@@ -269,7 +269,7 @@ public partial class Workflow<TInput, TReturn>
     /// <remarks>
     /// This is a convenience method for steps that return Unit.
     /// </remarks>
-    public Workflow<TInput, TReturn> Chain<TStep, TIn>()
+    internal Workflow<TInput, TReturn> Chain<TStep, TIn>()
         where TStep : IStep<TIn, Unit>, new() => Chain<TStep, TIn, Unit>(new TStep());
 
     #endregion

@@ -74,48 +74,119 @@ internal class SchedulerStartupService(
 
     private async Task SeedPendingManifests(CancellationToken cancellationToken)
     {
-        if (configuration.PendingManifests.Count == 0)
-            return;
-
-        logger.LogInformation(
-            "Seeding {Count} pending manifest(s) from startup configuration...",
-            configuration.PendingManifests.Count
-        );
-
         using var scope = serviceProvider.CreateScope();
-        var scheduler = scope.ServiceProvider.GetRequiredService<IManifestScheduler>();
 
-        foreach (var pending in configuration.PendingManifests)
+        // Seed manifests from startup configuration
+        if (configuration.PendingManifests.Count > 0)
         {
-            try
+            logger.LogInformation(
+                "Seeding {Count} pending manifest(s) from startup configuration...",
+                configuration.PendingManifests.Count
+            );
+
+            var scheduler = scope.ServiceProvider.GetRequiredService<IManifestScheduler>();
+
+            foreach (var pending in configuration.PendingManifests)
             {
-                await pending.ScheduleFunc(scheduler, cancellationToken);
-                logger.LogDebug("Seeded manifest: {ExternalId}", pending.ExternalId);
+                try
+                {
+                    await pending.ScheduleFunc(scheduler, cancellationToken);
+                    logger.LogDebug("Seeded manifest: {ExternalId}", pending.ExternalId);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(
+                        ex,
+                        "Failed to seed manifest {ExternalId}: {Message}",
+                        pending.ExternalId,
+                        ex.Message
+                    );
+                    throw;
+                }
             }
-            catch (Exception ex)
-            {
-                logger.LogError(
-                    ex,
-                    "Failed to seed manifest {ExternalId}: {Message}",
-                    pending.ExternalId,
-                    ex.Message
-                );
-                throw;
-            }
+
+            logger.LogInformation(
+                "Successfully seeded {Count} manifest(s)",
+                configuration.PendingManifests.Count
+            );
         }
 
-        logger.LogInformation(
-            "Successfully seeded {Count} manifest(s)",
-            configuration.PendingManifests.Count
-        );
+        // Prune orphaned manifests (manifests in DB that are no longer in the startup configuration)
+        var dataContext = scope.ServiceProvider.GetRequiredService<IDataContext>();
+
+        if (configuration.PruneOrphanedManifests)
+        {
+            var expectedExternalIds = configuration
+                .PendingManifests.SelectMany(p => p.ExpectedExternalIds)
+                .ToHashSet();
+
+            await PruneOrphanedManifestsAsync(dataContext, expectedExternalIds, cancellationToken);
+        }
 
         // Clean up orphaned ManifestGroups (groups with no manifests remaining)
-        var dataContext = scope.ServiceProvider.GetRequiredService<IDataContext>();
         var orphanedCount = await dataContext
             .ManifestGroups.Where(g => !g.Manifests.Any())
             .ExecuteDeleteAsync(cancellationToken);
 
         if (orphanedCount > 0)
             logger.LogInformation("Cleaned up {Count} orphaned manifest group(s)", orphanedCount);
+
+        // Release closures and captured batch lists that are no longer needed
+        configuration.PendingManifests.Clear();
+    }
+
+    private async Task PruneOrphanedManifestsAsync(
+        IDataContext dataContext,
+        HashSet<string> expectedExternalIds,
+        CancellationToken cancellationToken
+    )
+    {
+        // Find all manifest IDs whose ExternalId is not in the configured set
+        var orphanedManifestIds = await dataContext
+            .Manifests.Where(m => !expectedExternalIds.Contains(m.ExternalId))
+            .Select(m => m.Id)
+            .ToListAsync(cancellationToken);
+
+        if (orphanedManifestIds.Count == 0)
+        {
+            logger.LogDebug("No orphaned manifests found");
+            return;
+        }
+
+        // Clear self-referencing FK (DependsOnManifestId) for any manifest pointing to an orphan.
+        // This handles both orphan→orphan and kept→orphan references.
+        await dataContext
+            .Manifests.Where(
+                m =>
+                    m.DependsOnManifestId.HasValue
+                    && orphanedManifestIds.Contains(m.DependsOnManifestId.Value)
+            )
+            .ExecuteUpdateAsync(
+                s => s.SetProperty(m => m.DependsOnManifestId, (int?)null),
+                cancellationToken
+            );
+
+        // Delete in FK-dependency order: WorkQueues → DeadLetters → Metadata → Manifests
+        await dataContext
+            .WorkQueues.Where(
+                w => w.ManifestId.HasValue && orphanedManifestIds.Contains(w.ManifestId.Value)
+            )
+            .ExecuteDeleteAsync(cancellationToken);
+
+        await dataContext
+            .DeadLetters.Where(d => orphanedManifestIds.Contains(d.ManifestId))
+            .ExecuteDeleteAsync(cancellationToken);
+
+        await dataContext
+            .Metadatas.Where(
+                m => m.ManifestId.HasValue && orphanedManifestIds.Contains(m.ManifestId.Value)
+            )
+            .ExecuteDeleteAsync(cancellationToken);
+
+        var pruned = await dataContext
+            .Manifests.Where(m => orphanedManifestIds.Contains(m.Id))
+            .ExecuteDeleteAsync(cancellationToken);
+
+        logger.LogInformation("Pruned {Count} orphaned manifest(s) from the database", pruned);
     }
 }

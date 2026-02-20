@@ -1,7 +1,9 @@
+using System.Linq.Dynamic.Core;
 using ChainSharp.Effect.Dashboard.Components.Shared;
 using ChainSharp.Effect.Dashboard.Models;
 using ChainSharp.Effect.Dashboard.Utilities;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
+using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.ManifestGroup;
 using ChainSharp.Effect.Models.Metadata;
@@ -26,10 +28,20 @@ public partial class ManifestGroupDetailPage
     [Parameter]
     public int ManifestGroupId { get; set; }
 
+    protected override object? GetRouteKey() => ManifestGroupId;
+
     private ManifestGroup? _group;
-    private List<Manifest> _manifests = [];
-    private List<Metadata> _executions = [];
     private DagLayout? _dagLayout;
+
+    // ── Summary counts (efficient DB aggregates) ──
+    private int _manifestCount;
+    private int _completedCount;
+    private int _failedCount;
+    private int _inProgressCount;
+
+    // ── Grid references for server-side reload ──
+    private ChainSharpDataGrid<Manifest>? _manifestsGrid;
+    private ChainSharpDataGrid<Metadata>? _executionsGrid;
 
     // ── Settings dirty tracking ──
     private int? _savedMaxActiveJobs;
@@ -56,8 +68,10 @@ public partial class ManifestGroupDetailPage
         if (freshGroup is null)
         {
             _group = null;
-            _manifests = [];
-            _executions = [];
+            _manifestCount = 0;
+            _completedCount = 0;
+            _failedCount = 0;
+            _inProgressCount = 0;
             _dagLayout = null;
             return;
         }
@@ -69,35 +83,124 @@ public partial class ManifestGroupDetailPage
             SnapshotSettings();
         }
 
-        _manifests = await context
+        // Efficient COUNTs for summary cards
+        _manifestCount = await context
             .Manifests.AsNoTracking()
-            .Where(m => m.ManifestGroupId == ManifestGroupId)
-            .ToListAsync(cancellationToken);
+            .CountAsync(m => m.ManifestGroupId == ManifestGroupId, cancellationToken);
 
-        if (_manifests.Count > 0)
-        {
-            var manifestIds = _manifests.Select(m => m.Id).ToList();
+        // Subquery for scoping execution counts to this group's manifests.
+        // No AsNoTracking — this is composed into outer queries, never materialized.
+        var manifestIdsSubquery = context
+            .Manifests.Where(m => m.ManifestGroupId == ManifestGroupId)
+            .Select(m => m.Id);
 
-            _executions = await context
-                .Metadatas.AsNoTracking()
-                .Where(m => m.ManifestId.HasValue && manifestIds.Contains(m.ManifestId.Value))
-                .OrderByDescending(m => m.StartTime)
-                .Take(200)
-                .ToListAsync(cancellationToken);
-        }
+        var executionsBase = context
+            .Metadatas.AsNoTracking()
+            .Where(m => m.ManifestId.HasValue && manifestIdsSubquery.Contains(m.ManifestId.Value));
+
+        _completedCount = await executionsBase.CountAsync(
+            m => m.WorkflowState == WorkflowState.Completed,
+            cancellationToken
+        );
+        _failedCount = await executionsBase.CountAsync(
+            m => m.WorkflowState == WorkflowState.Failed,
+            cancellationToken
+        );
+        _inProgressCount = await executionsBase.CountAsync(
+            m => m.WorkflowState == WorkflowState.InProgress,
+            cancellationToken
+        );
 
         // Build 1-hop neighborhood dependency graph
         await LoadDependencyGraph(context, cancellationToken);
+
+        // Tell grids to reload their current page from the server
+        if (_manifestsGrid is not null)
+            await _manifestsGrid.ReloadAsync();
+        if (_executionsGrid is not null)
+            await _executionsGrid.ReloadAsync();
     }
+
+    // ── Server-side grid callbacks ──
+
+    private async Task<ServerDataResult<Manifest>> LoadManifestPageAsync(
+        LoadDataArgs args,
+        CancellationToken cancellationToken
+    )
+    {
+        using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
+
+        IQueryable<Manifest> query = context
+            .Manifests.AsNoTracking()
+            .Where(m => m.ManifestGroupId == ManifestGroupId);
+
+        if (!string.IsNullOrEmpty(args.Filter))
+            query = query.Where(args.Filter);
+
+        if (!string.IsNullOrEmpty(args.OrderBy))
+            query = query.OrderBy(args.OrderBy);
+        else
+            query = query.OrderByDescending(m => m.Id);
+
+        var count = await query.CountAsync(cancellationToken);
+
+        if (args.Skip.HasValue)
+            query = query.Skip(args.Skip.Value);
+        if (args.Top.HasValue)
+            query = query.Take(args.Top.Value);
+
+        var items = await query.ToListAsync(cancellationToken);
+        return new ServerDataResult<Manifest>(items, count);
+    }
+
+    private async Task<ServerDataResult<Metadata>> LoadExecutionPageAsync(
+        LoadDataArgs args,
+        CancellationToken cancellationToken
+    )
+    {
+        using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
+
+        // Subquery — generates SQL subselect, not a materialized IN list.
+        // No AsNoTracking — this is composed into the outer query, never materialized.
+        var manifestIdsSubquery = context
+            .Manifests.Where(m => m.ManifestGroupId == ManifestGroupId)
+            .Select(m => m.Id);
+
+        IQueryable<Metadata> query = context
+            .Metadatas.AsNoTracking()
+            .Where(m => m.ManifestId.HasValue && manifestIdsSubquery.Contains(m.ManifestId.Value));
+
+        if (!string.IsNullOrEmpty(args.Filter))
+            query = query.Where(args.Filter);
+
+        if (!string.IsNullOrEmpty(args.OrderBy))
+            query = query.OrderBy(args.OrderBy);
+        else
+            query = query.OrderByDescending(m => m.StartTime);
+
+        var count = await query.CountAsync(cancellationToken);
+
+        if (args.Skip.HasValue)
+            query = query.Skip(args.Skip.Value);
+        if (args.Top.HasValue)
+            query = query.Take(args.Top.Value);
+
+        var items = await query.ToListAsync(cancellationToken);
+        return new ServerDataResult<Metadata>(items, count);
+    }
+
+    // ── Dependency graph ──
 
     private async Task LoadDependencyGraph(
         Effect.Data.Services.DataContext.IDataContext context,
         CancellationToken cancellationToken
     )
     {
-        var currentManifestIds = _manifests.Select(m => m.Id).ToList();
+        var currentManifestIdsQuery = context
+            .Manifests.Where(m => m.ManifestGroupId == ManifestGroupId)
+            .Select(m => m.Id);
 
-        if (currentManifestIds.Count == 0)
+        if (!await currentManifestIdsQuery.AnyAsync(cancellationToken))
         {
             _dagLayout = null;
             return;
@@ -123,7 +226,7 @@ public partial class ManifestGroupDetailPage
             .Where(
                 m =>
                     m.DependsOnManifestId != null
-                    && currentManifestIds.Contains(m.DependsOnManifestId.Value)
+                    && currentManifestIdsQuery.Contains(m.DependsOnManifestId.Value)
                     && m.ManifestGroupId != ManifestGroupId
             )
             .Select(m => m.ManifestGroupId)
@@ -190,6 +293,8 @@ public partial class ManifestGroupDetailPage
 
         _dagLayout = DagLayoutEngine.ComputeLayout(dagNodes, dagEdges);
     }
+
+    // ── Settings ──
 
     private void SnapshotSettings()
     {

@@ -39,4 +39,15 @@ internal class PendingManifest
     /// For batch operations, this is a descriptive identifier like "sync-users... (batch)".
     /// </remarks>
     public required string ExternalId { get; init; }
+
+    /// <summary>
+    /// Gets or sets the complete list of ExternalIds this PendingManifest will create or upsert.
+    /// </summary>
+    /// <remarks>
+    /// Used by the startup reconciliation to determine which manifests in the database
+    /// are still configured and which should be pruned. For single operations this contains
+    /// just the one ExternalId; for batch operations it contains all ExternalIds computed
+    /// from the source list and map function.
+    /// </remarks>
+    public required List<string> ExpectedExternalIds { get; init; }
 }

@@ -1,4 +1,5 @@
 @page "/chainsharp/data/metadata"
+@using System.Linq.Dynamic.Core
 @inherits PollingComponentBase
 @inject IDataContextProviderFactory DataContextFactory
 @inject NavigationManager Navigation
@@ -8,9 +9,9 @@
     Execution records for each workflow run, tracking state, timing, input/output, and failure details.
 </RadzenText>
 
-<ChainSharpDataGrid Data="@_items"
+<ChainSharpDataGrid @ref="_grid"
                     TItem="Metadata"
-                    IsLoading="@IsLoading"
+                    ServerLoadData="@LoadPageAsync"
                     RowClick="@OnRowClick"
                     Style="cursor: pointer;">
     <Columns>
@@ -63,9 +64,17 @@
 </ChainSharpDataGrid>
 
 @code {
-    private List<Metadata> _items = [];
+    private ChainSharpDataGrid<Metadata>? _grid;
 
     protected override async Task LoadDataAsync(CancellationToken cancellationToken)
+    {
+        if (_grid is not null)
+            await _grid.ReloadAsync();
+    }
+
+    private async Task<ServerDataResult<Metadata>> LoadPageAsync(
+        LoadDataArgs args,
+        CancellationToken cancellationToken)
     {
         using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
         IQueryable<Metadata> query = context.Metadatas.AsNoTracking();
@@ -73,7 +82,23 @@
         if (DashboardSettings.HideAdminWorkflows)
             query = query.ExcludeAdmin(DashboardSettings.AdminWorkflowNames);
 
-        _items = await query.ToListAsync(cancellationToken);
+        if (!string.IsNullOrEmpty(args.Filter))
+            query = query.Where(args.Filter);
+
+        if (!string.IsNullOrEmpty(args.OrderBy))
+            query = query.OrderBy(args.OrderBy);
+        else
+            query = query.OrderByDescending(m => m.Id);
+
+        var count = await query.CountAsync(cancellationToken);
+
+        if (args.Skip.HasValue)
+            query = query.Skip(args.Skip.Value);
+        if (args.Top.HasValue)
+            query = query.Take(args.Top.Value);
+
+        var items = await query.ToListAsync(cancellationToken);
+        return new ServerDataResult<Metadata>(items, count);
     }
 
     private void OnRowClick(DataGridRowMouseEventArgs<Metadata> args)

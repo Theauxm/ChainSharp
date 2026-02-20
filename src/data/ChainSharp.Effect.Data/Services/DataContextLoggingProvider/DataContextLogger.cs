@@ -1,20 +1,19 @@
 using System.Text.RegularExpressions;
-using ChainSharp.Effect.Data.Services.DataContext;
-using ChainSharp.Effect.Data.Services.IDataContextFactory;
+using System.Threading.Channels;
 using ChainSharp.Effect.Models.Log.DTOs;
 using Microsoft.Extensions.Logging;
 
 namespace ChainSharp.Effect.Data.Services.DataContextLoggingProvider;
 
 public class DataContextLogger(
-    IDataContextProviderFactory dbContextFactory,
+    ChannelWriter<Effect.Models.Log.Log> logChannel,
     string categoryName,
     LogLevel minimumLogLevel,
     HashSet<string> exactBlacklist,
     List<Regex> wildcardBlacklist
 ) : ILogger
 {
-    public async void Log<TState>(
+    public void Log<TState>(
         LogLevel logLevel,
         EventId eventId,
         TState state,
@@ -39,9 +38,7 @@ public class DataContextLogger(
             }
         );
 
-        using var dataContext = await dbContextFactory.CreateDbContextAsync(CancellationToken.None);
-        await dataContext.Track(log);
-        await dataContext.SaveChanges(CancellationToken.None);
+        logChannel.TryWrite(log);
     }
 
     public bool IsEnabled(LogLevel logLevel) => logLevel >= minimumLogLevel;

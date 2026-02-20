@@ -27,7 +27,6 @@ protected override async Task<Either<Exception, OrderResult>> RunInternal(OrderI
 |--------|-------------|
 | [Activate]({{ site.baseurl }}{% link api-reference/workflow-methods/activate.md %}) | Stores the workflow input (and optional extra objects) into Memory |
 | [Chain]({{ site.baseurl }}{% link api-reference/workflow-methods/chain.md %}) | Executes a step, wiring its input from Memory and storing its output back |
-| [IChain]({{ site.baseurl }}{% link api-reference/workflow-methods/ichain.md %}) | Like Chain, but resolves the step from Memory by its interface type |
 | [ShortCircuit]({{ site.baseurl }}{% link api-reference/workflow-methods/short-circuit.md %}) | Executes a step that can return early, bypassing remaining steps |
 | [Extract]({{ site.baseurl }}{% link api-reference/workflow-methods/extract.md %}) | Pulls a nested property/field out of a Memory object into its own Memory slot |
 | [AddServices]({{ site.baseurl }}{% link api-reference/workflow-methods/add-services.md %}) | Stores DI services into Memory so steps can access them |

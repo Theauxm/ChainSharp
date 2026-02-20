@@ -24,7 +24,7 @@ public partial class Workflow<TInput, TReturn>
     /// if the step succeeds (returns Right). If it fails (returns Left), the workflow
     /// continues without setting an exception.
     /// </remarks>
-    public Workflow<TInput, TReturn> ShortCircuitChain<TStep, TIn, TOut>(
+    internal Workflow<TInput, TReturn> ShortCircuitChain<TStep, TIn, TOut>(
         TStep step,
         TIn previousStep,
         out Either<Exception, TOut> outVar

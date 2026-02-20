@@ -16,9 +16,13 @@ public static class AdminWorkflows
     /// </summary>
     public static readonly IReadOnlyList<Type> Types =
     [
+        typeof(IManifestManagerWorkflow),
         typeof(ManifestManagerWorkflow),
+        typeof(ITaskServerExecutorWorkflow),
         typeof(TaskServerExecutorWorkflow),
+        typeof(IMetadataCleanupWorkflow),
         typeof(MetadataCleanupWorkflow),
+        typeof(IJobDispatcherWorkflow),
         typeof(JobDispatcherWorkflow),
     ];
 

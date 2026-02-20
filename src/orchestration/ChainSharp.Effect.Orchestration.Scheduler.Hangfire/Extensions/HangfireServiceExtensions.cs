@@ -11,6 +11,9 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Hangfire.Extensions;
 /// <summary>
 /// Extension methods for configuring Hangfire as the background task server for ChainSharp.Effect.Orchestration.Scheduler.
 /// </summary>
+[Obsolete(
+    "Use UsePostgresTaskServer() from ChainSharp.Effect.Orchestration.Scheduler instead. This package will be removed in a future version."
+)]
 public static class HangfireServiceExtensions
 {
     /// <summary>

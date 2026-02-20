@@ -2,6 +2,7 @@ using System.Data;
 using ChainSharp.Effect.Data.Models.Metadata;
 using ChainSharp.Effect.Data.Services.DataContextTransaction;
 using ChainSharp.Effect.Models;
+using ChainSharp.Effect.Models.BackgroundJob;
 using ChainSharp.Effect.Models.DeadLetter;
 using ChainSharp.Effect.Models.Log;
 using ChainSharp.Effect.Models.Manifest;
@@ -86,6 +87,8 @@ public interface IDataContext : IEffectProvider, IAsyncDisposable
     DbSet<WorkQueue> WorkQueues { get; }
 
     DbSet<ManifestGroup> ManifestGroups { get; }
+
+    DbSet<BackgroundJob> BackgroundJobs { get; }
 
     #endregion
 

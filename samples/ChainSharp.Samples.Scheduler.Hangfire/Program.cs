@@ -3,7 +3,6 @@ using ChainSharp.Effect.Data.Postgres.Extensions;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Orchestration.Mediator.Extensions;
 using ChainSharp.Effect.Orchestration.Scheduler.Extensions;
-using ChainSharp.Effect.Orchestration.Scheduler.Hangfire.Extensions;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager;
 using ChainSharp.Effect.Provider.Json.Extensions;
@@ -13,7 +12,6 @@ using ChainSharp.Samples.Scheduler.Hangfire.Workflows.ExtractImport;
 using ChainSharp.Samples.Scheduler.Hangfire.Workflows.GoodbyeWorld;
 using ChainSharp.Samples.Scheduler.Hangfire.Workflows.HelloWorld;
 using ChainSharp.Samples.Scheduler.Hangfire.Workflows.TransformLoad;
-using Hangfire;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,7 +57,7 @@ builder.Services.AddChainSharpEffects(
                         cleanup.AddWorkflowType<IDataQualityCheckWorkflow>();
                     })
                     .JobDispatcherPollingInterval(TimeSpan.FromSeconds(2))
-                    .UseHangfire(connectionString);
+                    .UsePostgresTaskServer();
 
                 scheduler
                     .Schedule<IHelloWorldWorkflow, HelloWorldInput>(
@@ -199,6 +197,5 @@ builder.Services.AddChainSharpEffects(
 var app = builder.Build();
 
 app.UseChainSharpDashboard();
-app.UseHangfireDashboard("/hangfire", new DashboardOptions { Authorization = [] });
 
 app.Run();

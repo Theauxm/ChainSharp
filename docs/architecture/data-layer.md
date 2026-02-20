@@ -112,6 +112,27 @@ public class DataContext<TDbContext> : DbContext, IDataContext
 
 The **WorkQueue** table sits between scheduling and dispatch. When a manifest is due (or `TriggerAsync` is called), a `Queued` entry is created. The JobDispatcher reads these, creates a Metadata record, enqueues to the background task server, and flips the status to `Dispatched`. Both the Manifest and Metadata FKs use `ON DELETE RESTRICT`. The **ManifestGroup** table provides per-group dispatch controls. Every manifest belongs to exactly one group. Groups are auto-created during scheduling and orphaned groups (with no manifests) are cleaned up on startup.
 
+The **BackgroundJob** table is a transient queue for the built-in PostgreSQL task server. When `JobDispatcherWorkflow` enqueues a job via `IBackgroundTaskServer.EnqueueAsync()`, a row is inserted. Worker threads claim jobs atomically using `FOR UPDATE SKIP LOCKED`, execute the workflow, and delete the row on completion. The `fetched_at` column enables crash recovery — if a worker dies mid-execution, the stale timestamp makes the job eligible for re-claim after the visibility timeout. See [Task Server]({{ site.baseurl }}{% link scheduler/task-server.md %}) for architecture details.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      BACKGROUND_JOB                               │
+├─────────────────────────────────────────────────────────────────┤
+│ Id (PK)           │ bigserial (auto-increment)                   │
+│ MetadataId        │ int (NOT NULL)                               │
+│ Input             │ jsonb (nullable)                              │
+│ InputType         │ varchar(512) (nullable)                       │
+│ CreatedAt         │ timestamptz (default: now())                  │
+│ FetchedAt         │ timestamptz (nullable)                        │
+└─────────────────────────────────────────────────────────────────┘
+
+States (via FetchedAt):
+- NULL       → Available for dequeue
+- Recent     → Claimed by a worker (in progress)
+- Stale      → Abandoned (eligible for re-claim after VisibilityTimeout)
+- (deleted)  → Completed (row removed)
+```
+
 Additionally, **StepMetadata** tracks individual step executions within a workflow (not persisted to the database, used in-memory during workflow execution):
 
 ```

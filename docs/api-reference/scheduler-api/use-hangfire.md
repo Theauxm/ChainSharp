@@ -6,7 +6,9 @@ grand_parent: API Reference
 nav_order: 2
 ---
 
-# UseHangfire
+# UseHangfire (Deprecated)
+
+> **Deprecated**: Use [`UsePostgresTaskServer()`]({{ site.baseurl }}{% link api-reference/scheduler-api/use-postgres-task-server.md %}) instead. The Hangfire package will be removed in a future version.
 
 Configures [Hangfire](https://www.hangfire.io/) as the background task server for the ChainSharp scheduler, using PostgreSQL for job storage.
 

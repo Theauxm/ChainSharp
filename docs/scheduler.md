@@ -131,7 +131,7 @@ When `groupId` is not specified, it defaults to the manifest's `externalId`. See
                                   ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                  TaskServerExecutorWorkflow                       │
-│                  (runs on Hangfire workers)                       │
+│            (runs on PostgresWorkerService workers)                │
 │                                                                  │
 │  LoadMetadata → ValidateState → ExecuteWorkflow →                │
 │                                      UpdateManifest              │
@@ -150,9 +150,9 @@ The **ManifestManagerPollingService** and **JobDispatcherPollingService** are in
 
 The **ManifestManagerWorkflow** loads enabled manifests, dead-letters any that have exceeded their retry limit, determines which are due for execution (including [dependent manifests](scheduler/dependent-workflows.md) whose parent has a newer `LastSuccessfulRun`), and writes them to the work queue. It doesn't enqueue anything directly—it just records intent.
 
-The **JobDispatcherWorkflow** reads from the work queue, enforces both global and per-group `MaxActiveJobs` limits, creates `Metadata` records, and enqueues to the background task server (Hangfire). This is the single gateway to execution. Everything goes through the work queue first—manifest schedules, `TriggerAsync` calls, dashboard re-runs—so capacity enforcement happens in one place.
+The **JobDispatcherWorkflow** reads from the work queue, enforces both global and per-group `MaxActiveJobs` limits, creates `Metadata` records, and enqueues to the background task server. This is the single gateway to execution. Everything goes through the work queue first—manifest schedules, `TriggerAsync` calls, dashboard re-runs—so capacity enforcement happens in one place.
 
-The **TaskServerExecutorWorkflow** runs on Hangfire workers for each enqueued job. It loads the Metadata and Manifest, validates the job is still pending, executes the target workflow via `IWorkflowBus`, and updates `LastSuccessfulRun` on success.
+The **TaskServerExecutorWorkflow** runs on the task server's worker threads for each enqueued job. It loads the Metadata and Manifest, validates the job is still pending, executes the target workflow via `IWorkflowBus`, and updates `LastSuccessfulRun` on success. See [Task Server](scheduler/task-server.md) for details on the built-in PostgreSQL implementation.
 
 See [Administrative Workflows](scheduler/admin-workflows.md) for detailed documentation on each internal workflow.
 
@@ -168,4 +168,4 @@ For complete method signatures, all parameters, and detailed usage examples for 
 
 ## Sample Project
 
-A working example with Hangfire, bulk scheduling, metadata cleanup, and the dashboard is in [`samples/ChainSharp.Samples.Scheduler.Hangfire`](https://github.com/Theauxm/ChainSharp/tree/main/samples/ChainSharp.Samples.Scheduler.Hangfire).
+A working example with the built-in PostgreSQL task server, bulk scheduling, metadata cleanup, and the dashboard is in [`samples/ChainSharp.Samples.Scheduler.Hangfire`](https://github.com/Theauxm/ChainSharp/tree/main/samples/ChainSharp.Samples.Scheduler.Hangfire).

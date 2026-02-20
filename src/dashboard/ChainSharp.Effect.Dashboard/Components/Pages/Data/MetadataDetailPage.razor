@@ -72,8 +72,26 @@
         </RadzenColumn>
         <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
             <RadzenStack Gap="0.75rem">
-                <FieldDisplay Label="Manifest ID" Value="@(_metadata.ManifestId?.ToString() ?? "—")" />
-                <FieldDisplay Label="Parent ID" Value="@(_metadata.ParentId?.ToString() ?? "—")" />
+                @if (_metadata.ManifestId.HasValue)
+                {
+                    <FieldDisplay Label="Manifest ID">
+                        <RadzenLink Path="@($"chainsharp/data/manifests/{_metadata.ManifestId}")" Text="@_metadata.ManifestId.ToString()" />
+                    </FieldDisplay>
+                }
+                else
+                {
+                    <FieldDisplay Label="Manifest ID" Value="—" />
+                }
+                @if (_metadata.ParentId.HasValue)
+                {
+                    <FieldDisplay Label="Parent ID">
+                        <RadzenLink Path="@($"chainsharp/data/metadata/{_metadata.ParentId}")" Text="@_metadata.ParentId.ToString()" />
+                    </FieldDisplay>
+                }
+                else
+                {
+                    <FieldDisplay Label="Parent ID" Value="—" />
+                }
                 <FieldDisplay Label="Executor" Value="@(_metadata.Executor ?? "—")" />
             </RadzenStack>
         </RadzenColumn>

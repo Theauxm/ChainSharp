@@ -28,6 +28,8 @@ public partial class ManifestGroupDetailPage
     [Parameter]
     public int ManifestGroupId { get; set; }
 
+    protected override object? GetRouteKey() => ManifestGroupId;
+
     private ManifestGroup? _group;
     private DagLayout? _dagLayout;
 

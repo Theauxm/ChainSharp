@@ -59,7 +59,16 @@
                 <FieldDisplay Label="Name" Value="@ShortName(_manifest.Name)" />
                 <FieldDisplay Label="External ID" Value="@_manifest.ExternalId" />
                 <FieldDisplay Label="Enabled" Value="@(_manifest.IsEnabled ? "Yes" : "No")" />
-                <FieldDisplay Label="Group" Value="@(_manifest.ManifestGroup?.Name ?? "—")" />
+                @if (_manifest.ManifestGroup is not null)
+                {
+                    <FieldDisplay Label="Group">
+                        <RadzenLink Path="@($"chainsharp/data/manifest-groups/{_manifest.ManifestGroupId}")" Text="@_manifest.ManifestGroup.Name" />
+                    </FieldDisplay>
+                }
+                else
+                {
+                    <FieldDisplay Label="Group" Value="—" />
+                }
             </RadzenStack>
         </RadzenColumn>
         <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
@@ -176,7 +185,18 @@
                 <RadzenDataGridColumn TItem="Metadata"
                                       Property="ParentId"
                                       Title="Parent Id"
-                                      Width="100px" />
+                                      Width="100px">
+                    <Template Context="m">
+                        @if (m.ParentId.HasValue)
+                        {
+                            <RadzenLink Path="@($"chainsharp/data/metadata/{m.ParentId}")" Text="@m.ParentId.ToString()" />
+                        }
+                        else
+                        {
+                            <text>—</text>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
             </Columns>
         </ChainSharpDataGrid>
     }

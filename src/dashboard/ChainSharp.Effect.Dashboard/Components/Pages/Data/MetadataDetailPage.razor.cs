@@ -34,20 +34,8 @@ public partial class MetadataDetailPage
     private List<Log> _logs = [];
     private bool _rerunning;
     private string? _rerunError;
-    private int _previousMetadataId;
 
-    protected override async Task OnParametersSetAsync()
-    {
-        if (_previousMetadataId != 0 && _previousMetadataId != MetadataId)
-        {
-            IsLoading = true;
-            await LoadDataAsync(CancellationToken.None);
-            IsLoading = false;
-            StateHasChanged();
-        }
-
-        _previousMetadataId = MetadataId;
-    }
+    protected override object? GetRouteKey() => MetadataId;
 
     protected override async Task LoadDataAsync(CancellationToken cancellationToken)
     {

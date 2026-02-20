@@ -27,6 +27,8 @@ public partial class ManifestDetailPage
     [Parameter]
     public int ManifestId { get; set; }
 
+    protected override object? GetRouteKey() => ManifestId;
+
     private Manifest? _manifest;
     private List<Metadata> _metadataItems = [];
     private bool _triggering;

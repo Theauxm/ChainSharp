@@ -53,11 +53,6 @@ public partial class ManifestDetailPage
         }
     }
 
-    private void OnMetadataRowClick(DataGridRowMouseEventArgs<Metadata> args)
-    {
-        Navigation.NavigateTo($"chainsharp/data/metadata/{args.Data.Id}");
-    }
-
     private async Task TriggerManifest()
     {
         if (_manifest is null)

@@ -171,4 +171,17 @@ public interface IManifestScheduler
     /// Thrown when no manifest with the specified ExternalId exists.
     /// </exception>
     Task TriggerAsync(string externalId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Triggers immediate execution of all eligible manifests in a manifest group.
+    /// </summary>
+    /// <param name="groupId">The ID of the manifest group to trigger.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The number of manifests that were queued.</returns>
+    /// <remarks>
+    /// Only enabled manifests with non-dependent schedule types (None, Cron, Interval, OnDemand)
+    /// are queued. Dependent and DormantDependent manifests are skipped because they rely on
+    /// parent completion and may lack standalone inputs.
+    /// </remarks>
+    Task<int> TriggerGroupAsync(int groupId, CancellationToken ct = default);
 }

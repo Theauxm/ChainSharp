@@ -13,6 +13,8 @@ The task server is the execution backend for the scheduler. When the JobDispatch
 
 The recommended task server uses ChainSharp's own `chain_sharp.background_job` table for job queuing. No external dependencies — it shares the same PostgreSQL database already used by ChainSharp's data layer.
 
+The JobDispatcher commits the Metadata creation and WorkQueue status update in a `FOR UPDATE SKIP LOCKED` transaction before calling `EnqueueAsync`. The BackgroundJob insertion then happens as a separate operation. This ordering ensures the Metadata record is visible to the task server when it begins execution — necessary because the `InMemoryTaskServer` executes synchronously within the `EnqueueAsync` call.
+
 ### How It Works
 
 ```

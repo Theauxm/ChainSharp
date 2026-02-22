@@ -133,9 +133,13 @@ internal class DispatchJobsStep(IServiceProvider serviceProvider, ILogger<Dispat
         claimed.DispatchedAt = DateTime.UtcNow;
         await dataContext.SaveChanges(CancellationToken.None);
 
-        // Enqueue to background task server.
-        // For PostgresTaskServer (same scope/context), the BackgroundJob insert
-        // is part of this transaction — committed atomically below.
+        // Commit the claim transaction before enqueuing. The Metadata and WorkQueue
+        // updates must be visible to the task server — InMemoryTaskServer executes
+        // synchronously and needs to read the Metadata, while PostgresTaskServer and
+        // HangfireTaskServer both need the committed state to be visible.
+        await dataContext.CommitTransaction();
+
+        // Enqueue to background task server (outside the transaction)
         string backgroundTaskId;
         if (deserializedInput != null)
             backgroundTaskId = await backgroundTaskServer.EnqueueAsync(
@@ -144,8 +148,6 @@ internal class DispatchJobsStep(IServiceProvider serviceProvider, ILogger<Dispat
             );
         else
             backgroundTaskId = await backgroundTaskServer.EnqueueAsync(metadata.Id);
-
-        await dataContext.CommitTransaction();
 
         logger.LogDebug(
             "Dispatched work queue entry {WorkQueueId} as background task {BackgroundTaskId} (Metadata: {MetadataId})",

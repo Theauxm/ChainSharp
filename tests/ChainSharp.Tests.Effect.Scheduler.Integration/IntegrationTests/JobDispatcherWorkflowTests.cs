@@ -77,10 +77,11 @@ public class JobDispatcherWorkflowTests : TestSetup
     [Test]
     public async Task Run_OnlyPicksQueuedEntries_IgnoresDispatchedAndCancelled()
     {
-        // Arrange - Create entries in different statuses
+        // Arrange - Create entries in different statuses.
+        // The unique partial index (ix_work_queue_unique_queued_manifest) only allows
+        // one Queued entry per manifest, so we must transition entries to non-Queued
+        // states before inserting the next one.
         var manifest = await CreateAndSaveManifest();
-
-        var queuedEntry = await CreateAndSaveWorkQueueEntry(manifest);
 
         var dispatchedEntry = await CreateAndSaveWorkQueueEntry(manifest);
         dispatchedEntry = await DataContext.WorkQueues.FirstAsync(q => q.Id == dispatchedEntry.Id);
@@ -94,6 +95,9 @@ public class JobDispatcherWorkflowTests : TestSetup
         cancelledEntry.Status = WorkQueueStatus.Cancelled;
         await DataContext.SaveChanges(CancellationToken.None);
         DataContext.Reset();
+
+        // Create the queued entry last — only one Queued entry per manifest is allowed
+        var queuedEntry = await CreateAndSaveWorkQueueEntry(manifest);
 
         // Act
         await _workflow.Run(Unit.Default);

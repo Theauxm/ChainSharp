@@ -99,7 +99,21 @@ public class PostgresWorkerServiceTests : TestSetup
         var manifest = await CreateAndSaveManifest(group);
         var metadata = await CreateMetadataForManifest(manifest);
 
-        var job = BackgroundJob.Create(new CreateBackgroundJob { MetadataId = metadata.Id });
+        var input = new SchedulerTestInput { Value = "worker-test" };
+        var inputJson = JsonSerializer.Serialize(
+            input,
+            input.GetType(),
+            ChainSharpJsonSerializationOptions.ManifestProperties
+        );
+
+        var job = BackgroundJob.Create(
+            new CreateBackgroundJob
+            {
+                MetadataId = metadata.Id,
+                Input = inputJson,
+                InputType = typeof(SchedulerTestInput).FullName,
+            }
+        );
         await DataContext.Track(job);
         await DataContext.SaveChanges(CancellationToken.None);
         DataContext.Reset();

@@ -64,6 +64,16 @@ For dependent manifests, `DependentPriorityBoost` is still added on top of the g
 
 Each entry is saved individually. If one fails (e.g., a serialization issue for a specific manifest), the others still get queued. Errors are logged per-manifest.
 
+## Multi-Server Safety
+
+In a multi-server deployment, the ManifestManagerPollingService uses a PostgreSQL advisory lock to ensure only one server runs the manifest evaluation cycle at a time. Without this, two servers could both evaluate the same manifest as "due" and insert duplicate WorkQueue entries.
+
+The lock is transaction-scoped (`pg_try_advisory_xact_lock`) and non-blocking — if another server already holds the lock, the current server skips the cycle and waits for the next polling tick. The entire workflow runs within the advisory lock transaction, so all database changes (dead letters, WorkQueue entries) are committed atomically.
+
+As an additional safety net, a unique partial index on the `work_queue` table prevents duplicate `Queued` entries for the same manifest at the database level, even if the advisory lock is somehow bypassed.
+
+See [Multi-Server Concurrency](../concurrency.md) for the full concurrency model.
+
 ## What Changed
 
 Previously, this workflow had an `EnqueueJobsStep` as its final step. That step would directly create Metadata records and enqueue to the background task server (Hangfire). `MaxActiveJobs` was enforced there, meaning the ManifestManager was both the scheduler and the dispatcher.

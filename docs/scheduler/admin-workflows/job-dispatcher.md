@@ -30,13 +30,19 @@ This replaces the previous dependent-first ordering with a fully configurable pr
 
 ### DispatchJobsStep
 
-The core of the dispatcher. It enforces capacity at two levels before processing entries:
+The core of the dispatcher. For each entry that passes the capacity checks in earlier steps, the dispatcher atomically claims and dispatches it within its own DI scope and database transaction.
 
-1. **Global capacity check** (if global `MaxActiveJobs` is configured): counts all non-excluded `Pending` or `InProgress` metadata in the database. If the count meets or exceeds the global limit, the entire cycle is skipped—no entries are dispatched.
+**Atomic claim via `FOR UPDATE SKIP LOCKED`**: before dispatching an entry, the step re-selects it from the database with a row-level lock:
 
-2. **Per-group capacity check**: for each queued entry, the dispatcher checks whether the entry's `ManifestGroup` has hit its own `MaxActiveJobs` limit. If the group is at capacity, that entry is skipped with `continue` and the loop moves on to the next entry. This is the key starvation fix—a full group doesn't block entries from other groups.
+```sql
+SELECT * FROM chain_sharp.work_queue
+WHERE id = :entry_id AND status = 'queued'
+FOR UPDATE SKIP LOCKED
+```
 
-For each entry that passes both capacity checks, the dispatcher:
+If the entry has already been claimed by another server (locked in another transaction or already `Dispatched`), the query returns no rows and the entry is skipped. This prevents duplicate dispatch in multi-server deployments. See [Multi-Server Concurrency](../concurrency.md#jobdispatcher-row-level-locking) for details.
+
+For each successfully claimed entry, the dispatcher:
 
 1. **Deserializes the input**: uses `InputTypeName` to resolve the CLR type, then deserializes `Input` from JSON. Type resolution searches all loaded assemblies.
 
@@ -44,9 +50,11 @@ For each entry that passes both capacity checks, the dispatcher:
 
 3. **Updates the work queue entry**: sets `Status = Dispatched`, records the `MetadataId` and `DispatchedAt` timestamp.
 
-4. **Enqueues to the background task server**: calls `IBackgroundTaskServer.EnqueueAsync` with the metadata ID and deserialized input. This is what hands the job to Hangfire.
+4. **Commits the transaction**: the Metadata creation and WorkQueue status update are committed as a single atomic unit. This makes the Metadata visible to the task server before enqueue.
 
-If any individual entry fails during dispatch (type resolution, serialization, database error), the error is logged and the loop continues to the next entry. One bad entry doesn't block the rest of the queue.
+5. **Enqueues to the background task server**: calls `IBackgroundTaskServer.EnqueueAsync` with the metadata ID and deserialized input. This happens after commit because the `InMemoryTaskServer` executes the workflow synchronously and needs to read the committed Metadata.
+
+Each entry is processed in its own DI scope with a fresh `IDataContext`. If any individual entry fails (type resolution, serialization, database error), its transaction is rolled back, the error is logged, and the loop continues to the next entry. One bad entry doesn't affect the rest of the queue.
 
 ## MaxActiveJobs Enforcement
 

@@ -49,6 +49,26 @@ If there's no manifest (e.g., an ad-hoc execution), this step is a no-op.
 
 Persists all pending database changes—primarily the `LastSuccessfulRun` update. This is a separate step rather than being folded into `UpdateManifestSuccessStep` so that the save happens as its own observable step in the chain, with its own timing in step metadata.
 
+## Concurrency Model: Upstream Guarantee + State Guard
+
+The TaskServerExecutor does not use any database-level locking of its own. Its safety relies on two mechanisms:
+
+### Upstream Single-Dispatch Guarantee
+
+The [JobDispatcher](job-dispatcher.md) uses `FOR UPDATE SKIP LOCKED` to atomically claim each WorkQueue entry before creating its Metadata record. This guarantees that for any given WorkQueue entry, exactly one Metadata record is created and exactly one background task is enqueued. The TaskServerExecutor inherits this guarantee — it is only invoked once per Metadata ID.
+
+### State Validation Guard
+
+`ValidateMetadataStateStep` acts as a defense-in-depth check. It throws a `WorkflowException` if the metadata is in any state other than `Pending`. This catches edge cases where the background task server might retry a job that has already started (e.g., Hangfire retrying after a visibility timeout). Once the `WorkflowBus` transitions the metadata to `InProgress`, any duplicate invocation will be rejected.
+
+This is an **optimistic** guard — it reads the state without acquiring a lock. In the theoretical scenario where two workers execute the same Metadata ID simultaneously (which the JobDispatcher prevents), both could read `Pending` before either transitions to `InProgress`. This is acceptable because the upstream guarantee makes this scenario unreachable in practice.
+
+### No Wrapping Transaction
+
+The workflow does not wrap its steps in an explicit transaction. `LoadMetadataStep` loads the Metadata and its Manifest as **tracked EF Core entities** (not `AsNoTracking`), so `UpdateManifestSuccessStep` can mutate `Manifest.LastSuccessfulRun` in memory and `SaveDatabaseChangesStep` persists the change at the end. If the workflow fails before `SaveDatabaseChangesStep`, `LastSuccessfulRun` is not updated — which is the correct behavior, since a failed execution should not advance the dependent workflow chain.
+
+See [Multi-Server Concurrency](../concurrency.md) for the full cross-service concurrency model.
+
 ## Assembly Registration
 
 The `TaskServerExecutorWorkflow` lives in the `ChainSharp.Effect.Orchestration.Scheduler` assembly. The `WorkflowBus` discovers workflows by scanning assemblies, so this assembly must be registered:

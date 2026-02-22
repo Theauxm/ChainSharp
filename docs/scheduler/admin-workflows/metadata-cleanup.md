@@ -37,6 +37,30 @@ A metadata row is deleted when all three conditions are true:
 
 `Pending` and `InProgress` metadata is never deleted, regardless of age. Only terminal states are eligible.
 
+## Concurrency Model: Idempotent Bulk Deletes
+
+The MetadataCleanup workflow uses no application-level locking. Multiple servers can run cleanup concurrently without conflict because the operations are inherently idempotent.
+
+### Implicit Database Locks
+
+`DeleteExpiredMetadataStep` uses EF Core's `ExecuteDeleteAsync()`, which translates to atomic `DELETE FROM ... WHERE ...` SQL statements. The database engine acquires implicit row-level locks during these deletes. If two servers execute the same `DELETE` concurrently, the first deletes the rows and the second finds no matching rows — a no-op. No errors, no side effects.
+
+### Deletion Order
+
+The step deletes in a specific order to respect foreign key constraints:
+
+1. **WorkQueue entries** — delete entries whose `MetadataId` matches the set to be cleaned
+2. **Log entries** — delete logs whose `MetadataId` matches
+3. **Metadata rows** — delete the metadata itself
+
+This ordering prevents FK constraint violations. Each `ExecuteDeleteAsync` is its own SQL statement (not wrapped in an explicit transaction), so a failure in step 2 would leave orphaned WorkQueue deletions — but since the Metadata rows survive, the next cleanup cycle will retry and complete the deletion.
+
+### Safety Boundary
+
+Only metadata in a **terminal state** (`Completed` or `Failed`) is eligible for deletion. `Pending` and `InProgress` metadata is never deleted regardless of age, so cleanup cannot interfere with in-flight executions.
+
+See [Multi-Server Concurrency](../concurrency.md) for the full cross-service concurrency model.
+
 ## Configuration
 
 Enable cleanup with `.AddMetadataCleanup()`:

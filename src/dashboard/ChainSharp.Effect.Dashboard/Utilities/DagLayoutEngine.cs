@@ -6,7 +6,7 @@ namespace ChainSharp.Effect.Dashboard.Utilities;
 
 public class PositionedNode
 {
-    public int Id { get; init; }
+    public long Id { get; init; }
     public string Label { get; init; } = "";
     public bool IsHighlighted { get; init; }
     public double X { get; set; }
@@ -17,8 +17,8 @@ public class PositionedNode
 
 public class PositionedEdge
 {
-    public int FromId { get; init; }
-    public int ToId { get; init; }
+    public long FromId { get; init; }
+    public long ToId { get; init; }
 
     /// <summary>
     /// SVG cubic bezier path data (e.g., "M x1,y1 C cx1,cy1 cx2,cy2 x2,y2").
@@ -51,9 +51,9 @@ public static class DagLayoutEngine
             return new DagLayout();
 
         // Build adjacency lists (needed for layer assignment + barycenter)
-        var nodeIds = new HashSet<int>(nodes.Select(n => n.Id));
-        var successors = nodes.ToDictionary(n => n.Id, _ => new List<int>());
-        var predecessors = nodes.ToDictionary(n => n.Id, _ => new List<int>());
+        var nodeIds = new HashSet<long>(nodes.Select(n => n.Id));
+        var successors = nodes.ToDictionary(n => n.Id, _ => new List<long>());
+        var predecessors = nodes.ToDictionary(n => n.Id, _ => new List<long>());
 
         var validEdges = edges
             .Where(e => nodeIds.Contains(e.FromId) && nodeIds.Contains(e.ToId))
@@ -75,7 +75,7 @@ public static class DagLayoutEngine
         var sorted = sortResult.IsAcyclic ? sortResult.Sorted : nodes.Select(n => n.Id).ToList();
 
         // Layer assignment (longest path from roots)
-        var layer = new Dictionary<int, int>();
+        var layer = new Dictionary<long, int>();
         foreach (var id in sorted)
         {
             if (predecessors[id].Count == 0)
@@ -89,7 +89,7 @@ public static class DagLayoutEngine
         }
 
         // Separate isolated nodes (no edges at all) into their own rightmost layer
-        var isolatedIds = new HashSet<int>(
+        var isolatedIds = new HashSet<long>(
             nodes
                 .Where(n => successors[n.Id].Count == 0 && predecessors[n.Id].Count == 0)
                 .Select(n => n.Id)
@@ -151,7 +151,7 @@ public static class DagLayoutEngine
         var maxLayerHeight = maxNodesInLayer * (NodeHeight + NodeGap) - NodeGap;
 
         // Position nodes
-        var positioned = new Dictionary<int, PositionedNode>();
+        var positioned = new Dictionary<long, PositionedNode>();
 
         foreach (var (layerIndex, nodesInLayer) in layerGroups)
         {
@@ -229,9 +229,9 @@ public static class DagLayoutEngine
     /// <summary>
     /// Builds a map from node ID to its index position within the layer.
     /// </summary>
-    private static Dictionary<int, int> BuildPositionIndex(List<DagNode> layerNodes)
+    private static Dictionary<long, int> BuildPositionIndex(List<DagNode> layerNodes)
     {
-        var index = new Dictionary<int, int>();
+        var index = new Dictionary<long, int>();
         for (var i = 0; i < layerNodes.Count; i++)
             index[layerNodes[i].Id] = i;
         return index;
@@ -242,9 +242,9 @@ public static class DagLayoutEngine
     /// Returns double.MaxValue for nodes with no neighbors so they sort to the end.
     /// </summary>
     private static double Barycenter(
-        int nodeId,
-        Dictionary<int, List<int>> adjacency,
-        Dictionary<int, int> neighborPositions
+        long nodeId,
+        Dictionary<long, List<long>> adjacency,
+        Dictionary<long, int> neighborPositions
     )
     {
         var neighbors = adjacency[nodeId];

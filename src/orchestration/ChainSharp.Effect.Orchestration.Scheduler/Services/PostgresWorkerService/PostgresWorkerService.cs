@@ -81,8 +81,8 @@ internal class PostgresWorkerService(
     private async Task<bool> TryClaimAndExecuteAsync(int workerId, CancellationToken stoppingToken)
     {
         // Phase 1: Claim a job atomically
-        int jobId;
-        int metadataId;
+        long jobId;
+        long metadataId;
         string? inputJson;
         string? inputType;
 

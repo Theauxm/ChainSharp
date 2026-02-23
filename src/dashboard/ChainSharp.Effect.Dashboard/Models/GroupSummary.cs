@@ -2,7 +2,7 @@ namespace ChainSharp.Effect.Dashboard.Models;
 
 public class GroupSummary
 {
-    public int Id { get; init; }
+    public long Id { get; init; }
     public string Name { get; init; } = "";
     public int? MaxActiveJobs { get; init; }
     public int Priority { get; init; }

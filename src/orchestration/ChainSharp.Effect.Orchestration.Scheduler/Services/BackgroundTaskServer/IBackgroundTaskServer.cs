@@ -34,7 +34,7 @@ public interface IBackgroundTaskServer
     /// Implementations should enqueue a call to <see cref="ITaskServerExecutorWorkflow.Run"/>
     /// with an <see cref="ExecuteManifestRequest"/> containing the provided metadata ID.
     /// </remarks>
-    Task<string> EnqueueAsync(int metadataId);
+    Task<string> EnqueueAsync(long metadataId);
 
     /// <summary>
     /// Enqueues a job for immediate execution with an in-memory workflow input.
@@ -46,5 +46,5 @@ public interface IBackgroundTaskServer
     /// Used for ad-hoc workflow executions (e.g., from the dashboard) where the input
     /// is provided directly rather than resolved from a Manifest's properties.
     /// </remarks>
-    Task<string> EnqueueAsync(int metadataId, object input);
+    Task<string> EnqueueAsync(long metadataId, object input);
 }

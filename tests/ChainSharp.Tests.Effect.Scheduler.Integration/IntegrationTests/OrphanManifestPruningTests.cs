@@ -369,7 +369,7 @@ public class OrphanManifestPruningTests : TestSetup
 
     private async Task<Manifest> CreateAndSaveManifestWithExternalId(
         string externalId,
-        int? groupId = null
+        long? groupId = null
     )
     {
         if (groupId is null)

@@ -21,7 +21,7 @@ public partial class WorkQueueDetailPage
     private NotificationService NotificationService { get; set; } = default!;
 
     [Parameter]
-    public int WorkQueueId { get; set; }
+    public long WorkQueueId { get; set; }
 
     private WorkQueue? _entry;
     private bool _cancelling;

@@ -18,7 +18,7 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Services.BackgroundTaskServe
 public class PostgresTaskServer(IDataContext dataContext) : IBackgroundTaskServer
 {
     /// <inheritdoc />
-    public async Task<string> EnqueueAsync(int metadataId)
+    public async Task<string> EnqueueAsync(long metadataId)
     {
         var job = BackgroundJob.Create(new CreateBackgroundJob { MetadataId = metadataId });
 
@@ -29,7 +29,7 @@ public class PostgresTaskServer(IDataContext dataContext) : IBackgroundTaskServe
     }
 
     /// <inheritdoc />
-    public async Task<string> EnqueueAsync(int metadataId, object input)
+    public async Task<string> EnqueueAsync(long metadataId, object input)
     {
         var inputJson = JsonSerializer.Serialize(
             input,

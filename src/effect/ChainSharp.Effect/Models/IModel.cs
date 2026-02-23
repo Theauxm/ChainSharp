@@ -36,7 +36,7 @@ public interface IModel
     /// with different database systems.
     /// </remarks>
     [Column("id")]
-    int Id { get; }
+    long Id { get; }
 
     string ToString();
 }

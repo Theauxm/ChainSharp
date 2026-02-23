@@ -47,7 +47,7 @@ internal class LoadDispatchCapacityStep(
             )
             .SelectMany(
                 x => x.manifests.DefaultIfEmpty(),
-                (x, man) => new { GroupId = man == null ? (int?)null : (int?)man.ManifestGroupId }
+                (x, man) => new { GroupId = man == null ? (long?)null : (long?)man.ManifestGroupId }
             )
             .GroupBy(x => x.GroupId)
             .Select(g => new { GroupId = g.Key, Count = g.Count() })

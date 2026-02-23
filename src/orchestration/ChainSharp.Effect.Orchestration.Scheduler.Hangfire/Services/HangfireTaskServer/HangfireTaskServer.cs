@@ -26,7 +26,7 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Hangfire.Services.HangfireTa
 public class HangfireTaskServer(IBackgroundJobClient backgroundJobClient) : IBackgroundTaskServer
 {
     /// <inheritdoc />
-    public Task<string> EnqueueAsync(int metadataId)
+    public Task<string> EnqueueAsync(long metadataId)
     {
         // Use the async overload explicitly via Expression<Func<T, Task>>
         var jobId = backgroundJobClient.Enqueue<ITaskServerExecutorWorkflow>(
@@ -37,7 +37,7 @@ public class HangfireTaskServer(IBackgroundJobClient backgroundJobClient) : IBac
     }
 
     /// <inheritdoc />
-    public Task<string> EnqueueAsync(int metadataId, object input)
+    public Task<string> EnqueueAsync(long metadataId, object input)
     {
         var jobId = backgroundJobClient.Enqueue<ITaskServerExecutorWorkflow>(
             workflow => workflow.Run(new ExecuteManifestRequest(metadataId, input))

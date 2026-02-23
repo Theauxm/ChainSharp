@@ -20,7 +20,7 @@ namespace ChainSharp.Effect.Models.ManifestGroup;
 public class ManifestGroup : IModel
 {
     [Column("id")]
-    public int Id { get; }
+    public long Id { get; }
 
     /// <summary>
     /// Gets or sets the unique name for this group.

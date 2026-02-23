@@ -183,5 +183,5 @@ public interface IManifestScheduler
     /// are queued. Dependent and DormantDependent manifests are skipped because they rely on
     /// parent completion and may lack standalone inputs.
     /// </remarks>
-    Task<int> TriggerGroupAsync(int groupId, CancellationToken ct = default);
+    Task<int> TriggerGroupAsync(long groupId, CancellationToken ct = default);
 }

@@ -46,7 +46,7 @@ public class Metadata : IModel, IDisposable
     /// </remarks>
     [Column("id")]
     [JsonPropertyName("id")]
-    public int Id { get; private set; }
+    public long Id { get; private set; }
 
     /// <summary>
     /// Gets or sets the identifier of the parent workflow, if this workflow
@@ -59,7 +59,7 @@ public class Metadata : IModel, IDisposable
     [Column("parent_id")]
     [JsonPropertyName("parent_id")]
     [JsonInclude]
-    public int? ParentId { get; set; }
+    public long? ParentId { get; set; }
 
     /// <summary>
     /// Gets or sets a globally unique identifier for the workflow execution.
@@ -248,7 +248,7 @@ public class Metadata : IModel, IDisposable
     [Column("manifest_id")]
     [JsonPropertyName("manifest_id")]
     [JsonInclude]
-    public int? ManifestId { get; set; }
+    public long? ManifestId { get; set; }
 
     /// <summary>
     /// Gets the manifest that defines this workflow execution.

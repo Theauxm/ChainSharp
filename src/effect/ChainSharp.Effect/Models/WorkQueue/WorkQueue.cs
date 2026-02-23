@@ -24,7 +24,7 @@ public class WorkQueue : IModel
     #region Columns
 
     [Column("id")]
-    public int Id { get; private set; }
+    public long Id { get; private set; }
 
     [Column("external_id")]
     public string ExternalId { get; set; }
@@ -79,7 +79,7 @@ public class WorkQueue : IModel
     /// Optional manifest ID — set when this entry was queued from a scheduled manifest.
     /// </summary>
     [Column("manifest_id")]
-    public int? ManifestId { get; set; }
+    public long? ManifestId { get; set; }
 
     /// <summary>
     /// The associated manifest, if this entry was queued from a manifest.
@@ -90,7 +90,7 @@ public class WorkQueue : IModel
     /// The metadata ID created when the dispatcher picks up this entry.
     /// </summary>
     [Column("metadata_id")]
-    public int? MetadataId { get; set; }
+    public long? MetadataId { get; set; }
 
     /// <summary>
     /// The metadata record created for this entry's execution.

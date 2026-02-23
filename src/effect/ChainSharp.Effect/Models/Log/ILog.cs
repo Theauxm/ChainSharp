@@ -7,11 +7,11 @@ namespace ChainSharp.Effect.Models.Log;
 public interface ILog : IModel
 {
     [Column("id")]
-    public new int Id { get; }
+    public new long Id { get; }
 
     [Column("metadata_id")]
     [JsonInclude]
-    public int MetadataId { get; }
+    public long MetadataId { get; }
 
     [Column("level")]
     public LogLevel Level { get; set; }

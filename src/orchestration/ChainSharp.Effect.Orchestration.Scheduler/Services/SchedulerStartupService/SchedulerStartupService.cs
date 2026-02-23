@@ -162,7 +162,7 @@ internal class SchedulerStartupService(
                     && orphanedManifestIds.Contains(m.DependsOnManifestId.Value)
             )
             .ExecuteUpdateAsync(
-                s => s.SetProperty(m => m.DependsOnManifestId, (int?)null),
+                s => s.SetProperty(m => m.DependsOnManifestId, (long?)null),
                 cancellationToken
             );
 

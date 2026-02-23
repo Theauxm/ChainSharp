@@ -49,7 +49,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
     /// This enables hierarchical tracking of workflow executions, allowing for complex
     /// workflow compositions to be visualized and analyzed.
     /// </remarks>
-    internal int? ParentId { get; set; }
+    internal long? ParentId { get; set; }
 
     /// <summary>
     /// The EffectRunner is responsible for managing all effect providers and persisting

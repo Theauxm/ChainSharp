@@ -8,7 +8,7 @@ public class CreateBackgroundJob
     /// <summary>
     /// The ID of the Metadata record representing this job execution.
     /// </summary>
-    public required int MetadataId { get; set; }
+    public required long MetadataId { get; set; }
 
     /// <summary>
     /// Serialized workflow input (JSON), for ad-hoc executions.

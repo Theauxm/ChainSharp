@@ -89,7 +89,9 @@ public class PostgresTaskServerTests : TestSetup
         var jobs = await DataContext
             .BackgroundJobs.Where(
                 j =>
-                    new[] { int.Parse(jobId1), int.Parse(jobId2), int.Parse(jobId3) }.Contains(j.Id)
+                    new[] { long.Parse(jobId1), long.Parse(jobId2), long.Parse(jobId3) }.Contains(
+                        j.Id
+                    )
             )
             .ToListAsync();
 

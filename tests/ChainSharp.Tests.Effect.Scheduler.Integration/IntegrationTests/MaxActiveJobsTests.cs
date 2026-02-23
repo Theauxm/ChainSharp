@@ -801,7 +801,7 @@ public class MaxActiveJobsTests
 
         // Create queued entries
         var entryCount = 8;
-        var entryIds = new List<int>();
+        var entryIds = new List<long>();
         for (var i = 0; i < entryCount; i++)
         {
             var queuedGroup = await TestSetup.CreateAndSaveManifestGroup(

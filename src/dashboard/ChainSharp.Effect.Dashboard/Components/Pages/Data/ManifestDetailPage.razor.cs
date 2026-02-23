@@ -25,7 +25,7 @@ public partial class ManifestDetailPage
     private NotificationService NotificationService { get; set; } = default!;
 
     [Parameter]
-    public int ManifestId { get; set; }
+    public long ManifestId { get; set; }
 
     protected override object? GetRouteKey() => ManifestId;
 

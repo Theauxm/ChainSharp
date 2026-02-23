@@ -28,14 +28,14 @@ internal class DormantDependentContext(
     ILogger<DormantDependentContext> logger
 ) : IDormantDependentContext
 {
-    private int? _parentManifestId;
+    private long? _parentManifestId;
 
     /// <summary>
     /// Binds this context to the currently executing parent manifest.
     /// Called by <c>ExecuteScheduledWorkflowStep</c> before the user's workflow runs.
     /// </summary>
     /// <param name="parentManifestId">The database ID of the parent manifest.</param>
-    internal void Initialize(int parentManifestId)
+    internal void Initialize(long parentManifestId)
     {
         _parentManifestId = parentManifestId;
     }

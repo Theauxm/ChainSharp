@@ -30,7 +30,7 @@ public partial class ManifestGroupDetailPage
     private IManifestScheduler ManifestScheduler { get; set; } = default!;
 
     [Parameter]
-    public int ManifestGroupId { get; set; }
+    public long ManifestGroupId { get; set; }
 
     protected override object? GetRouteKey() => ManifestGroupId;
 
@@ -219,7 +219,7 @@ public partial class ManifestGroupDetailPage
             .Join(
                 context.Manifests.AsNoTracking(),
                 dependent => dependent.DependsOnManifestId,
-                parent => (int?)parent.Id,
+                parent => (long?)parent.Id,
                 (dependent, parent) => parent.ManifestGroupId
             )
             .Where(parentGroupId => parentGroupId != ManifestGroupId)
@@ -277,7 +277,7 @@ public partial class ManifestGroupDetailPage
             .Join(
                 context.Manifests.AsNoTracking(),
                 dependent => dependent.DependsOnManifestId,
-                parent => (int?)parent.Id,
+                parent => (long?)parent.Id,
                 (dependent, parent) =>
                     new
                     {
@@ -399,7 +399,7 @@ public partial class ManifestGroupDetailPage
         }
     }
 
-    private void OnDagNodeClick(int groupId)
+    private void OnDagNodeClick(long groupId)
     {
         Navigation.NavigateTo($"chainsharp/data/manifest-groups/{groupId}");
     }

@@ -53,7 +53,7 @@ public class CreateManifest
     /// The ID of the parent manifest this manifest depends on.
     /// Used with <see cref="ScheduleType.Dependent"/>.
     /// </summary>
-    public int? DependsOnManifestId { get; set; }
+    public long? DependsOnManifestId { get; set; }
 
     /// <summary>
     /// Default dispatch priority for work queue entries. Range: 0-31. Defaults to 0.

@@ -349,7 +349,7 @@ public class ManifestScheduler(
     }
 
     /// <inheritdoc />
-    public async Task<int> TriggerGroupAsync(int groupId, CancellationToken ct = default)
+    public async Task<int> TriggerGroupAsync(long groupId, CancellationToken ct = default)
     {
         await using var context = CreateContext();
 

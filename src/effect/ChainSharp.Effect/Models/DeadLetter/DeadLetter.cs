@@ -25,7 +25,7 @@ public class DeadLetter : IModel
     /// Gets the unique identifier for this dead letter record.
     /// </summary>
     [Column("id")]
-    public int Id { get; private set; }
+    public long Id { get; private set; }
 
     /// <summary>
     /// Gets the time when this job was moved to the dead letter queue.
@@ -71,7 +71,7 @@ public class DeadLetter : IModel
     /// Gets the ID of the associated Manifest (job definition).
     /// </summary>
     [Column("manifest_id")]
-    public int ManifestId { get; private set; }
+    public long ManifestId { get; private set; }
 
     /// <summary>
     /// Gets the associated Manifest containing the job definition.
@@ -82,7 +82,7 @@ public class DeadLetter : IModel
     /// Gets or sets the ID of the retry Metadata record, if this dead letter was retried.
     /// </summary>
     [Column("retry_metadata_id")]
-    public int? RetryMetadataId { get; set; }
+    public long? RetryMetadataId { get; set; }
 
     /// <summary>
     /// Gets the Metadata record for the retry execution, if applicable.
@@ -132,7 +132,7 @@ public class DeadLetter : IModel
     /// Marks this dead letter as retried.
     /// </summary>
     /// <param name="retryMetadataId">The ID of the new Metadata record for the retry</param>
-    public void MarkRetried(int retryMetadataId)
+    public void MarkRetried(long retryMetadataId)
     {
         Status = DeadLetterStatus.Retried;
         ResolvedAt = DateTime.UtcNow;

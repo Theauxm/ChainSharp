@@ -144,7 +144,7 @@ internal class DetermineJobsToQueueStep(ILogger<DetermineJobsToQueueStep> logger
     /// </summary>
     private bool ShouldSkipManifest(
         ManifestDispatchView view,
-        HashSet<int> newlyDeadLetteredManifestIds
+        HashSet<long> newlyDeadLetteredManifestIds
     )
     {
         if (newlyDeadLetteredManifestIds.Contains(view.Manifest.Id))

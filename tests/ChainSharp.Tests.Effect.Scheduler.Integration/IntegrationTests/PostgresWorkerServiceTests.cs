@@ -385,7 +385,7 @@ public class PostgresWorkerServiceTests : TestSetup
     public async Task MultipleWorkers_ProcessMultipleJobs_NoDuplicates()
     {
         // Arrange - Create several jobs
-        var metadataIds = new List<int>();
+        var metadataIds = new List<long>();
         for (var i = 0; i < 5; i++)
         {
             var metadata = await CreateMetadataForTestWorkflow();

@@ -19,7 +19,7 @@ public static class DataContextExtensions
     /// Ensures a ManifestGroup exists with the given name, creating one if necessary.
     /// </summary>
     /// <returns>The ManifestGroup ID.</returns>
-    public static async Task<int> EnsureManifestGroupAsync(
+    public static async Task<long> EnsureManifestGroupAsync(
         this IDataContext context,
         string groupName,
         int priority,
@@ -135,7 +135,7 @@ public static class DataContextExtensions
         this IDataContext context,
         string externalId,
         TInput input,
-        int dependsOnManifestId,
+        long dependsOnManifestId,
         ManifestOptions options,
         string groupId,
         int groupPriority,

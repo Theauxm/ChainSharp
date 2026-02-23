@@ -8,6 +8,6 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.JobDispatcher.Step
 internal record DispatchContext(
     List<WorkQueue> Entries,
     int ActiveMetadataCount,
-    Dictionary<int, int> GroupActiveCounts,
-    Dictionary<int, int> GroupLimits
+    Dictionary<long, int> GroupActiveCounts,
+    Dictionary<long, int> GroupLimits
 );

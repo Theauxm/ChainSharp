@@ -8,7 +8,7 @@ public class CreateMetadata
 
     public required dynamic? Input { get; set; }
 
-    public int? ParentId { get; set; }
+    public long? ParentId { get; set; }
 
-    public int? ManifestId { get; set; }
+    public long? ManifestId { get; set; }
 }

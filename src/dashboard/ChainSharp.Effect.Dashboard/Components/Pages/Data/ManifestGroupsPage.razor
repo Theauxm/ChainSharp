@@ -108,7 +108,7 @@
             .Join(
                 context.Manifests.AsNoTracking(),
                 dependent => dependent.DependsOnManifestId,
-                parent => (int?)parent.Id,
+                parent => (long?)parent.Id,
                 (dependent, parent) => new
                 {
                     ParentGroupId = parent.ManifestGroupId,
@@ -130,7 +130,7 @@
         _dagLayout = DagLayoutEngine.ComputeLayout(dagNodes, dagEdges);
     }
 
-    private void OnDagNodeClick(int groupId)
+    private void OnDagNodeClick(long groupId)
     {
         Navigation.NavigateTo($"chainsharp/data/manifest-groups/{groupId}");
     }

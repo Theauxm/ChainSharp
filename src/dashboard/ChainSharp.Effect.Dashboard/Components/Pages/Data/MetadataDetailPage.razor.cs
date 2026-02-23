@@ -28,7 +28,7 @@ public partial class MetadataDetailPage
     private NotificationService NotificationService { get; set; } = default!;
 
     [Parameter]
-    public int MetadataId { get; set; }
+    public long MetadataId { get; set; }
 
     private Metadata? _metadata;
     private List<Log> _logs = [];

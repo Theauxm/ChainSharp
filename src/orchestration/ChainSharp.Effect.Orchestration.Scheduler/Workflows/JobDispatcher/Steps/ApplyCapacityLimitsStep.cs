@@ -20,7 +20,7 @@ internal class ApplyCapacityLimitsStep(
     public override Task<List<WorkQueue>> Run(DispatchContext context)
     {
         var toDispatch = new List<WorkQueue>();
-        var groupDispatchCounts = new Dictionary<int, int>();
+        var groupDispatchCounts = new Dictionary<long, int>();
         var globalDispatched = 0;
 
         foreach (var entry in context.Entries) // already sorted by group priority

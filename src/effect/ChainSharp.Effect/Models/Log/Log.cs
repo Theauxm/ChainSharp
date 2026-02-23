@@ -13,12 +13,12 @@ public class Log : ILog
 
     [Column("id")]
     [JsonPropertyName("id")]
-    public int Id { get; private set; }
+    public long Id { get; private set; }
 
     [Column("metadata_id")]
     [JsonPropertyName("metadata_id")]
     [JsonInclude]
-    public int MetadataId { get; private set; }
+    public long MetadataId { get; private set; }
 
     [Column("event_id")]
     [JsonPropertyName("event_id")]

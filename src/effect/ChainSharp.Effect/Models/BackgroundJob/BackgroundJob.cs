@@ -22,13 +22,13 @@ public class BackgroundJob : IModel
     #region Columns
 
     [Column("id")]
-    public int Id { get; private set; }
+    public long Id { get; private set; }
 
     /// <summary>
     /// The ID of the Metadata record representing this job execution.
     /// </summary>
     [Column("metadata_id")]
-    public int MetadataId { get; set; }
+    public long MetadataId { get; set; }
 
     /// <summary>
     /// Serialized workflow input (JSON), for ad-hoc executions where input is provided directly.

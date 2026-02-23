@@ -12,7 +12,7 @@ public class StepMetadata : IModel
     #region Columns
 
     [Column("id")]
-    public int Id { get; private set; }
+    public long Id { get; private set; }
 
     [Column("workflow_name")]
     public string WorkflowName { get; private set; }

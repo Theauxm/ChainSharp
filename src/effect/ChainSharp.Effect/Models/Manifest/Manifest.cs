@@ -29,7 +29,7 @@ public class Manifest : IModel
     #region Columns
 
     [Column("id")]
-    public int Id { get; }
+    public long Id { get; }
 
     [Column("external_id")]
     public string ExternalId { get; set; }
@@ -129,7 +129,7 @@ public class Manifest : IModel
     /// controls (MaxActiveJobs, Priority, IsEnabled) and dashboard grouping.
     /// </remarks>
     [Column("manifest_group_id")]
-    public int ManifestGroupId { get; set; }
+    public long ManifestGroupId { get; set; }
 
     /// <summary>
     /// Gets or sets the ID of the parent manifest that this manifest depends on.
@@ -140,7 +140,7 @@ public class Manifest : IModel
     /// <see cref="Enums.ScheduleType.Dependent"/> when this property is used.
     /// </remarks>
     [Column("depends_on_manifest_id")]
-    public int? DependsOnManifestId { get; set; }
+    public long? DependsOnManifestId { get; set; }
 
     /// <summary>
     /// Gets or sets the default dispatch priority for work queue entries created from this manifest.

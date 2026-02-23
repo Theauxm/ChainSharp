@@ -1,3 +1,10 @@
+# [5.18.0](https://github.com/Theauxm/ChainSharp/compare/v5.17.0...v5.18.0) (2026-02-23)
+
+
+### Features
+
+* Internal hangfire ([#170](https://github.com/Theauxm/ChainSharp/issues/170)) ([1ba44d8](https://github.com/Theauxm/ChainSharp/commit/1ba44d83b234a3fb4f6a545abaf6a587637dcfcf))
+
 # [5.17.0](https://github.com/Theauxm/ChainSharp/compare/v5.16.1...v5.17.0) (2026-02-20)
 
 

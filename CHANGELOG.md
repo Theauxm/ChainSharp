@@ -1,3 +1,10 @@
+# [5.19.0](https://github.com/Theauxm/ChainSharp/compare/v5.18.0...v5.19.0) (2026-02-23)
+
+
+### Features
+
+* int -> long for primary keys on backing database ([#171](https://github.com/Theauxm/ChainSharp/issues/171)) ([7c40041](https://github.com/Theauxm/ChainSharp/commit/7c4004190a78284942fee8846ac7b7e630c3d497))
+
 # [5.18.0](https://github.com/Theauxm/ChainSharp/compare/v5.17.0...v5.18.0) (2026-02-23)
 
 

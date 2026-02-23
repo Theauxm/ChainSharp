@@ -7,16 +7,15 @@ nav_order: 1
 
 # Setup & Creating Scheduled Workflows
 
-## Quick Setup with Hangfire
+## Quick Setup
 
 ### Installation
 
 ```bash
 dotnet add package Theauxm.ChainSharp.Effect.Orchestration.Scheduler
-dotnet add package Theauxm.ChainSharp.Effect.Orchestration.Scheduler.Hangfire
 ```
 
-The Hangfire integration requires `Hangfire.Core >= 1.8` and `Hangfire.PostgreSql >= 1.20`. If your project already references an older Hangfire version, you'll need to update it or NuGet restore will fail with `NU1107`.
+The scheduler includes a built-in PostgreSQL task server — no additional packages needed.
 
 ### Configuration
 
@@ -40,7 +39,7 @@ builder.Services.AddChainSharpEffects(options => options
         .PollingInterval(TimeSpan.FromSeconds(5))
         .MaxActiveJobs(100)
         .DefaultMaxRetries(3)
-        .UseHangfire(connectionString)
+        .UsePostgresTaskServer()
 
         // Schedule jobs directly in configuration
         .Schedule<IHelloWorldWorkflow, HelloWorldInput>(
@@ -57,17 +56,34 @@ builder.Services.AddChainSharpEffects(options => options
 );
 
 var app = builder.Build();
-
-app.UseHangfireDashboard("/hangfire");
-
 app.Run();
 ```
 
-*API Reference: [AddScheduler]({{ site.baseurl }}{% link api-reference/scheduler-api/add-scheduler.md %}), [UseHangfire]({{ site.baseurl }}{% link api-reference/scheduler-api/use-hangfire.md %}), [Schedule]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %})*
+*API Reference: [AddScheduler]({{ site.baseurl }}{% link api-reference/scheduler-api/add-scheduler.md %}), [UsePostgresTaskServer]({{ site.baseurl }}{% link api-reference/scheduler-api/use-postgres-task-server.md %}), [Schedule]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %})*
 
-`AddScheduler` registers three hosted services — `SchedulerStartupService` (seeds manifests and recovers stuck jobs on startup), `ManifestManagerPollingService` (evaluates manifests on a timer), and `JobDispatcherPollingService` (dispatches work queue entries on a timer). No extra startup call needed. Hangfire is configured internally; you only need to provide the connection string. Hangfire's automatic retries are disabled since the scheduler manages retries through the manifest system.
+`AddScheduler` registers three hosted services — `SchedulerStartupService` (seeds manifests and recovers stuck jobs on startup), `ManifestManagerPollingService` (evaluates manifests on a timer), and `JobDispatcherPollingService` (dispatches work queue entries on a timer). No extra startup call needed.
 
-> **`TaskServerExecutorWorkflow.Assembly` is required.** The `WorkflowBus` discovers workflows by scanning assemblies. `TaskServerExecutorWorkflow` is the internal workflow that Hangfire invokes when a job fires—if its assembly isn't registered, scheduled jobs will silently fail to execute with no error message. Always include it alongside your own assemblies.
+`UsePostgresTaskServer()` starts a background worker service that polls the `chain_sharp.background_job` table for queued jobs using PostgreSQL's `FOR UPDATE SKIP LOCKED` for atomic, lock-free dequeue. No extra connection string needed — it reuses the `IDataContext` from `AddPostgresEffect()`. See [Task Server]({{ site.baseurl }}{% link scheduler/task-server.md %}) for architecture details.
+
+> **`TaskServerExecutorWorkflow.Assembly` is required.** The `WorkflowBus` discovers workflows by scanning assemblies. `TaskServerExecutorWorkflow` is the internal workflow that the task server invokes when a job fires—if its assembly isn't registered, scheduled jobs will silently fail to execute with no error message. Always include it alongside your own assemblies.
+
+### Task Server Options
+
+You can customize the task server's worker count, polling interval, and timeouts:
+
+```csharp
+.UsePostgresTaskServer(options =>
+{
+    options.WorkerCount = 4;                                // default: processor count
+    options.PollingInterval = TimeSpan.FromSeconds(2);      // default: 1 second
+    options.VisibilityTimeout = TimeSpan.FromMinutes(15);   // default: 30 minutes
+    options.ShutdownTimeout = TimeSpan.FromMinutes(1);      // default: 30 seconds
+})
+```
+
+See [UsePostgresTaskServer]({{ site.baseurl }}{% link api-reference/scheduler-api/use-postgres-task-server.md %}) for full parameter documentation.
+
+> **Migrating from Hangfire?** See the [migration guide]({{ site.baseurl }}{% link scheduler/task-server.md %}#migrating-from-hangfire).
 
 ## Creating Scheduled Workflows
 
@@ -113,7 +129,7 @@ public class SyncCustomersWorkflow : EffectWorkflow<SyncCustomersInput, Unit>, I
 
 ```csharp
 .AddScheduler(scheduler => scheduler
-    .UseHangfire(connectionString)
+    .UsePostgresTaskServer()
     .Schedule<ISyncCustomersWorkflow, SyncCustomersInput>(
         "sync-customers-us-east",
         new SyncCustomersInput { Region = "us-east", BatchSize = 500 },
@@ -149,12 +165,6 @@ The `Schedule` type defines when a job runs. Two static factory classes create `
 
 *API Reference: [Scheduling Helpers]({{ site.baseurl }}{% link api-reference/scheduler-api/scheduling-helpers.md %}) — all method signatures, cron expression format, and `ManifestOptions`.*
 
-> **Namespace conflict with Hangfire.** Both ChainSharp and Hangfire export a `Cron` class. Use a namespace alias to disambiguate:
->
-> ```csharp
-> using Cron = ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling.Cron;
-> ```
-
 ## Namespace Reference
 
 The scheduler spans multiple packages. This table lists every public type you're likely to use during integration:
@@ -163,6 +173,7 @@ The scheduler spans multiple packages. This table lists every public type you're
 |------|-----------|---------|
 | `IManifestProperties` | `ChainSharp.Effect.Models.Manifest` | `Theauxm.ChainSharp.Effect` |
 | `TaskServerExecutorWorkflow` | `ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor` | `Theauxm.ChainSharp.Effect.Orchestration.Scheduler` |
+| `PostgresTaskServerOptions` | `ChainSharp.Effect.Orchestration.Scheduler.Configuration` | `Theauxm.ChainSharp.Effect.Orchestration.Scheduler` |
 | `Cron` | `ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling` | `Theauxm.ChainSharp.Effect.Orchestration.Scheduler` |
 | `Every` | `ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling` | `Theauxm.ChainSharp.Effect.Orchestration.Scheduler` |
 | `Schedule` | `ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling` | `Theauxm.ChainSharp.Effect.Orchestration.Scheduler` |

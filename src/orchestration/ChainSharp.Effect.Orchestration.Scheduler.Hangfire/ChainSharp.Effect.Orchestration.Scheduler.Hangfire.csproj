@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Authors>Theauxm,mark-keaton</Authors>
-        <PackageDescription>Hangfire implementation for ChainSharp.Effect.Orchestration.Scheduler</PackageDescription>
+        <PackageDescription>[Deprecated] Hangfire implementation for ChainSharp.Effect.Orchestration.Scheduler. Use UsePostgresTaskServer() from ChainSharp.Effect.Orchestration.Scheduler instead.</PackageDescription>
         <RepositoryUrl>https://github.com/Theauxm/ChainSharp</RepositoryUrl>
         <AssemblyName>Theauxm.ChainSharp.Effect.Orchestration.Scheduler.Hangfire</AssemblyName>
     </PropertyGroup>

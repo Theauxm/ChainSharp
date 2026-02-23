@@ -103,6 +103,7 @@ public abstract class TestSetup
     public static async Task CleanupDatabase(IDataContext dataContext)
     {
         // Delete in FK-safe order (children before parents)
+        await dataContext.BackgroundJobs.ExecuteDeleteAsync();
         await dataContext.Logs.ExecuteDeleteAsync();
         await dataContext.WorkQueues.ExecuteDeleteAsync();
         await dataContext.DeadLetters.ExecuteDeleteAsync();

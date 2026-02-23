@@ -30,6 +30,8 @@ The scheduler runs three hosted services:
 
 The ManifestManager and JobDispatcher run independently on their own timers. They communicate through the work queue table — ManifestManager writes entries, JobDispatcher reads them. This means JobDispatcher may not see ManifestManager's freshly-queued entries until its next tick, but no work is lost. Independent intervals allow you to tune each service separately (e.g., fast manifest evaluation with slower dispatch, or vice versa).
 
+In multi-server deployments, each service uses a different concurrency strategy: the ManifestManager uses a PostgreSQL advisory lock for single-leader election, the JobDispatcher uses `FOR UPDATE SKIP LOCKED` for parallel per-entry dispatch, and the cleanup service is naturally idempotent. See [Multi-Server Concurrency](concurrency.md) for details.
+
 ## The Work Queue
 
 All job execution flows through the `work_queue` table. This is the key design decision: nothing goes directly to the background task server anymore. The ManifestManager doesn't enqueue jobs. `TriggerAsync` doesn't enqueue jobs. Dashboard re-runs don't enqueue jobs. They all write a `WorkQueue` entry with status `Queued`, and the JobDispatcher picks them up.

@@ -16,7 +16,6 @@
         <ProjectReference Include="..\..\src\orchestration\ChainSharp.Effect.Orchestration.Mediator\ChainSharp.Effect.Orchestration.Mediator.csproj" />
         <ProjectReference Include="..\..\src\providers\ChainSharp.Effect.Provider.Json\ChainSharp.Effect.Provider.Json.csproj" />
         <ProjectReference Include="..\..\src\orchestration\ChainSharp.Effect.Orchestration.Scheduler\ChainSharp.Effect.Orchestration.Scheduler.csproj" />
-        <ProjectReference Include="..\..\src\orchestration\ChainSharp.Effect.Orchestration.Scheduler.Hangfire\ChainSharp.Effect.Orchestration.Scheduler.Hangfire.csproj" />
         <ProjectReference Include="..\..\src\providers\ChainSharp.Effect.Provider.Parameter\ChainSharp.Effect.Provider.Parameter.csproj" />
         <ProjectReference Include="..\..\src\dashboard\ChainSharp.Effect.Dashboard\ChainSharp.Effect.Dashboard.csproj" />
 

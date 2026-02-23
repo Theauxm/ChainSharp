@@ -134,10 +134,11 @@ public class MaxActiveJobsTests
         }
 
         // Create queued work queue entries that should NOT be dispatched
-        var queueManifest = await CreateAndSaveManifest(inputValue: "Queued");
+        // Each entry needs its own manifest (unique partial index: one Queued per manifest)
         var queuedEntries = new List<WorkQueue>();
         for (var i = 0; i < 3; i++)
         {
+            var queueManifest = await CreateAndSaveManifest(inputValue: $"Queued_{i}");
             queuedEntries.Add(await CreateAndSaveWorkQueueEntry(queueManifest));
         }
 
@@ -244,11 +245,11 @@ public class MaxActiveJobsTests
             await CreateAndSaveMetadata(manifest, WorkflowState.InProgress);
         }
 
-        // Create queued entries
-        var queueManifest = await CreateAndSaveManifest(inputValue: "Queued");
+        // Create queued entries (each needs its own manifest — unique partial index)
         var entries = new List<WorkQueue>();
         for (var i = 0; i < 2; i++)
         {
+            var queueManifest = await CreateAndSaveManifest(inputValue: $"Queued_{i}");
             entries.Add(await CreateAndSaveWorkQueueEntry(queueManifest));
         }
 
@@ -279,10 +280,10 @@ public class MaxActiveJobsTests
             await CreateAndSaveMetadata(manifest, WorkflowState.InProgress);
         }
 
-        var queueManifest = await CreateAndSaveManifest(inputValue: "Queued");
         var entries = new List<WorkQueue>();
         for (var i = 0; i < 2; i++)
         {
+            var queueManifest = await CreateAndSaveManifest(inputValue: $"Queued_{i}");
             entries.Add(await CreateAndSaveWorkQueueEntry(queueManifest));
         }
 
@@ -416,10 +417,10 @@ public class MaxActiveJobsTests
             await CreateAndSaveMetadata(manifest, WorkflowState.Pending);
         }
 
-        var queueManifest = await CreateAndSaveManifest(inputValue: "Queued");
         var entries = new List<WorkQueue>();
         for (var i = 0; i < 3; i++)
         {
+            var queueManifest = await CreateAndSaveManifest(inputValue: $"Queued_{i}");
             entries.Add(await CreateAndSaveWorkQueueEntry(queueManifest));
         }
 

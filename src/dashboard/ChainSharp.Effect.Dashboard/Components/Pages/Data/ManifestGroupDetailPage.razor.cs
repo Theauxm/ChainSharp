@@ -7,6 +7,7 @@ using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.ManifestGroup;
 using ChainSharp.Effect.Models.Metadata;
+using ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestScheduler;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Radzen;
@@ -25,6 +26,9 @@ public partial class ManifestGroupDetailPage
     [Inject]
     private NotificationService NotificationService { get; set; } = default!;
 
+    [Inject]
+    private IManifestScheduler ManifestScheduler { get; set; } = default!;
+
     [Parameter]
     public int ManifestGroupId { get; set; }
 
@@ -32,6 +36,8 @@ public partial class ManifestGroupDetailPage
 
     private ManifestGroup? _group;
     private DagLayout? _dagLayout;
+    private bool _triggering;
+    private string? _triggerError;
 
     // ── Summary counts (efficient DB aggregates) ──
     private int _manifestCount;
@@ -364,14 +370,33 @@ public partial class ManifestGroupDetailPage
         _group.IsEnabled = _savedIsEnabled;
     }
 
-    private void OnManifestRowClick(DataGridRowMouseEventArgs<Manifest> args)
+    private async Task TriggerGroup()
     {
-        Navigation.NavigateTo($"chainsharp/data/manifests/{args.Data.Id}");
-    }
+        if (_group is null)
+            return;
 
-    private void OnMetadataRowClick(DataGridRowMouseEventArgs<Metadata> args)
-    {
-        Navigation.NavigateTo($"chainsharp/data/metadata/{args.Data.Id}");
+        _triggerError = null;
+        _triggering = true;
+
+        try
+        {
+            var count = await ManifestScheduler.TriggerGroupAsync(_group.Id);
+
+            NotificationService.Notify(
+                NotificationSeverity.Success,
+                "Group Queued",
+                $"{count} manifest(s) in \"{_group.Name}\" queued for execution.",
+                duration: 4000
+            );
+        }
+        catch (Exception ex)
+        {
+            _triggerError = ex.Message;
+        }
+        finally
+        {
+            _triggering = false;
+        }
     }
 
     private void OnDagNodeClick(int groupId)

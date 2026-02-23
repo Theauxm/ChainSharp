@@ -1,5 +1,6 @@
 using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
+using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.WorkQueue;
 using ChainSharp.Effect.Models.WorkQueue.DTOs;
@@ -345,6 +346,51 @@ public class ManifestScheduler(
             externalId,
             entry.Id
         );
+    }
+
+    /// <inheritdoc />
+    public async Task<int> TriggerGroupAsync(int groupId, CancellationToken ct = default)
+    {
+        await using var context = CreateContext();
+
+        var manifests = await context
+            .Manifests.AsNoTracking()
+            .Where(
+                m =>
+                    m.ManifestGroupId == groupId
+                    && m.IsEnabled
+                    && m.ScheduleType != ScheduleType.Dependent
+                    && m.ScheduleType != ScheduleType.DormantDependent
+            )
+            .ToListAsync(ct);
+
+        if (manifests.Count == 0)
+            return 0;
+
+        foreach (var manifest in manifests)
+        {
+            var entry = WorkQueue.Create(
+                new CreateWorkQueue
+                {
+                    WorkflowName = manifest.Name,
+                    Input = manifest.Properties,
+                    InputTypeName = manifest.PropertyTypeName,
+                    ManifestId = manifest.Id,
+                    Priority = manifest.Priority,
+                }
+            );
+            context.WorkQueues.Add(entry);
+        }
+
+        await context.SaveChanges(ct);
+
+        logger.LogInformation(
+            "Queued {Count} manifests in group {GroupId} for execution",
+            manifests.Count,
+            groupId
+        );
+
+        return manifests.Count;
     }
 
     // ── Private helpers ──────────────────────────────────────────────────

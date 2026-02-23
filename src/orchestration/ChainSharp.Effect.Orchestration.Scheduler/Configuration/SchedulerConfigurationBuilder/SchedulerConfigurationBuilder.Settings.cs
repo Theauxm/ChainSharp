@@ -171,11 +171,36 @@ public partial class SchedulerConfigurationBuilder
     }
 
     /// <summary>
+    /// Uses the built-in PostgreSQL task server for background job execution.
+    /// </summary>
+    /// <remarks>
+    /// Jobs are persisted to the <c>chain_sharp.background_job</c> table and executed by
+    /// concurrent worker tasks using PostgreSQL's <c>FOR UPDATE SKIP LOCKED</c> for atomic dequeue.
+    /// Requires <c>AddPostgresEffect(connectionString)</c> to have been called first.
+    /// </remarks>
+    /// <param name="configure">Optional configuration for worker count, polling interval, and timeouts</param>
+    /// <returns>The builder for method chaining</returns>
+    public SchedulerConfigurationBuilder UsePostgresTaskServer(
+        Action<PostgresTaskServerOptions>? configure = null
+    )
+    {
+        _taskServerRegistration = services =>
+        {
+            var options = new PostgresTaskServerOptions();
+            configure?.Invoke(options);
+            services.AddSingleton(options);
+            services.AddScoped<IBackgroundTaskServer, PostgresTaskServer>();
+            services.AddHostedService<Scheduler.Services.PostgresWorkerService.PostgresWorkerService>();
+        };
+        return this;
+    }
+
+    /// <summary>
     /// Registers a custom background task server registration action.
     /// </summary>
     /// <remarks>
     /// This is used by task server implementations (Hangfire, Quartz, etc.) to register
-    /// their services. Most users should use the specific extension methods like UseHangfire().
+    /// their services. Most users should use the specific extension methods like UsePostgresTaskServer().
     /// </remarks>
     /// <param name="registration">The action to register task server services</param>
     /// <returns>The builder for method chaining</returns>

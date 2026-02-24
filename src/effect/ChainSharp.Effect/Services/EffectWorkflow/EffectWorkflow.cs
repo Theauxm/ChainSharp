@@ -154,6 +154,9 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
                 e.Message
             );
 
+            // Trigger OnError hook for all effect providers before finishing workflow
+            await EffectRunner.OnError(Metadata, e, CancellationToken.None);
+
             await this.FinishWorkflow(e);
             await EffectRunner.SaveChanges(CancellationToken.None);
 

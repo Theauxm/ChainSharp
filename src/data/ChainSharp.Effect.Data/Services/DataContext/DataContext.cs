@@ -231,6 +231,13 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
         base.Update(model);
     }
 
+    /// <inheritdoc />
+    public Task OnError(
+        Metadata metadata,
+        Exception exception,
+        CancellationToken cancellationToken
+    ) => Task.CompletedTask;
+
     /// <summary>
     /// Resets the context, clearing all tracked entities.
     /// </summary>

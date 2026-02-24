@@ -56,4 +56,24 @@ public interface IEffectRunner : IDisposable
     /// has directly modified the model's properties.
     /// </remarks>
     Task Update(IModel model);
+
+    /// <summary>
+    /// Triggers the OnError hook on all active effect providers.
+    /// Called once per workflow failure before SaveChanges.
+    /// </summary>
+    /// <param name="metadata">The metadata for the failed workflow</param>
+    /// <param name="exception">The exception that caused the failure</param>
+    /// <param name="cancellationToken">Cancellation token for the operation</param>
+    /// <returns>A task representing the asynchronous operation</returns>
+    /// <remarks>
+    /// This method distributes the error notification to all registered providers,
+    /// allowing them to react to workflow failures without waiting for persistence.
+    /// Called immediately after a workflow throws an exception, before the workflow
+    /// metadata is finalized.
+    /// </remarks>
+    Task OnError(
+        Models.Metadata.Metadata metadata,
+        Exception exception,
+        CancellationToken cancellationToken
+    );
 }

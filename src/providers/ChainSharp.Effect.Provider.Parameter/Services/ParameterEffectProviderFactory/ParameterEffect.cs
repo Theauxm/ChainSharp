@@ -161,6 +161,13 @@ public class ParameterEffect(
         }
     }
 
+    /// <inheritdoc />
+    public Task OnError(
+        Metadata metadata,
+        Exception exception,
+        CancellationToken cancellationToken
+    ) => Task.CompletedTask;
+
     public void Dispose()
     {
         lock (_lock)

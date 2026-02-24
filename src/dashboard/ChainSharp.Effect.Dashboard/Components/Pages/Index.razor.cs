@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using ChainSharp.Effect.Dashboard.Components.Shared;
 using ChainSharp.Effect.Dashboard.Models;
 using ChainSharp.Effect.Dashboard.Services.WorkflowDiscovery;
@@ -41,9 +42,24 @@ public partial class Index
     private List<Metadata> _recentFailures = [];
     private List<Manifest> _activeManifestList = [];
 
+    // Server health
+    private double _cpuPercent;
+    private double _memoryWorkingSetMb;
+    private double _gcHeapMb;
+    private int _threadCount;
+    private TimeSpan _uptime;
+    private int _gcGen0;
+    private int _gcGen1;
+    private int _gcGen2;
+    private TimeSpan _prevCpuTime;
+    private DateTime _prevSampleTime = DateTime.UtcNow;
+
     protected override async Task LoadDataAsync(CancellationToken cancellationToken)
     {
         await DashboardSettings.InitializeAsync();
+
+        // Server health metrics
+        CollectServerHealthMetrics();
 
         using var context = await DataContextFactory.CreateDbContextAsync(cancellationToken);
         var now = DateTime.UtcNow;
@@ -249,5 +265,38 @@ public partial class Index
             .OrderBy(m => m.Name)
             .Take(20)
             .ToListAsync(cancellationToken);
+    }
+
+    private void CollectServerHealthMetrics()
+    {
+        using var process = Process.GetCurrentProcess();
+        var now = DateTime.UtcNow;
+
+        // CPU % — delta between samples, normalized by processor count
+        var currentCpuTime = process.TotalProcessorTime;
+        var elapsed = (now - _prevSampleTime).TotalMilliseconds;
+
+        if (elapsed > 0 && _prevCpuTime != TimeSpan.Zero)
+        {
+            var cpuDelta = (currentCpuTime - _prevCpuTime).TotalMilliseconds;
+            _cpuPercent = Math.Round(cpuDelta / elapsed / Environment.ProcessorCount * 100, 1);
+            _cpuPercent = Math.Clamp(_cpuPercent, 0, 100);
+        }
+
+        _prevCpuTime = currentCpuTime;
+        _prevSampleTime = now;
+
+        // Memory
+        _memoryWorkingSetMb = Math.Round(process.WorkingSet64 / 1024.0 / 1024.0, 1);
+        _gcHeapMb = Math.Round(GC.GetTotalMemory(false) / 1024.0 / 1024.0, 1);
+
+        // Threads & uptime
+        _threadCount = process.Threads.Count;
+        _uptime = now - process.StartTime.ToUniversalTime();
+
+        // GC collections
+        _gcGen0 = GC.CollectionCount(0);
+        _gcGen1 = GC.CollectionCount(1);
+        _gcGen2 = GC.CollectionCount(2);
     }
 }

@@ -15,4 +15,5 @@ public static class StorageKeys
     public const string ShowAvgDuration = "chainsharp-show-avg-duration";
     public const string ShowRecentFailures = "chainsharp-show-recent-failures";
     public const string ShowActiveManifests = "chainsharp-show-active-manifests";
+    public const string ShowServerHealth = "chainsharp-show-server-health";
 }

@@ -82,6 +82,15 @@ public static class DashboardFormatters
             _ => BadgeStyle.Light,
         };
 
+    public static string FormatUptime(TimeSpan uptime)
+    {
+        if (uptime.TotalDays >= 1)
+            return $"{(int)uptime.TotalDays}d {uptime.Hours}h";
+        if (uptime.TotalHours >= 1)
+            return $"{(int)uptime.TotalHours}h {uptime.Minutes}m";
+        return $"{(int)uptime.TotalMinutes}m {uptime.Seconds}s";
+    }
+
     public static BadgeStyle GetLogLevelBadgeStyle(LogLevel level) =>
         level switch
         {

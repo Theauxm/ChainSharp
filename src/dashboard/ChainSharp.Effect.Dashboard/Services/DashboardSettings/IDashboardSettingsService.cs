@@ -19,5 +19,6 @@ public interface IDashboardSettingsService
     bool ShowAvgDuration { get; }
     bool ShowRecentFailures { get; }
     bool ShowActiveManifests { get; }
+    bool ShowServerHealth { get; }
     Task SetComponentVisibilityAsync(string key, bool visible);
 }

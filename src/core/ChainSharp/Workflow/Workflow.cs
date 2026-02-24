@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using ChainSharp.Extensions;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
@@ -39,6 +40,7 @@ public abstract partial class Workflow<TInput, TReturn> : IWorkflow<TInput, TRet
     /// The CancellationToken for this workflow execution. Steps can access this
     /// via their own CancellationToken property which is set before Run is called.
     /// </summary>
+    [JsonIgnore]
     public CancellationToken CancellationToken { get; protected internal set; }
 
     /// <summary>

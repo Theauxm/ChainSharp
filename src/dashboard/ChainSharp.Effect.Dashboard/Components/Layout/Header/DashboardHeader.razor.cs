@@ -34,6 +34,7 @@ public partial class DashboardHeader : IAsyncDisposable
     private CancellationTokenSource? _cts;
     private int _secondsRemaining;
     private double _progressPercent;
+    private string _utcTime = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -63,7 +64,11 @@ public partial class DashboardHeader : IAsyncDisposable
 
     private void UpdateProgress()
     {
-        var elapsed = DateTime.UtcNow - DashboardSettings.LastPollTime;
+        var now = DateTime.UtcNow;
+
+        _utcTime = now.ToString("yyyy-MM-dd HH:mm:ss");
+
+        var elapsed = now - DashboardSettings.LastPollTime;
         var interval = DashboardSettings.PollingInterval;
 
         var ratio = interval.TotalSeconds > 0 ? elapsed.TotalSeconds / interval.TotalSeconds : 1.0;

@@ -11,7 +11,18 @@ nav_order: 3
 
 When a job exceeds `MaxRetries`, it enters the dead letter queue with status `AwaitingIntervention`. The ManifestManager will skip these manifests until they're resolved.
 
-To resolve a dead letter:
+To resolve a dead letter, use either the **Dashboard UI** or code:
+
+### Via Dashboard
+
+Navigate to **Data > Dead Letters** and click the visibility icon on any row. The dead letter detail page shows full context — the dead letter reason, manifest configuration, the most recent failure's stack trace, and a history of all failed runs.
+
+Two actions are available while the dead letter is in `AwaitingIntervention` status:
+
+- **Re-queue** — Creates a new WorkQueue entry from the manifest's properties and marks the dead letter as `Retried`
+- **Acknowledge** — Prompts for a resolution note and marks the dead letter as `Acknowledged`
+
+### Via Code
 
 ```csharp
 // Option 1: Retry (creates a new execution)
@@ -29,6 +40,8 @@ await context.SaveChanges(ct);
 ```
 
 ## Monitoring
+
+The **ChainSharp Dashboard** at `/chainsharp/data/dead-letters` provides a real-time view of all dead letters with status badges and links to detail pages. The dead letter detail page surfaces the full failure context — stack traces, inputs, and execution history — so operators can make informed retry/acknowledge decisions without writing queries.
 
 The Hangfire Dashboard at `/hangfire` shows enqueued TaskServerExecutor jobs, failures, and worker health. The ManifestManager polling itself runs as a .NET `BackgroundService` outside of Hangfire, so it won't appear in the dashboard. Configure authorization for production.
 

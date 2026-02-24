@@ -73,6 +73,15 @@ public static class DashboardFormatters
             _ => BadgeStyle.Light,
         };
 
+    public static BadgeStyle GetDeadLetterStatusBadgeStyle(DeadLetterStatus status) =>
+        status switch
+        {
+            DeadLetterStatus.AwaitingIntervention => BadgeStyle.Warning,
+            DeadLetterStatus.Retried => BadgeStyle.Info,
+            DeadLetterStatus.Acknowledged => BadgeStyle.Success,
+            _ => BadgeStyle.Light,
+        };
+
     public static BadgeStyle GetLogLevelBadgeStyle(LogLevel level) =>
         level switch
         {

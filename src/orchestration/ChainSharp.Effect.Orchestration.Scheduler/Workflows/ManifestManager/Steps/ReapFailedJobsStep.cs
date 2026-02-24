@@ -71,7 +71,7 @@ internal class ReapFailedJobsStep(IDataContext dataContext, ILogger<ReapFailedJo
         }
 
         // Persist all changes immediately to ensure dead letters survive workflow failure
-        await dataContext.SaveChanges(CancellationToken.None);
+        await dataContext.SaveChanges(CancellationToken);
 
         logger.LogInformation(
             "ReapFailedJobsStep completed: {DeadLettersCreated} dead letters created",

@@ -52,12 +52,12 @@ internal class DeleteExpiredMetadataStep(
             .WorkQueues.Where(
                 wq => wq.MetadataId.HasValue && metadataIdsToDelete.Contains(wq.MetadataId.Value)
             )
-            .ExecuteDeleteAsync();
+            .ExecuteDeleteAsync(CancellationToken);
 
         // Delete associated logs to avoid FK constraint violations
         var logsDeleted = await dataContext
             .Logs.Where(l => metadataIdsToDelete.Contains(l.MetadataId))
-            .ExecuteDeleteAsync();
+            .ExecuteDeleteAsync(CancellationToken);
 
         // Delete the metadata rows
         var metadataDeleted = await dataContext
@@ -68,7 +68,7 @@ internal class DeleteExpiredMetadataStep(
                     m.WorkflowState == WorkflowState.Completed
                     || m.WorkflowState == WorkflowState.Failed
             )
-            .ExecuteDeleteAsync();
+            .ExecuteDeleteAsync(CancellationToken);
 
         if (metadataDeleted > 0)
         {

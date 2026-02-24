@@ -51,7 +51,7 @@ internal class LoadDispatchCapacityStep(
             )
             .GroupBy(x => x.GroupId)
             .Select(g => new { GroupId = g.Key, Count = g.Count() })
-            .ToListAsync();
+            .ToListAsync(CancellationToken);
 
         var activeMetadataCount = activeCounts.Sum(x => x.Count);
 
@@ -73,7 +73,7 @@ internal class LoadDispatchCapacityStep(
         // Load per-group limits (only groups that have a limit set)
         var groupLimits = await dataContext
             .ManifestGroups.Where(g => g.MaxActiveJobs != null)
-            .ToDictionaryAsync(g => g.Id, g => g.MaxActiveJobs!.Value);
+            .ToDictionaryAsync(g => g.Id, g => g.MaxActiveJobs!.Value, CancellationToken);
 
         return new DispatchContext(entries, activeMetadataCount, groupActiveCounts, groupLimits);
     }

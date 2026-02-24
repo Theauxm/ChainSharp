@@ -31,7 +31,7 @@ internal class ExecuteScheduledWorkflowStep(
             metadata.Id
         );
 
-        await workflowBus.RunAsync(resolvedInput.Value, metadata);
+        await workflowBus.RunAsync(resolvedInput.Value, CancellationToken, metadata);
 
         logger.LogDebug(
             "Successfully executed workflow {WorkflowName} for Metadata {MetadataId}",

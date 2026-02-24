@@ -37,17 +37,17 @@ internal class MetadataCleanupPollingService(
         using var timer = new PeriodicTimer(cleanupConfig.CleanupInterval);
 
         // Run immediately on startup before waiting for the first tick
-        await RunCleanup();
+        await RunCleanup(stoppingToken);
 
         while (await timer.WaitForNextTickAsync(stoppingToken))
         {
-            await RunCleanup();
+            await RunCleanup(stoppingToken);
         }
 
         logger.LogInformation("MetadataCleanupPollingService stopping");
     }
 
-    private async Task RunCleanup()
+    private async Task RunCleanup(CancellationToken cancellationToken)
     {
         try
         {
@@ -55,7 +55,7 @@ internal class MetadataCleanupPollingService(
             var workflow = scope.ServiceProvider.GetRequiredService<IMetadataCleanupWorkflow>();
 
             logger.LogDebug("Metadata cleanup cycle starting");
-            await workflow.Run(new MetadataCleanupRequest());
+            await workflow.Run(new MetadataCleanupRequest(), cancellationToken);
             logger.LogDebug("Metadata cleanup cycle completed");
         }
         catch (Exception ex)

@@ -107,11 +107,9 @@ public partial class MetadataDetailPage
                 }
             );
 
-            using var dataContext = await DataContextFactory.CreateDbContextAsync(
-                CancellationToken.None
-            );
+            using var dataContext = await DataContextFactory.CreateDbContextAsync(DisposalToken);
             await dataContext.Track(entry);
-            await dataContext.SaveChanges(CancellationToken.None);
+            await dataContext.SaveChanges(DisposalToken);
 
             NotificationService.Notify(
                 NotificationSeverity.Success,

@@ -19,4 +19,13 @@ public interface IWorkflow<in TInput, TReturn>
     /// For error handling with the Railway pattern, use the RunEither method in the implementation.
     /// </remarks>
     public Task<TReturn> Run(TInput input);
+
+    /// <summary>
+    /// Executes the workflow with the provided input and cancellation support.
+    /// Default implementation delegates to Run(input) for backward compatibility.
+    /// </summary>
+    /// <param name="input">The input data for the workflow</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests</param>
+    /// <returns>The result produced by the workflow</returns>
+    public Task<TReturn> Run(TInput input, CancellationToken cancellationToken) => Run(input);
 }

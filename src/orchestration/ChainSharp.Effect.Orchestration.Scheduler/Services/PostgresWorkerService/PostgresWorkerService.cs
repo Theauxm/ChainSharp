@@ -92,7 +92,7 @@ internal class PostgresWorkerService(
 
             var visibilitySeconds = (int)options.VisibilityTimeout.TotalSeconds;
 
-            using var transaction = await dataContext.BeginTransaction();
+            using var transaction = await dataContext.BeginTransaction(stoppingToken);
 
             var job = await dataContext
                 .BackgroundJobs.FromSqlRaw(
@@ -156,12 +156,16 @@ internal class PostgresWorkerService(
                     ? new ExecuteManifestRequest(metadataId, deserializedInput)
                     : new ExecuteManifestRequest(metadataId);
 
-            // Use shutdown timeout for in-flight jobs
-            using var shutdownCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
-            if (stoppingToken.IsCancellationRequested)
-                shutdownCts.CancelAfter(options.ShutdownTimeout);
+            // Use shutdown timeout for in-flight jobs: when the host requests shutdown,
+            // give the workflow a grace period before forcefully cancelling.
+            // Use an unlinked CTS so we don't cancel immediately — the registration
+            // triggers CancelAfter(ShutdownTimeout) to provide a grace period.
+            using var shutdownCts = new CancellationTokenSource();
+            await using var shutdownRegistration = stoppingToken.Register(
+                () => shutdownCts.CancelAfter(options.ShutdownTimeout)
+            );
 
-            await workflow.Run(request);
+            await workflow.Run(request, shutdownCts.Token);
 
             logger.LogDebug(
                 "Worker {WorkerId} completed job {JobId} (Metadata: {MetadataId})",
@@ -187,11 +191,11 @@ internal class PostgresWorkerService(
             using var cleanupScope = serviceProvider.CreateScope();
             var cleanupContext = cleanupScope.ServiceProvider.GetRequiredService<IDataContext>();
 
-            var entity = await cleanupContext.BackgroundJobs.FindAsync(jobId);
+            var entity = await cleanupContext.BackgroundJobs.FindAsync(jobId, stoppingToken);
             if (entity != null)
             {
                 cleanupContext.BackgroundJobs.Remove(entity);
-                await cleanupContext.SaveChanges(CancellationToken.None);
+                await cleanupContext.SaveChanges(stoppingToken);
             }
         }
         catch (Exception ex)

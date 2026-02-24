@@ -33,17 +33,17 @@ internal class ManifestManagerPollingService(
 
         using var timer = new PeriodicTimer(configuration.ManifestManagerPollingInterval);
 
-        await RunManifestManager();
+        await RunManifestManager(stoppingToken);
 
         while (await timer.WaitForNextTickAsync(stoppingToken))
         {
-            await RunManifestManager();
+            await RunManifestManager(stoppingToken);
         }
 
         logger.LogInformation("ManifestManagerPollingService stopping");
     }
 
-    private async Task RunManifestManager()
+    private async Task RunManifestManager(CancellationToken cancellationToken)
     {
         if (!configuration.ManifestManagerEnabled)
         {
@@ -60,13 +60,13 @@ internal class ManifestManagerPollingService(
             // Prevents duplicate WorkQueue entries when multiple servers poll simultaneously.
             if (dataContext is DbContext dbContext)
             {
-                using var transaction = await dataContext.BeginTransaction();
+                using var transaction = await dataContext.BeginTransaction(cancellationToken);
 
                 var acquired = await dbContext
                     .Database.SqlQuery<bool>(
                         $"""SELECT pg_try_advisory_xact_lock(hashtext('chainsharp_manifest_manager')) AS "Value" """
                     )
-                    .FirstAsync();
+                    .FirstAsync(cancellationToken);
 
                 if (!acquired)
                 {
@@ -79,7 +79,7 @@ internal class ManifestManagerPollingService(
                 var workflow = scope.ServiceProvider.GetRequiredService<IManifestManagerWorkflow>();
 
                 logger.LogDebug("ManifestManager polling cycle starting");
-                await workflow.Run(Unit.Default);
+                await workflow.Run(Unit.Default, cancellationToken);
                 logger.LogDebug("ManifestManager polling cycle completed");
 
                 await dataContext.CommitTransaction();
@@ -90,7 +90,7 @@ internal class ManifestManagerPollingService(
                 var workflow = scope.ServiceProvider.GetRequiredService<IManifestManagerWorkflow>();
 
                 logger.LogDebug("ManifestManager polling cycle starting");
-                await workflow.Run(Unit.Default);
+                await workflow.Run(Unit.Default, cancellationToken);
                 logger.LogDebug("ManifestManager polling cycle completed");
             }
         }

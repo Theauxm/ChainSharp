@@ -319,9 +319,7 @@ public partial class ManifestGroupDetailPage
 
         try
         {
-            using var context = await DataContextFactory.CreateDbContextAsync(
-                CancellationToken.None
-            );
+            using var context = await DataContextFactory.CreateDbContextAsync(DisposalToken);
 
             var entity = await context.ManifestGroups.FindAsync(_group.Id);
             if (entity is null)
@@ -332,7 +330,7 @@ public partial class ManifestGroupDetailPage
             entity.IsEnabled = _group.IsEnabled;
             entity.UpdatedAt = DateTime.UtcNow;
 
-            await context.SaveChanges(CancellationToken.None);
+            await context.SaveChanges(DisposalToken);
 
             SnapshotSettings();
 

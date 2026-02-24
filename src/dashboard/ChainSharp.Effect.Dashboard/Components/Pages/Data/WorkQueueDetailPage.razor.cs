@@ -47,9 +47,7 @@ public partial class WorkQueueDetailPage
 
         try
         {
-            using var context = await DataContextFactory.CreateDbContextAsync(
-                CancellationToken.None
-            );
+            using var context = await DataContextFactory.CreateDbContextAsync(DisposalToken);
             var entry = await context.WorkQueues.FirstOrDefaultAsync(q => q.Id == WorkQueueId);
 
             if (entry is null)
@@ -65,7 +63,7 @@ public partial class WorkQueueDetailPage
             }
 
             entry.Status = WorkQueueStatus.Cancelled;
-            await context.SaveChanges(CancellationToken.None);
+            await context.SaveChanges(DisposalToken);
 
             _entry = entry;
 

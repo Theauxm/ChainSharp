@@ -39,7 +39,7 @@ public partial class Workflow<TInput, TReturn>
         }
 
         // Execute the step
-        outVar = Task.Run(() => step.RailwayStep(previousStep, this)).Result;
+        outVar = Task.Run(() => step.RailwayStep(previousStep, this), CancellationToken).Result;
 
         // We skip the Left for Short Circuiting - only process Right results
         if (outVar.IsRight)

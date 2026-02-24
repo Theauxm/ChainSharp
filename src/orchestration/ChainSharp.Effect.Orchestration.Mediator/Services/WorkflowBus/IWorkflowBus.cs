@@ -56,7 +56,33 @@ public interface IWorkflowBus
     /// </remarks>
     public Task<TOut> RunAsync<TOut>(object workflowInput, Metadata? metadata = null);
 
+    /// <summary>
+    /// Executes a workflow with cancellation support.
+    /// </summary>
+    /// <typeparam name="TOut">The expected output type of the workflow</typeparam>
+    /// <param name="workflowInput">The input object for the workflow</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests</param>
+    /// <param name="metadata">Optional metadata to associate with the workflow execution</param>
+    /// <returns>A task that resolves to the workflow's output</returns>
+    public Task<TOut> RunAsync<TOut>(
+        object workflowInput,
+        CancellationToken cancellationToken,
+        Metadata? metadata = null
+    );
+
     public Task RunAsync(object workflowInput, Metadata? metadata = null);
+
+    /// <summary>
+    /// Executes a workflow with cancellation support, returning Unit.
+    /// </summary>
+    /// <param name="workflowInput">The input object for the workflow</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests</param>
+    /// <param name="metadata">Optional metadata to associate with the workflow execution</param>
+    public Task RunAsync(
+        object workflowInput,
+        CancellationToken cancellationToken,
+        Metadata? metadata = null
+    );
 
     public object InitializeWorkflow(object workflowInput);
 }

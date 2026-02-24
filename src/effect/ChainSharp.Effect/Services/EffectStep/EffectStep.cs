@@ -62,7 +62,7 @@ public abstract class EffectStep<TIn, TOut> : Step<TIn, TOut>, IEffectStep<TIn, 
             await effectWorkflow.StepEffectRunner.BeforeStepExecution(
                 this,
                 effectWorkflow,
-                CancellationToken.None
+                effectWorkflow.CancellationToken
             );
 
         Metadata.StartTimeUtc = DateTime.UtcNow;
@@ -77,7 +77,7 @@ public abstract class EffectStep<TIn, TOut> : Step<TIn, TOut>, IEffectStep<TIn, 
             await effectWorkflow.StepEffectRunner.AfterStepExecution(
                 this,
                 effectWorkflow,
-                CancellationToken.None
+                effectWorkflow.CancellationToken
             );
 
         return result;

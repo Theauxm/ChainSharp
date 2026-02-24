@@ -44,7 +44,7 @@ public partial class Workflow<TInput, TReturn>
         }
 
         // Execute the step
-        outVar = Task.Run(() => step.RailwayStep(previousStep, this)).Result;
+        outVar = Task.Run(() => step.RailwayStep(previousStep, this), CancellationToken).Result;
 
         // Handle the result
         if (outVar.IsLeft)

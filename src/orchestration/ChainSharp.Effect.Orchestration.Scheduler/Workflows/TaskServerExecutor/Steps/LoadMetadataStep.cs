@@ -28,7 +28,7 @@ internal class LoadMetadataStep(IDataContext dataContext, ILogger<LoadMetadataSt
         // Always load with Manifest included (tracked so UpdateManifestSuccessStep works)
         var metadata = await dataContext
             .Metadatas.Include(x => x.Manifest)
-            .FirstOrDefaultAsync(x => x.Id == input.MetadataId);
+            .FirstOrDefaultAsync(x => x.Id == input.MetadataId, CancellationToken);
 
         if (metadata is null)
             throw new WorkflowException($"Metadata with ID {input.MetadataId} not found");

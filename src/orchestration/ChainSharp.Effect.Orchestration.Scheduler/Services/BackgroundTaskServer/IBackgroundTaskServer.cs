@@ -47,4 +47,16 @@ public interface IBackgroundTaskServer
     /// is provided directly rather than resolved from a Manifest's properties.
     /// </remarks>
     Task<string> EnqueueAsync(long metadataId, object input);
+
+    /// <summary>
+    /// Enqueues a job for immediate execution with cancellation support.
+    /// </summary>
+    Task<string> EnqueueAsync(long metadataId, CancellationToken cancellationToken) =>
+        EnqueueAsync(metadataId);
+
+    /// <summary>
+    /// Enqueues a job for immediate execution with an in-memory workflow input and cancellation support.
+    /// </summary>
+    Task<string> EnqueueAsync(long metadataId, object input, CancellationToken cancellationToken) =>
+        EnqueueAsync(metadataId, input);
 }

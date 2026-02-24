@@ -59,6 +59,17 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
         new();
 
     /// <summary>
+    /// Thread-safe cache for storing the 2-parameter Run(TIn, CancellationToken) method lookups.
+    /// </summary>
+    private static readonly ConcurrentDictionary<Type, MethodInfo> RunWithCtMethodCache = new();
+
+    /// <summary>
+    /// Thread-safe cache for storing the 3-parameter Run(TIn, Metadata, CancellationToken) method lookups.
+    /// </summary>
+    private static readonly ConcurrentDictionary<Type, MethodInfo> RunWithMetadataCtMethodCache =
+        new();
+
+    /// <summary>
     /// Clears the static reflection method cache. This should be called during testing
     /// or when memory cleanup is needed to prevent memory leaks from cached MethodInfo objects.
     /// </summary>
@@ -71,6 +82,8 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
     {
         RunMethodCache.Clear();
         RunWithMetadataMethodCache.Clear();
+        RunWithCtMethodCache.Clear();
+        RunWithMetadataCtMethodCache.Clear();
     }
 
     /// <summary>
@@ -79,7 +92,10 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
     /// <returns>The number of cached method entries</returns>
     public static int GetMethodCacheSize()
     {
-        return RunMethodCache.Count + RunWithMetadataMethodCache.Count;
+        return RunMethodCache.Count
+            + RunWithMetadataMethodCache.Count
+            + RunWithCtMethodCache.Count
+            + RunWithMetadataCtMethodCache.Count;
     }
 
     public object InitializeWorkflow(object workflowInput)
@@ -221,8 +237,107 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
         return taskRunMethod;
     }
 
+    /// <summary>
+    /// Executes a workflow with cancellation support.
+    /// </summary>
+    public Task<TOut> RunAsync<TOut>(
+        object workflowInput,
+        CancellationToken cancellationToken,
+        Metadata? metadata = null
+    )
+    {
+        var workflowService = InitializeWorkflow(workflowInput);
+        var workflowType = workflowService.GetType();
+
+        if (metadata != null)
+        {
+            if (metadata.WorkflowState != WorkflowState.Pending)
+                throw new WorkflowException(
+                    $"WorkflowBus will not run a passed Metadata with state ({metadata.WorkflowState}), Must be Pending"
+                );
+
+            // Find Run(input, metadata, ct) — 3 params
+            var runWithMetadataCtMethod = RunWithMetadataCtMethodCache.GetOrAdd(
+                workflowType,
+                type =>
+                {
+                    var method = type.GetMethods()
+                        .Where(x => x.Name == "Run")
+                        .Where(x => x.GetParameters().Length == 3)
+                        .FirstOrDefault(
+                            x =>
+                                x.GetParameters()[1].ParameterType == typeof(Metadata)
+                                && x.GetParameters()[2].ParameterType == typeof(CancellationToken)
+                        );
+
+                    if (method == null)
+                        throw new WorkflowException(
+                            $"Failed to find Run(input, metadata, ct) method for workflow type ({type.Name})"
+                        );
+
+                    return method;
+                }
+            );
+
+            var taskWithMetadata = (Task<TOut>?)
+                runWithMetadataCtMethod.Invoke(
+                    workflowService,
+                    [workflowInput, metadata, cancellationToken]
+                );
+
+            if (taskWithMetadata is null)
+                throw new WorkflowException(
+                    $"Failed to invoke Run(input, metadata, ct) method for workflow type ({workflowType.Name})"
+                );
+
+            return taskWithMetadata;
+        }
+
+        // Find Run(input, ct) — 2 params where second is CancellationToken
+        var runWithCtMethod = RunWithCtMethodCache.GetOrAdd(
+            workflowType,
+            type =>
+            {
+                var method = type.GetMethods()
+                    .Where(x => x.Name == "Run")
+                    .Where(x => x.GetParameters().Length == 2)
+                    .FirstOrDefault(
+                        x =>
+                            x.GetParameters()[1].ParameterType == typeof(CancellationToken)
+                            && x.Module.Name.Contains("Effect")
+                    );
+
+                if (method == null)
+                    throw new WorkflowException(
+                        $"Failed to find Run(input, ct) method for workflow type ({type.Name})"
+                    );
+
+                return method;
+            }
+        );
+
+        var taskRunMethod = (Task<TOut>?)
+            runWithCtMethod.Invoke(workflowService, [workflowInput, cancellationToken]);
+
+        if (taskRunMethod is null)
+            throw new WorkflowException(
+                $"Failed to invoke Run(input, ct) method for workflow type ({workflowType.Name})"
+            );
+
+        return taskRunMethod;
+    }
+
     public async Task RunAsync(object workflowInput, Metadata? metadata = null)
     {
         await RunAsync<Unit>(workflowInput, metadata);
+    }
+
+    public async Task RunAsync(
+        object workflowInput,
+        CancellationToken cancellationToken,
+        Metadata? metadata = null
+    )
+    {
+        await RunAsync<Unit>(workflowInput, cancellationToken, metadata);
     }
 }

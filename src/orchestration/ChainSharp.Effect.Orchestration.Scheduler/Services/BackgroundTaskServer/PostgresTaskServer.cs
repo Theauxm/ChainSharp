@@ -18,18 +18,30 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Services.BackgroundTaskServe
 public class PostgresTaskServer(IDataContext dataContext) : IBackgroundTaskServer
 {
     /// <inheritdoc />
-    public async Task<string> EnqueueAsync(long metadataId)
+    public Task<string> EnqueueAsync(long metadataId) =>
+        EnqueueAsync(metadataId, CancellationToken.None);
+
+    /// <inheritdoc />
+    public Task<string> EnqueueAsync(long metadataId, object input) =>
+        EnqueueAsync(metadataId, input, CancellationToken.None);
+
+    /// <inheritdoc />
+    public async Task<string> EnqueueAsync(long metadataId, CancellationToken cancellationToken)
     {
         var job = BackgroundJob.Create(new CreateBackgroundJob { MetadataId = metadataId });
 
         await dataContext.Track(job);
-        await dataContext.SaveChanges(CancellationToken.None);
+        await dataContext.SaveChanges(cancellationToken);
 
         return job.Id.ToString();
     }
 
     /// <inheritdoc />
-    public async Task<string> EnqueueAsync(long metadataId, object input)
+    public async Task<string> EnqueueAsync(
+        long metadataId,
+        object input,
+        CancellationToken cancellationToken
+    )
     {
         var inputJson = JsonSerializer.Serialize(
             input,
@@ -47,7 +59,7 @@ public class PostgresTaskServer(IDataContext dataContext) : IBackgroundTaskServe
         );
 
         await dataContext.Track(job);
-        await dataContext.SaveChanges(CancellationToken.None);
+        await dataContext.SaveChanges(cancellationToken);
 
         return job.Id.ToString();
     }

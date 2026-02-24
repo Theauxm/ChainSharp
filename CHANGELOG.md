@@ -1,3 +1,10 @@
+# [5.20.0](https://github.com/Theauxm/ChainSharp/compare/v5.19.0...v5.20.0) (2026-02-24)
+
+
+### Features
+
+* QoL Components ([#172](https://github.com/Theauxm/ChainSharp/issues/172)) ([c824318](https://github.com/Theauxm/ChainSharp/commit/c82431855d691d8440596acda8e4560962cbbd78))
+
 # [5.19.0](https://github.com/Theauxm/ChainSharp/compare/v5.18.0...v5.19.0) (2026-02-23)
 
 

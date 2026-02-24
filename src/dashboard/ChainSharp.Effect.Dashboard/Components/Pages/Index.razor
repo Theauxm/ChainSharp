@@ -9,6 +9,67 @@
     return;
 }
 
+@* ── Server Health ── *@
+@if (DashboardSettings.ShowServerHealth)
+{
+    <RadzenRow Gap="1rem" class="rz-mb-4">
+        <RadzenColumn Size="12" SizeMD="4" SizeLG="2">
+            <RadzenCard>
+                <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                    <RadzenIcon Icon="speed" Style="font-size: 2rem; color: var(--rz-info);" />
+                    <RadzenText TextStyle="TextStyle.H3" Style="margin: 0;">@(_cpuPercent)%</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="text-align: center;">CPU</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="4" SizeLG="2">
+            <RadzenCard>
+                <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                    <RadzenIcon Icon="memory" Style="font-size: 2rem; color: var(--rz-warning);" />
+                    <RadzenText TextStyle="TextStyle.H3" Style="margin: 0;">@(_memoryWorkingSetMb) MB</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="text-align: center;">Working Set</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="4" SizeLG="2">
+            <RadzenCard>
+                <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                    <RadzenIcon Icon="delete_sweep" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H3" Style="margin: 0;">@(_gcHeapMb) MB</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="text-align: center;">GC Heap</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="4" SizeLG="2">
+            <RadzenCard>
+                <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                    <RadzenIcon Icon="hub" Style="font-size: 2rem; color: var(--rz-secondary);" />
+                    <RadzenText TextStyle="TextStyle.H3" Style="margin: 0;">@_threadCount</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="text-align: center;">Threads</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="4" SizeLG="2">
+            <RadzenCard>
+                <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                    <RadzenIcon Icon="timer" Style="font-size: 2rem; color: var(--rz-success);" />
+                    <RadzenText TextStyle="TextStyle.H3" Style="margin: 0;">@FormatUptime(_uptime)</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="text-align: center;">Uptime</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="4" SizeLG="2">
+            <RadzenCard>
+                <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+                    <RadzenIcon Icon="recycling" Style="font-size: 2rem; color: var(--rz-danger);" />
+                    <RadzenText TextStyle="TextStyle.H3" Style="margin: 0;">@_gcGen0/@_gcGen1/@_gcGen2</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Style="text-align: center;">GC (Gen 0/1/2)</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+}
+
 @* ── Summary Cards ── *@
 @if (DashboardSettings.ShowSummaryCards)
 {

@@ -28,6 +28,7 @@ public class DashboardSettingsService(ILocalStorageService localStorage) : IDash
     public bool ShowAvgDuration { get; private set; } = DefaultComponentVisibility;
     public bool ShowRecentFailures { get; private set; } = DefaultComponentVisibility;
     public bool ShowActiveManifests { get; private set; } = DefaultComponentVisibility;
+    public bool ShowServerHealth { get; private set; } = DefaultComponentVisibility;
 
     public async Task InitializeAsync()
     {
@@ -50,6 +51,7 @@ public class DashboardSettingsService(ILocalStorageService localStorage) : IDash
         ShowAvgDuration = await LoadVisibilityAsync(StorageKeys.ShowAvgDuration);
         ShowRecentFailures = await LoadVisibilityAsync(StorageKeys.ShowRecentFailures);
         ShowActiveManifests = await LoadVisibilityAsync(StorageKeys.ShowActiveManifests);
+        ShowServerHealth = await LoadVisibilityAsync(StorageKeys.ShowServerHealth);
 
         _isInitialized = true;
     }
@@ -91,6 +93,9 @@ public class DashboardSettingsService(ILocalStorageService localStorage) : IDash
                 break;
             case StorageKeys.ShowActiveManifests:
                 ShowActiveManifests = visible;
+                break;
+            case StorageKeys.ShowServerHealth:
+                ShowServerHealth = visible;
                 break;
         }
 

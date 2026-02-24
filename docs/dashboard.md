@@ -75,6 +75,20 @@ When `ChainSharp.Effect.Data` is registered, the dashboard exposes pages for bro
 
 These pages are accessible from the **Data** section in the sidebar navigation.
 
+#### Dead Letter Detail Page
+
+Clicking the visibility icon on a dead letter row opens a detail page with:
+
+- **Dead Letter Details**: Status badge, dead-lettered timestamp, retry count, reason, resolution info
+- **Manifest Details**: Linked manifest name, schedule, max retries, timeout, properties JSON
+- **Most Recent Failure**: The latest failed execution's failure step, exception, reason, stack trace, and input
+- **Failed Execution History**: A full grid of all failed metadata runs for the manifest, each linking to the metadata detail page
+
+Two action buttons appear when the dead letter is in `AwaitingIntervention` status:
+
+- **Re-queue**: Creates a new WorkQueue entry from the manifest, marks the dead letter as `Retried`, and navigates to the new work queue entry
+- **Acknowledge**: Prompts for a resolution note, marks the dead letter as `Acknowledged`, and reloads the page
+
 ### Effects Page
 
 The **Effects** page (`/chainsharp/settings/effects`) shows all registered effect and step effect provider factories. From this page you can:

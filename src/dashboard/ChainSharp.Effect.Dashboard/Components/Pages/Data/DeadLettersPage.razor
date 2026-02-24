@@ -1,6 +1,7 @@
 @page "/chainsharp/data/dead-letters"
 @inherits PollingComponentBase
 @inject IDataContextProviderFactory DataContextFactory
+@inject NavigationManager Navigation
 
 <RadzenText TextStyle="TextStyle.H4" class="rz-mb-2">Dead Letters</RadzenText>
 <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-4" Style="color: var(--rz-text-secondary-color);">
@@ -11,6 +12,20 @@
                     TItem="DeadLetter"
                     IsLoading="@IsLoading">
     <Columns>
+        <RadzenDataGridColumn TItem="DeadLetter"
+                              Title=""
+                              Width="50px"
+                              Sortable="false"
+                              Filterable="false"
+                              Frozen="true"
+                              TextAlign="TextAlign.Center">
+            <Template Context="d">
+                <RadzenButton Icon="visibility"
+                              Variant="Variant.Text"
+                              Size="ButtonSize.Small"
+                              Click="@(() => Navigation.NavigateTo($"chainsharp/data/dead-letters/{d.Id}"))" />
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="DeadLetter"
                               Property="Id"
                               Title="Id"
@@ -23,7 +38,12 @@
         <RadzenDataGridColumn TItem="DeadLetter"
                               Property="Status"
                               Title="Status"
-                              Width="150px" />
+                              Width="150px">
+            <Template Context="d">
+                <RadzenBadge BadgeStyle="@GetDeadLetterStatusBadgeStyle(d.Status)"
+                             Text="@d.Status.ToString()" />
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="DeadLetter"
                               Property="DeadLetteredAt"
                               Title="Dead Lettered At"

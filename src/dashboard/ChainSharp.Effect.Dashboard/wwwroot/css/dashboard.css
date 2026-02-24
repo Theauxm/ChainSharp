@@ -52,6 +52,17 @@
     color: var(--cs-header-text);
 }
 
+/* UTC clock in header */
+.cs-dashboard .cs-utc-clock {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    font-family: monospace, var(--rz-body-font-family, sans-serif);
+    opacity: 0.85;
+    white-space: nowrap;
+}
+
 /* Environment badge in header */
 .cs-dashboard .cs-env-badge {
     font-size: 0.7rem;

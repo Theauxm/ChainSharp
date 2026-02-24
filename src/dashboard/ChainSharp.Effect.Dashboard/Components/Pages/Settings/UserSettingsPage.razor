@@ -39,6 +39,13 @@
         </RadzenText>
         <RadzenStack Gap="1.5rem">
             <RadzenStack Gap="0.25rem">
+                <RadzenLabel Text="Server Health" />
+                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
+                    Process CPU, memory, threads, uptime, and GC collection stats.
+                </RadzenText>
+                <RadzenSwitch @bind-Value="_showServerHealth" />
+            </RadzenStack>
+            <RadzenStack Gap="0.25rem">
                 <RadzenLabel Text="Summary Cards" />
                 <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
                     Executions Today, Success Rate, Currently Running, Dead Letters, Active Manifests, Registered Workflows.

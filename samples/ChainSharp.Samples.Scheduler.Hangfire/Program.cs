@@ -7,6 +7,7 @@ using ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager;
 using ChainSharp.Effect.Provider.Json.Extensions;
 using ChainSharp.Effect.Provider.Parameter.Extensions;
+using ChainSharp.Samples.Scheduler.Hangfire.Workflows.AlwaysFails;
 using ChainSharp.Samples.Scheduler.Hangfire.Workflows.DataQualityCheck;
 using ChainSharp.Samples.Scheduler.Hangfire.Workflows.ExtractImport;
 using ChainSharp.Samples.Scheduler.Hangfire.Workflows.GoodbyeWorld;
@@ -55,6 +56,7 @@ builder.Services.AddChainSharpEffects(
                         cleanup.AddWorkflowType<IExtractImportWorkflow>();
                         cleanup.AddWorkflowType<ITransformLoadWorkflow>();
                         cleanup.AddWorkflowType<IDataQualityCheckWorkflow>();
+                        cleanup.AddWorkflowType<IAlwaysFailsWorkflow>();
                     })
                     .JobDispatcherPollingInterval(TimeSpan.FromSeconds(2))
                     .UsePostgresTaskServer();
@@ -84,6 +86,16 @@ builder.Services.AddChainSharpEffects(
                         "sample-otherword-world",
                         new GoodbyeWorldInput { Name = "ChainSharp otherword" }
                     );
+
+                // AlwaysFails: intentionally throws on every run.
+                // MaxRetries(1) means it dead-letters after a single failure,
+                // providing a quick way to test the dead letter detail page.
+                scheduler.Schedule<IAlwaysFailsWorkflow, AlwaysFailsInput>(
+                    "sample-always-fails",
+                    new AlwaysFailsInput { Scenario = "Database connection timeout" },
+                    Every.Seconds(30),
+                    options => options.MaxRetries(1)
+                );
 
                 scheduler
                     // Schedule ExtractImport for Customer table (10 indexes)

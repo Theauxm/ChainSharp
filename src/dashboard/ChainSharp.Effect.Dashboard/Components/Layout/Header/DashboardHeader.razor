@@ -25,6 +25,10 @@
                     <div style="height: 100%; width: @(_progressPercent.ToString("F0"))%; background: var(--rz-primary); transition: width 0.5s linear;"></div>
                 </div>
             </div>
+            <div class="cs-utc-clock" title="Current UTC time — all timestamps in the dashboard are UTC">
+                <RadzenIcon Icon="schedule" Style="font-size: 0.85rem;" />
+                <span>@_utcTime UTC</span>
+            </div>
             <RadzenButton Icon="@(IsDarkMode ? "light_mode" : "dark_mode")"
                           ButtonStyle="ButtonStyle.Light"
                           Variant="Variant.Text"

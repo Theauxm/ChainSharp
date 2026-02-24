@@ -17,6 +17,7 @@ public partial class UserSettingsPage
     private bool _hideAdminWorkflows;
 
     // Component visibility
+    private bool _showServerHealth;
     private bool _showSummaryCards;
     private bool _showExecutionsChart;
     private bool _showStatusBreakdown;
@@ -28,6 +29,7 @@ public partial class UserSettingsPage
     // Saved-state snapshots for dirty tracking
     private int _savedPollingIntervalSeconds;
     private bool _savedHideAdminWorkflows;
+    private bool _savedShowServerHealth;
     private bool _savedShowSummaryCards;
     private bool _savedShowExecutionsChart;
     private bool _savedShowStatusBreakdown;
@@ -41,7 +43,8 @@ public partial class UserSettingsPage
     private bool IsAdminWorkflowsDirty => _hideAdminWorkflows != _savedHideAdminWorkflows;
 
     private bool IsComponentsDirty =>
-        _showSummaryCards != _savedShowSummaryCards
+        _showServerHealth != _savedShowServerHealth
+        || _showSummaryCards != _savedShowSummaryCards
         || _showExecutionsChart != _savedShowExecutionsChart
         || _showStatusBreakdown != _savedShowStatusBreakdown
         || _showTopFailures != _savedShowTopFailures
@@ -55,6 +58,7 @@ public partial class UserSettingsPage
         _pollingIntervalSeconds = (int)DashboardSettings.PollingInterval.TotalSeconds;
         _hideAdminWorkflows = DashboardSettings.HideAdminWorkflows;
 
+        _showServerHealth = DashboardSettings.ShowServerHealth;
         _showSummaryCards = DashboardSettings.ShowSummaryCards;
         _showExecutionsChart = DashboardSettings.ShowExecutionsChart;
         _showStatusBreakdown = DashboardSettings.ShowStatusBreakdown;
@@ -71,6 +75,10 @@ public partial class UserSettingsPage
         await DashboardSettings.SetPollingIntervalAsync(_pollingIntervalSeconds);
         await DashboardSettings.SetHideAdminWorkflowsAsync(_hideAdminWorkflows);
 
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowServerHealth,
+            _showServerHealth
+        );
         await DashboardSettings.SetComponentVisibilityAsync(
             StorageKeys.ShowSummaryCards,
             _showSummaryCards
@@ -120,6 +128,7 @@ public partial class UserSettingsPage
         await DashboardSettings.SetPollingIntervalAsync(_pollingIntervalSeconds);
         await DashboardSettings.SetHideAdminWorkflowsAsync(_hideAdminWorkflows);
 
+        _showServerHealth = DashboardSettingsService.DefaultComponentVisibility;
         _showSummaryCards = DashboardSettingsService.DefaultComponentVisibility;
         _showExecutionsChart = DashboardSettingsService.DefaultComponentVisibility;
         _showStatusBreakdown = DashboardSettingsService.DefaultComponentVisibility;
@@ -128,6 +137,10 @@ public partial class UserSettingsPage
         _showRecentFailures = DashboardSettingsService.DefaultComponentVisibility;
         _showActiveManifests = DashboardSettingsService.DefaultComponentVisibility;
 
+        await DashboardSettings.SetComponentVisibilityAsync(
+            StorageKeys.ShowServerHealth,
+            _showServerHealth
+        );
         await DashboardSettings.SetComponentVisibilityAsync(
             StorageKeys.ShowSummaryCards,
             _showSummaryCards
@@ -174,6 +187,7 @@ public partial class UserSettingsPage
     {
         _savedPollingIntervalSeconds = _pollingIntervalSeconds;
         _savedHideAdminWorkflows = _hideAdminWorkflows;
+        _savedShowServerHealth = _showServerHealth;
         _savedShowSummaryCards = _showSummaryCards;
         _savedShowExecutionsChart = _showExecutionsChart;
         _savedShowStatusBreakdown = _showStatusBreakdown;

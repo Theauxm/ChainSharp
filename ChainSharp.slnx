@@ -36,4 +36,5 @@
   <Project Path="src/core/ChainSharp/ChainSharp.csproj" />
   <Project Path="src/analyzers/ChainSharp.Analyzers/ChainSharp.Analyzers.csproj" />
   <Project Path="tests/ChainSharp.Tests.Analyzers/ChainSharp.Tests.Analyzers.csproj" />
+  <Project Path="tests/ChainSharp.Tests.Benchmarks/ChainSharp.Tests.Benchmarks.csproj" />
 </Solution>

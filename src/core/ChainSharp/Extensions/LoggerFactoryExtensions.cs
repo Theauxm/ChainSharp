@@ -11,6 +11,22 @@ namespace ChainSharp.Extensions;
 public static class LoggerExtensions
 {
     /// <summary>
+    /// Cached generic CreateLogger method to avoid repeated reflection lookups.
+    /// </summary>
+    private static readonly Lazy<MethodInfo> GenericCreateLoggerMethod =
+        new(
+            () =>
+                typeof(LoggerFactoryExtensions)
+                    .GetMethods(BindingFlags.Static | BindingFlags.Public)
+                    .First(
+                        m =>
+                            m.Name == nameof(LoggerFactoryExtensions.CreateLogger)
+                            && m.GetParameters().Length == 1
+                            && m.IsGenericMethod
+                    )
+        );
+
+    /// <summary>
     /// Creates a generic logger for the specified type.
     /// </summary>
     /// <param name="loggerFactory">The logger factory</param>
@@ -19,36 +35,14 @@ public static class LoggerExtensions
     /// <exception cref="WorkflowException">Thrown if the logger cannot be created</exception>
     /// <remarks>
     /// This method uses reflection to call LoggerFactoryExtensions.CreateLogger&lt;T&gt;
-    /// with the specified type. It's used to create loggers dynamically at runtime
-    /// when the type is not known at compile time.
+    /// with the specified type. The generic MethodInfo is cached via Lazy&lt;T&gt;.
     /// </remarks>
     public static dynamic CreateGenericLogger(this ILoggerFactory loggerFactory, Type genericType)
     {
-        // 1. Find the generic CreateLogger<T> method
-        var genericMethod = typeof(LoggerFactoryExtensions)
-            .GetMethods(BindingFlags.Static | BindingFlags.Public)
-            .FirstOrDefault(
-                m =>
-                    m.Name == nameof(LoggerFactoryExtensions.CreateLogger)
-                    && m.GetParameters().Length == 1
-                    && // Only one parameter (ILoggerFactory)
-                    m.IsGenericMethod
-            );
+        // Make the method generic with the desired type
+        var specificMethod = GenericCreateLoggerMethod.Value.MakeGenericMethod(genericType);
 
-        if (genericMethod is null)
-            throw new WorkflowException(
-                $"Could not find Generic method on LoggerFactoryExtensions for CreateLogger<({genericType.Name})>."
-            );
-
-        // 2. Make the method generic with the desired type
-        var specificMethod = genericMethod.MakeGenericMethod(genericType);
-
-        if (specificMethod is null)
-            throw new WorkflowException(
-                $"Could not create generic method CreateLogger<({genericType.Name})> on LoggerFactoryExtensions."
-            );
-
-        // 3. Invoke the method
+        // Invoke the method
         var loggerInstance = specificMethod.Invoke(null, [loggerFactory]);
 
         if (loggerInstance is null)

@@ -1,0 +1,17 @@
+using ChainSharp.Step;
+using ChainSharp.Tests.Benchmarks.Models;
+
+namespace ChainSharp.Tests.Benchmarks.Steps;
+
+public class TransformStep : Step<PersonDto, PersonEntity>
+{
+    public override Task<PersonEntity> Run(PersonDto input) =>
+        Task.FromResult(
+            new PersonEntity(
+                FullName: $"{input.FirstName} {input.LastName}",
+                Age: input.Age,
+                ContactEmail: input.Email,
+                IsAdult: input.Age >= 18
+            )
+        );
+}

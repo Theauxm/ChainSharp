@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using LanguageExt;
 
 namespace ChainSharp.Extensions;
@@ -8,6 +9,8 @@ namespace ChainSharp.Extensions;
 /// </summary>
 public static class FunctionalExtensions
 {
+    private static readonly ConcurrentDictionary<Type, bool> TupleCache = new();
+
     /// <summary>
     /// Unwraps a Task of Either, returning the Right value or throwing the Left exception.
     /// This is used to convert from the Railway pattern back to traditional exception handling.
@@ -63,6 +66,10 @@ public static class FunctionalExtensions
     /// It's used throughout ChainSharp to handle tuple types specially in Memory.
     /// </remarks>
     internal static bool IsTuple(this Type type) =>
-        (type.IsGenericType && type.FullName.StartsWith("System.ValueTuple`"))
-        || type.FullName.StartsWith("System.Runtime.CompilerServices.ITuple");
+        TupleCache.GetOrAdd(
+            type,
+            t =>
+                (t.IsGenericType && t.FullName?.StartsWith("System.ValueTuple`") == true)
+                || t.FullName?.StartsWith("System.Runtime.CompilerServices.ITuple") == true
+        );
 }

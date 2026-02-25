@@ -38,8 +38,9 @@ public partial class Workflow<TInput, TReturn>
             return this;
         }
 
-        // Execute the step
-        outVar = Task.Run(() => step.RailwayStep(previousStep, this), CancellationToken).Result;
+        // Execute the step directly without thread pool scheduling
+        var task = step.RailwayStep(previousStep, this);
+        outVar = task.IsCompletedSuccessfully ? task.Result : task.GetAwaiter().GetResult();
 
         // We skip the Left for Short Circuiting - only process Right results
         if (outVar.IsRight)

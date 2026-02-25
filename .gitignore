@@ -138,3 +138,6 @@ _NCrunch*
 
 # VSCode extension packages
 *.vsix
+
+# BenchmarkDotNet
+BenchmarkDotNet.Artifacts/

@@ -102,7 +102,6 @@ A **Cancel** button appears for InProgress workflows. Clicking it sets `cancel_r
 #### Cancellation Metrics on Home Page
 
 The dashboard home page includes:
-- A **Cancelled Today** summary card showing the count of workflows cancelled in the last 24 hours
 - A **Cancelled** slice in the workflow state donut chart
 - A **Cancelled** column series in the 24-hour execution chart
 

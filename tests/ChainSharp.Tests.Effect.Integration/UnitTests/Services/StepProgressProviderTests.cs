@@ -187,8 +187,9 @@ public class StepProgressProviderTests
     [Test]
     public async Task AfterStepExecution_NullMetadata_ReturnsWithoutError()
     {
-        // Arrange
-        var workflow = CreateTestWorkflow(metadata: null);
+        // Arrange — workflow with null metadata (no reflection call)
+        var workflow = new TestWorkflow();
+        workflow.EffectRunner = _mockEffectRunner.Object;
         var step = CreateTestStep("SomeStep");
 
         // Act & Assert

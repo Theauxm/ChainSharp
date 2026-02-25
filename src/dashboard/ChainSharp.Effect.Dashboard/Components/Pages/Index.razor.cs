@@ -27,7 +27,6 @@ public partial class Index
     // Summary card values
     private int _executionsToday;
     private double _successRate;
-    private int _cancelledToday;
     private int _currentlyRunning;
     private int _unresolvedDeadLetters;
     private int _activeManifests;
@@ -88,8 +87,6 @@ public partial class Index
         var completed = CountForState(WorkflowState.Completed);
         var terminal = completed + CountForState(WorkflowState.Failed);
         _successRate = terminal > 0 ? Math.Round(100.0 * completed / terminal, 1) : 0;
-        _cancelledToday = CountForState(WorkflowState.Cancelled);
-
         var runningQuery = context
             .Metadatas.AsNoTracking()
             .Where(m => m.WorkflowState == WorkflowState.InProgress);

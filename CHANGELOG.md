@@ -1,3 +1,10 @@
+## [5.20.2](https://github.com/Theauxm/ChainSharp/compare/v5.20.1...v5.20.2) (2026-02-25)
+
+
+### Bug Fixes
+
+* Benchmarks added ([#174](https://github.com/Theauxm/ChainSharp/issues/174)) ([dd05e81](https://github.com/Theauxm/ChainSharp/commit/dd05e81ad9d50d2f507adf32a5367efb29baf929))
+
 # [5.20.0](https://github.com/Theauxm/ChainSharp/compare/v5.19.0...v5.20.0) (2026-02-24)
 
 

@@ -99,6 +99,27 @@ Requires steps to inherit from `EffectStep<TIn, TOut>` instead of `Step<TIn, TOu
 
 See [Step Logger](effect-providers/step-logger.md) for the full StepMetadata field reference.
 
+## Step Progress & Cancellation Check (`AddStepProgress`)
+
+**Use when:** You need per-step progress visibility in the dashboard and/or the ability to cancel running workflows from the dashboard (including cross-server cancellation).
+
+```csharp
+services.AddChainSharpEffects(options =>
+    options.AddStepProgress()
+);
+```
+
+*API Reference: [AddStepProgress]({{ site.baseurl }}{% link api-reference/configuration/add-step-progress.md %})*
+
+This registers two step-level effect providers:
+
+1. **CancellationCheckProvider** — Before each step, queries the database for `Metadata.CancellationRequested`. If `true`, throws `OperationCanceledException`, which maps to `WorkflowState.Cancelled`.
+2. **StepProgressProvider** — Before each step, writes the step name and start time to `Metadata.CurrentlyRunningStep` and `Metadata.StepStartedAt`. After the step, clears both columns.
+
+The cancellation check runs first so a cancelled workflow never writes progress columns for a step that won't execute. Requires steps to inherit from `EffectStep<TIn, TOut>`.
+
+See [Step Progress](effect-providers/step-progress.md) for the dual-path cancellation architecture and dashboard integration.
+
 ## Combining Providers
 
 Providers compose. A typical production setup:
@@ -109,6 +130,7 @@ services.AddChainSharpEffects(options =>
         .AddPostgresEffect(connectionString)   // Persist metadata
         .SaveWorkflowParameters()              // Include input/output in metadata
         .AddStepLogger(serializeStepData: true) // Log individual step executions
+        .AddStepProgress()                     // Step progress + cancellation check
         .AddEffectWorkflowBus(assemblies)      // Enable workflow discovery
 );
 ```

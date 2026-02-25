@@ -30,6 +30,8 @@
       <ProjectReference Include="..\..\src\effect\ChainSharp.Effect\ChainSharp.Effect.csproj" />
       <ProjectReference Include="..\..\src\providers\ChainSharp.Effect.Provider.Json\ChainSharp.Effect.Provider.Json.csproj" />
       <ProjectReference Include="..\..\src\providers\ChainSharp.Effect.StepProvider.Logging\ChainSharp.Effect.StepProvider.Logging.csproj" />
+      <ProjectReference Include="..\..\src\providers\ChainSharp.Effect.StepProvider.Progress\ChainSharp.Effect.StepProvider.Progress.csproj" />
+      <ProjectReference Include="..\..\src\data\ChainSharp.Effect.Data\ChainSharp.Effect.Data.csproj" />
     </ItemGroup>
 
 </Project>

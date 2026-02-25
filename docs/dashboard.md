@@ -67,10 +67,10 @@ When `ChainSharp.Effect.Data` is registered, the dashboard exposes pages for bro
 
 | Page | Description |
 |------|-------------|
-| **Metadata** | Workflow execution history—start/end times, success/failure, inputs/outputs |
+| **Metadata** | Workflow execution history—start/end times, success/failure, inputs/outputs. Includes a "Current Step" column for InProgress workflows and per-row cancel buttons. |
 | **Logs** | Application log entries captured during workflow execution |
 | **Manifests** | Scheduled job definitions (requires Scheduler) |
-| **Manifest Groups** | Manifest group settings and aggregate execution stats (requires Scheduler) |
+| **Manifest Groups** | Manifest group settings and aggregate execution stats (requires Scheduler). Includes a "Cancel All Running" button. |
 | **Dead Letters** | Failed jobs that exhausted their retry budget (requires Scheduler) |
 
 These pages are accessible from the **Data** section in the sidebar navigation.
@@ -88,6 +88,25 @@ Two action buttons appear when the dead letter is in `AwaitingIntervention` stat
 
 - **Re-queue**: Creates a new WorkQueue entry from the manifest, marks the dead letter as `Retried`, and navigates to the new work queue entry
 - **Acknowledge**: Prompts for a resolution note, marks the dead letter as `Acknowledged`, and reloads the page
+
+#### Metadata Detail Page
+
+Clicking a metadata row opens a detail page with workflow state, timing, input/output, and exception details.
+
+When `AddStepProgress()` is registered and the workflow is `InProgress`, a **Step Progress** card appears showing:
+- **Currently Running** — the name of the step currently executing
+- **Step Started** — when the step began (HH:mm:ss)
+
+A **Cancel** button appears for InProgress workflows. Clicking it sets `cancel_requested = true` in the database and attempts to cancel the workflow via `ICancellationRegistry` (instant for same-server). Cancelled workflows transition to `WorkflowState.Cancelled`.
+
+#### Cancellation Metrics on Home Page
+
+The dashboard home page includes:
+- A **Cancelled Today** summary card showing the count of workflows cancelled in the last 24 hours
+- A **Cancelled** slice in the workflow state donut chart
+- A **Cancelled** column series in the 24-hour execution chart
+
+Cancelled workflows are excluded from the success rate calculation — cancellation is an operator action, not a failure.
 
 ### Effects Page
 

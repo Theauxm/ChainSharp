@@ -34,6 +34,7 @@
       <ProjectReference Include="..\..\src\providers\ChainSharp.Effect.Provider.Parameter\ChainSharp.Effect.Provider.Parameter.csproj" />
       <ProjectReference Include="..\..\src\providers\ChainSharp.Effect.StepProvider.Logging\ChainSharp.Effect.StepProvider.Logging.csproj" />
       <ProjectReference Include="..\..\src\orchestration\ChainSharp.Effect.Orchestration.Scheduler\ChainSharp.Effect.Orchestration.Scheduler.csproj" />
+      <ProjectReference Include="..\..\src\providers\ChainSharp.Effect.StepProvider.Progress\ChainSharp.Effect.StepProvider.Progress.csproj" />
     </ItemGroup>
 
     <ItemGroup>

@@ -161,6 +161,18 @@ Cancellation is treated differently from regular exceptions:
 
 This means cancellation always throws (even with `RunEither`), which matches the .NET convention that cancellation is exceptional flow, not a business error.
 
+### WorkflowState.Cancelled
+
+When an `OperationCanceledException` reaches `FinishWorkflow`, the workflow state is set to `Cancelled` instead of `Failed`:
+
+```
+OperationCanceledException → WorkflowState.Cancelled
+All other exceptions       → WorkflowState.Failed
+No exception               → WorkflowState.Completed
+```
+
+Cancelled workflows are **not retried** and **do not create dead letters**. Cancellation is a deliberate operator action, not a transient failure. The dashboard shows cancelled workflows with a warning (orange) badge to distinguish them from failures.
+
 ## WorkflowBus Dispatch
 
 When using `IWorkflowBus` for dynamic workflow dispatch, pass the token as the second argument:
@@ -255,7 +267,45 @@ Configure the grace period:
 - `BeginTransaction(CancellationToken)` — transaction starts use the token
 - Step effect providers receive the token for their before/after hooks
 
-If a workflow is cancelled mid-execution, the `EffectWorkflow` catch block still runs `FinishWorkflow` to record the failure in Metadata — so you get an audit trail even for cancelled workflows.
+If a workflow is cancelled mid-execution, the `EffectWorkflow` catch block still runs `FinishWorkflow` to record the cancellation in Metadata — so you get an audit trail even for cancelled workflows. `FinishWorkflow` also clears the step progress columns (`CurrentlyRunningStep` and `StepStartedAt`) as a safety net.
+
+## Cancelling Running Workflows
+
+ChainSharp supports two complementary cancellation paths: **same-server** (instant) and **cross-server** (between-step).
+
+### Same-Server: ICancellationRegistry
+
+When the scheduler is configured, `PostgresWorkerService` registers each in-flight workflow's `CancellationTokenSource` with `ICancellationRegistry`. Calling `TryCancel(metadataId)` fires the CTS immediately, interrupting the workflow mid-step:
+
+```
+Dashboard "Cancel" button
+    ├──→ SET cancel_requested = true in DB  (always)
+    └──→ ICancellationRegistry.TryCancel()  (same-server bonus)
+            ├─ Found → CTS.Cancel() → in-flight async op throws OCE instantly
+            └─ Not found → no-op (cross-server handled by DB flag)
+```
+
+### Cross-Server: CancellationCheckProvider
+
+For multi-server deployments where the cancelling server may not be the one executing the workflow, the `CancellationCheckProvider` step effect queries the `cancel_requested` column before each step:
+
+```
+CancellationCheckProvider.BeforeStepExecution()
+    → SELECT cancel_requested FROM metadata WHERE id = @id
+    → if true: throw OperationCanceledException
+    → workflow terminates at next step boundary
+```
+
+Enable both paths with a single call:
+
+```csharp
+services.AddChainSharpEffects(options => options
+    .AddPostgresEffect(connectionString)
+    .AddStepProgress()  // Adds CancellationCheckProvider + StepProgressProvider
+);
+```
+
+*See also: [Step Progress]({{ site.baseurl }}{% link usage-guide/effect-providers/step-progress.md %})*
 
 ## IBackgroundTaskServer
 
@@ -356,3 +406,5 @@ public async Task Workflow_CancelDuringStep_PropagatesCancellation()
 | **PostgresWorkerService** | `shutdownCts.Token` (grace period) | Passed to `workflow.Run(input, shutdownCts.Token)` |
 | **Task Server** | `EnqueueAsync(id, ct)` | Passed to `SaveChangesAsync` / `workflow.Run()` |
 | **Dashboard** | Component disposal token | Passed to event handler async calls |
+| **CancellationCheckProvider** | DB `cancel_requested` flag | Throws `OperationCanceledException` before step |
+| **ICancellationRegistry** | `CancellationTokenSource` lookup | `TryCancel()` fires CTS for same-server instant cancel |

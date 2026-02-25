@@ -9,7 +9,6 @@ using ChainSharp.Effect.Services.StepEffectProvider;
 using ChainSharp.Effect.Services.StepEffectProviderFactory;
 using ChainSharp.Effect.Services.StepEffectRunner;
 using FluentAssertions;
-using Moq;
 
 namespace ChainSharp.Tests.Effect.Integration.UnitTests.Services;
 
@@ -23,14 +22,14 @@ public class EffectRunnerRegistryTests
     {
         // Arrange
         var registry = new EffectRegistry();
-        var mockFactory = new Mock<IEffectProviderFactory>();
-        registry.Register(mockFactory.Object.GetType(), enabled: false);
+        var factory = new DisabledEffectFactory();
+        registry.Register(typeof(DisabledEffectFactory), enabled: false);
 
         // Act
-        using var runner = new EffectRunner([mockFactory.Object], registry);
+        using var runner = new EffectRunner([factory], registry);
 
         // Assert
-        mockFactory.Verify(f => f.Create(), Times.Never);
+        factory.CreateCalled.Should().BeFalse();
     }
 
     [Test]
@@ -38,16 +37,14 @@ public class EffectRunnerRegistryTests
     {
         // Arrange
         var registry = new EffectRegistry();
-        var mockFactory = new Mock<IEffectProviderFactory>();
-        var mockProvider = new Mock<IEffectProvider>();
-        mockFactory.Setup(f => f.Create()).Returns(mockProvider.Object);
-        registry.Register(mockFactory.Object.GetType(), enabled: true);
+        var factory = new EnabledEffectFactory();
+        registry.Register(typeof(EnabledEffectFactory), enabled: true);
 
         // Act
-        using var runner = new EffectRunner([mockFactory.Object], registry);
+        using var runner = new EffectRunner([factory], registry);
 
         // Assert
-        mockFactory.Verify(f => f.Create(), Times.Once);
+        factory.CreateCalled.Should().BeTrue();
     }
 
     [Test]
@@ -55,16 +52,14 @@ public class EffectRunnerRegistryTests
     {
         // Arrange - factory type not registered in registry (infrastructure effect)
         var registry = new EffectRegistry();
-        var mockFactory = new Mock<IEffectProviderFactory>();
-        var mockProvider = new Mock<IEffectProvider>();
-        mockFactory.Setup(f => f.Create()).Returns(mockProvider.Object);
+        var factory = new EnabledEffectFactory();
         // Intentionally NOT registering the factory type
 
         // Act
-        using var runner = new EffectRunner([mockFactory.Object], registry);
+        using var runner = new EffectRunner([factory], registry);
 
         // Assert
-        mockFactory.Verify(f => f.Create(), Times.Once);
+        factory.CreateCalled.Should().BeTrue();
     }
 
     [Test]
@@ -113,14 +108,14 @@ public class EffectRunnerRegistryTests
     {
         // Arrange
         var registry = new EffectRegistry();
-        var mockFactory = new Mock<IStepEffectProviderFactory>();
-        registry.Register(mockFactory.Object.GetType(), enabled: false);
+        var factory = new DisabledStepEffectFactory();
+        registry.Register(typeof(DisabledStepEffectFactory), enabled: false);
 
         // Act
-        using var runner = new StepEffectRunner([mockFactory.Object], registry);
+        using var runner = new StepEffectRunner([factory], registry);
 
         // Assert
-        mockFactory.Verify(f => f.Create(), Times.Never);
+        factory.CreateCalled.Should().BeFalse();
     }
 
     [Test]
@@ -128,16 +123,14 @@ public class EffectRunnerRegistryTests
     {
         // Arrange
         var registry = new EffectRegistry();
-        var mockFactory = new Mock<IStepEffectProviderFactory>();
-        var mockProvider = new Mock<IStepEffectProvider>();
-        mockFactory.Setup(f => f.Create()).Returns(mockProvider.Object);
-        registry.Register(mockFactory.Object.GetType(), enabled: true);
+        var factory = new EnabledStepEffectFactory();
+        registry.Register(typeof(EnabledStepEffectFactory), enabled: true);
 
         // Act
-        using var runner = new StepEffectRunner([mockFactory.Object], registry);
+        using var runner = new StepEffectRunner([factory], registry);
 
         // Assert
-        mockFactory.Verify(f => f.Create(), Times.Once);
+        factory.CreateCalled.Should().BeTrue();
     }
 
     [Test]
@@ -145,16 +138,14 @@ public class EffectRunnerRegistryTests
     {
         // Arrange - factory type not registered in registry (infrastructure effect)
         var registry = new EffectRegistry();
-        var mockFactory = new Mock<IStepEffectProviderFactory>();
-        var mockProvider = new Mock<IStepEffectProvider>();
-        mockFactory.Setup(f => f.Create()).Returns(mockProvider.Object);
+        var factory = new EnabledStepEffectFactory();
         // Intentionally NOT registering the factory type
 
         // Act
-        using var runner = new StepEffectRunner([mockFactory.Object], registry);
+        using var runner = new StepEffectRunner([factory], registry);
 
         // Assert
-        mockFactory.Verify(f => f.Create(), Times.Once);
+        factory.CreateCalled.Should().BeTrue();
     }
 
     [Test]
@@ -197,9 +188,6 @@ public class EffectRunnerRegistryTests
     #endregion
 
     #region Test Stubs
-
-    // Concrete stub factories with distinct types for mix tests
-    // (Moq proxies share the same GetType(), so we need real types)
 
     private class StubEffectProvider : IEffectProvider
     {

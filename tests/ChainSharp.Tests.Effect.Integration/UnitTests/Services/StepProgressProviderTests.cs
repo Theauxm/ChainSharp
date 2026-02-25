@@ -1,4 +1,5 @@
 using System.Reflection;
+using ChainSharp.Effect.Models;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.Metadata.DTOs;
 using ChainSharp.Effect.Models.StepMetadata;
@@ -9,7 +10,6 @@ using ChainSharp.Effect.Services.EffectWorkflow;
 using ChainSharp.Effect.StepProvider.Progress.Services.StepProgressProvider;
 using FluentAssertions;
 using LanguageExt;
-using Moq;
 
 namespace ChainSharp.Tests.Effect.Integration.UnitTests.Services;
 
@@ -21,19 +21,20 @@ namespace ChainSharp.Tests.Effect.Integration.UnitTests.Services;
 public class StepProgressProviderTests
 {
     private StepProgressProvider _provider;
-    private Mock<IEffectRunner> _mockEffectRunner;
+    private FakeEffectRunner _fakeEffectRunner;
 
     [SetUp]
     public void SetUp()
     {
         _provider = new StepProgressProvider();
-        _mockEffectRunner = new Mock<IEffectRunner>();
+        _fakeEffectRunner = new FakeEffectRunner();
     }
 
     [TearDown]
     public void TearDown()
     {
         _provider.Dispose();
+        _fakeEffectRunner.Dispose();
     }
 
     #region BeforeStepExecution Tests
@@ -77,7 +78,7 @@ public class StepProgressProviderTests
         await _provider.BeforeStepExecution(step, workflow, CancellationToken.None);
 
         // Assert
-        _mockEffectRunner.Verify(r => r.Update(workflow.Metadata!), Times.Once);
+        _fakeEffectRunner.UpdateCallCount.Should().Be(1);
     }
 
     [Test]
@@ -90,7 +91,7 @@ public class StepProgressProviderTests
         await _provider.BeforeStepExecution(step, workflow, CancellationToken.None);
 
         // Assert
-        _mockEffectRunner.Verify(r => r.SaveChanges(It.IsAny<CancellationToken>()), Times.Once);
+        _fakeEffectRunner.SaveChangesCallCount.Should().Be(1);
     }
 
     [Test]
@@ -98,14 +99,14 @@ public class StepProgressProviderTests
     {
         // Arrange — workflow with null metadata (no reflection call)
         var workflow = new TestWorkflow();
-        workflow.EffectRunner = _mockEffectRunner.Object;
+        workflow.EffectRunner = _fakeEffectRunner;
         var step = CreateTestStep("SomeStep");
 
         // Act & Assert
         var act = () => _provider.BeforeStepExecution(step, workflow, CancellationToken.None);
         await act.Should().NotThrowAsync();
 
-        _mockEffectRunner.Verify(r => r.Update(It.IsAny<Metadata>()), Times.Never);
+        _fakeEffectRunner.UpdateCallCount.Should().Be(0);
     }
 
     [Test]
@@ -133,7 +134,8 @@ public class StepProgressProviderTests
         await _provider.BeforeStepExecution(step, workflow, cts.Token);
 
         // Assert
-        _mockEffectRunner.Verify(r => r.SaveChanges(cts.Token), Times.Once);
+        _fakeEffectRunner.SaveChangesCallCount.Should().Be(1);
+        _fakeEffectRunner.LastSaveChangesCancellationToken.Should().Be(cts.Token);
     }
 
     #endregion
@@ -180,8 +182,8 @@ public class StepProgressProviderTests
         await _provider.AfterStepExecution(step, workflow, CancellationToken.None);
 
         // Assert
-        _mockEffectRunner.Verify(r => r.Update(workflow.Metadata!), Times.Once);
-        _mockEffectRunner.Verify(r => r.SaveChanges(It.IsAny<CancellationToken>()), Times.Once);
+        _fakeEffectRunner.UpdateCallCount.Should().Be(1);
+        _fakeEffectRunner.SaveChangesCallCount.Should().Be(1);
     }
 
     [Test]
@@ -189,14 +191,14 @@ public class StepProgressProviderTests
     {
         // Arrange — workflow with null metadata (no reflection call)
         var workflow = new TestWorkflow();
-        workflow.EffectRunner = _mockEffectRunner.Object;
+        workflow.EffectRunner = _fakeEffectRunner;
         var step = CreateTestStep("SomeStep");
 
         // Act & Assert
         var act = () => _provider.AfterStepExecution(step, workflow, CancellationToken.None);
         await act.Should().NotThrowAsync();
 
-        _mockEffectRunner.Verify(r => r.Update(It.IsAny<Metadata>()), Times.Never);
+        _fakeEffectRunner.UpdateCallCount.Should().Be(0);
     }
 
     #endregion
@@ -247,11 +249,8 @@ public class StepProgressProviderTests
         workflow.Metadata!.CurrentlyRunningStep.Should().BeNull();
 
         // Verify 4 updates (before+after for each step) and 4 saves
-        _mockEffectRunner.Verify(r => r.Update(workflow.Metadata), Times.Exactly(4));
-        _mockEffectRunner.Verify(
-            r => r.SaveChanges(It.IsAny<CancellationToken>()),
-            Times.Exactly(4)
-        );
+        _fakeEffectRunner.UpdateCallCount.Should().Be(4);
+        _fakeEffectRunner.SaveChangesCallCount.Should().Be(4);
     }
 
     #endregion
@@ -295,7 +294,7 @@ public class StepProgressProviderTests
         var workflow = new TestWorkflow();
 
         // EffectRunner has a public setter
-        workflow.EffectRunner = effectRunner ?? _mockEffectRunner.Object;
+        workflow.EffectRunner = effectRunner ?? _fakeEffectRunner;
 
         // Metadata has an internal setter — use reflection
         var metadataToSet = metadata ?? CreateMetadata();
@@ -307,7 +306,7 @@ public class StepProgressProviderTests
     private TestWorkflow CreateTestWorkflow(bool withNullMetadata)
     {
         var workflow = new TestWorkflow();
-        workflow.EffectRunner = _mockEffectRunner.Object;
+        workflow.EffectRunner = _fakeEffectRunner;
         // Leave Metadata as null (default)
         return workflow;
     }
@@ -379,6 +378,38 @@ public class StepProgressProviderTests
     private class TestStep : EffectStep<string, string>
     {
         public override Task<string> Run(string input) => Task.FromResult(input);
+    }
+
+    /// <summary>
+    /// Fake IEffectRunner that tracks method calls for assertions.
+    /// </summary>
+    private class FakeEffectRunner : IEffectRunner
+    {
+        public int UpdateCallCount { get; private set; }
+        public int SaveChangesCallCount { get; private set; }
+        public int TrackCallCount { get; private set; }
+        public CancellationToken LastSaveChangesCancellationToken { get; private set; }
+
+        public Task SaveChanges(CancellationToken cancellationToken)
+        {
+            SaveChangesCallCount++;
+            LastSaveChangesCancellationToken = cancellationToken;
+            return Task.CompletedTask;
+        }
+
+        public Task Track(IModel model)
+        {
+            TrackCallCount++;
+            return Task.CompletedTask;
+        }
+
+        public Task Update(IModel model)
+        {
+            UpdateCallCount++;
+            return Task.CompletedTask;
+        }
+
+        public void Dispose() { }
     }
 
     #endregion

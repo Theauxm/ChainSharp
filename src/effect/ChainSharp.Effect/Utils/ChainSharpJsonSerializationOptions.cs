@@ -21,7 +21,6 @@ namespace ChainSharp.Effect.Utils;
 /// 4. Custom converters for special types:
 ///    - Enums as strings for better readability and interoperability
 ///    - ValueTuples for proper serialization of tuple types
-///    - Mock objects for handling Moq mocks in test scenarios
 ///    - System.Type objects for type information persistence
 ///
 /// These options can be used by any component that needs to serialize or deserialize
@@ -44,7 +43,6 @@ public static class ChainSharpJsonSerializationOptions
     /// - Converters:
     ///   - JsonStringEnumConverter - Serializes enums as strings instead of numbers
     ///   - ValueTupleConverter - Handles serialization of ValueTuple types
-    ///   - MockConverter - Handles serialization of Moq mock objects
     ///   - SystemTypeConverter - Handles serialization of System.Type objects
     ///
     /// These options can be modified if needed, but changing them may affect the
@@ -64,7 +62,6 @@ public static class ChainSharpJsonSerializationOptions
             {
                 new JsonStringEnumConverter(),
                 new ValueTupleConverter(),
-                new MockConverter(),
                 new SystemTypeConverter(),
             }
         };
@@ -88,7 +85,6 @@ public static class ChainSharpJsonSerializationOptions
             {
                 new JsonStringEnumConverter(),
                 new ValueTupleConverter(),
-                new MockConverter(),
                 new SystemTypeConverter(),
             }
         };

@@ -1,3 +1,10 @@
+# [5.21.0](https://github.com/Theauxm/ChainSharp/compare/v5.20.2...v5.21.0) (2026-02-25)
+
+
+### Features
+
+* flowthru sample ([#175](https://github.com/Theauxm/ChainSharp/issues/175)) ([8839191](https://github.com/Theauxm/ChainSharp/commit/88391912eca8d4bd8df42a7e530b3ab21ddef69f))
+
 ## [5.20.2](https://github.com/Theauxm/ChainSharp/compare/v5.20.1...v5.20.2) (2026-02-25)
 
 

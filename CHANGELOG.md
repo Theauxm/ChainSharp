@@ -1,3 +1,10 @@
+## [5.20.1](https://github.com/Theauxm/ChainSharp/compare/v5.20.0...v5.20.1) (2026-02-25)
+
+
+### Bug Fixes
+
+* cancellation tokens ([#173](https://github.com/Theauxm/ChainSharp/issues/173)) ([76883d3](https://github.com/Theauxm/ChainSharp/commit/76883d3ae9c6fdc60c106d4d5943d7427f4b7b15))
+
 # [5.20.0](https://github.com/Theauxm/ChainSharp/compare/v5.19.0...v5.20.0) (2026-02-24)
 
 

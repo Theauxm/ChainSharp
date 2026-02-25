@@ -52,4 +52,14 @@ public enum WorkflowState
     /// Workflows in this state are actively processing their steps.
     /// </remarks>
     InProgress,
+
+    /// <summary>
+    /// The workflow was explicitly cancelled by an operator or system signal.
+    /// </summary>
+    /// <remarks>
+    /// This state indicates that the workflow was intentionally stopped before completion,
+    /// either via the dashboard cancel button or a system cancellation signal.
+    /// Cancelled workflows are not retried and do not create dead letters.
+    /// </remarks>
+    Cancelled,
 }

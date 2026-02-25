@@ -1,5 +1,6 @@
 using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 using ChainSharp.Effect.Extensions;
+using ChainSharp.Effect.Orchestration.Scheduler.Services.CancellationRegistry;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.DormantDependentContext;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.JobDispatcherPollingService;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestManagerPollingService;
@@ -69,6 +70,12 @@ public partial class SchedulerConfigurationBuilder
 
         // Register the configuration
         _parentBuilder.ServiceCollection.AddSingleton(_configuration);
+
+        // Register the cancellation registry (singleton — shared across all workers)
+        _parentBuilder.ServiceCollection.AddSingleton<
+            ICancellationRegistry,
+            CancellationRegistry
+        >();
 
         // Register IManifestScheduler
         _parentBuilder.ServiceCollection.AddScoped<IManifestScheduler, ManifestScheduler>();

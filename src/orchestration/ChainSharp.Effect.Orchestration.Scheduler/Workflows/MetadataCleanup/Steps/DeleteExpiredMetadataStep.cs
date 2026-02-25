@@ -44,6 +44,7 @@ internal class DeleteExpiredMetadataStep(
                 m =>
                     m.WorkflowState == WorkflowState.Completed
                     || m.WorkflowState == WorkflowState.Failed
+                    || m.WorkflowState == WorkflowState.Cancelled
             )
             .Select(m => m.Id);
 
@@ -67,6 +68,7 @@ internal class DeleteExpiredMetadataStep(
                 m =>
                     m.WorkflowState == WorkflowState.Completed
                     || m.WorkflowState == WorkflowState.Failed
+                    || m.WorkflowState == WorkflowState.Cancelled
             )
             .ExecuteDeleteAsync(CancellationToken);
 

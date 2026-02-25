@@ -19,99 +19,91 @@ Dependent manifests are evaluated during polling — when a parent's `LastSucces
 
 ## Signatures
 
-### Startup: ThenInclude (Single — cursor-based)
+### Startup: ThenInclude (Single — cursor-based, Recommended)
 
 ```csharp
-public SchedulerConfigurationBuilder ThenInclude<TWorkflow, TInput>(
+public SchedulerConfigurationBuilder ThenInclude<TWorkflow>(
     string externalId,
-    TInput input,
+    IManifestProperties input,
     Action<ScheduleOptions>? options = null
 )
-    where TWorkflow : IEffectWorkflow<TInput, Unit>
-    where TInput : IManifestProperties
+    where TWorkflow : class
 ```
 
-### Startup: Include (Single — root-based)
+### Startup: Include (Single — root-based, Recommended)
 
 ```csharp
-public SchedulerConfigurationBuilder Include<TWorkflow, TInput>(
+public SchedulerConfigurationBuilder Include<TWorkflow>(
     string externalId,
-    TInput input,
+    IManifestProperties input,
     Action<ScheduleOptions>? options = null
 )
+    where TWorkflow : class
+```
+
+Both infer the input type from `TWorkflow`'s `IEffectWorkflow<TInput, Unit>` interface and validate the provided `input` at configuration time.
+
+### Startup: IncludeMany with ManifestItem (Recommended)
+
+```csharp
+// Name-based: derives groupId, prunePrefix, and external IDs from name
+public SchedulerConfigurationBuilder IncludeMany<TWorkflow>(
+    string name,
+    IEnumerable<ManifestItem> items,
+    Action<ScheduleOptions>? options = null
+)
+    where TWorkflow : class
+
+// Unnamed: each ManifestItem.Id is the full external ID
+public SchedulerConfigurationBuilder IncludeMany<TWorkflow>(
+    IEnumerable<ManifestItem> items,
+    Action<ScheduleOptions>? options = null
+)
+    where TWorkflow : class
+```
+
+Each item's `ManifestItem.DependsOn` specifies the parent's external ID. When `DependsOn` is null, the item falls back to the root `Schedule`. If all items have explicit `DependsOn`, no preceding `Schedule` is required (useful after `ScheduleMany`).
+
+The `name` parameter automatically derives `groupId` = `name`, `prunePrefix` = `"{name}-"`, and each external ID = `"{name}-{item.Id}"`.
+
+### Startup: ThenIncludeMany with ManifestItem (Recommended)
+
+```csharp
+// Name-based
+public SchedulerConfigurationBuilder ThenIncludeMany<TWorkflow>(
+    string name,
+    IEnumerable<ManifestItem> items,
+    Action<ScheduleOptions>? options = null
+)
+    where TWorkflow : class
+
+// Unnamed
+public SchedulerConfigurationBuilder ThenIncludeMany<TWorkflow>(
+    IEnumerable<ManifestItem> items,
+    Action<ScheduleOptions>? options = null
+)
+    where TWorkflow : class
+```
+
+Every `ManifestItem.DependsOn` **must** be set — `ThenIncludeMany` throws `InvalidOperationException` if any item has a null `DependsOn`.
+
+### Startup: Explicit Type Parameters (Legacy)
+
+The two-type-parameter single forms and three-type-parameter batch forms are still available for backward compatibility:
+
+```csharp
+// Single
+public SchedulerConfigurationBuilder ThenInclude<TWorkflow, TInput>(...)
     where TWorkflow : IEffectWorkflow<TInput, Unit>
     where TInput : IManifestProperties
-```
 
-### Startup: IncludeMany — Name-Based (Recommended)
+public SchedulerConfigurationBuilder Include<TWorkflow, TInput>(...)
+    where TWorkflow : IEffectWorkflow<TInput, Unit>
+    where TInput : IManifestProperties
 
-```csharp
-// With explicit dependsOn
-public SchedulerConfigurationBuilder IncludeMany<TWorkflow, TInput, TSource>(
-    string name,
-    IEnumerable<TSource> sources,
-    Func<TSource, (string Suffix, TInput Input)> map,
-    Func<TSource, string> dependsOn,
-    Action<ScheduleOptions>? options = null,
-    Action<TSource, ManifestOptions>? configureEach = null
-)
-
-// Root-based (no dependsOn) — all items depend on the root Schedule
-public SchedulerConfigurationBuilder IncludeMany<TWorkflow, TInput, TSource>(
-    string name,
-    IEnumerable<TSource> sources,
-    Func<TSource, (string Suffix, TInput Input)> map,
-    Action<ScheduleOptions>? options = null,
-    Action<TSource, ManifestOptions>? configureEach = null
-)
-```
-
-The `name` parameter automatically derives `groupId` = `name`, `prunePrefix` = `"{name}-"`, and each external ID = `"{name}-{suffix}"`.
-
-### Startup: IncludeMany — Explicit
-
-```csharp
-// With explicit dependsOn
-public SchedulerConfigurationBuilder IncludeMany<TWorkflow, TInput, TSource>(
-    IEnumerable<TSource> sources,
-    Func<TSource, (string ExternalId, TInput Input)> map,
-    Func<TSource, string> dependsOn,
-    Action<ScheduleOptions>? options = null,
-    Action<TSource, ManifestOptions>? configureEach = null
-)
-
-// Root-based (no dependsOn) — all items depend on the root Schedule
-public SchedulerConfigurationBuilder IncludeMany<TWorkflow, TInput, TSource>(
-    IEnumerable<TSource> sources,
-    Func<TSource, (string ExternalId, TInput Input)> map,
-    Action<ScheduleOptions>? options = null,
-    Action<TSource, ManifestOptions>? configureEach = null
-)
-```
-
-### Startup: ThenIncludeMany — Name-Based (Recommended)
-
-```csharp
-public SchedulerConfigurationBuilder ThenIncludeMany<TWorkflow, TInput, TSource>(
-    string name,
-    IEnumerable<TSource> sources,
-    Func<TSource, (string Suffix, TInput Input)> map,
-    Func<TSource, string> dependsOn,
-    Action<ScheduleOptions>? options = null,
-    Action<TSource, ManifestOptions>? configureEach = null
-)
-```
-
-### Startup: ThenIncludeMany — Explicit
-
-```csharp
-public SchedulerConfigurationBuilder ThenIncludeMany<TWorkflow, TInput, TSource>(
-    IEnumerable<TSource> sources,
-    Func<TSource, (string ExternalId, TInput Input)> map,
-    Func<TSource, string> dependsOn,
-    Action<ScheduleOptions>? options = null,
-    Action<TSource, ManifestOptions>? configureEach = null
-)
+// Batch (with map + dependsOn functions)
+public SchedulerConfigurationBuilder IncludeMany<TWorkflow, TInput, TSource>(...)
+public SchedulerConfigurationBuilder ThenIncludeMany<TWorkflow, TInput, TSource>(...)
 ```
 
 ### Runtime: ScheduleDependentAsync (Single)
@@ -150,14 +142,24 @@ Task<IReadOnlyList<Manifest>> ScheduleManyDependentAsync<TWorkflow, TInput, TSou
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `externalId` | `string` | Yes | Unique identifier for this dependent job |
-| `input` | `TInput` | Yes | Input data passed to the workflow on each execution |
+| `input` | `IManifestProperties` (inferred) / `TInput` (explicit) | Yes | Input data passed to the workflow on each execution. Validated against the workflow's expected input type at configuration time. |
 | `options` | `Action<ScheduleOptions>?` | No | Optional callback to configure all scheduling options via a fluent builder. Includes manifest-level settings (`Priority`, `Enabled`, `MaxRetries`, `Timeout`) and group-level settings (`.Group(...)` with `MaxActiveJobs`, `Priority`, `Enabled`). See [ScheduleOptions]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}#scheduleoptions). |
 
 `ThenInclude` links to the **cursor** — the most recently declared manifest (the last `Schedule`, `ThenInclude`, or `Include`). Must be called after `Schedule()`, `Include()`, or another `ThenInclude()`.
 
 `Include` links to the **root** — the most recent `Schedule()` call. Must be called after `Schedule()`. Use `Include` to create multiple independent branches from a single root.
 
-### ScheduleDependentAsync (Runtime)
+### IncludeMany / ThenIncludeMany with ManifestItem (Startup — Batch)
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `name` | `string` | No (name-based only) | The batch name. Derives `groupId`, `prunePrefix`, and external ID prefix. |
+| `items` | `IEnumerable<ManifestItem>` | Yes | Items to create as dependent manifests. Each item's `DependsOn` specifies the parent. |
+| `options` | `Action<ScheduleOptions>?` | No | Optional callback to configure scheduling options. |
+
+`IncludeMany` items can use `DependsOn` per-item or fall back to the root `Schedule`. `ThenIncludeMany` requires `DependsOn` on every item.
+
+### ScheduleDependentAsync (Runtime — Single)
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -167,21 +169,9 @@ Task<IReadOnlyList<Manifest>> ScheduleManyDependentAsync<TWorkflow, TInput, TSou
 | `options` | `Action<ScheduleOptions>?` | No | Optional callback to configure all scheduling options via a fluent builder. See [ScheduleOptions]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}#scheduleoptions). |
 | `ct` | `CancellationToken` | No | Cancellation token |
 
-### IncludeMany / ThenIncludeMany / ScheduleManyDependentAsync (Batch)
+### ScheduleManyDependentAsync (Runtime — Batch)
 
-The name-based overloads take the same parameters as [ScheduleMany name-based]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %}#name-based-overload), plus:
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `dependsOn` | `Func<TSource, string>` | Yes | A function that maps each source item to the `ExternalId` of its parent manifest |
-
-The explicit overloads take the same parameters as [ScheduleMany explicit]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %}#explicit-overload), plus `dependsOn`.
-
-`IncludeMany` (with `dependsOn`) is for first-level batch dependents — use after `ScheduleMany` or `Schedule`. `ThenIncludeMany` is for deeper chaining after a previous `IncludeMany`.
-
-### IncludeMany (Batch — root-based, no `dependsOn`)
-
-Same parameters as [ScheduleMany]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %}) (without `schedule` or `dependsOn`) — all items automatically depend on the root `Schedule()`. Must be called after `Schedule()`.
+Uses the legacy three-type-parameter API with `map` and `dependsOn` functions. See [ScheduleMany]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %}) for parameter details.
 
 ## Examples
 
@@ -190,22 +180,22 @@ Same parameters as [ScheduleMany]({{ site.baseurl }}{% link api-reference/schedu
 ```csharp
 services.AddChainSharpEffects(options => options
     .AddScheduler(scheduler => scheduler
-        .UseHangfire(connectionString)
+        .UsePostgresTaskServer()
         // A: Extract runs every 5 minutes
-        .Schedule<IExtractWorkflow, ExtractInput>(
+        .Schedule<IExtractWorkflow>(
             "etl-extract",
             new ExtractInput(),
             Every.Minutes(5),
             options => options.Group("etl-pipeline"))
         // B: Transform runs after Extract succeeds (priority 5 + DependentPriorityBoost)
-        .ThenInclude<ITransformWorkflow, TransformInput>(
+        .ThenInclude<ITransformWorkflow>(
             "etl-transform",
             new TransformInput(),
             options => options
                 .Group("etl-pipeline")
                 .Priority(5))
         // C: Load runs after Transform succeeds
-        .ThenInclude<ILoadWorkflow, LoadInput>(
+        .ThenInclude<ILoadWorkflow>(
             "etl-load",
             new LoadInput(),
             options => options.Group("etl-pipeline"))
@@ -219,14 +209,14 @@ Use `Include` to create multiple branches from a single root. Each `Include` dep
 
 ```csharp
 scheduler
-    .Schedule<IExtractWorkflow, ExtractInput>(
+    .Schedule<IExtractWorkflow>(
         "extract", new ExtractInput(), Every.Hours(1),
         options => options.Group("etl"))
     // Both Transform and Validate depend on Extract (fan-out)
-    .Include<ITransformWorkflow, TransformInput>(
+    .Include<ITransformWorkflow>(
         "transform", new TransformInput(),
         options => options.Group("etl"))
-    .Include<IValidateWorkflow, ValidateInput>(
+    .Include<IValidateWorkflow>(
         "validate", new ValidateInput(),
         options => options.Group("etl"))
 ```
@@ -237,41 +227,46 @@ scheduler
 
 ```csharp
 scheduler
-    .Schedule<IExtractWorkflow, ExtractInput>(
+    .Schedule<IExtractWorkflow>(
         "extract", new ExtractInput(), Every.Hours(1),
         options => options.Group("etl"))
     // Branch 1: Extract → Transform → Load
-    .Include<ITransformWorkflow, TransformInput>(
+    .Include<ITransformWorkflow>(
         "transform", new TransformInput(),
         options => options.Group("etl"))
-        .ThenInclude<ILoadWorkflow, LoadInput>(
+        .ThenInclude<ILoadWorkflow>(
             "load", new LoadInput(),
             options => options.Group("etl"))
     // Branch 2: Extract → Validate (back to root)
-    .Include<IValidateWorkflow, ValidateInput>(
+    .Include<IValidateWorkflow>(
         "validate", new ValidateInput(),
         options => options.Group("etl"))
 ```
 
 Result: `Extract → Transform → Load`, `Extract → Validate`
 
-### Batch Dependent Scheduling
+### Batch Dependent Scheduling with ManifestItem
 
 ```csharp
-// Name-based: groupId, prunePrefix, and external ID prefix derived from name
 scheduler
-    .ScheduleMany<IExtractWorkflow, ExtractInput, int>(
+    .ScheduleMany<IExtractWorkflow>(
         "extract",
-        Enumerable.Range(0, 10),
-        i => ($"{i}", new ExtractInput { Index = i }),
+        Enumerable.Range(0, 10).Select(i => new ManifestItem(
+            $"{i}",
+            new ExtractInput { Index = i }
+        )),
         Every.Minutes(5))
-    .IncludeMany<ITransformWorkflow, TransformInput, int>(
+    .IncludeMany<ITransformWorkflow>(
         "transform",
-        Enumerable.Range(0, 10),
-        i => ($"{i}", new TransformInput { Index = i }),
-        dependsOn: i => $"extract-{i}");
+        Enumerable.Range(0, 10).Select(i => new ManifestItem(
+            $"{i}",
+            new TransformInput { Index = i },
+            DependsOn: $"extract-{i}"
+        )));
 // Creates: extract-0..extract-9, transform-0..transform-9
 ```
+
+Each `ManifestItem` specifies its parent via the `DependsOn` property. No separate `dependsOn` function needed.
 
 ### Batch Fan-Out (IncludeMany)
 
@@ -279,16 +274,17 @@ All items in the batch depend on a single root `Schedule`:
 
 ```csharp
 scheduler
-    .Schedule<IExtractWorkflow, ExtractInput>(
+    .Schedule<IExtractWorkflow>(
         "extract-all", new ExtractInput(), Every.Hours(1),
         options => options.Group("extract"))
-    .IncludeMany<ILoadWorkflow, LoadInput, int>(
-        "load",
-        Enumerable.Range(0, 10),
-        i => ($"{i}", new LoadInput { Partition = i }))
+    .IncludeMany<ILoadWorkflow>(
+        Enumerable.Range(0, 10).Select(i => new ManifestItem(
+            $"load-{i}",
+            new LoadInput { Partition = i }
+        )))
 ```
 
-All 10 `load-*` manifests depend on `extract-all`. The name `"load"` auto-derives `groupId: "load"` and `prunePrefix: "load-"`.
+All 10 `load-*` manifests depend on `extract-all`. When `ManifestItem.DependsOn` is null, it falls back to the root `Schedule`.
 
 ### Runtime Dependent Scheduling
 
@@ -310,9 +306,9 @@ Add `.Dormant()` to `ScheduleOptions` when declaring a dependent to make it a do
 
 ```csharp
 scheduler
-    .Schedule<IParentWorkflow, ParentInput>(
+    .Schedule<IParentWorkflow>(
         "parent", new ParentInput(), Every.Minutes(5))
-    .Include<IChildWorkflow, ChildInput>(
+    .Include<IChildWorkflow>(
         "child", new ChildInput(),
         options: o => o.Dormant());
 ```

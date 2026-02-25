@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Authors>Theauxm,mark-keaton</Authors>
+        <PackageDescription>Step Progress and Cancellation Check Providers for ChainSharp Effects</PackageDescription>
+        <RepositoryUrl>https://github.com/Theauxm/ChainSharp</RepositoryUrl>
+        <AssemblyName>Theauxm.ChainSharp.Effect.StepProvider.Progress</AssemblyName>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\effect\ChainSharp.Effect\ChainSharp.Effect.csproj" />
+      <ProjectReference Include="..\..\data\ChainSharp.Effect.Data\ChainSharp.Effect.Data.csproj" />
+    </ItemGroup>
+
+</Project>

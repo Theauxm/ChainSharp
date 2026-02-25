@@ -5,6 +5,7 @@ public class ExecutionTimePoint
     public string Hour { get; init; } = "";
     public int Completed { get; init; }
     public int Failed { get; init; }
+    public int Cancelled { get; init; }
 }
 
 public class StateCount

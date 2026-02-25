@@ -1,8 +1,12 @@
 @page "/chainsharp/data/metadata"
 @using System.Linq.Dynamic.Core
+@using ChainSharp.Effect.Orchestration.Scheduler.Services.CancellationRegistry
+@using Microsoft.Extensions.DependencyInjection
 @inherits PollingComponentBase
 @inject IDataContextProviderFactory DataContextFactory
 @inject NavigationManager Navigation
+@inject IServiceProvider ServiceProvider
+@inject NotificationService NotificationService
 
 <RadzenText TextStyle="TextStyle.H4" class="rz-mb-2">Metadata</RadzenText>
 <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-4" Style="color: var(--rz-text-secondary-color);">
@@ -15,16 +19,26 @@
     <Columns>
         <RadzenDataGridColumn TItem="Metadata"
                               Title=""
-                              Width="50px"
+                              Width="80px"
                               Sortable="false"
                               Filterable="false"
                               Frozen="true"
                               TextAlign="TextAlign.Center">
             <Template Context="m">
-                <RadzenButton Icon="visibility"
-                              Variant="Variant.Text"
-                              Size="ButtonSize.Small"
-                              Click="@(() => Navigation.NavigateTo($"chainsharp/data/metadata/{m.Id}"))" />
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0" AlignItems="AlignItems.Center">
+                    <RadzenButton Icon="visibility"
+                                  Variant="Variant.Text"
+                                  Size="ButtonSize.Small"
+                                  Click="@(() => Navigation.NavigateTo($"chainsharp/data/metadata/{m.Id}"))" />
+                    @if (m.WorkflowState == WorkflowState.InProgress)
+                    {
+                        <RadzenButton Icon="cancel"
+                                      Variant="Variant.Text"
+                                      Size="ButtonSize.Small"
+                                      ButtonStyle="ButtonStyle.Danger"
+                                      Click="@(() => CancelWorkflow(m.Id, m.Name))" />
+                    }
+                </RadzenStack>
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Metadata"
@@ -42,6 +56,12 @@
                               Property="WorkflowState"
                               Title="State"
                               Width="120px" />
+        <RadzenDataGridColumn TItem="Metadata"
+                              Property="CurrentlyRunningStep"
+                              Title="Current Step"
+                              Width="150px">
+            <Template Context="m">@(m.WorkflowState == WorkflowState.InProgress ? (m.CurrentlyRunningStep ?? "—") : "—")</Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Metadata"
                               Property="ExternalId"
                               Title="External Id"
@@ -81,6 +101,38 @@
 
 @code {
     private ChainSharpDataGrid<Metadata>? _grid;
+
+    private async Task CancelWorkflow(long metadataId, string workflowName)
+    {
+        try
+        {
+            using var context = await DataContextFactory.CreateDbContextAsync(DisposalToken);
+            await context
+                .Metadatas.Where(m => m.Id == metadataId)
+                .ExecuteUpdateAsync(
+                    s => s.SetProperty(m => m.CancellationRequested, true),
+                    DisposalToken
+                );
+
+            ServiceProvider.GetService<ICancellationRegistry>()?.TryCancel(metadataId);
+
+            NotificationService.Notify(
+                NotificationSeverity.Success,
+                "Cancellation Requested",
+                $"Cancel signal sent for {ShortName(workflowName)}.",
+                duration: 4000
+            );
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(
+                NotificationSeverity.Error,
+                "Cancel Failed",
+                ex.Message,
+                duration: 6000
+            );
+        }
+    }
 
     protected override async Task LoadDataAsync(CancellationToken cancellationToken)
     {

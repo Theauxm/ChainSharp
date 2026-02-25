@@ -2,11 +2,13 @@ using ChainSharp.Effect.Dashboard.Extensions;
 using ChainSharp.Effect.Data.Postgres.Extensions;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Orchestration.Mediator.Extensions;
+using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
 using ChainSharp.Effect.Orchestration.Scheduler.Extensions;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager;
 using ChainSharp.Effect.Provider.Json.Extensions;
 using ChainSharp.Effect.Provider.Parameter.Extensions;
+using ChainSharp.Effect.StepProvider.Progress.Extensions;
 using ChainSharp.Samples.Scheduler.Hangfire.Workflows.AlwaysFails;
 using ChainSharp.Samples.Scheduler.Hangfire.Workflows.DataQualityCheck;
 using ChainSharp.Samples.Scheduler.Hangfire.Workflows.ExtractImport;
@@ -45,6 +47,7 @@ builder.Services.AddChainSharpEffects(
             .AddPostgresEffect(connectionString)
             .AddJsonEffect()
             .SaveWorkflowParameters()
+            .AddStepProgress()
             // Add Scheduler with Hangfire as the background task server
             .AddScheduler(scheduler =>
             {
@@ -62,27 +65,33 @@ builder.Services.AddChainSharpEffects(
                     .UsePostgresTaskServer();
 
                 scheduler
-                    .Schedule<IHelloWorldWorkflow, HelloWorldInput>(
+                    .Schedule<IHelloWorldWorkflow>(
                         "sample-hello-world",
                         new HelloWorldInput { Name = "ChainSharp Scheduler" },
                         Every.Seconds(20)
                     )
-                    .IncludeMany<IGoodbyeWorldWorkflow, GoodbyeWorldInput, string>(
-                        Enumerable.Range(0, 10).Select(i => ($"ChainSharp {i}")),
-                        source =>
-                            ("sample-goodbye-number", new GoodbyeWorldInput() { Name = source })
+                    .IncludeMany<IGoodbyeWorldWorkflow>(
+                        Enumerable
+                            .Range(0, 10)
+                            .Select(
+                                i =>
+                                    new ManifestItem(
+                                        $"sample-goodbye-number",
+                                        new GoodbyeWorldInput() { Name = $"ChainSharp {i}" }
+                                    )
+                            )
                     )
                     // Fan-out: both GoodbyeWorld variants run after HelloWorld succeeds
                     // Include always branches from the root Schedule (HelloWorld)
-                    .Include<IGoodbyeWorldWorkflow, GoodbyeWorldInput>(
+                    .Include<IGoodbyeWorldWorkflow>(
                         "sample-goodbye-world",
                         new GoodbyeWorldInput { Name = "ChainSharp Scheduler" }
                     )
-                    .Include<IGoodbyeWorldWorkflow, GoodbyeWorldInput>(
+                    .Include<IGoodbyeWorldWorkflow>(
                         "sample-farewell-world",
                         new GoodbyeWorldInput { Name = "ChainSharp Farewell" }
                     )
-                    .ThenInclude<IGoodbyeWorldWorkflow, GoodbyeWorldInput>(
+                    .ThenInclude<IGoodbyeWorldWorkflow>(
                         "sample-otherword-world",
                         new GoodbyeWorldInput { Name = "ChainSharp otherword" }
                     );
@@ -90,7 +99,7 @@ builder.Services.AddChainSharpEffects(
                 // AlwaysFails: intentionally throws on every run.
                 // MaxRetries(1) means it dead-letters after a single failure,
                 // providing a quick way to test the dead letter detail page.
-                scheduler.Schedule<IAlwaysFailsWorkflow, AlwaysFailsInput>(
+                scheduler.Schedule<IAlwaysFailsWorkflow>(
                     "sample-always-fails",
                     new AlwaysFailsInput { Scenario = "Database connection timeout" },
                     Every.Seconds(30),
@@ -99,108 +108,99 @@ builder.Services.AddChainSharpEffects(
 
                 scheduler
                     // Schedule ExtractImport for Customer table (10 indexes)
-                    .ScheduleMany<
-                        IExtractImportWorkflow,
-                        ExtractImportInput,
-                        (string Table, int Index)
-                    >(
+                    .ScheduleMany<IExtractImportWorkflow>(
                         "extract-import-customer",
-                        Enumerable.Range(0, 10).Select(i => ("Customer", i)),
-                        source =>
-                            (
-                                $"{source.Index}",
-                                new ExtractImportInput
-                                {
-                                    TableName = source.Table,
-                                    Index = source.Index,
-                                }
+                        Enumerable
+                            .Range(0, 10)
+                            .Select(
+                                i =>
+                                    new ManifestItem(
+                                        $"{i}",
+                                        new ExtractImportInput { TableName = "Customer", Index = i }
+                                    )
                             ),
                         Every.Minutes(5)
                     )
                     // First-level dependents: TransformLoad runs after each Customer ExtractImport succeeds
-                    .IncludeMany<
-                        ITransformLoadWorkflow,
-                        TransformLoadInput,
-                        (string Table, int Index)
-                    >(
+                    .IncludeMany<ITransformLoadWorkflow>(
                         "transform-load-customer",
-                        Enumerable.Range(0, 10).Select(i => ("Customer", i)),
-                        source =>
-                            (
-                                $"{source.Index}",
-                                new TransformLoadInput
-                                {
-                                    TableName = source.Table,
-                                    Index = source.Index,
-                                }
-                            ),
-                        dependsOn: source => $"extract-import-customer-{source.Index}"
+                        Enumerable
+                            .Range(0, 10)
+                            .Select(
+                                i =>
+                                    new ManifestItem(
+                                        $"{i}",
+                                        new TransformLoadInput
+                                        {
+                                            TableName = "Customer",
+                                            Index = i
+                                        },
+                                        DependsOn: $"extract-import-customer-{i}"
+                                    )
+                            )
                     )
                     // Dormant dependents: DataQualityCheck is declared in the topology but never
                     // auto-fires. The parent ExtractImport workflow activates it at runtime only
                     // when anomalies are detected, providing runtime-determined input.
-                    .IncludeMany<
-                        IDataQualityCheckWorkflow,
-                        DataQualityCheckInput,
-                        (string Table, int Index)
-                    >(
+                    .IncludeMany<IDataQualityCheckWorkflow>(
                         "dq-check-customer",
-                        Enumerable.Range(0, 10).Select(i => ("Customer", i)),
-                        source =>
-                            (
-                                $"{source.Index}",
-                                new DataQualityCheckInput
-                                {
-                                    TableName = source.Table,
-                                    Index = source.Index,
-                                    AnomalyCount = 0,
-                                }
+                        Enumerable
+                            .Range(0, 10)
+                            .Select(
+                                i =>
+                                    new ManifestItem(
+                                        $"{i}",
+                                        new DataQualityCheckInput
+                                        {
+                                            TableName = "Customer",
+                                            Index = i,
+                                            AnomalyCount = 0,
+                                        },
+                                        DependsOn: $"extract-import-customer-{i}"
+                                    )
                             ),
-                        dependsOn: source => $"extract-import-customer-{source.Index}",
                         options: o => o.Dormant()
                     );
 
                 scheduler
                     // Schedule ExtractImport for Transaction table (30 indexes)
                     // Demonstrates per-group MaxActiveJobs via the new ScheduleOptions API
-                    .ScheduleMany<
-                        IExtractImportWorkflow,
-                        ExtractImportInput,
-                        (string Table, int Index)
-                    >(
+                    .ScheduleMany<IExtractImportWorkflow>(
                         "extract-import-transaction",
-                        Enumerable.Range(0, 30).Select(i => ("Transaction", i)),
-                        source =>
-                            (
-                                $"{source.Index}",
-                                new ExtractImportInput
-                                {
-                                    TableName = source.Table,
-                                    Index = source.Index,
-                                }
+                        Enumerable
+                            .Range(0, 30)
+                            .Select(
+                                i =>
+                                    new ManifestItem(
+                                        $"{i}",
+                                        new ExtractImportInput
+                                        {
+                                            TableName = "Transaction",
+                                            Index = i
+                                        }
+                                    )
                             ),
                         Every.Minutes(5),
                         options => options.Priority(24).Group(group => group.MaxActiveJobs(10))
                     )
                     // Dormant dependents for Transaction quality checks
-                    .IncludeMany<
-                        IDataQualityCheckWorkflow,
-                        DataQualityCheckInput,
-                        (string Table, int Index)
-                    >(
+                    .IncludeMany<IDataQualityCheckWorkflow>(
                         "dq-check-transaction",
-                        Enumerable.Range(0, 30).Select(i => ("Transaction", i)),
-                        source =>
-                            (
-                                $"{source.Index}",
-                                new DataQualityCheckInput
-                                {
-                                    TableName = source.Table,
-                                    Index = source.Index,
-                                    AnomalyCount = 0,
-                                }
+                        Enumerable
+                            .Range(0, 30)
+                            .Select(
+                                i =>
+                                    new ManifestItem(
+                                        $"{i}",
+                                        new DataQualityCheckInput
+                                        {
+                                            TableName = "Transaction",
+                                            Index = i,
+                                            AnomalyCount = 0,
+                                        },
+                                        DependsOn: $"extract-import-transaction-{i}"
+                                    )
                             ),
-                        dependsOn: source => $"extract-import-transaction-{source.Index}",
                         options: o => o.Dormant()
                     );
             })

@@ -26,23 +26,25 @@ The group is set via the `ScheduleOptions` fluent builder using `.Group(...)`. W
 ```csharp
 services.AddChainSharpEffects(options => options
     .AddScheduler(scheduler => scheduler
-        .UseHangfire(connectionString)
+        .UsePostgresTaskServer()
         // Single manifest — explicit group shared with other related jobs
-        .Schedule<IExtractWorkflow, ExtractInput>(
+        .Schedule<IExtractWorkflow>(
             "extract-users",
             new ExtractInput { Table = "users" },
             Every.Minutes(5),
             options => options.Group("user-pipeline"))
         // Dependent manifest in the same group
-        .Include<ILoadWorkflow, LoadInput>(
+        .Include<ILoadWorkflow>(
             "load-users",
             new LoadInput { Table = "users" },
             options => options.Group("user-pipeline"))
         // Bulk scheduling — name-based overload sets groupId automatically
-        .ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
+        .ScheduleMany<ISyncTableWorkflow>(
             "table-sync",
-            tables,
-            tableName => (tableName, new SyncTableInput { TableName = tableName }),
+            tables.Select(tableName => new ManifestItem(
+                tableName,
+                new SyncTableInput { TableName = tableName }
+            )),
             Every.Minutes(5))
     )
 );
@@ -129,7 +131,7 @@ Each ManifestGroup has three configurable properties that govern how its manifes
 These settings can be configured both from code via the `.Group(...)` builder on `ScheduleOptions`, and from the dashboard's **Manifest Group detail page**. Code-level configuration is applied during scheduling (upsert semantics), while the dashboard allows operators to adjust settings at runtime without redeployment.
 
 ```csharp
-scheduler.Schedule<IMyWorkflow, MyInput>(
+scheduler.Schedule<IMyWorkflow>(
     "my-job",
     new MyInput { ... },
     Every.Minutes(5),
@@ -173,8 +175,8 @@ For dependent manifests that should only fire when explicitly activated by the p
 
 ```csharp
 scheduler
-    .Schedule<IParentWorkflow, ParentInput>("parent", new ParentInput(), Every.Minutes(5))
-    .Include<IChildWorkflow, ChildInput>(
+    .Schedule<IParentWorkflow>("parent", new ParentInput(), Every.Minutes(5))
+    .Include<IChildWorkflow>(
         "child", new ChildInput(),
         options: o => o.Dormant());
 ```

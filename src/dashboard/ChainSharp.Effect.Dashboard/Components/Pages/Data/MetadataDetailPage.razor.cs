@@ -1,13 +1,16 @@
 using System.Text.Json;
 using ChainSharp.Effect.Dashboard.Services.WorkflowDiscovery;
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
+using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.Log;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.WorkQueue;
 using ChainSharp.Effect.Models.WorkQueue.DTOs;
+using ChainSharp.Effect.Orchestration.Scheduler.Services.CancellationRegistry;
 using ChainSharp.Effect.Utils;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Radzen;
 using static ChainSharp.Effect.Dashboard.Utilities.DashboardFormatters;
 
@@ -27,6 +30,9 @@ public partial class MetadataDetailPage
     [Inject]
     private NotificationService NotificationService { get; set; } = default!;
 
+    [Inject]
+    private IServiceProvider ServiceProvider { get; set; } = default!;
+
     [Parameter]
     public long MetadataId { get; set; }
 
@@ -34,6 +40,8 @@ public partial class MetadataDetailPage
     private List<Log> _logs = [];
     private bool _rerunning;
     private string? _rerunError;
+    private bool _cancelling;
+    private string? _cancelError;
 
     protected override object? GetRouteKey() => MetadataId;
 
@@ -51,6 +59,45 @@ public partial class MetadataDetailPage
                 .Logs.AsNoTracking()
                 .Where(l => l.MetadataId == MetadataId)
                 .ToListAsync(cancellationToken);
+        }
+    }
+
+    private async Task CancelWorkflow()
+    {
+        if (_metadata is null || _metadata.WorkflowState != WorkflowState.InProgress)
+            return;
+
+        _cancelError = null;
+        _cancelling = true;
+
+        try
+        {
+            // Always set DB flag (works cross-server)
+            using var context = await DataContextFactory.CreateDbContextAsync(DisposalToken);
+            await context
+                .Metadatas.Where(m => m.Id == MetadataId)
+                .ExecuteUpdateAsync(
+                    s => s.SetProperty(m => m.CancellationRequested, true),
+                    DisposalToken
+                );
+
+            // Same-server instant cancel bonus
+            ServiceProvider.GetService<ICancellationRegistry>()?.TryCancel(MetadataId);
+
+            NotificationService.Notify(
+                NotificationSeverity.Success,
+                "Cancellation Requested",
+                $"Cancel signal sent for {ShortName(_metadata.Name)}.",
+                duration: 4000
+            );
+        }
+        catch (Exception ex)
+        {
+            _cancelError = ex.Message;
+        }
+        finally
+        {
+            _cancelling = false;
         }
     }
 

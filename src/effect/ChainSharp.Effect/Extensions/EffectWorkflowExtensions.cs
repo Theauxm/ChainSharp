@@ -122,7 +122,11 @@ internal static class EffectWorkflowExtensions
 
         var failureReason = result.IsRight ? null : result.Swap().ValueUnsafe();
 
-        var resultState = result.IsRight ? WorkflowState.Completed : WorkflowState.Failed;
+        var resultState = result.IsRight
+            ? WorkflowState.Completed
+            : failureReason is OperationCanceledException
+                ? WorkflowState.Cancelled
+                : WorkflowState.Failed;
         effectWorkflow.Logger?.LogTrace(
             "Setting ({WorkflowName}) to ({ResultState}).",
             effectWorkflow.WorkflowName,
@@ -130,6 +134,8 @@ internal static class EffectWorkflowExtensions
         );
         effectWorkflow.Metadata.WorkflowState = resultState;
         effectWorkflow.Metadata.EndTime = DateTime.UtcNow;
+        effectWorkflow.Metadata.CurrentlyRunningStep = null;
+        effectWorkflow.Metadata.StepStartedAt = null;
 
         if (failureReason != null)
             effectWorkflow.Metadata.AddException(failureReason);

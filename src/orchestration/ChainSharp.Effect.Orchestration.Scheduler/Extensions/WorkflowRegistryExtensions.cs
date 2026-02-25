@@ -15,9 +15,14 @@ public static class WorkflowRegistryExtensions
     /// <exception cref="InvalidOperationException">
     /// Thrown when no workflow is registered for the input type.
     /// </exception>
-    public static void ValidateWorkflowRegistration<TInput>(this IWorkflowRegistry registry)
+    public static void ValidateWorkflowRegistration<TInput>(this IWorkflowRegistry registry) =>
+        registry.ValidateWorkflowRegistration(typeof(TInput));
+
+    internal static void ValidateWorkflowRegistration(
+        this IWorkflowRegistry registry,
+        Type inputType
+    )
     {
-        var inputType = typeof(TInput);
         if (!registry.InputTypeToWorkflow.ContainsKey(inputType))
         {
             throw new InvalidOperationException(

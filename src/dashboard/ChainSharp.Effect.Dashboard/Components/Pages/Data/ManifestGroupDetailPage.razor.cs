@@ -7,9 +7,11 @@ using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.ManifestGroup;
 using ChainSharp.Effect.Models.Metadata;
+using ChainSharp.Effect.Orchestration.Scheduler.Services.CancellationRegistry;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestScheduler;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Radzen;
 using static ChainSharp.Effect.Dashboard.Utilities.DashboardFormatters;
 
@@ -29,6 +31,9 @@ public partial class ManifestGroupDetailPage
     [Inject]
     private IManifestScheduler ManifestScheduler { get; set; } = default!;
 
+    [Inject]
+    private IServiceProvider ServiceProvider { get; set; } = default!;
+
     [Parameter]
     public long ManifestGroupId { get; set; }
 
@@ -38,6 +43,7 @@ public partial class ManifestGroupDetailPage
     private DagLayout? _dagLayout;
     private bool _triggering;
     private string? _triggerError;
+    private bool _cancellingAll;
 
     // ── Summary counts (efficient DB aggregates) ──
     private int _manifestCount;
@@ -394,6 +400,77 @@ public partial class ManifestGroupDetailPage
         finally
         {
             _triggering = false;
+        }
+    }
+
+    private async Task CancelAllRunning()
+    {
+        if (_group is null)
+            return;
+
+        _cancellingAll = true;
+
+        try
+        {
+            using var context = await DataContextFactory.CreateDbContextAsync(DisposalToken);
+
+            var manifestIdsSubquery = context
+                .Manifests.Where(m => m.ManifestGroupId == ManifestGroupId)
+                .Select(m => m.Id);
+
+            // Get IDs of in-progress metadata for this group
+            var inProgressIds = await context
+                .Metadatas.AsNoTracking()
+                .Where(
+                    m =>
+                        m.ManifestId.HasValue
+                        && manifestIdsSubquery.Contains(m.ManifestId.Value)
+                        && m.WorkflowState == WorkflowState.InProgress
+                )
+                .Select(m => m.Id)
+                .ToListAsync(DisposalToken);
+
+            if (inProgressIds.Count == 0)
+            {
+                NotificationService.Notify(
+                    NotificationSeverity.Info,
+                    "No Running Workflows",
+                    "There are no in-progress workflows in this group.",
+                    duration: 4000
+                );
+                return;
+            }
+
+            // Batch set cancel_requested = true
+            await context
+                .Metadatas.Where(m => inProgressIds.Contains(m.Id))
+                .ExecuteUpdateAsync(
+                    s => s.SetProperty(m => m.CancellationRequested, true),
+                    DisposalToken
+                );
+
+            // Same-server instant cancel bonus
+            var registry = ServiceProvider.GetService<ICancellationRegistry>();
+            if (registry is not null)
+            {
+                foreach (var id in inProgressIds)
+                    registry.TryCancel(id);
+            }
+
+            NotificationService.Notify(
+                NotificationSeverity.Success,
+                "Cancellation Requested",
+                $"Cancel signal sent for {inProgressIds.Count} workflow(s).",
+                duration: 4000
+            );
+        }
+        catch (Exception ex)
+        {
+            _triggerError = ex.Message;
+        }
+        finally
+        {
+            _cancellingAll = false;
         }
     }
 

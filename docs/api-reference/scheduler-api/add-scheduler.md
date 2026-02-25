@@ -36,7 +36,7 @@ services.AddChainSharpEffects(options => options
     .AddPostgresEffect(connectionString)
     .AddEffectWorkflowBus(assemblies: typeof(Program).Assembly)
     .AddScheduler(scheduler => scheduler
-        .UseHangfire(connectionString)
+        .UsePostgresTaskServer()
         .ManifestManagerPollingInterval(TimeSpan.FromSeconds(5))
         .JobDispatcherPollingInterval(TimeSpan.FromSeconds(5))
         .MaxActiveJobs(50)
@@ -48,12 +48,13 @@ services.AddChainSharpEffects(options => options
         .RecoverStuckJobsOnStartup()
         .DependentPriorityBoost(16)
         .AddMetadataCleanup()
-        .Schedule<IMyWorkflow, MyInput>(
+        .Schedule<IMyWorkflow>(
             "my-job",
             new MyInput(),
             Every.Minutes(5),
-            priority: 10,
-            groupId: "my-group")
+            options => options
+                .Priority(10)
+                .Group("my-group"))
     )
 );
 ```

@@ -205,6 +205,15 @@ public class Metadata : IModel, IDisposable
     [Column("scheduled_time")]
     public DateTime? ScheduledTime { get; set; }
 
+    [Column("cancel_requested")]
+    public bool CancellationRequested { get; set; }
+
+    [Column("step_started_at")]
+    public DateTime? StepStartedAt { get; set; }
+
+    [Column("currently_running_step")]
+    public string? CurrentlyRunningStep { get; set; }
+
     /// <summary>
     /// Gets a value indicating whether this workflow is a child of another workflow.
     /// </summary>

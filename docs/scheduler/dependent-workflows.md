@@ -32,16 +32,16 @@ Chain a dependent workflow after a `Schedule` call:
 ```csharp
 services.AddChainSharpEffects(options => options
     .AddScheduler(scheduler => scheduler
-        .UseHangfire(connectionString)
-        .Schedule<IExtractWorkflow, ExtractInput>(
+        .UsePostgresTaskServer()
+        .Schedule<IExtractWorkflow>(
             "extract-data",
             new ExtractInput { Source = "api" },
             Every.Hours(1),
-            groupId: "etl")
-        .ThenInclude<ITransformWorkflow, TransformInput>(
+            options => options.Group("etl"))
+        .ThenInclude<ITransformWorkflow>(
             "transform-data",
             new TransformInput { Format = "parquet" },
-            groupId: "etl")
+            options => options.Group("etl"))
     )
 );
 ```
@@ -60,16 +60,16 @@ Sometimes one job needs to trigger multiple independent downstream jobs. An extr
 
 ```csharp
 scheduler
-    .Schedule<IExtractWorkflow, ExtractInput>(
+    .Schedule<IExtractWorkflow>(
         "extract", new ExtractInput(), Every.Hours(1),
-        groupId: "etl")
+        options => options.Group("etl"))
     // Both depend on Extract, not on each other
-    .Include<ITransformWorkflow, TransformInput>(
+    .Include<ITransformWorkflow>(
         "transform", new TransformInput(),
-        groupId: "etl")
-    .Include<IValidateWorkflow, ValidateInput>(
+        options => options.Group("etl"))
+    .Include<IValidateWorkflow>(
         "validate", new ValidateInput(),
-        groupId: "etl");
+        options => options.Group("etl"));
 ```
 
 *API Reference: [Include]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %})*
@@ -84,27 +84,31 @@ This creates: `extract` &rarr; `transform`, `extract` &rarr; `validate`. When ex
 
 ## Bulk Dependencies: IncludeMany
 
-For batch jobs where each item in one batch depends on a corresponding item in another, use `IncludeMany` (with `dependsOn`) after `ScheduleMany`. The name-based overloads eliminate repetitive `groupId`, `prunePrefix`, and external ID prefix strings:
+For batch jobs where each item in one batch depends on a corresponding item in another, use `IncludeMany` with `ManifestItem` after `ScheduleMany`. Each `ManifestItem` specifies its parent via the `DependsOn` property:
 
 ```csharp
 scheduler
-    .ScheduleMany<IExtractWorkflow, ExtractInput, int>(
+    .ScheduleMany<IExtractWorkflow>(
         "extract",
-        Enumerable.Range(0, 100),
-        i => ($"{i}", new ExtractInput { Partition = i }),
+        Enumerable.Range(0, 100).Select(i => new ManifestItem(
+            $"{i}",
+            new ExtractInput { Partition = i }
+        )),
         Every.Minutes(30))
-    .IncludeMany<ILoadWorkflow, LoadInput, int>(
+    .IncludeMany<ILoadWorkflow>(
         "load",
-        Enumerable.Range(0, 100),
-        i => ($"{i}", new LoadInput { Partition = i }),
-        dependsOn: i => $"extract-{i}");
+        Enumerable.Range(0, 100).Select(i => new ManifestItem(
+            $"{i}",
+            new LoadInput { Partition = i },
+            DependsOn: $"extract-{i}"
+        )));
 // Creates: extract-0..extract-99 (groupId: "extract", prunePrefix: "extract-")
 //          load-0..load-99 (groupId: "load", prunePrefix: "load-")
 ```
 
 *API Reference: [ScheduleMany]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule-many.md %}), [IncludeMany]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %})*
 
-The `dependsOn` function maps each source item to its parent's external ID. In this example, `load-0` depends on `extract-0`, `load-1` on `extract-1`, and so on. When `extract-42` succeeds, only `load-42` gets queued—the rest are unaffected.
+The `DependsOn` property on each `ManifestItem` specifies the parent's external ID. In this example, `load-0` depends on `extract-0`, `load-1` on `extract-1`, and so on. When `extract-42` succeeds, only `load-42` gets queued—the rest are unaffected.
 
 The mapping is flexible. You aren't limited to 1:1—multiple dependents can point to the same parent. The name-based overloads automatically set `groupId` and `prunePrefix` from the `name` parameter. For deeper chaining (a third batch level), use `ThenIncludeMany`.
 
@@ -112,24 +116,26 @@ The mapping is flexible. You aren't limited to 1:1—multiple dependents can poi
 
 ## Bulk Fan-Out: IncludeMany
 
-When a single root manifest should trigger an entire batch of dependents, use `IncludeMany`:
+When a single root manifest should trigger an entire batch of dependents, use `IncludeMany` without `DependsOn` — items automatically depend on the root `Schedule`:
 
 ```csharp
 scheduler
-    .Schedule<IExtractWorkflow, ExtractInput>(
+    .Schedule<IExtractWorkflow>(
         "extract-all",
         new ExtractInput { Mode = "full" },
         Every.Hours(1),
-        groupId: "extract")
-    .IncludeMany<ILoadWorkflow, LoadInput, int>(
+        options => options.Group("extract"))
+    .IncludeMany<ILoadWorkflow>(
         "load",
-        Enumerable.Range(0, 10),
-        i => ($"{i}", new LoadInput { Partition = i }));
+        Enumerable.Range(0, 10).Select(i => new ManifestItem(
+            $"{i}",
+            new LoadInput { Partition = i }
+        )));
 ```
 
 *API Reference: [IncludeMany]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %})*
 
-All 10 `load-*` manifests depend on `extract-all`. No `dependsOn` function needed — `IncludeMany` automatically parents every item from the root `Schedule`. The name `"load"` derives `groupId: "load"` and `prunePrefix: "load-"`.
+All 10 `load-*` manifests depend on `extract-all`. No `DependsOn` needed — `IncludeMany` automatically parents every item from the root `Schedule`. The name `"load"` derives `groupId: "load"` and `prunePrefix: "load-"`.
 
 ## Runtime API
 
@@ -168,15 +174,21 @@ Add `.Dormant()` to the options when declaring a dependent:
 
 ```csharp
 scheduler
-    .ScheduleMany<IDeltaImportWorkflow, DeltaImportRequest, NetSuiteTable>(
-        "delta", allTables,
-        table => ($"{table}", DeltaImportRequest.Create(table)),
+    .ScheduleMany<IDeltaImportWorkflow>(
+        "delta",
+        allTables.Select(table => new ManifestItem(
+            $"{table}",
+            DeltaImportRequest.Create(table)
+        )),
         Every.Seconds(10),
         options: o => o.Group(group => group.MaxActiveJobs(4)))
-    .IncludeMany<ICacheBronzeWorkflow, ExtractRequest, (NetSuiteTable, int)>(
-        "delta-bronze", allJobs,
-        item => ($"{item.Table}-{item.Batch}", ExtractRequest.Default(item.Table, item.Batch)),
-        dependsOn: item => $"delta-{item.Table}",
+    .IncludeMany<ICacheBronzeWorkflow>(
+        "delta-bronze",
+        allJobs.Select(item => new ManifestItem(
+            $"{item.Table}-{item.Batch}",
+            ExtractRequest.Default(item.Table, item.Batch),
+            DependsOn: $"delta-{item.Table}"
+        )),
         options: o => o.Dormant().Group(group => group.MaxActiveJobs(4)));
 ```
 

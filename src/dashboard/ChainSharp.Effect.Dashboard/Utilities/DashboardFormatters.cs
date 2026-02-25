@@ -70,6 +70,7 @@ public static class DashboardFormatters
             WorkflowState.Failed => BadgeStyle.Danger,
             WorkflowState.InProgress => BadgeStyle.Info,
             WorkflowState.Pending => BadgeStyle.Warning,
+            WorkflowState.Cancelled => BadgeStyle.Warning,
             _ => BadgeStyle.Light,
         };
 

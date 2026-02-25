@@ -3,13 +3,11 @@ using ChainSharp.Effect.Data.Postgres.Extensions;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Orchestration.Mediator.Extensions;
 using ChainSharp.Effect.Orchestration.Scheduler.Extensions;
-using ChainSharp.Effect.Orchestration.Scheduler.Hangfire.Extensions;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager;
 using ChainSharp.Effect.Provider.Json.Extensions;
 using ChainSharp.Effect.Provider.Parameter.Extensions;
 using ChainSharp.Server.Workflows.HelloWorld;
-using Hangfire;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,7 +40,7 @@ builder.Services.AddChainSharpEffects(
                         cleanup.AddWorkflowType<IHelloWorldWorkflow>();
                     })
                     .UseHangfire(connectionString)
-                    .Schedule<IHelloWorldWorkflow, HelloWorldInput>(
+                    .Schedule<IHelloWorldWorkflow>(
                         "hello-world",
                         new HelloWorldInput { Name = "ChainSharp" },
                         Every.Seconds(20)

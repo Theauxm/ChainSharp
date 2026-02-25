@@ -1,7 +1,9 @@
 using System.Text.Json;
+using System.Text.Json;
 using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Models.BackgroundJob;
 using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
+using ChainSharp.Effect.Orchestration.Scheduler.Services.CancellationRegistry;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor;
 using ChainSharp.Effect.Utils;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +30,7 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Services.PostgresWorkerServi
 internal class PostgresWorkerService(
     IServiceProvider serviceProvider,
     PostgresTaskServerOptions options,
+    ICancellationRegistry cancellationRegistry,
     ILogger<PostgresWorkerService> logger
 ) : BackgroundService
 {
@@ -161,18 +164,26 @@ internal class PostgresWorkerService(
             // Use an unlinked CTS so we don't cancel immediately — the registration
             // triggers CancelAfter(ShutdownTimeout) to provide a grace period.
             using var shutdownCts = new CancellationTokenSource();
-            await using var shutdownRegistration = stoppingToken.Register(
-                () => shutdownCts.CancelAfter(options.ShutdownTimeout)
-            );
+            cancellationRegistry.Register(metadataId, shutdownCts);
+            try
+            {
+                await using var shutdownRegistration = stoppingToken.Register(
+                    () => shutdownCts.CancelAfter(options.ShutdownTimeout)
+                );
 
-            await workflow.Run(request, shutdownCts.Token);
+                await workflow.Run(request, shutdownCts.Token);
 
-            logger.LogDebug(
-                "Worker {WorkerId} completed job {JobId} (Metadata: {MetadataId})",
-                workerId,
-                jobId,
-                metadataId
-            );
+                logger.LogDebug(
+                    "Worker {WorkerId} completed job {JobId} (Metadata: {MetadataId})",
+                    workerId,
+                    jobId,
+                    metadataId
+                );
+            }
+            finally
+            {
+                cancellationRegistry.Unregister(metadataId);
+            }
         }
         catch (Exception ex)
         {

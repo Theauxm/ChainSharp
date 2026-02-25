@@ -393,6 +393,277 @@ public class ManifestScheduler(
         return manifests.Count;
     }
 
+    // ── Internal non-generic overloads (used by WorkflowConfigurator) ───
+
+    internal async Task<Manifest> ScheduleAsyncUntyped(
+        Type workflowType,
+        Type inputType,
+        string externalId,
+        IManifestProperties input,
+        Schedule schedule,
+        Action<ScheduleOptions>? options = null,
+        CancellationToken ct = default
+    )
+    {
+        workflowRegistry.ValidateWorkflowRegistration(inputType);
+
+        var resolved = ResolveOptions(options);
+
+        await using var context = CreateContext();
+
+        var manifest = await context.UpsertManifestAsync(
+            workflowType,
+            externalId,
+            input,
+            schedule,
+            resolved.ManifestOptions,
+            groupId: resolved.GroupId ?? externalId,
+            groupPriority: resolved.GroupPriority,
+            groupMaxActiveJobs: resolved.GroupMaxActiveJobs,
+            groupIsEnabled: resolved.GroupEnabled,
+            ct: ct
+        );
+
+        await context.SaveChanges(ct);
+
+        logger.LogInformation(
+            "Scheduled workflow {Workflow} with ExternalId {ExternalId}",
+            workflowType.Name,
+            externalId
+        );
+
+        return manifest;
+    }
+
+    internal async Task<Manifest> ScheduleDependentAsyncUntyped(
+        Type workflowType,
+        Type inputType,
+        string externalId,
+        IManifestProperties input,
+        string dependsOnExternalId,
+        Action<ScheduleOptions>? options = null,
+        CancellationToken ct = default
+    )
+    {
+        workflowRegistry.ValidateWorkflowRegistration(inputType);
+
+        var resolved = ResolveOptions(options);
+
+        await using var context = CreateContext();
+
+        var parentManifest =
+            await context.Manifests.FirstOrDefaultAsync(
+                m => m.ExternalId == dependsOnExternalId,
+                ct
+            )
+            ?? throw new InvalidOperationException(
+                $"Parent manifest with ExternalId '{dependsOnExternalId}' not found. "
+                    + "Ensure the parent manifest is scheduled before its dependents."
+            );
+
+        var manifest = await context.UpsertDependentManifestAsync(
+            workflowType,
+            externalId,
+            input,
+            parentManifest.Id,
+            resolved.ManifestOptions,
+            groupId: resolved.GroupId ?? externalId,
+            groupPriority: resolved.GroupPriority,
+            groupMaxActiveJobs: resolved.GroupMaxActiveJobs,
+            groupIsEnabled: resolved.GroupEnabled,
+            ct: ct
+        );
+
+        await context.SaveChanges(ct);
+
+        logger.LogInformation(
+            "Scheduled dependent workflow {Workflow} with ExternalId {ExternalId} depending on {ParentExternalId}",
+            workflowType.Name,
+            externalId,
+            dependsOnExternalId
+        );
+
+        return manifest;
+    }
+
+    internal async Task<IReadOnlyList<Manifest>> ScheduleManyAsyncUntyped<TSource>(
+        Type workflowType,
+        Type inputType,
+        IEnumerable<TSource> sources,
+        Func<TSource, (string ExternalId, IManifestProperties Input)> map,
+        Schedule schedule,
+        Action<ScheduleOptions>? options = null,
+        Action<TSource, ManifestOptions>? configureEach = null,
+        CancellationToken ct = default
+    )
+    {
+        workflowRegistry.ValidateWorkflowRegistration(inputType);
+
+        var resolved = ResolveOptions(options);
+        var sourceList = sources.ToList();
+
+        if (sourceList.Count == 0)
+            return [];
+
+        await using var context = CreateContext();
+        var transaction = await context.BeginTransaction();
+
+        try
+        {
+            var effectiveGroupId =
+                resolved.GroupId
+                ?? resolved.PrunePrefix
+                ?? sourceList.Select(s => map(s).ExternalId).FirstOrDefault()
+                ?? "batch";
+
+            var results = new List<Manifest>(sourceList.Count);
+
+            foreach (var source in sourceList)
+            {
+                var (externalId, input) = map(source);
+                var itemOptions = CreateItemOptions(resolved.ManifestOptions);
+                configureEach?.Invoke(source, itemOptions);
+
+                var manifest = await context.UpsertManifestAsync(
+                    workflowType,
+                    externalId,
+                    input,
+                    schedule,
+                    itemOptions,
+                    groupId: effectiveGroupId,
+                    groupPriority: resolved.GroupPriority,
+                    groupMaxActiveJobs: resolved.GroupMaxActiveJobs,
+                    groupIsEnabled: resolved.GroupEnabled,
+                    ct: ct
+                );
+                results.Add(manifest);
+            }
+
+            await context.SaveChanges(ct);
+
+            if (resolved.PrunePrefix is not null)
+            {
+                var keepIds = results.Select(m => m.ExternalId).ToHashSet();
+                await PruneStaleManifestsAsync(context, resolved.PrunePrefix, keepIds, ct);
+            }
+
+            await context.CommitTransaction();
+
+            logger.LogInformation(
+                "Scheduled {Count} manifests for workflow {Workflow} in single transaction",
+                results.Count,
+                workflowType.Name
+            );
+
+            return results;
+        }
+        catch
+        {
+            await context.RollbackTransaction();
+            throw;
+        }
+        finally
+        {
+            transaction?.Dispose();
+        }
+    }
+
+    internal async Task<IReadOnlyList<Manifest>> ScheduleManyDependentAsyncUntyped<TSource>(
+        Type workflowType,
+        Type inputType,
+        IEnumerable<TSource> sources,
+        Func<TSource, (string ExternalId, IManifestProperties Input)> map,
+        Func<TSource, string> dependsOn,
+        Action<ScheduleOptions>? options = null,
+        Action<TSource, ManifestOptions>? configureEach = null,
+        CancellationToken ct = default
+    )
+    {
+        workflowRegistry.ValidateWorkflowRegistration(inputType);
+
+        var resolved = ResolveOptions(options);
+        var sourceList = sources.ToList();
+
+        if (sourceList.Count == 0)
+            return [];
+
+        await using var context = CreateContext();
+        var transaction = await context.BeginTransaction();
+
+        try
+        {
+            var effectiveGroupId =
+                resolved.GroupId
+                ?? resolved.PrunePrefix
+                ?? sourceList.Select(s => map(s).ExternalId).FirstOrDefault()
+                ?? "batch";
+
+            // Resolve all parent manifests in one query
+            var parentExternalIds = sourceList.Select(dependsOn).Distinct().ToList();
+            var parentManifests = await context
+                .Manifests.Where(m => parentExternalIds.Contains(m.ExternalId))
+                .ToDictionaryAsync(m => m.ExternalId, ct);
+
+            var results = new List<Manifest>(sourceList.Count);
+
+            foreach (var source in sourceList)
+            {
+                var (externalId, input) = map(source);
+                var parentExternalId = dependsOn(source);
+
+                if (!parentManifests.TryGetValue(parentExternalId, out var parentManifest))
+                    throw new InvalidOperationException(
+                        $"Parent manifest with ExternalId '{parentExternalId}' not found. "
+                            + "Ensure parent manifests are scheduled before their dependents."
+                    );
+
+                var itemOptions = CreateItemOptions(resolved.ManifestOptions);
+                configureEach?.Invoke(source, itemOptions);
+
+                var manifest = await context.UpsertDependentManifestAsync(
+                    workflowType,
+                    externalId,
+                    input,
+                    parentManifest.Id,
+                    itemOptions,
+                    groupId: effectiveGroupId,
+                    groupPriority: resolved.GroupPriority,
+                    groupMaxActiveJobs: resolved.GroupMaxActiveJobs,
+                    groupIsEnabled: resolved.GroupEnabled,
+                    ct: ct
+                );
+                results.Add(manifest);
+            }
+
+            await context.SaveChanges(ct);
+
+            if (resolved.PrunePrefix is not null)
+            {
+                var keepIds = results.Select(m => m.ExternalId).ToHashSet();
+                await PruneStaleManifestsAsync(context, resolved.PrunePrefix, keepIds, ct);
+            }
+
+            await context.CommitTransaction();
+
+            logger.LogInformation(
+                "Scheduled {Count} dependent manifests for workflow {Workflow} in single transaction",
+                results.Count,
+                workflowType.Name
+            );
+
+            return results;
+        }
+        catch
+        {
+            await context.RollbackTransaction();
+            throw;
+        }
+        finally
+        {
+            transaction?.Dispose();
+        }
+    }
+
     // ── Private helpers ──────────────────────────────────────────────────
 
     private IDataContext CreateContext() =>

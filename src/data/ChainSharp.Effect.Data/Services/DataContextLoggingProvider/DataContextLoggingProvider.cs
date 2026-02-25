@@ -60,28 +60,44 @@ public class DataContextLoggingProvider : IDataContextLoggingProvider
 
     private async Task FlushLoopAsync(CancellationToken ct)
     {
-        var batch = new List<Effect.Models.Log.Log>(64);
+        const int maxBatchSize = 256;
+        var batch = new List<Effect.Models.Log.Log>(maxBatchSize);
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+        using var dataContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
         try
         {
-            while (await _logChannel.Reader.WaitToReadAsync(ct))
+            while (!ct.IsCancellationRequested)
             {
+                // Wait for either new data or the 1-second timer tick
+                var dataAvailable = _logChannel.Reader.TryRead(out var firstLog);
+
+                if (!dataAvailable)
+                {
+                    // Wait for whichever comes first: data or timer
+                    using var delayCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                    var timerTask = timer.WaitForNextTickAsync(delayCts.Token).AsTask();
+                    var readTask = _logChannel.Reader.WaitToReadAsync(delayCts.Token).AsTask();
+
+                    await Task.WhenAny(timerTask, readTask);
+                    await delayCts.CancelAsync();
+
+                    dataAvailable = _logChannel.Reader.TryRead(out firstLog);
+                    if (!dataAvailable)
+                        continue;
+                }
+
                 batch.Clear();
+                batch.Add(firstLog!);
 
-                while (batch.Count < 64 && _logChannel.Reader.TryRead(out var log))
+                while (batch.Count < maxBatchSize && _logChannel.Reader.TryRead(out var log))
                     batch.Add(log);
-
-                if (batch.Count == 0)
-                    continue;
 
                 try
                 {
-                    using var dataContext = await _dbContextFactory.CreateDbContextAsync(ct);
-
-                    foreach (var log in batch)
-                        await dataContext.Track(log);
-
+                    await dataContext.Logs.AddRangeAsync(batch, ct);
                     await dataContext.SaveChanges(ct);
+                    dataContext.Reset();
                 }
                 catch (OperationCanceledException) when (ct.IsCancellationRequested)
                 {
@@ -91,6 +107,7 @@ public class DataContextLoggingProvider : IDataContextLoggingProvider
                 {
                     // Drop the batch on failure to prevent infinite retry loops.
                     // Logging failures should not crash the application.
+                    dataContext.Reset();
                 }
             }
         }

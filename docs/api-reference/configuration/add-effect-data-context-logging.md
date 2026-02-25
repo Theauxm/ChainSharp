@@ -24,7 +24,7 @@ public static ChainSharpEffectConfigurationBuilder AddEffectDataContextLogging(
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `minimumLogLevel` | `LogLevel?` | No | `LogLevel.Information` | Minimum log level to capture. Can be overridden by the `CHAIN_SHARP_POSTGRES_LOG_LEVEL` environment variable. |
+| `minimumLogLevel` | `LogLevel?` | No | `LogLevel.Information` | Minimum log level to capture. |
 | `blacklist` | `List<string>?` | No | `[]` (empty) | Namespace patterns to exclude from logging (e.g., `["Microsoft.EntityFrameworkCore.*"]`) |
 
 ## Returns
@@ -45,5 +45,5 @@ services.AddChainSharpEffects(options => options
 ## Remarks
 
 - **Must** be called after a data provider ([AddPostgresEffect]({{ site.baseurl }}{% link api-reference/configuration/add-postgres-effect.md %}) or [AddInMemoryEffect]({{ site.baseurl }}{% link api-reference/configuration/add-in-memory-effect.md %})). Throws an `Exception` if no data provider is registered.
-- The `CHAIN_SHARP_POSTGRES_LOG_LEVEL` environment variable takes precedence over the `minimumLogLevel` parameter if set.
 - Registers `DataContextLoggingProvider` as an `ILoggerProvider`.
+- Log levels can be changed at runtime via the Dashboard's Server Settings page.

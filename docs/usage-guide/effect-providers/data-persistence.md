@@ -95,7 +95,7 @@ services.AddChainSharpEffects(options =>
 );
 ```
 
-You can also control the log level via the `CHAIN_SHARP_POSTGRES_LOG_LEVEL` environment variable without recompiling. The optional `blacklist` parameter filters out noisy namespaces:
+Log levels can also be changed at runtime via the Dashboard's Server Settings page. The optional `blacklist` parameter filters out noisy namespaces:
 
 ```csharp
 .AddEffectDataContextLogging(

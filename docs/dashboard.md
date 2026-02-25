@@ -156,6 +156,16 @@ app.UseChainSharpDashboard("/admin/chainsharp");
 
 The dashboard uses [Radzen Blazor](https://blazor.radzen.com/) v6 components with a sidebar navigation layout. A theme toggle in the header switches between light and dark mode, with the preference persisted in `localStorage`.
 
+### User Settings
+
+The **User Settings** page (`/chainsharp/settings/user`) lets each user customize their dashboard experience. Settings are stored in browser `localStorage` and only affect the current session.
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| **Polling Interval** | 5 seconds | How often dashboard pages re-query for fresh data. Range: 1–300 seconds. |
+| **Hide Administration Workflows** | `true` | Exclude scheduler internals (ManifestManager, TaskServerExecutor, MetadataCleanup) from statistics and charts. |
+| **Dashboard Components** | All visible | Toggle visibility of individual home page sections (summary cards, charts, tables). |
+
 ## Integration with Existing Blazor Apps
 
 If your application already uses Blazor Server, the dashboard's `AddChainSharpDashboard()` call is safe to use alongside your existing `AddRazorComponents()`. The dashboard pages use their own layout, so they won't interfere with your app's UI.

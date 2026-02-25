@@ -168,4 +168,4 @@ For complete method signatures, all parameters, and detailed usage examples for 
 
 ## Sample Project
 
-A working example with the built-in PostgreSQL task server, bulk scheduling, metadata cleanup, and the dashboard is in [`samples/ChainSharp.Samples.Scheduler.Hangfire`](https://github.com/Theauxm/ChainSharp/tree/main/samples/ChainSharp.Samples.Scheduler.Hangfire).
+A working example with the built-in PostgreSQL task server, bulk scheduling, metadata cleanup, and the dashboard is in [`samples/ChainSharp.Samples.Scheduler`](https://github.com/Theauxm/ChainSharp/tree/main/samples/ChainSharp.Samples.Scheduler).

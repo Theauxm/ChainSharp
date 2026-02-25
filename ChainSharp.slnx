@@ -17,7 +17,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/ChainSharp.Tests.Effect.Scheduler.Integration/ChainSharp.Tests.Effect.Scheduler.Integration.csproj" />
   </Folder>
-  <Project Path="samples/ChainSharp.Samples.Scheduler.Hangfire/ChainSharp.Samples.Scheduler.Hangfire.csproj" />
+  <Project Path="samples/ChainSharp.Samples.Scheduler/ChainSharp.Samples.Scheduler.csproj" />
   <Project Path="templates/Theauxm.ChainSharp.Templates.csproj" />
   <Project Path="src/providers/ChainSharp.Effect.Provider.Parameter/ChainSharp.Effect.Provider.Parameter.csproj" />
   <Project Path="src/providers/ChainSharp.Effect.StepProvider.Logging/ChainSharp.Effect.StepProvider.Logging.csproj" />

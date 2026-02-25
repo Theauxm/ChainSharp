@@ -1,6 +1,4 @@
-using System.Collections.Concurrent;
 using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
-using ChainSharp.Effect.Data.Enums;
 using ChainSharp.Effect.Data.Services.DataContextLoggingProvider;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -37,10 +35,9 @@ public static class ServiceExtensions
     /// It registers the necessary services for capturing and processing database logs.
     ///
     /// The method:
-    /// 1. Checks for a log level specified in the CHAIN_SHARP_POSTGRES_LOG_LEVEL environment variable
-    /// 2. Verifies that data context logging is enabled in the configuration
-    /// 3. Creates a logging configuration with the specified settings
-    /// 4. Registers the logging provider and configuration with the dependency injection container
+    /// 1. Verifies that data context logging is enabled in the configuration
+    /// 2. Creates a logging configuration with the specified settings
+    /// 3. Registers the logging provider and configuration with the dependency injection container
     ///
     /// Data context logging provides visibility into:
     /// - SQL queries executed
@@ -67,16 +64,6 @@ public static class ServiceExtensions
         List<string>? blacklist = null
     )
     {
-        // Check for log level in environment variables
-        var logLevelEnvironment = Environment.GetEnvironmentVariable(
-            "CHAIN_SHARP_POSTGRES_LOG_LEVEL"
-        );
-
-        var parsed = Enum.TryParse<LogLevel>(logLevelEnvironment, out var logLevel);
-
-        if (parsed)
-            minimumLogLevel ??= logLevel;
-
         // Verify that data context logging is enabled
         if (configurationBuilder.DataContextLoggingEffectEnabled == false)
             throw new Exception(

@@ -1,6 +1,7 @@
 using ChainSharp.Effect.Orchestration.Scheduler.Services.DormantDependentContext;
 using ChainSharp.Samples.Scheduler.Workflows.DataQualityCheck;
 using ChainSharp.Step;
+using static ChainSharp.Samples.Scheduler.ManifestNames;
 using LanguageExt;
 using Microsoft.Extensions.Logging;
 
@@ -33,15 +34,20 @@ public class CheckAndActivateQualityStep(
                 anomalyCount
             );
 
-            await dormants.ActivateAsync<IDataQualityCheckWorkflow, DataQualityCheckInput>(
-                $"dq-check-{input.TableName.ToLower()}-{input.Index}",
-                new DataQualityCheckInput
-                {
-                    TableName = input.TableName,
-                    Index = input.Index,
-                    AnomalyCount = anomalyCount,
-                }
-            );
+            // Only the Transaction pipeline declares Dormant() quality checks.
+            // The Customer pipeline uses regular chained dependents that auto-fire.
+            if (input.TableName == ManifestNames.TransactionTable)
+            {
+                await dormants.ActivateAsync<IDataQualityCheckWorkflow, DataQualityCheckInput>(
+                    ManifestNames.WithIndex(ManifestNames.DqTransaction, input.Index),
+                    new DataQualityCheckInput
+                    {
+                        TableName = input.TableName,
+                        Index = input.Index,
+                        AnomalyCount = anomalyCount,
+                    }
+                );
+            }
         }
         else
         {

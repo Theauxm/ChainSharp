@@ -1,4 +1,5 @@
 using ChainSharp.Effect.Dashboard.Extensions;
+using ChainSharp.Effect.Data.Extensions;
 using ChainSharp.Effect.Data.Postgres.Extensions;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Orchestration.Mediator.Extensions;
@@ -9,6 +10,7 @@ using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager;
 using ChainSharp.Effect.Provider.Json.Extensions;
 using ChainSharp.Effect.Provider.Parameter.Extensions;
 using ChainSharp.Effect.StepProvider.Progress.Extensions;
+using ChainSharp.Samples.Scheduler;
 using ChainSharp.Samples.Scheduler.Workflows.AlwaysFails;
 using ChainSharp.Samples.Scheduler.Workflows.DataQualityCheck;
 using ChainSharp.Samples.Scheduler.Workflows.ExtractImport;
@@ -32,6 +34,7 @@ builder.Services.AddChainSharpEffects(
                 assemblies: [typeof(Program).Assembly, typeof(ManifestManagerWorkflow).Assembly,]
             )
             .AddPostgresEffect(connectionString)
+            .AddEffectDataContextLogging()
             .AddJsonEffect()
             .SaveWorkflowParameters()
             .AddStepProgress()
@@ -57,7 +60,7 @@ builder.Services.AddChainSharpEffects(
                 //    Every.* helpers create interval-based schedules.
                 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                 scheduler.Schedule<IHelloWorldWorkflow>(
-                    "hello-world",
+                    ManifestNames.HelloWorld,
                     new HelloWorldInput { Name = "ChainSharp" },
                     Every.Seconds(20)
                 );
@@ -68,7 +71,7 @@ builder.Services.AddChainSharpEffects(
                 //    Monthly(), Expression("0 */6 * * *")
                 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                 scheduler.Schedule<IGoodbyeWorldWorkflow>(
-                    "goodbye-nightly",
+                    ManifestNames.GoodbyeNightly,
                     new GoodbyeWorldInput { Name = "Night Shift" },
                     Cron.Daily(hour: 3)
                 );
@@ -79,7 +82,7 @@ builder.Services.AddChainSharpEffects(
                 //    This workflow always throws, so it dead-letters after 1 attempt.
                 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                 scheduler.Schedule<IAlwaysFailsWorkflow>(
-                    "always-fails",
+                    ManifestNames.AlwaysFails,
                     new AlwaysFailsInput { Scenario = "Database connection timeout" },
                     Every.Seconds(30),
                     o => o.MaxRetries(1)
@@ -99,24 +102,24 @@ builder.Services.AddChainSharpEffects(
                 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                 scheduler
                     .Schedule<IHelloWorldWorkflow>(
-                        "hello-greeter",
+                        ManifestNames.HelloGreeter,
                         new HelloWorldInput { Name = "Greeter Pipeline" },
                         Every.Minutes(2)
                     )
                     .Include<IGoodbyeWorldWorkflow>(
-                        "farewell-a",
+                        ManifestNames.FarewellA,
                         new GoodbyeWorldInput { Name = "Branch A" }
                     )
                     .Include<IGoodbyeWorldWorkflow>(
-                        "farewell-b",
+                        ManifestNames.FarewellB,
                         new GoodbyeWorldInput { Name = "Branch B" }
                     )
                     .ThenInclude<IGoodbyeWorldWorkflow>(
-                        "farewell-c",
+                        ManifestNames.FarewellC,
                         new GoodbyeWorldInput { Name = "Chained after B" }
                     )
                     .IncludeMany<IGoodbyeWorldWorkflow>(
-                        "broadcast",
+                        ManifestNames.Broadcast,
                         Enumerable
                             .Range(0, 5)
                             .Select(
@@ -141,20 +144,20 @@ builder.Services.AddChainSharpEffects(
                 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                 scheduler
                     .ScheduleMany<IExtractImportWorkflow>(
-                        "extract-customer",
+                        ManifestNames.ExtractCustomer,
                         Enumerable
                             .Range(0, 10)
                             .Select(
                                 i =>
                                     new ManifestItem(
                                         $"{i}",
-                                        new ExtractImportInput { TableName = "Customer", Index = i }
+                                        new ExtractImportInput { TableName = ManifestNames.CustomerTable, Index = i }
                                     )
                             ),
                         Every.Minutes(5)
                     )
                     .IncludeMany<ITransformLoadWorkflow>(
-                        "transform-customer",
+                        ManifestNames.TransformCustomer,
                         Enumerable
                             .Range(0, 10)
                             .Select(
@@ -163,15 +166,15 @@ builder.Services.AddChainSharpEffects(
                                         $"{i}",
                                         new TransformLoadInput
                                         {
-                                            TableName = "Customer",
+                                            TableName = ManifestNames.CustomerTable,
                                             Index = i
                                         },
-                                        DependsOn: $"extract-customer-{i}"
+                                        DependsOn: ManifestNames.WithIndex(ManifestNames.ExtractCustomer, i)
                                     )
                             )
                     )
                     .ThenIncludeMany<IDataQualityCheckWorkflow>(
-                        "dq-customer",
+                        ManifestNames.DqCustomer,
                         Enumerable
                             .Range(0, 10)
                             .Select(
@@ -180,11 +183,11 @@ builder.Services.AddChainSharpEffects(
                                         $"{i}",
                                         new DataQualityCheckInput
                                         {
-                                            TableName = "Customer",
+                                            TableName = ManifestNames.CustomerTable,
                                             Index = i,
                                             AnomalyCount = 0,
                                         },
-                                        DependsOn: $"transform-customer-{i}"
+                                        DependsOn: ManifestNames.WithIndex(ManifestNames.TransformCustomer, i)
                                     )
                             )
                     );
@@ -201,7 +204,7 @@ builder.Services.AddChainSharpEffects(
                 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                 scheduler
                     .ScheduleMany<IExtractImportWorkflow>(
-                        "extract-transaction",
+                        ManifestNames.ExtractTransaction,
                         Enumerable
                             .Range(0, 30)
                             .Select(
@@ -210,7 +213,7 @@ builder.Services.AddChainSharpEffects(
                                         $"{i}",
                                         new ExtractImportInput
                                         {
-                                            TableName = "Transaction",
+                                            TableName = ManifestNames.TransactionTable,
                                             Index = i
                                         }
                                     )
@@ -219,7 +222,7 @@ builder.Services.AddChainSharpEffects(
                         o => o.Priority(24).Group(group => group.MaxActiveJobs(10))
                     )
                     .IncludeMany<IDataQualityCheckWorkflow>(
-                        "dq-transaction",
+                        ManifestNames.DqTransaction,
                         Enumerable
                             .Range(0, 30)
                             .Select(
@@ -228,11 +231,11 @@ builder.Services.AddChainSharpEffects(
                                         $"{i}",
                                         new DataQualityCheckInput
                                         {
-                                            TableName = "Transaction",
+                                            TableName = ManifestNames.TransactionTable,
                                             Index = i,
                                             AnomalyCount = 0,
                                         },
-                                        DependsOn: $"extract-transaction-{i}"
+                                        DependsOn: ManifestNames.WithIndex(ManifestNames.ExtractTransaction, i)
                                     )
                             ),
                         options: o => o.Dormant()

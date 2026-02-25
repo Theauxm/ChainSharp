@@ -15,6 +15,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 using ChainSharp.Effect.Dashboard.Extensions;
+using ChainSharp.Effect.Data.Extensions;
 using ChainSharp.Effect.Data.Postgres.Extensions;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Orchestration.Mediator.Extensions;
@@ -25,6 +26,7 @@ using ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager;
 using ChainSharp.Effect.Provider.Json.Extensions;
 using ChainSharp.Effect.Provider.Parameter.Extensions;
 using ChainSharp.Effect.StepProvider.Progress.Extensions;
+using ChainSharp.Samples.Flowthru.Spaceflights;
 using ChainSharp.Samples.Flowthru.Spaceflights.Workflows.DataProcessing;
 using ChainSharp.Samples.Flowthru.Spaceflights.Workflows.DataScience;
 using ChainSharp.Samples.Flowthru.Spaceflights.Workflows.Reporting;
@@ -78,6 +80,7 @@ builder.Services.AddChainSharpEffects(
                 assemblies: [typeof(Program).Assembly, typeof(ManifestManagerWorkflow).Assembly]
             )
             .AddPostgresEffect(connectionString)
+            .AddEffectDataContextLogging()
             .AddJsonEffect()
             .SaveWorkflowParameters()
             .AddStepProgress()
@@ -99,16 +102,16 @@ builder.Services.AddChainSharpEffects(
                 //          └── reporting   (ThenInclude — depends on data-science)
                 scheduler
                     .Schedule<IDataProcessingPipelineWorkflow>(
-                        "data-processing",
+                        ManifestNames.DataProcessing,
                         new DataProcessingPipelineInput(),
                         Every.Minutes(5)
                     )
                     .ThenInclude<IDataSciencePipelineWorkflow>(
-                        "data-science",
+                        ManifestNames.DataScience,
                         new DataSciencePipelineInput()
                     )
                     .ThenInclude<IReportingPipelineWorkflow>(
-                        "reporting",
+                        ManifestNames.Reporting,
                         new ReportingPipelineInput()
                     );
             })

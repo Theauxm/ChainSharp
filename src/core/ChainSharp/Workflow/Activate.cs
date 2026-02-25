@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using ChainSharp.Exceptions;
 using ChainSharp.Extensions;
@@ -7,6 +8,8 @@ namespace ChainSharp.Workflow;
 
 public partial class Workflow<TInput, TReturn>
 {
+    private static readonly ConcurrentDictionary<Type, Type[]> InterfaceCache = new();
+
     /// <summary>
     /// Activates the workflow by storing the input and additional objects in the Memory dictionary.
     /// This is typically the first method called in a workflow's RunInternal implementation.
@@ -42,7 +45,7 @@ public partial class Workflow<TInput, TReturn>
             Memory[inputType] = input;
 
             // Also store by all interfaces for interface-based retrieval
-            var interfaces = inputType.GetInterfaces();
+            var interfaces = InterfaceCache.GetOrAdd(inputType, t => t.GetInterfaces());
             foreach (var foundInterface in interfaces)
                 Memory[foundInterface] = input;
         }
@@ -58,9 +61,9 @@ public partial class Workflow<TInput, TReturn>
             {
                 Memory[otherType] = otherInput;
 
-                var interfaces = inputType.GetInterfaces();
+                var interfaces = InterfaceCache.GetOrAdd(otherType, t => t.GetInterfaces());
                 foreach (var foundInterface in interfaces)
-                    Memory[foundInterface] = input;
+                    Memory[foundInterface] = otherInput;
             }
         }
 

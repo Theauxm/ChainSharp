@@ -66,8 +66,6 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
         // Check cancellation before executing
         CancellationToken.ThrowIfCancellationRequested();
 
-        var stepName = GetType().Name;
-
         try
         {
             // Execute the step and return its result as Right
@@ -95,7 +93,7 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
             {
                 WorkflowName = workflow.GetType().Name,
                 WorkflowExternalId = workflow.ExternalId,
-                Step = stepName,
+                Step = GetType().Name,
                 Type = e.GetType().Name,
                 Message = e.Message
             };

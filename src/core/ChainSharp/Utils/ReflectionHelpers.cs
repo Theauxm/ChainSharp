@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Reflection;
 using ChainSharp.Step;
 using ChainSharp.Workflow;
@@ -8,22 +9,40 @@ namespace ChainSharp.Utils;
 /// <summary>
 /// Provides helper methods for working with reflection.
 /// These methods are used throughout ChainSharp to dynamically invoke methods and extract type information.
+/// Results are cached in static ConcurrentDictionary instances to avoid repeated reflection lookups.
 /// </summary>
 internal static class ReflectionHelpers
 {
     /// <summary>
+    /// Cache for step type arguments (TIn, TOut) keyed by the step type.
+    /// Since a step's IStep&lt;TIn, TOut&gt; interface never changes, this is safe to cache statically.
+    /// </summary>
+    private static readonly ConcurrentDictionary<
+        Type,
+        (Type TIn, Type TOut)
+    > StepTypeArgumentsCache = new();
+
+    /// <summary>
+    /// Cache for resolved generic MethodInfo instances, keyed by (workflowType, methodName, stepType, tIn, tOut, paramCount).
+    /// </summary>
+    private static readonly ConcurrentDictionary<
+        (Type WorkflowType, string MethodName, Type StepType, Type TIn, Type TOut, int ParamCount),
+        MethodInfo
+    > GenericMethodCache = new();
+
+    /// <summary>
     /// Extracts the input and output type arguments from an IStep implementation.
+    /// Results are cached per step type for subsequent calls.
     /// </summary>
     /// <typeparam name="TStep">The step type</typeparam>
     /// <returns>A tuple containing the input type and output type</returns>
     /// <exception cref="InvalidOperationException">Thrown if TStep does not implement IStep&lt;TIn, TOut&gt;</exception>
-    /// <remarks>
-    /// This method is used to determine the input and output types of a step at runtime.
-    /// It's used by the Chain and ShortCircuit methods to find the appropriate method to call.
-    /// </remarks>
     internal static (Type, Type) ExtractStepTypeArguments<TStep>()
     {
         var stepType = typeof(TStep);
+
+        if (StepTypeArgumentsCache.TryGetValue(stepType, out var cached))
+            return cached;
 
         // Find the IStep<,> interface
         var interfaceType = stepType
@@ -41,28 +60,17 @@ internal static class ReflectionHelpers
 
         // Extract the generic arguments
         var types = interfaceType.GetGenericArguments();
-        var tIn = types[0];
-        var tOut = types[1];
+        var result = (types[0], types[1]);
 
-        return (tIn, tOut);
+        StepTypeArgumentsCache.TryAdd(stepType, result);
+
+        return result;
     }
 
     /// <summary>
     /// Finds the ShortCircuitChain method that matches the specified types and parameter count.
+    /// Results are cached per (workflowType, stepType, tIn, tOut, paramCount) combination.
     /// </summary>
-    /// <typeparam name="TStep">The step type</typeparam>
-    /// <typeparam name="TInput">The workflow input type</typeparam>
-    /// <typeparam name="TReturn">The workflow return type</typeparam>
-    /// <param name="workflow">The workflow instance</param>
-    /// <param name="tIn">The step input type</param>
-    /// <param name="tOut">The step output type</param>
-    /// <param name="parameterCount">The number of parameters</param>
-    /// <returns>The method info for the matching method</returns>
-    /// <exception cref="InvalidOperationException">Thrown if no matching method is found or if multiple matching methods are found</exception>
-    /// <remarks>
-    /// This method is used by the ShortCircuit method to find the appropriate ShortCircuitChain method to call.
-    /// It searches for a method with the specified name, generic argument count, and parameter count.
-    /// </remarks>
     internal static MethodInfo FindGenericChainInternalMethod<TStep, TInput, TReturn>(
         Workflow<TInput, TReturn> workflow,
         Type tIn,
@@ -70,45 +78,51 @@ internal static class ReflectionHelpers
         int parameterCount
     )
     {
-        // Find a Generic Chain with 3 Type arguments and parameterCount
-        var methods = workflow
-            .GetType()
-            .GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-            .Where(m => m is { Name: "ShortCircuitChain", IsGenericMethodDefinition: true })
-            .Where(m => m.GetGenericArguments().Length == 3)
-            .Where(m => m.GetParameters().Length == parameterCount)
-            .ToList();
+        var cacheKey = (
+            workflow.GetType(),
+            "ShortCircuitChain",
+            typeof(TStep),
+            tIn,
+            tOut,
+            parameterCount
+        );
 
-        switch (methods.Count)
-        {
-            case > 1:
-                throw new InvalidOperationException("More than one Generic 'Chain' method found.");
-            case 0:
-                throw new InvalidOperationException("Suitable 'Chain' method not found.");
-        }
+        if (GenericMethodCache.TryGetValue(cacheKey, out var cached))
+            return cached;
 
-        // Create a generic method with the specified types
-        var method = methods.First();
-        var genericMethod = method.MakeGenericMethod(typeof(TStep), tIn, tOut);
-        return genericMethod;
+        return GenericMethodCache.GetOrAdd(
+            cacheKey,
+            _ =>
+            {
+                var methods = workflow
+                    .GetType()
+                    .GetMethods(
+                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
+                    )
+                    .Where(m => m is { Name: "ShortCircuitChain", IsGenericMethodDefinition: true })
+                    .Where(m => m.GetGenericArguments().Length == 3)
+                    .Where(m => m.GetParameters().Length == parameterCount)
+                    .ToList();
+
+                switch (methods.Count)
+                {
+                    case > 1:
+                        throw new InvalidOperationException(
+                            "More than one Generic 'Chain' method found."
+                        );
+                    case 0:
+                        throw new InvalidOperationException("Suitable 'Chain' method not found.");
+                }
+
+                return methods.First().MakeGenericMethod(typeof(TStep), tIn, tOut);
+            }
+        );
     }
 
     /// <summary>
     /// Finds the Chain method that matches the specified types and parameter count.
+    /// Results are cached per (workflowType, stepType, tIn, tOut, paramCount) combination.
     /// </summary>
-    /// <typeparam name="TStep">The step type</typeparam>
-    /// <typeparam name="TInput">The workflow input type</typeparam>
-    /// <typeparam name="TReturn">The workflow return type</typeparam>
-    /// <param name="workflow">The workflow instance</param>
-    /// <param name="tIn">The step input type</param>
-    /// <param name="tOut">The step output type</param>
-    /// <param name="parameterCount">The number of parameters</param>
-    /// <returns>The method info for the matching method</returns>
-    /// <exception cref="InvalidOperationException">Thrown if no matching method is found or if multiple matching methods are found</exception>
-    /// <remarks>
-    /// This method is used by the Chain method to find the appropriate Chain method to call.
-    /// It searches for a method with the specified name, generic argument count, and parameter count.
-    /// </remarks>
     internal static MethodInfo FindGenericChainMethod<TStep, TInput, TReturn>(
         Workflow<TInput, TReturn> workflow,
         Type tIn,
@@ -116,27 +130,38 @@ internal static class ReflectionHelpers
         int parameterCount
     )
     {
-        // Find a Generic Chain with 3 Type arguments and parameterCount
-        var methods = workflow
-            .GetType()
-            .GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-            .Where(m => m is { Name: "Chain", IsGenericMethodDefinition: true })
-            .Where(m => m.GetGenericArguments().Length == 3)
-            .Where(m => m.GetParameters().Length == parameterCount)
-            .ToList();
+        var cacheKey = (workflow.GetType(), "Chain", typeof(TStep), tIn, tOut, parameterCount);
 
-        switch (methods.Count)
-        {
-            case > 1:
-                throw new InvalidOperationException("More than one Generic 'Chain' method found.");
-            case 0:
-                throw new InvalidOperationException("Suitable 'Chain' method not found.");
-        }
+        if (GenericMethodCache.TryGetValue(cacheKey, out var cached))
+            return cached;
 
-        // Create a generic method with the specified types
-        var method = methods.First();
-        var genericMethod = method.MakeGenericMethod(typeof(TStep), tIn, tOut);
-        return genericMethod;
+        return GenericMethodCache.GetOrAdd(
+            cacheKey,
+            _ =>
+            {
+                var methods = workflow
+                    .GetType()
+                    .GetMethods(
+                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
+                    )
+                    .Where(m => m is { Name: "Chain", IsGenericMethodDefinition: true })
+                    .Where(m => m.GetGenericArguments().Length == 3)
+                    .Where(m => m.GetParameters().Length == parameterCount)
+                    .ToList();
+
+                switch (methods.Count)
+                {
+                    case > 1:
+                        throw new InvalidOperationException(
+                            "More than one Generic 'Chain' method found."
+                        );
+                    case 0:
+                        throw new InvalidOperationException("Suitable 'Chain' method not found.");
+                }
+
+                return methods.First().MakeGenericMethod(typeof(TStep), tIn, tOut);
+            }
+        );
     }
 
     /// <summary>

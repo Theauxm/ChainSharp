@@ -1,9 +1,10 @@
+using System.Collections.Concurrent;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using ChainSharp.Exceptions;
 using ChainSharp.Utils;
 using ChainSharp.Workflow;
 using LanguageExt;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace ChainSharp.Extensions;
@@ -15,22 +16,22 @@ namespace ChainSharp.Extensions;
 public static class WorkflowExtensions
 {
     /// <summary>
+    /// Cache for step constructor info and parameter types, keyed by step type.
+    /// </summary>
+    private static readonly ConcurrentDictionary<
+        Type,
+        (ConstructorInfo Constructor, Type[] ParameterTypes)?
+    > ConstructorCache = new();
+
+    /// <summary>
     /// Initializes a step instance by extracting its constructor parameters from Memory.
+    /// Constructor metadata is cached per step type for subsequent calls.
     /// </summary>
     /// <typeparam name="TStep">The type of step to initialize</typeparam>
     /// <typeparam name="TInput">The workflow input type</typeparam>
     /// <typeparam name="TReturn">The workflow return type</typeparam>
     /// <param name="workflow">The workflow instance</param>
     /// <returns>The initialized step instance, or null if initialization fails</returns>
-    /// <remarks>
-    /// This method:
-    /// 1. Verifies that TStep is a class
-    /// 2. Ensures it has exactly one constructor
-    /// 3. Extracts the constructor parameters from Memory
-    /// 4. Creates an instance of the step
-    ///
-    /// It's used by the Chain method to create step instances dynamically.
-    /// </remarks>
     public static TStep? InitializeStep<TStep, TInput, TReturn>(
         this Workflow<TInput, TReturn> workflow
     )
@@ -38,40 +39,39 @@ public static class WorkflowExtensions
     {
         var stepType = typeof(TStep);
 
-        // Verify that TStep is a class
-        if (!stepType.IsClass)
+        var cached = ConstructorCache.GetOrAdd(
+            stepType,
+            type =>
+            {
+                if (!type.IsClass)
+                    return null;
+
+                var constructors = type.GetConstructors();
+                if (constructors.Length != 1)
+                    return null;
+
+                var parameterTypes = constructors[0]
+                    .GetParameters()
+                    .Select(x => x.ParameterType)
+                    .ToArray();
+
+                return (constructors[0], parameterTypes);
+            }
+        );
+
+        if (cached is null)
         {
-            workflow.Exception ??= new WorkflowException($"Step ({stepType}) must be a class.");
+            // Determine the specific error for the caller
+            if (!stepType.IsClass)
+                workflow.Exception ??= new WorkflowException($"Step ({stepType}) must be a class.");
+            else
+                workflow.Exception ??= new WorkflowException(
+                    $"Step classes can only have a single constructor ({stepType})."
+                );
             return null;
         }
 
-        var constructors = stepType.GetConstructors();
-
-        // Ensure it has exactly one constructor
-        if (constructors.Length != 1)
-        {
-            workflow.Exception ??= new WorkflowException(
-                $"Step classes can only have a single constructor ({stepType})."
-            );
-            return null;
-        }
-
-        // Get the constructor parameter types
-        var constructorArguments = constructors
-            .First()
-            .GetParameters()
-            .Select(x => x.ParameterType)
-            .ToArray();
-
-        var constructor = stepType.GetConstructor(constructorArguments);
-
-        if (constructor is null)
-        {
-            workflow.Exception ??= new WorkflowException(
-                $"Could not find constructor for ({stepType})"
-            );
-            return null;
-        }
+        var (constructor, constructorArguments) = cached.Value;
 
         // Extract the constructor parameters from Memory
         var constructorParameters = ExtractTypesFromMemory(workflow, constructorArguments);
@@ -108,7 +108,14 @@ public static class WorkflowExtensions
     public static dynamic?[] ExtractTypesFromMemory<TInput, TReturn>(
         this Workflow<TInput, TReturn> workflow,
         IEnumerable<Type> types
-    ) => types.Select(type => ExtractTypeFromMemory(workflow, type)).ToArray();
+    )
+    {
+        var typeArray = types as Type[] ?? types.ToArray();
+        var result = new dynamic?[typeArray.Length];
+        for (var i = 0; i < typeArray.Length; i++)
+            result[i] = ExtractTypeFromMemory(workflow, typeArray[i]);
+        return result;
+    }
 
     /// <summary>
     /// Extracts a value of type T from Memory.

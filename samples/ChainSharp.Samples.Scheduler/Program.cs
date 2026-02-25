@@ -151,7 +151,11 @@ builder.Services.AddChainSharpEffects(
                                 i =>
                                     new ManifestItem(
                                         $"{i}",
-                                        new ExtractImportInput { TableName = ManifestNames.CustomerTable, Index = i }
+                                        new ExtractImportInput
+                                        {
+                                            TableName = ManifestNames.CustomerTable,
+                                            Index = i
+                                        }
                                     )
                             ),
                         Every.Minutes(5)
@@ -169,7 +173,10 @@ builder.Services.AddChainSharpEffects(
                                             TableName = ManifestNames.CustomerTable,
                                             Index = i
                                         },
-                                        DependsOn: ManifestNames.WithIndex(ManifestNames.ExtractCustomer, i)
+                                        DependsOn: ManifestNames.WithIndex(
+                                            ManifestNames.ExtractCustomer,
+                                            i
+                                        )
                                     )
                             )
                     )
@@ -187,7 +194,10 @@ builder.Services.AddChainSharpEffects(
                                             Index = i,
                                             AnomalyCount = 0,
                                         },
-                                        DependsOn: ManifestNames.WithIndex(ManifestNames.TransformCustomer, i)
+                                        DependsOn: ManifestNames.WithIndex(
+                                            ManifestNames.TransformCustomer,
+                                            i
+                                        )
                                     )
                             )
                     );
@@ -235,7 +245,10 @@ builder.Services.AddChainSharpEffects(
                                             Index = i,
                                             AnomalyCount = 0,
                                         },
-                                        DependsOn: ManifestNames.WithIndex(ManifestNames.ExtractTransaction, i)
+                                        DependsOn: ManifestNames.WithIndex(
+                                            ManifestNames.ExtractTransaction,
+                                            i
+                                        )
                                     )
                             ),
                         options: o => o.Dormant()

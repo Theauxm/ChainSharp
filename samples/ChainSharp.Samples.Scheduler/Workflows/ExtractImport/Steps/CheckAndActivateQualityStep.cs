@@ -1,9 +1,9 @@
 using ChainSharp.Effect.Orchestration.Scheduler.Services.DormantDependentContext;
 using ChainSharp.Samples.Scheduler.Workflows.DataQualityCheck;
 using ChainSharp.Step;
-using static ChainSharp.Samples.Scheduler.ManifestNames;
 using LanguageExt;
 using Microsoft.Extensions.Logging;
+using static ChainSharp.Samples.Scheduler.ManifestNames;
 
 namespace ChainSharp.Samples.Scheduler.Workflows.ExtractImport.Steps;
 

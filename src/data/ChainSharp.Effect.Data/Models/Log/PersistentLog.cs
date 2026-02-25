@@ -9,13 +9,9 @@ public class PersistentLog : Effect.Models.Log.Log
         modelBuilder.Entity<Effect.Models.Log.Log>(entity =>
         {
             entity.ToTable("log", "chain_sharp");
+            entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).ValueGeneratedOnAdd();
-
-            // entity
-            // .HasOne(x => x.Metadata)
-            // .WithMany(x => x.Logs)
-            // .HasForeignKey(x => x.MetadataId)
-            // .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => e.MetadataId);
         });
     }
 }

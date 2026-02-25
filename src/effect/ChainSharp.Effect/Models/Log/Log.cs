@@ -59,15 +59,18 @@ public class Log : ILog
         var newLog = new Log()
         {
             Level = createLog.Level,
-            Message = createLog.Message,
-            Category = createLog.CategoryName,
+            Message = Truncate(createLog.Message, 4000)!,
+            Category = Truncate(createLog.CategoryName, 500)!,
             EventId = createLog.EventId,
-            Exception = createLog.Exception?.Message,
-            StackTrace = createLog.Exception?.StackTrace
+            Exception = Truncate(createLog.Exception?.Message, 2000),
+            StackTrace = Truncate(createLog.Exception?.StackTrace, 4000)
         };
 
         return newLog;
     }
+
+    private static string? Truncate(string? value, int maxLength) =>
+        value?.Length > maxLength ? value[..maxLength] : value;
 
     public override string ToString() =>
         JsonSerializer.Serialize(

@@ -5,7 +5,7 @@ namespace ChainSharp.Effect.Dashboard.Services.DashboardSettings;
 
 public class DashboardSettingsService(ILocalStorageService localStorage) : IDashboardSettingsService
 {
-    public const int DefaultPollingIntervalSeconds = 15;
+    public const int DefaultPollingIntervalSeconds = 5;
     public const bool DefaultHideAdminWorkflows = true;
     public const bool DefaultComponentVisibility = true;
 

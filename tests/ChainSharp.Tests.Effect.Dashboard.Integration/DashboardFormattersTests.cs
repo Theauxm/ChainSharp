@@ -126,4 +126,90 @@ public class DashboardFormattersTests
         // Assert
         result.Should().Be(invalid);
     }
+
+    #region GetStateBadgeStyle Tests
+
+    [Test]
+    public void GetStateBadgeStyle_Completed_ReturnsSuccess()
+    {
+        // Act
+        var result = DashboardFormatters.GetStateBadgeStyle(WorkflowState.Completed);
+
+        // Assert
+        result.Should().Be(BadgeStyle.Success);
+    }
+
+    [Test]
+    public void GetStateBadgeStyle_Failed_ReturnsDanger()
+    {
+        // Act
+        var result = DashboardFormatters.GetStateBadgeStyle(WorkflowState.Failed);
+
+        // Assert
+        result.Should().Be(BadgeStyle.Danger);
+    }
+
+    [Test]
+    public void GetStateBadgeStyle_InProgress_ReturnsInfo()
+    {
+        // Act
+        var result = DashboardFormatters.GetStateBadgeStyle(WorkflowState.InProgress);
+
+        // Assert
+        result.Should().Be(BadgeStyle.Info);
+    }
+
+    [Test]
+    public void GetStateBadgeStyle_Pending_ReturnsWarning()
+    {
+        // Act
+        var result = DashboardFormatters.GetStateBadgeStyle(WorkflowState.Pending);
+
+        // Assert
+        result.Should().Be(BadgeStyle.Warning);
+    }
+
+    [Test]
+    public void GetStateBadgeStyle_Cancelled_ReturnsWarning()
+    {
+        // Act
+        var result = DashboardFormatters.GetStateBadgeStyle(WorkflowState.Cancelled);
+
+        // Assert
+        result.Should().Be(BadgeStyle.Warning);
+    }
+
+    [Test]
+    public void GetStateBadgeStyle_UnknownValue_ReturnsLight()
+    {
+        // Act
+        var result = DashboardFormatters.GetStateBadgeStyle((WorkflowState)99);
+
+        // Assert
+        result.Should().Be(BadgeStyle.Light);
+    }
+
+    [Test]
+    public void GetStateBadgeStyle_AllDefinedStates_ReturnExpectedStyles()
+    {
+        // Verify every defined WorkflowState maps to a non-default style
+        var expectedMappings = new Dictionary<WorkflowState, BadgeStyle>
+        {
+            [WorkflowState.Completed] = BadgeStyle.Success,
+            [WorkflowState.Failed] = BadgeStyle.Danger,
+            [WorkflowState.InProgress] = BadgeStyle.Info,
+            [WorkflowState.Pending] = BadgeStyle.Warning,
+            [WorkflowState.Cancelled] = BadgeStyle.Warning
+        };
+
+        foreach (var (state, expectedStyle) in expectedMappings)
+        {
+            var result = DashboardFormatters.GetStateBadgeStyle(state);
+            result
+                .Should()
+                .Be(expectedStyle, $"WorkflowState.{state} should map to {expectedStyle}");
+        }
+    }
+
+    #endregion
 }

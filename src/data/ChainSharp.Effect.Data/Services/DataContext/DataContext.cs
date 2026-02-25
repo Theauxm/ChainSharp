@@ -144,6 +144,10 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
     public Task<IDataContextTransaction> BeginTransaction() =>
         BeginTransaction(IsolationLevel.ReadCommitted);
 
+    /// <inheritdoc />
+    public Task<IDataContextTransaction> BeginTransaction(CancellationToken cancellationToken) =>
+        BeginTransaction(IsolationLevel.ReadCommitted, cancellationToken);
+
     /// <summary>
     /// Begins a new database transaction with the specified isolation level.
     /// </summary>
@@ -163,6 +167,16 @@ public class DataContext<TDbContext>(DbContextOptions<TDbContext> options)
         new DataContextTransaction.DataContextTransaction(
             this,
             await Database.BeginTransactionAsync()
+        );
+
+    /// <inheritdoc />
+    public async Task<IDataContextTransaction> BeginTransaction(
+        IsolationLevel isolationLevel,
+        CancellationToken cancellationToken
+    ) =>
+        new DataContextTransaction.DataContextTransaction(
+            this,
+            await Database.BeginTransactionAsync(cancellationToken)
         );
 
     /// <summary>

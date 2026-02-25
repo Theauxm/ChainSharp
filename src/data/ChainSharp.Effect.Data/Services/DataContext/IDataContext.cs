@@ -132,6 +132,13 @@ public interface IDataContext : IEffectProvider, IAsyncDisposable
     Task<IDataContextTransaction> BeginTransaction();
 
     /// <summary>
+    /// Begins a new database transaction with cancellation support.
+    /// </summary>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests</param>
+    /// <returns>A transaction object that can be used to commit or rollback changes</returns>
+    Task<IDataContextTransaction> BeginTransaction(CancellationToken cancellationToken);
+
+    /// <summary>
     /// Begins a new database transaction with the specified isolation level.
     /// </summary>
     /// <param name="isolationLevel">The transaction isolation level to use</param>
@@ -150,6 +157,17 @@ public interface IDataContext : IEffectProvider, IAsyncDisposable
     /// CommitTransaction or RollbackTransaction methods.
     /// </remarks>
     Task<IDataContextTransaction> BeginTransaction(IsolationLevel isolationLevel);
+
+    /// <summary>
+    /// Begins a new database transaction with the specified isolation level and cancellation support.
+    /// </summary>
+    /// <param name="isolationLevel">The transaction isolation level to use</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests</param>
+    /// <returns>A transaction object that can be used to commit or rollback changes</returns>
+    Task<IDataContextTransaction> BeginTransaction(
+        IsolationLevel isolationLevel,
+        CancellationToken cancellationToken
+    );
 
     /// <summary>
     /// Commits the current transaction.

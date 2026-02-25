@@ -155,6 +155,13 @@
                                             Fill="#C62828">
                             <RadzenSeriesDataLabels Visible="false" />
                         </RadzenColumnSeries>
+                        <RadzenColumnSeries Data="@_executionsOverTime"
+                                            CategoryProperty="Hour"
+                                            ValueProperty="Cancelled"
+                                            Title="Cancelled"
+                                            Fill="#F9A825">
+                            <RadzenSeriesDataLabels Visible="false" />
+                        </RadzenColumnSeries>
                         <RadzenColumnOptions Margin="2" />
                         <RadzenCategoryAxis>
                             <RadzenGridLines Visible="true" />
@@ -179,7 +186,7 @@
                                                CategoryProperty="State"
                                                ValueProperty="Count"
                                                Title="State"
-                                               Fills="@(new [] { "#2E7D32", "#C62828", "#1565C0", "#F9A825" })">
+                                               Fills="@(new [] { "#2E7D32", "#C62828", "#1565C0", "#F9A825", "#E65100" })">
                                 <RadzenSeriesDataLabels Visible="false" />
                             </RadzenDonutSeries>
                             <RadzenLegend Position="LegendPosition.Bottom" />

@@ -34,6 +34,12 @@ public abstract class PollingComponentBase : ComponentBase, IAsyncDisposable
 
     protected bool IsLoading { get; set; } = true;
 
+    /// <summary>
+    /// A CancellationToken that is cancelled when the component is disposed.
+    /// Event handlers can pass this to async operations so they abort when the user navigates away.
+    /// </summary>
+    protected CancellationToken DisposalToken => _cts?.Token ?? CancellationToken.None;
+
     protected abstract Task LoadDataAsync(CancellationToken cancellationToken);
 
     /// <summary>

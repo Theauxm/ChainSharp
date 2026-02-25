@@ -9,7 +9,6 @@ using ChainSharp.Workflow;
 using FluentAssertions;
 using LanguageExt;
 using Microsoft.Extensions.Logging;
-using Moq;
 
 namespace ChainSharp.Tests.Integration.IntegrationTests;
 
@@ -383,6 +382,11 @@ public class WorkflowTests : TestSetup
         result.Should().Be(Unit.Default);
     }
 
+    private class StubFerment : Step<BrewingJug, Unit>, IFerment
+    {
+        public override Task<Unit> Run(BrewingJug input) => Task.FromResult(Unit.Default);
+    }
+
     private class ThrowsStep : Step<Unit, Unit>
     {
         public override Task<Unit> Run(Unit input) =>
@@ -643,7 +647,7 @@ public class WorkflowTests : TestSetup
         )
         {
             var brew = new Brew();
-            var ferment = new Mock<IFerment>().Object;
+            var ferment = new StubFerment() as IFerment;
             return Activate(input, "this is a test string to make sure it gets added to memory")
                 .AddServices(ferment)
                 .Chain<Prepare>()

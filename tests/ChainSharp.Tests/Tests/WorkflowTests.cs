@@ -9,7 +9,6 @@ using ChainSharp.Workflow;
 using FluentAssertions;
 using LanguageExt;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
 using NUnit.Framework;
 
 namespace ChainSharp.Tests.Tests;
@@ -154,7 +153,7 @@ public class WorkflowTests : TestSetup
         )
         {
             var brew = new Brew();
-            var ferment = new Mock<IFerment>().Object;
+            var ferment = new StubFerment() as IFerment;
             return Activate(input, "this is a test string to make sure it gets added to memory")
                 .AddServices(ferment)
                 .Chain<Prepare>()
@@ -274,6 +273,11 @@ public class WorkflowTests : TestSetup
         protected override async Task<Either<Exception, InnerField>> RunInternal(
             OuterField input
         ) => Activate(input).Extract<OuterField, InnerField>().Resolve();
+    }
+
+    private class StubFerment : Step<BrewingJug, Unit>, IFerment
+    {
+        public override Task<Unit> Run(BrewingJug input) => Task.FromResult(Unit.Default);
     }
 
     private class TwoTupleStepTest : Step<(Ingredients, BrewingJug), Unit>

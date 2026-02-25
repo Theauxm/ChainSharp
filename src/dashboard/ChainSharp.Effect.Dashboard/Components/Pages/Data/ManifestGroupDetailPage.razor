@@ -18,15 +18,27 @@
 
     @if (_group is not null)
     {
-        <RadzenButton Text="Run Group"
-                      Icon="play_arrow"
-                      ButtonStyle="ButtonStyle.Secondary"
-                      Variant="Variant.Outlined"
-                      Size="ButtonSize.Small"
-                      Click="@TriggerGroup"
-                      IsBusy="@_triggering"
-                      Disabled="@_triggering"
-                      Style="margin-left: auto;" />
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" Style="margin-left: auto;">
+            @if (_inProgressCount > 0)
+            {
+                <RadzenButton Text="Cancel All Running"
+                              Icon="cancel"
+                              ButtonStyle="ButtonStyle.Danger"
+                              Variant="Variant.Outlined"
+                              Size="ButtonSize.Small"
+                              Click="@CancelAllRunning"
+                              IsBusy="@_cancellingAll"
+                              Disabled="@_cancellingAll" />
+            }
+            <RadzenButton Text="Run Group"
+                          Icon="play_arrow"
+                          ButtonStyle="ButtonStyle.Secondary"
+                          Variant="Variant.Outlined"
+                          Size="ButtonSize.Small"
+                          Click="@TriggerGroup"
+                          IsBusy="@_triggering"
+                          Disabled="@_triggering" />
+        </RadzenStack>
     }
 </RadzenStack>
 

@@ -46,5 +46,5 @@ internal class LoadManifestsStep(IDataContext dataContext)
                     }
             )
             .AsNoTracking()
-            .ToListAsync();
+            .ToListAsync(CancellationToken);
 }

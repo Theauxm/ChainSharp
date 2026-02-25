@@ -40,6 +40,27 @@ public class CreateUserStep(IUserRepository UserRepository) : Step<CreateUserReq
 
 Steps use constructor injection for dependencies. When a step throws, the workflow stops and returns the exception.
 
+## CancellationToken in Steps
+
+Every step has a `CancellationToken` property that is set automatically by the workflow before `Run()` is called. Use it to pass cancellation to async operations:
+
+```csharp
+public class FetchUserStep(IHttpClientFactory httpFactory) : Step<UserId, UserProfile>
+{
+    public override async Task<UserProfile> Run(UserId input)
+    {
+        var client = httpFactory.CreateClient();
+        var response = await client.GetAsync($"/users/{input.Value}", CancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<UserProfile>(CancellationToken);
+    }
+}
+```
+
+The token comes from the caller: `workflow.Run(input, cancellationToken)`. If no token is provided, `CancellationToken` defaults to `CancellationToken.None`. Before each step executes, cancellation is checked — if the token is already cancelled, the step is skipped and `OperationCanceledException` propagates.
+
+*Full details: [Cancellation Tokens]({{ site.baseurl }}{% link usage-guide/cancellation-tokens.md %})*
+
 ## EffectStep vs Step
 
 ChainSharp has two step base classes:

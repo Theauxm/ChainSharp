@@ -16,7 +16,6 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
         <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.3" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.3" />
-        <PackageReference Include="Moq" Version="4.20.70" />
         <PackageReference Include="NUnit" Version="3.14.0"/>
         <PackageReference Include="NUnit.Analyzers" Version="3.9.0"/>
         <PackageReference Include="NUnit3TestAdapter" Version="4.5.0"/>
@@ -30,6 +29,8 @@
       <ProjectReference Include="..\..\src\effect\ChainSharp.Effect\ChainSharp.Effect.csproj" />
       <ProjectReference Include="..\..\src\providers\ChainSharp.Effect.Provider.Json\ChainSharp.Effect.Provider.Json.csproj" />
       <ProjectReference Include="..\..\src\providers\ChainSharp.Effect.StepProvider.Logging\ChainSharp.Effect.StepProvider.Logging.csproj" />
+      <ProjectReference Include="..\..\src\providers\ChainSharp.Effect.StepProvider.Progress\ChainSharp.Effect.StepProvider.Progress.csproj" />
+      <ProjectReference Include="..\..\src\data\ChainSharp.Effect.Data\ChainSharp.Effect.Data.csproj" />
     </ItemGroup>
 
 </Project>

@@ -14,9 +14,60 @@ Batch-schedules multiple instances of a workflow from a collection. All manifest
 
 ## Signatures
 
-### Startup: Name-Based (Recommended)
+### Startup: Name-Based with ManifestItem (Recommended)
 
 ```csharp
+public SchedulerConfigurationBuilder ScheduleMany<TWorkflow>(
+    string name,
+    IEnumerable<ManifestItem> items,
+    Schedule schedule,
+    Action<ScheduleOptions>? options = null
+)
+    where TWorkflow : class
+```
+
+The `name` parameter automatically derives:
+- **`groupId`** = `name`
+- **`prunePrefix`** = `"{name}-"`
+- **`externalId`** = `"{name}-{item.Id}"` for each item
+
+Each `ManifestItem` contains the item's ID and input. The input type is inferred from `TWorkflow`'s `IEffectWorkflow<TInput, Unit>` interface and validated at configuration time.
+
+### Startup: Unnamed with ManifestItem
+
+```csharp
+public SchedulerConfigurationBuilder ScheduleMany<TWorkflow>(
+    IEnumerable<ManifestItem> items,
+    Schedule schedule,
+    Action<ScheduleOptions>? options = null
+)
+    where TWorkflow : class
+```
+
+Each `ManifestItem.Id` is used as the full external ID (no name prefix applied).
+
+### ManifestItem
+
+```csharp
+public sealed record ManifestItem(
+    string Id,
+    IManifestProperties Input,
+    string? DependsOn = null
+);
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Id` | `string` | The item's identifier. In name-based overloads, this becomes the suffix (full external ID = `"{name}-{Id}"`). In unnamed overloads, this is the full external ID. |
+| `Input` | `IManifestProperties` | The workflow input for this item. Must match the expected input type of `TWorkflow`. |
+| `DependsOn` | `string?` | The external ID of the parent manifest this item depends on. Used by `IncludeMany` and `ThenIncludeMany`. See [Dependent Scheduling]({{ site.baseurl }}{% link api-reference/scheduler-api/dependent-scheduling.md %}). |
+
+### Startup: Explicit Type Parameters (Legacy)
+
+The three-type-parameter forms are still available for backward compatibility:
+
+```csharp
+// Name-based
 public SchedulerConfigurationBuilder ScheduleMany<TWorkflow, TInput, TSource>(
     string name,
     IEnumerable<TSource> sources,
@@ -27,16 +78,8 @@ public SchedulerConfigurationBuilder ScheduleMany<TWorkflow, TInput, TSource>(
 )
     where TWorkflow : IEffectWorkflow<TInput, Unit>
     where TInput : IManifestProperties
-```
 
-The `name` parameter automatically derives:
-- **`groupId`** = `name`
-- **`prunePrefix`** = `"{name}-"`
-- **`externalId`** = `"{name}-{suffix}"` (where `suffix` comes from the `map` function)
-
-### Startup: Explicit
-
-```csharp
+// Explicit
 public SchedulerConfigurationBuilder ScheduleMany<TWorkflow, TInput, TSource>(
     IEnumerable<TSource> sources,
     Func<TSource, (string ExternalId, TInput Input)> map,
@@ -65,6 +108,14 @@ Task<IReadOnlyList<Manifest>> ScheduleManyAsync<TWorkflow, TInput, TSource>(
 
 ## Type Parameters
 
+### ManifestItem API (Recommended)
+
+| Type Parameter | Constraint | Description |
+|---------------|------------|-------------|
+| `TWorkflow` | `class` | The workflow interface type. Must implement `IEffectWorkflow<TInput, Unit>`. The input type is inferred at configuration time. |
+
+### Legacy / Runtime API
+
 | Type Parameter | Constraint | Description |
 |---------------|------------|-------------|
 | `TWorkflow` | `IEffectWorkflow<TInput, Unit>` | The workflow interface type. All items in the batch execute the same workflow. |
@@ -73,26 +124,25 @@ Task<IReadOnlyList<Manifest>> ScheduleManyAsync<TWorkflow, TInput, TSource>(
 
 ## Parameters
 
-### Name-Based Overload
+### ManifestItem API (Recommended)
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `name` | `string` | Yes | — | The batch name. Automatically derives `groupId` = `name`, `prunePrefix` = `"{name}-"`, and each external ID = `"{name}-{suffix}"`. |
-| `sources` | `IEnumerable<TSource>` | Yes | — | The collection of items to create manifests from. Each item becomes one scheduled manifest. |
-| `map` | `Func<TSource, (string Suffix, TInput Input)>` | Yes | — | A function that transforms each source item into a `Suffix` and `Input` pair. The full external ID is `"{name}-{suffix}"`. |
+| `name` | `string` | Yes (name-based) | — | The batch name. Automatically derives `groupId` = `name`, `prunePrefix` = `"{name}-"`, and each external ID = `"{name}-{item.Id}"`. |
+| `items` | `IEnumerable<ManifestItem>` | Yes | — | The collection of items to create manifests from. Each item becomes one scheduled manifest. |
 | `schedule` | `Schedule` | Yes | — | The schedule definition applied to **all** manifests in the batch. Use [Every]({{ site.baseurl }}{% link api-reference/scheduler-api/scheduling-helpers.md %}) or [Cron]({{ site.baseurl }}{% link api-reference/scheduler-api/scheduling-helpers.md %}) helpers. |
-| `options` | `Action<ScheduleOptions>?` | No | `null` | Optional callback to configure all scheduling options via a fluent builder. Includes manifest-level settings (`Priority`, `Enabled`, `MaxRetries`, `Timeout`), group-level settings (`.Group(...)` with `MaxActiveJobs`, `Priority`, `Enabled`), and batch settings (`PrunePrefix`). Note: the name-based overload pre-sets `Group(name)` and `PrunePrefix("{name}-")` before invoking your callback, so you can override these if needed. See [ScheduleOptions]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}#scheduleoptions). |
+| `options` | `Action<ScheduleOptions>?` | No | `null` | Optional callback to configure all scheduling options. The name-based overload pre-sets `Group(name)` and `PrunePrefix("{name}-")` before invoking your callback. See [ScheduleOptions]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}#scheduleoptions). |
+
+### Legacy API Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `name` | `string` | Yes (name-based) | — | The batch name. Automatically derives `groupId` = `name`, `prunePrefix` = `"{name}-"`, and each external ID = `"{name}-{suffix}"`. |
+| `sources` | `IEnumerable<TSource>` | Yes | — | The collection of items to create manifests from. Each item becomes one scheduled manifest. |
+| `map` | `Func<TSource, (string, TInput)>` | Yes | — | A function that transforms each source item into an ID/suffix and input pair. |
+| `schedule` | `Schedule` | Yes | — | The schedule definition applied to **all** manifests in the batch. |
+| `options` | `Action<ScheduleOptions>?` | No | `null` | Optional callback to configure all scheduling options. See [ScheduleOptions]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}#scheduleoptions). |
 | `configureEach` | `Action<TSource, ManifestOptions>?` | No | `null` | Optional callback to set per-item manifest options. Receives both the source item and options, allowing per-item overrides of the base options set via `options`. |
-
-### Explicit Overload
-
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `sources` | `IEnumerable<TSource>` | Yes | — | The collection of items to create manifests from. Each item becomes one scheduled manifest. |
-| `map` | `Func<TSource, (string ExternalId, TInput Input)>` | Yes | — | A function that transforms each source item into an `ExternalId` (unique identifier) and `Input` (workflow input data) pair. |
-| `schedule` | `Schedule` | Yes | — | The schedule definition applied to **all** manifests in the batch. Use [Every]({{ site.baseurl }}{% link api-reference/scheduler-api/scheduling-helpers.md %}) or [Cron]({{ site.baseurl }}{% link api-reference/scheduler-api/scheduling-helpers.md %}) helpers. |
-| `options` | `Action<ScheduleOptions>?` | No | `null` | Optional callback to configure all scheduling options via a fluent builder. Includes manifest-level settings (`Priority`, `Enabled`, `MaxRetries`, `Timeout`), group-level settings (`.Group(...)` with `MaxActiveJobs`, `Priority`, `Enabled`), batch settings (`PrunePrefix`). See [ScheduleOptions]({{ site.baseurl }}{% link api-reference/scheduler-api/schedule.md %}#scheduleoptions). |
-| `configureEach` | `Action<TSource, ManifestOptions>?` | No | `null` | Optional callback to set per-item manifest options. Receives **both** the source item and the options, allowing per-item overrides of the base options. |
 | `ct` | `CancellationToken` | No | `default` | Cancellation token (runtime API only). |
 
 ## Returns
@@ -102,18 +152,20 @@ Task<IReadOnlyList<Manifest>> ScheduleManyAsync<TWorkflow, TInput, TSource>(
 
 ## Examples
 
-### Basic Batch Scheduling (Name-Based)
+### Basic Batch Scheduling with ManifestItem (Recommended)
 
 ```csharp
 var tables = new[] { "customers", "orders", "products" };
 
 services.AddChainSharpEffects(options => options
     .AddScheduler(scheduler => scheduler
-        .UseHangfire(connectionString)
-        .ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
+        .UsePostgresTaskServer()
+        .ScheduleMany<ISyncTableWorkflow>(
             "sync",
-            tables,
-            table => (table, new SyncTableInput { TableName = table }),
+            tables.Select(table => new ManifestItem(
+                table,
+                new SyncTableInput { TableName = table }
+            )),
             Every.Minutes(5))
     )
 );
@@ -121,28 +173,24 @@ services.AddChainSharpEffects(options => options
 // groupId: "sync", prunePrefix: "sync-"
 ```
 
-### Basic Batch Scheduling (Explicit)
+Each `ManifestItem` contains the item's ID (used as the suffix in name-based overloads) and the workflow input. No `map` function needed — the data is already structured.
+
+### Unnamed Batch Scheduling
 
 ```csharp
 var tables = new[] { "customers", "orders", "products" };
 
-services.AddChainSharpEffects(options => options
-    .AddScheduler(scheduler => scheduler
-        .UseHangfire(connectionString)
-        .ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
-            sources: tables,
-            map: table => (
-                ExternalId: $"sync-{table}",
-                Input: new SyncTableInput { TableName = table }
-            ),
-            schedule: Every.Minutes(5))
-    )
-);
+scheduler.ScheduleMany<ISyncTableWorkflow>(
+    tables.Select(table => new ManifestItem(
+        $"sync-{table}",
+        new SyncTableInput { TableName = table }
+    )),
+    Every.Minutes(5));
 ```
 
 ### With Pruning (Automatic Stale Cleanup)
 
-The name-based overload includes pruning automatically (`prunePrefix: "{name}-"`). With the explicit overload, specify it via `ScheduleOptions`:
+The name-based overload includes pruning automatically (`prunePrefix: "{name}-"`):
 
 ```csharp
 // If "partners" was in a previous deployment but removed from this list,
@@ -150,53 +198,50 @@ The name-based overload includes pruning automatically (`prunePrefix: "{name}-"`
 // "sync-" but wasn't included in the current batch.
 var tables = new[] { "customers", "orders" };
 
-// Name-based: pruning is automatic
-scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
+scheduler.ScheduleMany<ISyncTableWorkflow>(
     "sync",
-    tables,
-    table => (table, new SyncTableInput { TableName = table }),
+    tables.Select(table => new ManifestItem(
+        table,
+        new SyncTableInput { TableName = table }
+    )),
     Every.Minutes(5));
-
-// Explicit: specify prunePrefix via options
-scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
-    tables,
-    table => ($"sync-{table}", new SyncTableInput { TableName = table }),
-    Every.Minutes(5),
-    options => options.PrunePrefix("sync-"));
-```
-
-### With Per-Item Configuration
-
-```csharp
-scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
-    tables,
-    table => ($"sync-{table}", new SyncTableInput { TableName = table }),
-    Every.Minutes(5),
-    options => options.Priority(10),  // Base priority for all items
-    configureEach: (table, opts) =>
-    {
-        // Give the "orders" table more retries and higher priority
-        if (table == "orders")
-        {
-            opts.MaxRetries = 10;
-            opts.Priority = 25;
-        }
-    });
 ```
 
 ### With Group Configuration
 
 ```csharp
-scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
+scheduler.ScheduleMany<ISyncTableWorkflow>(
     "sync",
-    tables,
-    table => (table, new SyncTableInput { TableName = table }),
+    tables.Select(table => new ManifestItem(
+        table,
+        new SyncTableInput { TableName = table }
+    )),
     Every.Minutes(5),
     options => options
         .Priority(10)
         .Group(group => group
             .MaxActiveJobs(5)
             .Priority(20)));
+```
+
+### Legacy API with Map Function
+
+The three-type-parameter form is still available and supports per-item configuration via `configureEach`:
+
+```csharp
+scheduler.ScheduleMany<ISyncTableWorkflow, SyncTableInput, string>(
+    tables,
+    table => ($"sync-{table}", new SyncTableInput { TableName = table }),
+    Every.Minutes(5),
+    options => options.Priority(10),
+    configureEach: (table, opts) =>
+    {
+        if (table == "orders")
+        {
+            opts.MaxRetries = 10;
+            opts.Priority = 25;
+        }
+    });
 ```
 
 ### Runtime Scheduling

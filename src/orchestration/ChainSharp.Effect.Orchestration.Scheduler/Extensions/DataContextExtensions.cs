@@ -60,7 +60,7 @@ public static class DataContextExtensions
     /// <summary>
     /// Creates or updates a manifest with the specified configuration.
     /// </summary>
-    public static async Task<Manifest> UpsertManifestAsync<TWorkflow, TInput>(
+    public static Task<Manifest> UpsertManifestAsync<TWorkflow, TInput>(
         this IDataContext context,
         string externalId,
         TInput input,
@@ -73,7 +73,36 @@ public static class DataContextExtensions
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
-        where TInput : IManifestProperties
+        where TInput : IManifestProperties =>
+        context.UpsertManifestAsync(
+            typeof(TWorkflow),
+            externalId,
+            input,
+            schedule,
+            options,
+            groupId,
+            groupPriority,
+            groupMaxActiveJobs,
+            groupIsEnabled,
+            ct
+        );
+
+    /// <summary>
+    /// Non-generic overload that accepts workflow type as a <see cref="Type"/> parameter.
+    /// </summary>
+    internal static async Task<Manifest> UpsertManifestAsync(
+        this IDataContext context,
+        Type workflowType,
+        string externalId,
+        IManifestProperties input,
+        Schedule schedule,
+        ManifestOptions options,
+        string groupId,
+        int groupPriority,
+        int? groupMaxActiveJobs = null,
+        bool groupIsEnabled = true,
+        CancellationToken ct = default
+    )
     {
         var manifestGroupId = await context.EnsureManifestGroupAsync(
             groupId,
@@ -91,8 +120,7 @@ public static class DataContextExtensions
         if (existing != null)
         {
             // Update only scheduling-related fields, preserve runtime state
-            existing.Name = typeof(TWorkflow).FullName!;
-            existing.PropertyTypeName = typeof(TInput).FullName;
+            existing.Name = workflowType.FullName!;
             existing.SetProperties(input);
             existing.IsEnabled = options.IsEnabled;
             existing.MaxRetries = options.MaxRetries;
@@ -110,8 +138,7 @@ public static class DataContextExtensions
         var manifest = new Manifest
         {
             ExternalId = externalId,
-            Name = typeof(TWorkflow).FullName!,
-            PropertyTypeName = typeof(TInput).FullName,
+            Name = workflowType.FullName!,
             IsEnabled = options.IsEnabled,
             MaxRetries = options.MaxRetries,
             TimeoutSeconds = options.Timeout.HasValue
@@ -131,7 +158,7 @@ public static class DataContextExtensions
     /// <summary>
     /// Creates or updates a dependent manifest that triggers after a parent manifest succeeds.
     /// </summary>
-    public static async Task<Manifest> UpsertDependentManifestAsync<TWorkflow, TInput>(
+    public static Task<Manifest> UpsertDependentManifestAsync<TWorkflow, TInput>(
         this IDataContext context,
         string externalId,
         TInput input,
@@ -144,7 +171,36 @@ public static class DataContextExtensions
         CancellationToken ct = default
     )
         where TWorkflow : IEffectWorkflow<TInput, Unit>
-        where TInput : IManifestProperties
+        where TInput : IManifestProperties =>
+        context.UpsertDependentManifestAsync(
+            typeof(TWorkflow),
+            externalId,
+            input,
+            dependsOnManifestId,
+            options,
+            groupId,
+            groupPriority,
+            groupMaxActiveJobs,
+            groupIsEnabled,
+            ct
+        );
+
+    /// <summary>
+    /// Non-generic overload that accepts workflow type as a <see cref="Type"/> parameter.
+    /// </summary>
+    internal static async Task<Manifest> UpsertDependentManifestAsync(
+        this IDataContext context,
+        Type workflowType,
+        string externalId,
+        IManifestProperties input,
+        long dependsOnManifestId,
+        ManifestOptions options,
+        string groupId,
+        int groupPriority,
+        int? groupMaxActiveJobs = null,
+        bool groupIsEnabled = true,
+        CancellationToken ct = default
+    )
     {
         var manifestGroupId = await context.EnsureManifestGroupAsync(
             groupId,
@@ -165,8 +221,7 @@ public static class DataContextExtensions
 
         if (existing != null)
         {
-            existing.Name = typeof(TWorkflow).FullName!;
-            existing.PropertyTypeName = typeof(TInput).FullName;
+            existing.Name = workflowType.FullName!;
             existing.SetProperties(input);
             existing.IsEnabled = options.IsEnabled;
             existing.MaxRetries = options.MaxRetries;
@@ -186,8 +241,7 @@ public static class DataContextExtensions
         var manifest = new Manifest
         {
             ExternalId = externalId,
-            Name = typeof(TWorkflow).FullName!,
-            PropertyTypeName = typeof(TInput).FullName,
+            Name = workflowType.FullName!,
             IsEnabled = options.IsEnabled,
             MaxRetries = options.MaxRetries,
             TimeoutSeconds = options.Timeout.HasValue

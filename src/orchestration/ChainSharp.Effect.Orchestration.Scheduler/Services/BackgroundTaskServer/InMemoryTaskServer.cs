@@ -32,21 +32,39 @@ public class InMemoryTaskServer(ITaskServerExecutorWorkflow taskServerExecutorWo
     /// Executes the workflow immediately and synchronously. The returned job ID is
     /// a simple incrementing counter prefixed with "inmemory-".
     /// </remarks>
-    public async Task<string> EnqueueAsync(long metadataId)
+    public Task<string> EnqueueAsync(long metadataId) =>
+        EnqueueAsync(metadataId, CancellationToken.None);
+
+    /// <inheritdoc />
+    public Task<string> EnqueueAsync(long metadataId, object input) =>
+        EnqueueAsync(metadataId, input, CancellationToken.None);
+
+    /// <inheritdoc />
+    public async Task<string> EnqueueAsync(long metadataId, CancellationToken cancellationToken)
     {
         var jobId = $"inmemory-{Interlocked.Increment(ref _jobCounter)}";
 
-        await taskServerExecutorWorkflow.Run(new ExecuteManifestRequest(metadataId));
+        await taskServerExecutorWorkflow.Run(
+            new ExecuteManifestRequest(metadataId),
+            cancellationToken
+        );
 
         return jobId;
     }
 
     /// <inheritdoc />
-    public async Task<string> EnqueueAsync(long metadataId, object input)
+    public async Task<string> EnqueueAsync(
+        long metadataId,
+        object input,
+        CancellationToken cancellationToken
+    )
     {
         var jobId = $"inmemory-{Interlocked.Increment(ref _jobCounter)}";
 
-        await taskServerExecutorWorkflow.Run(new ExecuteManifestRequest(metadataId, input));
+        await taskServerExecutorWorkflow.Run(
+            new ExecuteManifestRequest(metadataId, input),
+            cancellationToken
+        );
 
         return jobId;
     }

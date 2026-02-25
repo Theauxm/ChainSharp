@@ -129,7 +129,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
             await this.InitializeWorkflow();
 
         Metadata.AssertLoaded();
-        await EffectRunner.SaveChanges(CancellationToken.None);
+        await EffectRunner.SaveChanges(CancellationToken);
 
         try
         {
@@ -142,7 +142,7 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
             await EffectRunner.Update(Metadata);
 
             await this.FinishWorkflow(result);
-            await EffectRunner.SaveChanges(CancellationToken.None);
+            await EffectRunner.SaveChanges(CancellationToken);
 
             return result;
         }
@@ -155,14 +155,44 @@ public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWo
             );
 
             await this.FinishWorkflow(e);
-            await EffectRunner.SaveChanges(CancellationToken.None);
+            await EffectRunner.SaveChanges(CancellationToken);
 
             throw;
         }
     }
 
+    /// <summary>
+    /// Executes the workflow with the given input and cancellation support.
+    /// </summary>
+    /// <param name="input">The input data for the workflow</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests</param>
+    /// <returns>The result of the workflow execution</returns>
+    public new virtual async Task<TOut> Run(TIn input, CancellationToken cancellationToken)
+    {
+        CancellationToken = cancellationToken;
+        return await Run(input);
+    }
+
     public virtual async Task<TOut> Run(TIn input, Metadata metadata)
     {
+        await this.InitializeWorkflow(metadata);
+        return await Run(input);
+    }
+
+    /// <summary>
+    /// Executes the workflow with the given input, pre-created metadata, and cancellation support.
+    /// </summary>
+    /// <param name="input">The input data for the workflow</param>
+    /// <param name="metadata">Pre-created metadata record for this workflow execution</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests</param>
+    /// <returns>The result of the workflow execution</returns>
+    public virtual async Task<TOut> Run(
+        TIn input,
+        Metadata metadata,
+        CancellationToken cancellationToken
+    )
+    {
+        CancellationToken = cancellationToken;
         await this.InitializeWorkflow(metadata);
         return await Run(input);
     }

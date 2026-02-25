@@ -26,17 +26,17 @@ internal class JobDispatcherPollingService(
 
         using var timer = new PeriodicTimer(configuration.JobDispatcherPollingInterval);
 
-        await RunJobDispatcher();
+        await RunJobDispatcher(stoppingToken);
 
         while (await timer.WaitForNextTickAsync(stoppingToken))
         {
-            await RunJobDispatcher();
+            await RunJobDispatcher(stoppingToken);
         }
 
         logger.LogInformation("JobDispatcherPollingService stopping");
     }
 
-    private async Task RunJobDispatcher()
+    private async Task RunJobDispatcher(CancellationToken cancellationToken)
     {
         if (!configuration.JobDispatcherEnabled)
         {
@@ -50,7 +50,7 @@ internal class JobDispatcherPollingService(
             var workflow = scope.ServiceProvider.GetRequiredService<IJobDispatcherWorkflow>();
 
             logger.LogDebug("JobDispatcher polling cycle starting");
-            await workflow.Run(Unit.Default);
+            await workflow.Run(Unit.Default, cancellationToken);
             logger.LogDebug("JobDispatcher polling cycle completed");
         }
         catch (Exception ex)

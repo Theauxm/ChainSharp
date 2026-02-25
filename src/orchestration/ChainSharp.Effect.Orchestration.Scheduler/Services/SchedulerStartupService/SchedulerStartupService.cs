@@ -26,14 +26,14 @@ internal class SchedulerStartupService(
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         if (configuration.RecoverStuckJobsOnStartup)
-            await RecoverStuckJobs();
+            await RecoverStuckJobs(cancellationToken);
 
         await SeedPendingManifests(cancellationToken);
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    private async Task RecoverStuckJobs()
+    private async Task RecoverStuckJobs(CancellationToken cancellationToken)
     {
         var serverStartTime = DateTime.UtcNow;
 
@@ -44,7 +44,7 @@ internal class SchedulerStartupService(
             .Metadatas.Where(
                 m => m.WorkflowState == WorkflowState.InProgress && m.StartTime < serverStartTime
             )
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         if (stuckJobs.Count == 0)
         {
@@ -63,7 +63,7 @@ internal class SchedulerStartupService(
             );
         }
 
-        await dataContext.SaveChanges(CancellationToken.None);
+        await dataContext.SaveChanges(cancellationToken);
 
         logger.LogWarning(
             "RecoverStuckJobs: failed {Count} stuck in-progress job(s) from before server start at {ServerStartTime}",

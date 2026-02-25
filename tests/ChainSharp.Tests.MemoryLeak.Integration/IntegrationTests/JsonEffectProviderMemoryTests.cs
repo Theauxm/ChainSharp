@@ -1,10 +1,12 @@
+using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Provider.Json.Services.JsonEffect;
 using ChainSharp.Tests.MemoryLeak.Integration.TestWorkflows.TestModels;
 using ChainSharp.Tests.MemoryLeak.Integration.Utils;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
-using Moq;
+using Microsoft.Extensions.Logging.Abstractions;
+using Newtonsoft.Json;
 
 namespace ChainSharp.Tests.MemoryLeak.Integration.IntegrationTests;
 
@@ -16,20 +18,14 @@ namespace ChainSharp.Tests.MemoryLeak.Integration.IntegrationTests;
 [TestFixture]
 public class JsonEffectProviderMemoryTests
 {
-    private Mock<ILogger<JsonEffectProvider>> _mockLogger;
-    private Mock<ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration.IChainSharpEffectConfiguration> _mockConfiguration;
+    private ILogger<JsonEffectProvider> _logger;
+    private IChainSharpEffectConfiguration _configuration;
 
     [SetUp]
     public void SetUp()
     {
-        _mockLogger = new Mock<ILogger<JsonEffectProvider>>();
-        _mockConfiguration =
-            new Mock<ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration.IChainSharpEffectConfiguration>();
-
-        // Setup default JSON serializer options
-        _mockConfiguration
-            .Setup(x => x.SystemJsonSerializerOptions)
-            .Returns(new System.Text.Json.JsonSerializerOptions());
+        _logger = NullLogger<JsonEffectProvider>.Instance;
+        _configuration = new StubEffectConfiguration();
     }
 
     [Test]
@@ -41,10 +37,7 @@ public class JsonEffectProviderMemoryTests
             {
                 for (int i = 0; i < 50; i++)
                 {
-                    using var provider = new JsonEffectProvider(
-                        _mockLogger.Object,
-                        _mockConfiguration.Object
-                    );
+                    using var provider = new JsonEffectProvider(_logger, _configuration);
 
                     // Track multiple models
                     for (int j = 0; j < 20; j++)
@@ -110,10 +103,7 @@ public class JsonEffectProviderMemoryTests
         var result = await MemoryProfiler.MonitorMemoryUsageAsync(
             async () =>
             {
-                using var provider = new JsonEffectProvider(
-                    _mockLogger.Object,
-                    _mockConfiguration.Object
-                );
+                using var provider = new JsonEffectProvider(_logger, _configuration);
 
                 // Track many models with large JSON serialization
                 for (int i = 0; i < 100; i++)
@@ -187,10 +177,7 @@ public class JsonEffectProviderMemoryTests
         var result = await MemoryProfiler.MonitorMemoryUsageAsync(
             async () =>
             {
-                using var provider = new JsonEffectProvider(
-                    _mockLogger.Object,
-                    _mockConfiguration.Object
-                );
+                using var provider = new JsonEffectProvider(_logger, _configuration);
 
                 var tasks = Enumerable
                     .Range(0, 8)
@@ -256,10 +243,7 @@ public class JsonEffectProviderMemoryTests
         var result = await MemoryProfiler.MonitorMemoryUsageAsync(
             async () =>
             {
-                using var provider = new JsonEffectProvider(
-                    _mockLogger.Object,
-                    _mockConfiguration.Object
-                );
+                using var provider = new JsonEffectProvider(_logger, _configuration);
 
                 // Track a few models
                 var metadataList = new List<Metadata>();
@@ -319,7 +303,7 @@ public class JsonEffectProviderMemoryTests
     public void JsonEffectProvider_DisposedState_ShouldStopTracking()
     {
         // Test that disposed provider stops tracking models
-        var provider = new JsonEffectProvider(_mockLogger.Object, _mockConfiguration.Object);
+        var provider = new JsonEffectProvider(_logger, _configuration);
 
         // Track a model before disposal
         var metadata1 = new Metadata { Name = "BeforeDisposal" };
@@ -351,10 +335,7 @@ public class JsonEffectProviderMemoryTests
         var result = await MemoryProfiler.MonitorMemoryUsageAsync(
             async () =>
             {
-                using var provider = new JsonEffectProvider(
-                    _mockLogger.Object,
-                    _mockConfiguration.Object
-                );
+                using var provider = new JsonEffectProvider(_logger, _configuration);
 
                 // Track models with very large serializable data
                 for (int i = 0; i < 20; i++)
@@ -411,10 +392,7 @@ public class JsonEffectProviderMemoryTests
         var result = await MemoryProfiler.MonitorMemoryUsageAsync(
             async () =>
             {
-                using var provider = new JsonEffectProvider(
-                    _mockLogger.Object,
-                    _mockConfiguration.Object
-                );
+                using var provider = new JsonEffectProvider(_logger, _configuration);
 
                 var metadata = new Metadata { Name = "DuplicateTrackingTest" };
                 metadata.SetInputObject(
@@ -462,5 +440,13 @@ public class JsonEffectProviderMemoryTests
                 5 * 1024 * 1024,
                 "Duplicate model tracking should not cause excessive memory growth"
             );
+    }
+
+    private class StubEffectConfiguration : IChainSharpEffectConfiguration
+    {
+        public System.Text.Json.JsonSerializerOptions SystemJsonSerializerOptions { get; } = new();
+        public JsonSerializerSettings NewtonsoftJsonSerializerSettings { get; } = new();
+        public bool SerializeStepData { get; } = false;
+        public LogLevel LogLevel { get; } = LogLevel.Information;
     }
 }

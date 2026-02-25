@@ -21,6 +21,7 @@
   <Project Path="templates/Theauxm.ChainSharp.Templates.csproj" />
   <Project Path="src/providers/ChainSharp.Effect.Provider.Parameter/ChainSharp.Effect.Provider.Parameter.csproj" />
   <Project Path="src/providers/ChainSharp.Effect.StepProvider.Logging/ChainSharp.Effect.StepProvider.Logging.csproj" />
+  <Project Path="src/providers/ChainSharp.Effect.StepProvider.Progress/ChainSharp.Effect.StepProvider.Progress.csproj" />
   <Project Path="src/effect/ChainSharp.Effect/ChainSharp.Effect.csproj" />
   <Project Path="src/dashboard/ChainSharp.Effect.Dashboard/ChainSharp.Effect.Dashboard.csproj" />
   <Project Path="tests/ChainSharp.Tests.Effect.Data.InMemory.Integration/ChainSharp.Tests.Effect.Data.InMemory.Integration.csproj" />

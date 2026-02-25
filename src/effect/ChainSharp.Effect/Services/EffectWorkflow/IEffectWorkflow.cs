@@ -27,6 +27,15 @@ public interface IEffectWorkflow<in TIn, TOut> : IWorkflow<TIn, TOut>, IDisposab
     new Task<TOut> Run(TIn input);
 
     /// <summary>
+    /// Executes the workflow with the given input and cancellation support.
+    /// Default implementation delegates to Run(input) for backward compatibility.
+    /// </summary>
+    /// <param name="input">The input data for the workflow</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests</param>
+    /// <returns>The result of the workflow execution</returns>
+    new Task<TOut> Run(TIn input, CancellationToken cancellationToken) => Run(input);
+
+    /// <summary>
     /// Gets the metadata associated with this workflow execution.
     /// Contains tracking information such as state, timing, and error details.
     /// </summary>

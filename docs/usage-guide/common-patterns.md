@@ -62,3 +62,60 @@ public class RobustStep(IPaymentGateway PaymentGateway) : Step<PaymentRequest, P
     }
 }
 ```
+
+## Cancellation Patterns
+
+### Passing Tokens from ASP.NET Controllers
+
+ASP.NET Core provides a `CancellationToken` that fires when the HTTP request is aborted:
+
+```csharp
+[HttpPost("orders")]
+public async Task<IActionResult> CreateOrder(
+    CreateOrderRequest request,
+    CancellationToken cancellationToken)
+{
+    var result = await workflowBus.RunAsync<OrderResult>(request, cancellationToken);
+    return Ok(result);
+}
+```
+
+### Using the Token in Steps
+
+Access `this.CancellationToken` inside any step to pass it to async operations:
+
+```csharp
+public class QueryDatabaseStep(IDataContext context) : Step<UserId, User>
+{
+    public override async Task<User> Run(UserId input)
+    {
+        return await context.Users
+            .FirstOrDefaultAsync(u => u.Id == input.Value, CancellationToken)
+            ?? throw new NotFoundException($"User {input.Value} not found");
+    }
+}
+```
+
+### Checking Cancellation in Long-Running Steps
+
+For steps that iterate over large collections, check cancellation periodically:
+
+```csharp
+public class BatchProcessStep : Step<BatchInput, BatchResult>
+{
+    public override async Task<BatchResult> Run(BatchInput input)
+    {
+        var results = new List<ItemResult>();
+
+        foreach (var item in input.Items)
+        {
+            CancellationToken.ThrowIfCancellationRequested();
+            results.Add(await ProcessItem(item));
+        }
+
+        return new BatchResult(results);
+    }
+}
+```
+
+*Full details: [Cancellation Tokens]({{ site.baseurl }}{% link usage-guide/cancellation-tokens.md %})*

@@ -12,7 +12,7 @@ internal class SaveDatabaseChangesStep(IDataContext dataContext) : EffectStep<Un
 {
     public override async Task<Unit> Run(Unit input)
     {
-        await dataContext.SaveChanges(CancellationToken.None);
+        await dataContext.SaveChanges(CancellationToken);
 
         return Unit.Default;
     }

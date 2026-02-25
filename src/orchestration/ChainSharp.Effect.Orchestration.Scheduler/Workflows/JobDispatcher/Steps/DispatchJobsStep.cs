@@ -77,7 +77,7 @@ internal class DispatchJobsStep(IServiceProvider serviceProvider, ILogger<Dispat
         var backgroundTaskServer =
             scope.ServiceProvider.GetRequiredService<IBackgroundTaskServer>();
 
-        using var transaction = await dataContext.BeginTransaction();
+        using var transaction = await dataContext.BeginTransaction(CancellationToken);
 
         // Atomically claim the entry — skips entries locked by other dispatchers
         var claimed = await dataContext
@@ -89,7 +89,7 @@ internal class DispatchJobsStep(IServiceProvider serviceProvider, ILogger<Dispat
                 """,
                 entry.Id
             )
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(CancellationToken);
 
         if (claimed is null)
         {
@@ -125,13 +125,13 @@ internal class DispatchJobsStep(IServiceProvider serviceProvider, ILogger<Dispat
         );
 
         await dataContext.Track(metadata);
-        await dataContext.SaveChanges(CancellationToken.None);
+        await dataContext.SaveChanges(CancellationToken);
 
         // Update work queue entry
         claimed.Status = WorkQueueStatus.Dispatched;
         claimed.MetadataId = metadata.Id;
         claimed.DispatchedAt = DateTime.UtcNow;
-        await dataContext.SaveChanges(CancellationToken.None);
+        await dataContext.SaveChanges(CancellationToken);
 
         // Commit the claim transaction before enqueuing. The Metadata and WorkQueue
         // updates must be visible to the task server — InMemoryTaskServer executes
@@ -144,10 +144,14 @@ internal class DispatchJobsStep(IServiceProvider serviceProvider, ILogger<Dispat
         if (deserializedInput != null)
             backgroundTaskId = await backgroundTaskServer.EnqueueAsync(
                 metadata.Id,
-                deserializedInput
+                deserializedInput,
+                CancellationToken
             );
         else
-            backgroundTaskId = await backgroundTaskServer.EnqueueAsync(metadata.Id);
+            backgroundTaskId = await backgroundTaskServer.EnqueueAsync(
+                metadata.Id,
+                CancellationToken
+            );
 
         logger.LogDebug(
             "Dispatched work queue entry {WorkQueueId} as background task {BackgroundTaskId} (Metadata: {MetadataId})",

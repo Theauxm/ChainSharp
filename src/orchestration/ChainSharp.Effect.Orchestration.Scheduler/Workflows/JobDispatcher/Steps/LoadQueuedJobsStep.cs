@@ -23,5 +23,5 @@ internal class LoadQueuedJobsStep(IDataContext dataContext) : EffectStep<Unit, L
             .OrderByDescending(q => q.Manifest != null ? q.Manifest.ManifestGroup.Priority : 0)
             .ThenByDescending(q => q.Priority)
             .ThenBy(q => q.CreatedAt)
-            .ToListAsync();
+            .ToListAsync(CancellationToken);
 }

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using ChainSharp.Extensions;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
@@ -34,6 +35,13 @@ public abstract partial class Workflow<TInput, TReturn> : IWorkflow<TInput, TRet
     private TReturn ShortCircuitValue { get; set; } = default!;
 
     public string ExternalId { get; set; } = Guid.NewGuid().ToString("N");
+
+    /// <summary>
+    /// The CancellationToken for this workflow execution. Steps can access this
+    /// via their own CancellationToken property which is set before Run is called.
+    /// </summary>
+    [JsonIgnore]
+    public CancellationToken CancellationToken { get; protected internal set; }
 
     /// <summary>
     /// Indicates whether a short-circuit value has been set.
@@ -109,6 +117,67 @@ public abstract partial class Workflow<TInput, TReturn> : IWorkflow<TInput, TRet
         };
 
         return RunInternal(input);
+    }
+
+    /// <summary>
+    /// Executes the workflow with the provided input and cancellation support.
+    /// </summary>
+    /// <param name="input">The input data for the workflow</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests</param>
+    /// <returns>The result produced by the workflow</returns>
+    public async Task<TReturn> Run(TInput input, CancellationToken cancellationToken)
+    {
+        CancellationToken = cancellationToken;
+        return await Run(input);
+    }
+
+    /// <summary>
+    /// Executes the workflow with the provided input, service provider, and cancellation support.
+    /// </summary>
+    /// <param name="input">The input data for the workflow</param>
+    /// <param name="serviceProvider">The service provider for dependency injection</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests</param>
+    /// <returns>The result produced by the workflow</returns>
+    public async Task<TReturn> Run(
+        TInput input,
+        IServiceProvider serviceProvider,
+        CancellationToken cancellationToken
+    )
+    {
+        CancellationToken = cancellationToken;
+        return await Run(input, serviceProvider);
+    }
+
+    /// <summary>
+    /// Executes the workflow with Railway-oriented programming support and cancellation.
+    /// </summary>
+    /// <param name="input">The input data for the workflow</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests</param>
+    /// <returns>Either the result of the workflow or an exception</returns>
+    public Task<Either<Exception, TReturn>> RunEither(
+        TInput input,
+        CancellationToken cancellationToken
+    )
+    {
+        CancellationToken = cancellationToken;
+        return RunEither(input);
+    }
+
+    /// <summary>
+    /// Executes the workflow with Railway-oriented programming support, service provider, and cancellation.
+    /// </summary>
+    /// <param name="input">The input data for the workflow</param>
+    /// <param name="serviceProvider">The service provider for dependency injection</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests</param>
+    /// <returns>Either the result of the workflow or an exception</returns>
+    public Task<Either<Exception, TReturn>> RunEither(
+        TInput input,
+        IServiceProvider serviceProvider,
+        CancellationToken cancellationToken
+    )
+    {
+        CancellationToken = cancellationToken;
+        return RunEither(input, serviceProvider);
     }
 
     /// <summary>

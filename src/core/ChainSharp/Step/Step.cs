@@ -22,6 +22,13 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
     public Either<Exception, TOut> Result { get; private set; }
 
     /// <summary>
+    /// The CancellationToken for the current workflow execution.
+    /// Set automatically by the workflow before Run is called.
+    /// Step implementations can use this to check for cancellation.
+    /// </summary>
+    protected internal CancellationToken CancellationToken { get; internal set; }
+
+    /// <summary>
     /// The core implementation method that performs the step's operation.
     /// This must be implemented by derived classes.
     /// </summary>
@@ -33,9 +40,11 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
     /// Railway-oriented implementation that handles the Either monad pattern.
     /// This method:
     /// 1. Short-circuits if the previous step failed (input is Left)
-    /// 2. Attempts to run the step and return Right(result)
-    /// 3. Catches any exceptions and returns Left(exception)
-    /// 4. Enriches exceptions with step context information
+    /// 2. Propagates the workflow's CancellationToken to this step
+    /// 3. Checks for cancellation before executing the step
+    /// 4. Attempts to run the step and return Right(result)
+    /// 5. Catches any exceptions and returns Left(exception)
+    /// 6. Enriches non-cancellation exceptions with step context information
     /// </summary>
     /// <param name="previousOutput">Either a result from the previous step or an exception</param>
     /// <param name="workflow">Workflow calling the Step</param>
@@ -47,9 +56,15 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
     {
         PreviousResult = previousOutput;
 
+        // Propagate the token from the workflow to this step
+        CancellationToken = workflow.CancellationToken;
+
         // If the previous step failed, short-circuit and return its exception
         if (previousOutput.IsLeft)
             return previousOutput.Swap().ValueUnsafe();
+
+        // Check cancellation before executing
+        CancellationToken.ThrowIfCancellationRequested();
 
         var stepName = GetType().Name;
 
@@ -59,6 +74,11 @@ public abstract class Step<TIn, TOut> : IStep<TIn, TOut>
             Result = await Run(previousOutput.ValueUnsafe());
 
             return Result;
+        }
+        catch (OperationCanceledException) when (CancellationToken.IsCancellationRequested)
+        {
+            // Let cancellation propagate cleanly without wrapping in step exception data
+            throw;
         }
         catch (Exception e)
         {

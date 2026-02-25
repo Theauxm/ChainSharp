@@ -53,7 +53,7 @@ internal class EnqueueJobsStep(
                 await dataContext.Track(metadata);
 
                 // Persist immediately to ensure durability before enqueueing
-                await dataContext.SaveChanges(CancellationToken.None);
+                await dataContext.SaveChanges(CancellationToken);
 
                 logger.LogDebug(
                     "Created Metadata {MetadataId} for manifest {ManifestId} (name: {ManifestName})",
@@ -63,7 +63,10 @@ internal class EnqueueJobsStep(
                 );
 
                 // Enqueue the job to the background task server
-                var backgroundTaskId = await backgroundTaskServer.EnqueueAsync(metadata.Id);
+                var backgroundTaskId = await backgroundTaskServer.EnqueueAsync(
+                    metadata.Id,
+                    CancellationToken
+                );
 
                 logger.LogDebug(
                     "Enqueued manifest {ManifestId} as background task {BackgroundTaskId} (Metadata: {MetadataId})",

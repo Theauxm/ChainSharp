@@ -87,7 +87,6 @@ public partial class Index
         var completed = CountForState(WorkflowState.Completed);
         var terminal = completed + CountForState(WorkflowState.Failed);
         _successRate = terminal > 0 ? Math.Round(100.0 * completed / terminal, 1) : 0;
-
         var runningQuery = context
             .Metadatas.AsNoTracking()
             .Where(m => m.WorkflowState == WorkflowState.InProgress);
@@ -168,6 +167,14 @@ public partial class Index
                                 && x.WorkflowState == WorkflowState.Failed
                         )
                         .Sum(x => x.Count),
+                    Cancelled = hourlyStats
+                        .Where(
+                            x =>
+                                x.Date == targetDate
+                                && x.Hour == targetHour
+                                && x.WorkflowState == WorkflowState.Cancelled
+                        )
+                        .Sum(x => x.Count),
                 };
             })
             .ToList();
@@ -179,6 +186,7 @@ public partial class Index
             new() { State = "Failed", Count = CountForState(WorkflowState.Failed) },
             new() { State = "In Progress", Count = CountForState(WorkflowState.InProgress), },
             new() { State = "Pending", Count = CountForState(WorkflowState.Pending) },
+            new() { State = "Cancelled", Count = CountForState(WorkflowState.Cancelled) },
         ];
 
         // Top failing workflows (last 7 days)

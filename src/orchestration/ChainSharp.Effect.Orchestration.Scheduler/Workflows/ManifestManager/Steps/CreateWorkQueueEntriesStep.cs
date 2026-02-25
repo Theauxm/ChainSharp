@@ -55,7 +55,7 @@ internal class CreateWorkQueueEntriesStep(
                 );
 
                 await dataContext.Track(entry);
-                await dataContext.SaveChanges(CancellationToken.None);
+                await dataContext.SaveChanges(CancellationToken);
 
                 logger.LogDebug(
                     "Created WorkQueue entry {WorkQueueId} for manifest {ManifestId} (name: {ManifestName})",

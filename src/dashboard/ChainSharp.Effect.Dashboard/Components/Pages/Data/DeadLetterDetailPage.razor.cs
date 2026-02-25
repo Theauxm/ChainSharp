@@ -128,9 +128,7 @@ public partial class DeadLetterDetailPage
                 }
             );
 
-            using var dataContext = await DataContextFactory.CreateDbContextAsync(
-                CancellationToken.None
-            );
+            using var dataContext = await DataContextFactory.CreateDbContextAsync(DisposalToken);
 
             await dataContext.Track(entry);
 
@@ -149,7 +147,7 @@ public partial class DeadLetterDetailPage
                     $"Re-queued via dashboard (WorkQueue {entry.Id})";
             }
 
-            await dataContext.SaveChanges(CancellationToken.None);
+            await dataContext.SaveChanges(DisposalToken);
 
             NotificationService.Notify(
                 NotificationSeverity.Success,
@@ -184,16 +182,14 @@ public partial class DeadLetterDetailPage
 
         try
         {
-            using var dataContext = await DataContextFactory.CreateDbContextAsync(
-                CancellationToken.None
-            );
+            using var dataContext = await DataContextFactory.CreateDbContextAsync(DisposalToken);
 
             var trackedDeadLetter = await dataContext.DeadLetters.FirstAsync(
                 d => d.Id == DeadLetterId
             );
 
             trackedDeadLetter.Acknowledge(_acknowledgeNote);
-            await dataContext.SaveChanges(CancellationToken.None);
+            await dataContext.SaveChanges(DisposalToken);
 
             _showAcknowledgeInput = false;
             _acknowledgeNote = "";
@@ -206,7 +202,7 @@ public partial class DeadLetterDetailPage
             );
 
             // Reload to reflect updated status
-            await LoadDataAsync(CancellationToken.None);
+            await LoadDataAsync(DisposalToken);
         }
         catch (Exception ex)
         {

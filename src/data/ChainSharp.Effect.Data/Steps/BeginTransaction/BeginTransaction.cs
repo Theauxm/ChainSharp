@@ -11,7 +11,7 @@ public class BeginTransaction(IDataContext dataContext) : Step<Unit, Unit>
 {
     public override async Task<Unit> Run(Unit input)
     {
-        await dataContext.BeginTransaction();
+        await dataContext.BeginTransaction(CancellationToken);
 
         return Unit.Default;
     }

@@ -133,3 +133,38 @@ public async Task Workflow_PersistsMetadata()
 ```
 
 *API Reference: [AddInMemoryEffect]({{ site.baseurl }}{% link api-reference/configuration/add-in-memory-effect.md %}), [AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %})*
+
+## Testing Cancellation
+
+Verify that your steps and workflows handle cancellation correctly by passing a pre-cancelled or timed token:
+
+```csharp
+[Test]
+public async Task Workflow_WithCancelledToken_DoesNotExecuteSteps()
+{
+    // Arrange
+    using var cts = new CancellationTokenSource();
+    cts.Cancel();
+    var workflow = new MyWorkflow();
+
+    // Act & Assert — workflow should throw, step should not run
+    var act = () => workflow.Run(input, cts.Token);
+    await act.Should().ThrowAsync<Exception>();
+}
+
+[Test]
+public async Task Step_UsesToken_ForAsyncOperations()
+{
+    // Arrange
+    using var cts = new CancellationTokenSource();
+    var workflow = new TestWorkflow(new MyStep());
+
+    // Act
+    await workflow.Run("input", cts.Token);
+
+    // Assert — verify the step received the token
+    // (access via a test helper that captures this.CancellationToken)
+}
+```
+
+*Full details: [Cancellation Tokens]({{ site.baseurl }}{% link usage-guide/cancellation-tokens.md %}#testing-with-cancellation-tokens)*

@@ -1,7 +1,9 @@
 using System.Text.Json;
+using System.Text.Json;
 using ChainSharp.Effect.Data.Services.DataContext;
 using ChainSharp.Effect.Models.BackgroundJob;
 using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
+using ChainSharp.Effect.Orchestration.Scheduler.Services.CancellationRegistry;
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor;
 using ChainSharp.Effect.Utils;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +30,7 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Services.PostgresWorkerServi
 internal class PostgresWorkerService(
     IServiceProvider serviceProvider,
     PostgresTaskServerOptions options,
+    ICancellationRegistry cancellationRegistry,
     ILogger<PostgresWorkerService> logger
 ) : BackgroundService
 {
@@ -92,7 +95,7 @@ internal class PostgresWorkerService(
 
             var visibilitySeconds = (int)options.VisibilityTimeout.TotalSeconds;
 
-            using var transaction = await dataContext.BeginTransaction();
+            using var transaction = await dataContext.BeginTransaction(stoppingToken);
 
             var job = await dataContext
                 .BackgroundJobs.FromSqlRaw(
@@ -156,19 +159,31 @@ internal class PostgresWorkerService(
                     ? new ExecuteManifestRequest(metadataId, deserializedInput)
                     : new ExecuteManifestRequest(metadataId);
 
-            // Use shutdown timeout for in-flight jobs
-            using var shutdownCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
-            if (stoppingToken.IsCancellationRequested)
-                shutdownCts.CancelAfter(options.ShutdownTimeout);
+            // Use shutdown timeout for in-flight jobs: when the host requests shutdown,
+            // give the workflow a grace period before forcefully cancelling.
+            // Use an unlinked CTS so we don't cancel immediately — the registration
+            // triggers CancelAfter(ShutdownTimeout) to provide a grace period.
+            using var shutdownCts = new CancellationTokenSource();
+            cancellationRegistry.Register(metadataId, shutdownCts);
+            try
+            {
+                await using var shutdownRegistration = stoppingToken.Register(
+                    () => shutdownCts.CancelAfter(options.ShutdownTimeout)
+                );
 
-            await workflow.Run(request);
+                await workflow.Run(request, shutdownCts.Token);
 
-            logger.LogDebug(
-                "Worker {WorkerId} completed job {JobId} (Metadata: {MetadataId})",
-                workerId,
-                jobId,
-                metadataId
-            );
+                logger.LogDebug(
+                    "Worker {WorkerId} completed job {JobId} (Metadata: {MetadataId})",
+                    workerId,
+                    jobId,
+                    metadataId
+                );
+            }
+            finally
+            {
+                cancellationRegistry.Unregister(metadataId);
+            }
         }
         catch (Exception ex)
         {
@@ -187,11 +202,11 @@ internal class PostgresWorkerService(
             using var cleanupScope = serviceProvider.CreateScope();
             var cleanupContext = cleanupScope.ServiceProvider.GetRequiredService<IDataContext>();
 
-            var entity = await cleanupContext.BackgroundJobs.FindAsync(jobId);
+            var entity = await cleanupContext.BackgroundJobs.FindAsync(jobId, stoppingToken);
             if (entity != null)
             {
                 cleanupContext.BackgroundJobs.Remove(entity);
-                await cleanupContext.SaveChanges(CancellationToken.None);
+                await cleanupContext.SaveChanges(stoppingToken);
             }
         }
         catch (Exception ex)

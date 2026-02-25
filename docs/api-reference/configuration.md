@@ -19,6 +19,7 @@ services.AddChainSharpEffects(options => options
     .AddJsonEffect()
     .SaveWorkflowParameters()
     .AddStepLogger()
+    .AddStepProgress()
     .AddEffectWorkflowBus(assemblies: typeof(Program).Assembly)
     .AddScheduler(scheduler => scheduler
         .UseHangfire(connectionString)
@@ -58,6 +59,7 @@ These properties can be set directly on the `ChainSharpEffectConfigurationBuilde
 | [AddJsonEffect]({{ site.baseurl }}{% link api-reference/configuration/add-json-effect.md %}) | Adds JSON change detection for tracking model mutations |
 | [SaveWorkflowParameters]({{ site.baseurl }}{% link api-reference/configuration/save-workflow-parameters.md %}) | Serializes workflow input/output to JSON for persistence (optionally configurable) |
 | [AddStepLogger]({{ site.baseurl }}{% link api-reference/configuration/add-step-logger.md %}) | Adds per-step execution logging |
+| [AddStepProgress]({{ site.baseurl }}{% link api-reference/configuration/add-step-progress.md %}) | Adds step progress tracking and cross-server cancellation checking |
 | [AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %}) | Registers the WorkflowBus and discovers workflows via assembly scanning |
 | [AddEffect / AddStepEffect]({{ site.baseurl }}{% link api-reference/configuration/add-effect.md %}) | Registers custom effect provider factories |
 | [SetEffectLogLevel]({{ site.baseurl }}{% link api-reference/configuration/set-effect-log-level.md %}) | Sets the minimum log level for effect logging |

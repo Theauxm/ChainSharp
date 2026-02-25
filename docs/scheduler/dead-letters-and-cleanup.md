@@ -74,13 +74,14 @@ System workflows like `ManifestManagerWorkflow` run frequently (every 5 seconds 
 │                                                                  │
 │  DeleteExpiredMetadataStep:                                      │
 │    1. Find metadata matching whitelist + older than retention    │
-│    2. Only terminal states (Completed / Failed)                  │
-│    3. Delete associated log entries (FK safety)                  │
-│    4. Delete metadata rows                                       │
+│    2. Only terminal states (Completed / Failed / Cancelled)      │
+│    3. Delete associated work queue entries (FK safety)            │
+│    4. Delete associated log entries (FK safety)                  │
+│    5. Delete metadata rows                                       │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-The cleanup only targets metadata in **terminal states** (Completed or Failed). Pending and InProgress metadata is never deleted, regardless of age. Associated log entries are deleted first to avoid foreign key constraint violations.
+The cleanup only targets metadata in **terminal states** (Completed, Failed, or Cancelled). Pending and InProgress metadata is never deleted, regardless of age. Associated work queue entries and log entries are deleted first to avoid foreign key constraint violations.
 
 Deletion uses EF Core's `ExecuteDeleteAsync` for efficient single-statement SQL—no entities are loaded into memory.
 
@@ -98,9 +99,12 @@ A metadata row is deleted when **all** of these conditions are true:
 
 1. Its `Name` matches a workflow in the whitelist
 2. Its `StartTime` is older than the retention period
-3. Its `WorkflowState` is `Completed` or `Failed`
+3. Its `WorkflowState` is `Completed`, `Failed`, or `Cancelled`
 
-Any log entries associated with deleted metadata are also removed.
+Any work queue entries and log entries associated with deleted metadata are also removed.
+
+{: .note }
+Cancelled workflows are treated as terminal — they are eligible for cleanup but are **not retried** and **do not create dead letters**. Cancellation is an explicit operator action, not a transient failure.
 
 ## Testing
 

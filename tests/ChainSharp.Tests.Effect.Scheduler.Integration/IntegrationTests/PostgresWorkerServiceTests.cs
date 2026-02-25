@@ -11,6 +11,7 @@ using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.Metadata.DTOs;
 using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.BackgroundTaskServer;
+using ChainSharp.Effect.Orchestration.Scheduler.Services.CancellationRegistry;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.PostgresWorkerService;
 using ChainSharp.Effect.Utils;
 using ChainSharp.Tests.Effect.Scheduler.Integration.Examples.Workflows;
@@ -68,6 +69,7 @@ public class PostgresWorkerServiceTests : TestSetup
         var workerService = new PostgresWorkerService(
             Scope.ServiceProvider,
             options,
+            new CancellationRegistry(),
             Scope.ServiceProvider.GetRequiredService<ILogger<PostgresWorkerService>>()
         );
 
@@ -129,6 +131,7 @@ public class PostgresWorkerServiceTests : TestSetup
         var workerService = new PostgresWorkerService(
             Scope.ServiceProvider,
             options,
+            new CancellationRegistry(),
             Scope.ServiceProvider.GetRequiredService<ILogger<PostgresWorkerService>>()
         );
 
@@ -179,6 +182,7 @@ public class PostgresWorkerServiceTests : TestSetup
         var workerService = new PostgresWorkerService(
             Scope.ServiceProvider,
             options,
+            new CancellationRegistry(),
             Scope.ServiceProvider.GetRequiredService<ILogger<PostgresWorkerService>>()
         );
 
@@ -223,6 +227,7 @@ public class PostgresWorkerServiceTests : TestSetup
         var workerService = new PostgresWorkerService(
             Scope.ServiceProvider,
             options,
+            new CancellationRegistry(),
             Scope.ServiceProvider.GetRequiredService<ILogger<PostgresWorkerService>>()
         );
 
@@ -262,6 +267,7 @@ public class PostgresWorkerServiceTests : TestSetup
         var workerService = new PostgresWorkerService(
             Scope.ServiceProvider,
             options,
+            new CancellationRegistry(),
             Scope.ServiceProvider.GetRequiredService<ILogger<PostgresWorkerService>>()
         );
 
@@ -312,6 +318,7 @@ public class PostgresWorkerServiceTests : TestSetup
         var workerService = new PostgresWorkerService(
             Scope.ServiceProvider,
             options,
+            new CancellationRegistry(),
             Scope.ServiceProvider.GetRequiredService<ILogger<PostgresWorkerService>>()
         );
 
@@ -357,6 +364,7 @@ public class PostgresWorkerServiceTests : TestSetup
         var workerService = new PostgresWorkerService(
             Scope.ServiceProvider,
             options,
+            new CancellationRegistry(),
             Scope.ServiceProvider.GetRequiredService<ILogger<PostgresWorkerService>>()
         );
 
@@ -409,6 +417,7 @@ public class PostgresWorkerServiceTests : TestSetup
         var workerService = new PostgresWorkerService(
             Scope.ServiceProvider,
             options,
+            new CancellationRegistry(),
             Scope.ServiceProvider.GetRequiredService<ILogger<PostgresWorkerService>>()
         );
 
@@ -471,6 +480,7 @@ public class PostgresWorkerServiceTests : TestSetup
         var workerService = new PostgresWorkerService(
             Scope.ServiceProvider,
             options,
+            new CancellationRegistry(),
             Scope.ServiceProvider.GetRequiredService<ILogger<PostgresWorkerService>>()
         );
 

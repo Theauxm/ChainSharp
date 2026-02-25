@@ -99,19 +99,28 @@ Edit `appsettings.json` to customize:
    public interface IMyJobWorkflow : IEffectWorkflow<MyJobInput, Unit>;
    ```
 
-3. **Create a manifest** (via API, database, or seeding):
+3. **Schedule the workflow** (at startup via the scheduler builder):
    ```csharp
-   var manifest = new Manifest
-   {
-       ExternalId = "my-job",
-       Name = typeof(IMyJobWorkflow).AssemblyQualifiedName!,
-       PropertyTypeName = typeof(MyJobInput).AssemblyQualifiedName,
-       Properties = JsonSerializer.Serialize(new MyJobInput { SomeProperty = "value" }),
-       IsEnabled = true,
-       ScheduleType = ScheduleType.Cron,
-       CronExpression = "0 0 * * *", // Daily at midnight
-       MaxRetries = 3
-   };
+   services.AddChainSharpEffects(options => options
+       .AddScheduler(scheduler => scheduler
+           .UsePostgresTaskServer()
+           .Schedule<IMyJobWorkflow>(
+               "my-job",
+               new MyJobInput { SomeProperty = "value" },
+               Cron.Daily())));
+   ```
+
+   The input type is inferred from `IMyJobWorkflow`'s `IEffectWorkflow<MyJobInput, Unit>` interface — only one type parameter needed.
+
+   For batch scheduling, use `ScheduleMany` with `ManifestItem`:
+   ```csharp
+   scheduler.ScheduleMany<IMyJobWorkflow>(
+       "my-batch",
+       items.Select(item => new ManifestItem(
+           item.Id,
+           new MyJobInput { SomeProperty = item.Value }
+       )),
+       Every.Minutes(5));
    ```
 
 ## Architecture

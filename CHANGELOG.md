@@ -1,3 +1,10 @@
+## [5.21.1](https://github.com/Theauxm/ChainSharp/compare/v5.21.0...v5.21.1) (2026-02-26)
+
+
+### Bug Fixes
+
+* Async Chain support ([#177](https://github.com/Theauxm/ChainSharp/issues/177)) ([9ccc4ae](https://github.com/Theauxm/ChainSharp/commit/9ccc4aec559689a6ee77fed7b545b1acd72b30ba))
+
 # [5.21.0](https://github.com/Theauxm/ChainSharp/compare/v5.20.2...v5.21.0) (2026-02-25)
 
 

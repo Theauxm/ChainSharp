@@ -1,3 +1,10 @@
+## [5.21.2](https://github.com/Theauxm/ChainSharp/compare/v5.21.1...v5.21.2) (2026-02-26)
+
+
+### Bug Fixes
+
+* for nuget ([9a20230](https://github.com/Theauxm/ChainSharp/commit/9a202300332de72996ed29b1a8ba2e21ebe0dba3))
+
 ## [5.21.1](https://github.com/Theauxm/ChainSharp/compare/v5.21.0...v5.21.1) (2026-02-26)
 
 

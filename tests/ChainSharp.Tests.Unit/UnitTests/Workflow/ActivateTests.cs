@@ -1,4 +1,5 @@
-using ChainSharp.Workflow;
+using ChainSharp.Monad;
+using ChainSharp.Train;
 using FluentAssertions;
 using LanguageExt;
 
@@ -14,13 +15,13 @@ public class ActivateTests : TestSetup
         var workflow = new TestWorkflow();
 
         // Act
-        workflow.Activate(input);
+        var monad = workflow.Activate(input);
 
         // Assert
-        workflow.Memory.Should().NotBeNull();
-        workflow.Memory.Count.Should().Be(2);
-        workflow.Memory.Should().ContainValue(input);
-        workflow.Exception.Should().BeNull();
+        monad.Memory.Should().NotBeNull();
+        monad.Memory.Count.Should().Be(2);
+        monad.Memory.Should().ContainValue(input);
+        monad.Exception.Should().BeNull();
     }
 
     [Theory]
@@ -31,11 +32,11 @@ public class ActivateTests : TestSetup
         var workflow = new TestWorkflow();
 
         // Act
-        workflow.Activate(input);
+        var monad = workflow.Activate(input);
 
         // Assert
-        workflow.Memory.Should().NotBeNull();
-        workflow.Exception.Should().NotBeNull();
+        monad.Memory.Should().NotBeNull();
+        monad.Exception.Should().NotBeNull();
     }
 
     [Theory]
@@ -46,16 +47,16 @@ public class ActivateTests : TestSetup
         var workflow = new TestWorkflow();
 
         // Act
-        workflow.Activate(input, 1, "hello", false);
+        var monad = workflow.Activate(input, 1, "hello", false);
 
         // Assert
-        workflow.Memory.Should().NotBeNull();
-        workflow.Memory.Count.Should().Be(48);
-        workflow.Memory.Should().ContainValue(input);
-        workflow.Memory.Should().ContainValue(1);
-        workflow.Memory.Should().ContainValue(false);
-        workflow.Memory.Should().ContainValue("hello");
-        workflow.Exception.Should().BeNull();
+        monad.Memory.Should().NotBeNull();
+        monad.Memory.Count.Should().Be(48);
+        monad.Memory.Should().ContainValue(input);
+        monad.Memory.Should().ContainValue(1);
+        monad.Memory.Should().ContainValue(false);
+        monad.Memory.Should().ContainValue("hello");
+        monad.Exception.Should().BeNull();
     }
 
     [Theory]
@@ -67,16 +68,16 @@ public class ActivateTests : TestSetup
         var workflow = new TestTupleWorkflow();
 
         // Act
-        workflow.Activate(input, 2, "hello", false);
+        var monad = workflow.Activate(input, 2, "hello", false);
 
         // Assert
-        workflow.Memory.Should().NotBeNull();
-        workflow.Memory.Count.Should().Be(48);
-        workflow.Memory.Should().ContainValue(inputObject);
-        workflow.Memory.Should().ContainValue(2);
-        workflow.Memory.Should().ContainValue(false);
-        workflow.Memory.Should().ContainValue("hello");
-        workflow.Exception.Should().BeNull();
+        monad.Memory.Should().NotBeNull();
+        monad.Memory.Count.Should().Be(48);
+        monad.Memory.Should().ContainValue(inputObject);
+        monad.Memory.Should().ContainValue(2);
+        monad.Memory.Should().ContainValue(false);
+        monad.Memory.Should().ContainValue("hello");
+        monad.Exception.Should().BeNull();
     }
 
     [Theory]
@@ -87,25 +88,25 @@ public class ActivateTests : TestSetup
         var workflow = new TestWorkflow();
 
         // Act
-        workflow.Activate(input, (1, "hello", false));
+        var monad = workflow.Activate(input, (1, "hello", false));
 
         // Assert
-        workflow.Memory.Should().NotBeNull();
-        workflow.Memory.Count.Should().Be(48);
-        workflow.Memory.Should().ContainValue(input);
-        workflow.Memory.Should().ContainValue(1);
-        workflow.Memory.Should().ContainValue(false);
-        workflow.Memory.Should().ContainValue("hello");
-        workflow.Exception.Should().BeNull();
+        monad.Memory.Should().NotBeNull();
+        monad.Memory.Count.Should().Be(48);
+        monad.Memory.Should().ContainValue(input);
+        monad.Memory.Should().ContainValue(1);
+        monad.Memory.Should().ContainValue(false);
+        monad.Memory.Should().ContainValue("hello");
+        monad.Exception.Should().BeNull();
     }
 
-    private class TestWorkflow : Workflow<object, string>
+    private class TestWorkflow : Train<object, string>
     {
         protected override Task<Either<Exception, string>> RunInternal(object input) =>
             throw new NotImplementedException();
     }
 
-    private class TestTupleWorkflow : Workflow<(int, object), string>
+    private class TestTupleWorkflow : Train<(int, object), string>
     {
         protected override Task<Either<Exception, string>> RunInternal((int, object) input) =>
             throw new NotImplementedException();

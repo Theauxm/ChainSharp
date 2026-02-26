@@ -1,5 +1,5 @@
 using ChainSharp.Effect.Models.Manifest;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using LanguageExt;
 
 #pragma warning disable CS8766 // Nullability mismatch on Metadata property inherited from EffectWorkflow
@@ -7,14 +7,14 @@ using LanguageExt;
 namespace ChainSharp.Tests.Effect.Dashboard.Integration.Fakes;
 
 // --- Manifest-compatible fakes for scheduler builder tests ---
-// These satisfy TWorkflow : IEffectWorkflow<TInput, Unit> where TInput : IManifestProperties
+// These satisfy TWorkflow : IServiceTrain<TInput, Unit> where TInput : IManifestProperties
 
 public record FakeManifestInputA : IManifestProperties;
 
-public interface IFakeSchedulerWorkflowA : IEffectWorkflow<FakeManifestInputA, Unit> { }
+public interface IFakeSchedulerWorkflowA : IServiceTrain<FakeManifestInputA, Unit> { }
 
 public class FakeSchedulerWorkflowA
-    : EffectWorkflow<FakeManifestInputA, Unit>,
+    : ServiceTrain<FakeManifestInputA, Unit>,
         IFakeSchedulerWorkflowA
 {
     protected override Task<Either<Exception, Unit>> RunInternal(FakeManifestInputA input) =>
@@ -23,10 +23,10 @@ public class FakeSchedulerWorkflowA
 
 public record FakeManifestInputB : IManifestProperties;
 
-public interface IFakeSchedulerWorkflowB : IEffectWorkflow<FakeManifestInputB, Unit> { }
+public interface IFakeSchedulerWorkflowB : IServiceTrain<FakeManifestInputB, Unit> { }
 
 public class FakeSchedulerWorkflowB
-    : EffectWorkflow<FakeManifestInputB, Unit>,
+    : ServiceTrain<FakeManifestInputB, Unit>,
         IFakeSchedulerWorkflowB
 {
     protected override Task<Either<Exception, Unit>> RunInternal(FakeManifestInputB input) =>
@@ -35,10 +35,10 @@ public class FakeSchedulerWorkflowB
 
 public record FakeManifestInputC : IManifestProperties;
 
-public interface IFakeSchedulerWorkflowC : IEffectWorkflow<FakeManifestInputC, Unit> { }
+public interface IFakeSchedulerWorkflowC : IServiceTrain<FakeManifestInputC, Unit> { }
 
 public class FakeSchedulerWorkflowC
-    : EffectWorkflow<FakeManifestInputC, Unit>,
+    : ServiceTrain<FakeManifestInputC, Unit>,
         IFakeSchedulerWorkflowC
 {
     protected override Task<Either<Exception, Unit>> RunInternal(FakeManifestInputC input) =>
@@ -47,10 +47,10 @@ public class FakeSchedulerWorkflowC
 
 public record FakeManifestInputD : IManifestProperties;
 
-public interface IFakeSchedulerWorkflowD : IEffectWorkflow<FakeManifestInputD, Unit> { }
+public interface IFakeSchedulerWorkflowD : IServiceTrain<FakeManifestInputD, Unit> { }
 
 public class FakeSchedulerWorkflowD
-    : EffectWorkflow<FakeManifestInputD, Unit>,
+    : ServiceTrain<FakeManifestInputD, Unit>,
         IFakeSchedulerWorkflowD
 {
     protected override Task<Either<Exception, Unit>> RunInternal(FakeManifestInputD input) =>

@@ -31,7 +31,7 @@ None.
 ```csharp
 services.AddChainSharpEffects(options => options
     .AddInMemoryEffect()
-    .AddEffectWorkflowBus(assemblies: typeof(Program).Assembly)
+    .AddServiceTrainBus(assemblies: typeof(Program).Assembly)
 );
 ```
 

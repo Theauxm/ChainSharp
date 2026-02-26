@@ -31,7 +31,7 @@ Two lines in `Program.cs`:
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddChainSharpEffects(o => o.AddEffectWorkflowBus(typeof(Program).Assembly));
+builder.Services.AddChainSharpEffects(o => o.AddServiceTrainBus(typeof(Program).Assembly));
 builder.Services.AddChainSharpDashboard();
 
 var app = builder.Build();
@@ -43,13 +43,13 @@ app.Run();
 
 *API Reference: [AddChainSharpDashboard]({{ site.baseurl }}{% link api-reference/dashboard-api/add-chainsharp-dashboard.md %}), [UseChainSharpDashboard]({{ site.baseurl }}{% link api-reference/dashboard-api/use-chainsharp-dashboard.md %})*
 
-Navigate to `/chainsharp/workflows` and you'll see every `IEffectWorkflow` registered in your application.
+Navigate to `/chainsharp/workflows` and you'll see every `IServiceTrain` registered in your application.
 
 ## What It Shows
 
 ### Workflows Page
 
-The dashboard scans your DI container for all services implementing `IEffectWorkflow<TIn, TOut>` and displays them in a sortable, filterable grid:
+The dashboard scans your DI container for all services implementing `IServiceTrain<TIn, TOut>` and displays them in a sortable, filterable grid:
 
 | Column | Description |
 |--------|-------------|
@@ -131,9 +131,9 @@ Per-group `MaxActiveJobs` prevents starvation — when a high-priority group hit
 
 ## How Discovery Works
 
-The dashboard reads from the same `IServiceCollection` that your application builds. When you call `AddChainSharpDashboard()`, it captures a reference to the service collection. At request time, it scans the registered `ServiceDescriptor` entries for anything that implements `IEffectWorkflow<,>`, extracts the generic type arguments, and deduplicates.
+The dashboard reads from the same `IServiceCollection` that your application builds. When you call `AddChainSharpDashboard()`, it captures a reference to the service collection. At request time, it scans the registered `ServiceDescriptor` entries for anything that implements `IServiceTrain<,>`, extracts the generic type arguments, and deduplicates.
 
-If you register workflows with `AddEffectWorkflowBus` (which calls `AddScopedChainSharpWorkflow` under the hood), they show up automatically. Workflows registered manually via `AddScoped<IMyWorkflow, MyWorkflow>()` will also appear as long as their interface extends `IEffectWorkflow<TIn, TOut>`.
+If you register workflows with `AddServiceTrainBus` (which calls `AddScopedChainSharpRoute` under the hood), they show up automatically. Workflows registered manually via `AddScoped<IMyWorkflow, MyWorkflow>()` will also appear as long as their interface extends `IServiceTrain<TIn, TOut>`.
 
 ## Options
 
@@ -191,14 +191,14 @@ app.Run();
 The dashboard discovers workflows by scanning `ServiceDescriptor` entries in your DI container. If the grid is empty:
 
 **Causes:**
-- The assembly containing your workflows wasn't passed to `AddEffectWorkflowBus`
+- The assembly containing your workflows wasn't passed to `AddServiceTrainBus`
 - `AddChainSharpDashboard()` was called before the workflows were registered, so the captured `IServiceCollection` snapshot doesn't include them yet
 
 **Fix:** Make sure `AddChainSharpDashboard()` is called after `AddChainSharpEffects`:
 
 ```csharp
 builder.Services.AddChainSharpEffects(o =>
-    o.AddEffectWorkflowBus(typeof(Program).Assembly)
+    o.AddServiceTrainBus(typeof(Program).Assembly)
 );
 builder.Services.AddChainSharpDashboard();  // After workflows are registered
 ```
@@ -209,7 +209,7 @@ If styles are missing or `_content/` paths return 404, ensure `UseStaticFiles()`
 
 ### Duplicate workflow entries in the grid
 
-`AddScopedChainSharpWorkflow<IMyWorkflow, MyWorkflow>()` registers two DI descriptors—one for the concrete type and one for the interface. The discovery service attempts to deduplicate these, but in some cases both registrations appear in the grid. The entries will have the same input/output types; one will show the interface name and the other the concrete class name.
+`AddScopedChainSharpRoute<IMyWorkflow, MyWorkflow>()` registers two DI descriptors—one for the concrete type and one for the interface. The discovery service attempts to deduplicate these, but in some cases both registrations appear in the grid. The entries will have the same input/output types; one will show the interface name and the other the concrete class name.
 
 This is cosmetic and doesn't affect workflow execution. If it bothers you, it's a known limitation of how the discovery service groups factory-based descriptors.
 

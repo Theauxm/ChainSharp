@@ -1,5 +1,5 @@
 using ChainSharp.Step;
-using ChainSharp.Workflow;
+using ChainSharp.Train;
 using FluentAssertions;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
@@ -149,7 +149,7 @@ public class StepCancellationTests : TestSetup
             throw new InvalidOperationException("test error");
     }
 
-    private class TestWorkflow : Workflow<string, string>
+    private class TestWorkflow : Train<string, string>
     {
         protected override Task<Either<Exception, string>> RunInternal(string input) =>
             throw new NotImplementedException();

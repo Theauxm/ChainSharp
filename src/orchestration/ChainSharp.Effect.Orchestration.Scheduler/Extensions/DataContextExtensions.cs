@@ -3,7 +3,7 @@ using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.ManifestGroup;
 using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using LanguageExt;
 using Microsoft.EntityFrameworkCore;
 using Schedule = ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling.Schedule;
@@ -72,7 +72,7 @@ public static class DataContextExtensions
         bool groupIsEnabled = true,
         CancellationToken ct = default
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties =>
         context.UpsertManifestAsync(
             typeof(TWorkflow),
@@ -170,7 +170,7 @@ public static class DataContextExtensions
         bool groupIsEnabled = true,
         CancellationToken ct = default
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties =>
         context.UpsertDependentManifestAsync(
             typeof(TWorkflow),

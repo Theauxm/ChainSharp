@@ -6,7 +6,7 @@ using ChainSharp.Effect.Configuration.ChainSharpEffectBuilder;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Orchestration.Mediator.Services.WorkflowBus;
 using ChainSharp.Effect.Orchestration.Mediator.Services.WorkflowRegistry;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -44,11 +44,11 @@ public static class ServiceExtensions
     /// </exception>
     /// <remarks>
     /// This method scans the specified assemblies for classes that implement the
-    /// IEffectWorkflow&lt;TIn, TOut&gt; interface and registers them with the
+    /// IServiceTrain&lt;TIn, TOut&gt; interface and registers them with the
     /// dependency injection container.
     ///
     /// The method performs the following steps:
-    /// 1. Identifies the IEffectWorkflow&lt;TIn, TOut&gt; generic type definition
+    /// 1. Identifies the IServiceTrain&lt;TIn, TOut&gt; generic type definition
     /// 2. Scans each assembly for classes that implement this interface
     /// 3. Extracts the workflow types and their interfaces
     /// 4. Registers each workflow with the dependency injection container
@@ -59,19 +59,19 @@ public static class ServiceExtensions
     ///
     /// Example usage:
     /// ```csharp
-    /// services.RegisterEffectWorkflows(
+    /// services.RegisterServiceTrains(
     ///     ServiceLifetime.Scoped,
     ///     typeof(MyWorkflow).Assembly
     /// );
     /// ```
     /// </remarks>
-    public static IServiceCollection RegisterEffectWorkflows(
+    public static IServiceCollection RegisterServiceTrains(
         this IServiceCollection services,
         ServiceLifetime serviceLifetime = ServiceLifetime.Transient,
         params Assembly[] assemblies
     )
     {
-        var workflowType = typeof(IEffectWorkflow<,>);
+        var workflowType = typeof(IServiceTrain<,>);
 
         var types = new List<(Type, Type)>();
         foreach (var assembly in assemblies)
@@ -108,13 +108,13 @@ public static class ServiceExtensions
             switch (serviceLifetime)
             {
                 case ServiceLifetime.Singleton:
-                    services.AddSingletonChainSharpWorkflow(typeInterface, typeImplementation);
+                    services.AddSingletonChainSharpRoute(typeInterface, typeImplementation);
                     break;
                 case ServiceLifetime.Scoped:
-                    services.AddScopedChainSharpWorkflow(typeInterface, typeImplementation);
+                    services.AddScopedChainSharpRoute(typeInterface, typeImplementation);
                     break;
                 case ServiceLifetime.Transient:
-                    services.AddTransientChainSharpWorkflow(typeInterface, typeImplementation);
+                    services.AddTransientChainSharpRoute(typeInterface, typeImplementation);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(
@@ -132,7 +132,7 @@ public static class ServiceExtensions
     /// Adds the effect workflow bus and registry to the ChainSharp effect configuration builder.
     /// </summary>
     /// <param name="configurationBuilder">The ChainSharp effect configuration builder</param>
-    /// <param name="effectWorkflowServiceLifetime">The service lifetime to use for the workflows</param>
+    /// <param name="serviceTrainLifetime">The service lifetime to use for the workflows</param>
     /// <param name="assemblies">The assemblies to scan for workflow implementations</param>
     /// <returns>The configuration builder for method chaining</returns>
     /// <remarks>
@@ -146,23 +146,20 @@ public static class ServiceExtensions
     /// Example usage:
     /// ```csharp
     /// services.AddChainSharpEffects(options =>
-    ///     options.AddEffectWorkflowBus(
+    ///     options.AddServiceTrainBus(
     ///         ServiceLifetime.Scoped,
     ///         typeof(MyWorkflow).Assembly
     ///     )
     /// );
     /// ```
     /// </remarks>
-    public static ChainSharpEffectConfigurationBuilder AddEffectWorkflowBus(
+    public static ChainSharpEffectConfigurationBuilder AddServiceTrainBus(
         this ChainSharpEffectConfigurationBuilder configurationBuilder,
-        ServiceLifetime effectWorkflowServiceLifetime = ServiceLifetime.Transient,
+        ServiceLifetime serviceTrainLifetime = ServiceLifetime.Transient,
         params Assembly[] assemblies
     )
     {
-        configurationBuilder.ServiceCollection.AddEffectWorkflowBus(
-            effectWorkflowServiceLifetime,
-            assemblies
-        );
+        configurationBuilder.ServiceCollection.AddServiceTrainBus(serviceTrainLifetime, assemblies);
 
         return configurationBuilder;
     }
@@ -171,7 +168,7 @@ public static class ServiceExtensions
     /// Adds the effect workflow bus and registry to the service collection.
     /// </summary>
     /// <param name="serviceCollection">The service collection to add the services to</param>
-    /// <param name="effectWorkflowServiceLifetime">The service lifetime to use for the workflows</param>
+    /// <param name="serviceTrainLifetime">The service lifetime to use for the workflows</param>
     /// <param name="assemblies">The assemblies to scan for workflow implementations</param>
     /// <returns>The service collection for method chaining</returns>
     /// <remarks>
@@ -189,15 +186,15 @@ public static class ServiceExtensions
     ///
     /// Example usage:
     /// ```csharp
-    /// services.AddEffectWorkflowBus(
+    /// services.AddServiceTrainBus(
     ///     ServiceLifetime.Scoped,
     ///     typeof(MyWorkflow).Assembly
     /// );
     /// ```
     /// </remarks>
-    public static IServiceCollection AddEffectWorkflowBus(
+    public static IServiceCollection AddServiceTrainBus(
         this IServiceCollection serviceCollection,
-        ServiceLifetime effectWorkflowServiceLifetime = ServiceLifetime.Transient,
+        ServiceLifetime serviceTrainLifetime = ServiceLifetime.Transient,
         params Assembly[] assemblies
     )
     {
@@ -206,6 +203,6 @@ public static class ServiceExtensions
         return serviceCollection
             .AddSingleton<IWorkflowRegistry>(workflowRegistry)
             .AddScoped<IWorkflowBus, WorkflowBus>()
-            .RegisterEffectWorkflows(effectWorkflowServiceLifetime, assemblies);
+            .RegisterServiceTrains(serviceTrainLifetime, assemblies);
     }
 }

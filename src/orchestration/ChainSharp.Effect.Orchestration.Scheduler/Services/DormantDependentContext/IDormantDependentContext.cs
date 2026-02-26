@@ -1,5 +1,5 @@
 using ChainSharp.Effect.Models.Manifest;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using LanguageExt;
 
 namespace ChainSharp.Effect.Orchestration.Scheduler.Services.DormantDependentContext;
@@ -62,7 +62,7 @@ public interface IDormantDependentContext
         TInput input,
         CancellationToken ct = default
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties;
 
     /// <summary>
@@ -84,6 +84,6 @@ public interface IDormantDependentContext
         IEnumerable<(string ExternalId, TInput Input)> activations,
         CancellationToken ct = default
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties;
 }

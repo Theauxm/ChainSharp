@@ -1,4 +1,4 @@
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ChainSharp.Effect.Dashboard.Services.WorkflowDiscovery;
@@ -18,21 +18,21 @@ public class WorkflowDiscoveryService : IWorkflowDiscoveryService
         if (_cachedRegistrations != null)
             return _cachedRegistrations;
 
-        var effectWorkflowType = typeof(IEffectWorkflow<,>);
+        var serviceTrainType = typeof(IServiceTrain<,>);
         var registrations = new List<WorkflowRegistration>();
 
         foreach (var descriptor in _serviceCollection)
         {
             var serviceType = descriptor.ServiceType;
 
-            // Find IEffectWorkflow<,> either directly or via interface hierarchy
-            Type? effectInterface = FindEffectWorkflowInterface(serviceType, effectWorkflowType);
+            // Find IServiceTrain<,> either directly or via interface hierarchy
+            Type? effectInterface = FindServiceTrainInterface(serviceType, serviceTrainType);
 
             if (effectInterface == null)
                 continue;
 
             // Skip concrete type registrations from the dual-registration pattern
-            // (AddScopedChainSharpWorkflow registers both TImplementation and TService)
+            // (AddScopedChainSharpRoute registers both TImplementation and TService)
             if (descriptor.ImplementationFactory != null && !serviceType.IsInterface)
                 continue;
 
@@ -92,14 +92,14 @@ public class WorkflowDiscoveryService : IWorkflowDiscoveryService
         return _cachedRegistrations;
     }
 
-    private static Type? FindEffectWorkflowInterface(Type type, Type effectWorkflowType)
+    private static Type? FindServiceTrainInterface(Type type, Type serviceTrainType)
     {
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == effectWorkflowType)
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == serviceTrainType)
             return type;
 
         return type.GetInterfaces()
             .FirstOrDefault(
-                i => i.IsGenericType && i.GetGenericTypeDefinition() == effectWorkflowType
+                i => i.IsGenericType && i.GetGenericTypeDefinition() == serviceTrainType
             );
     }
 

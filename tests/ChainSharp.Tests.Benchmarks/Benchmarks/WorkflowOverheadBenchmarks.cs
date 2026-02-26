@@ -27,19 +27,16 @@ public class WorkflowOverheadBenchmarks
         // EffectWorkflow with no effect providers
         var noEffectsServices = new ServiceCollection();
         noEffectsServices.AddChainSharpEffects();
-        noEffectsServices.AddScopedChainSharpWorkflow<
-            IEffectAddOneWorkflow,
-            EffectAddOneWorkflow
-        >();
-        noEffectsServices.AddScopedChainSharpWorkflow<
+        noEffectsServices.AddScopedChainSharpRoute<IEffectAddOneWorkflow, EffectAddOneWorkflow>();
+        noEffectsServices.AddScopedChainSharpRoute<
             IEffectAddThreeWorkflow,
             EffectAddThreeWorkflow
         >();
-        noEffectsServices.AddScopedChainSharpWorkflow<
+        noEffectsServices.AddScopedChainSharpRoute<
             IEffectTransformWorkflow,
             EffectTransformWorkflow
         >();
-        noEffectsServices.AddScopedChainSharpWorkflow<
+        noEffectsServices.AddScopedChainSharpRoute<
             IEffectSimulatedIoWorkflow,
             EffectSimulatedIoWorkflow
         >();
@@ -48,16 +45,16 @@ public class WorkflowOverheadBenchmarks
         // EffectWorkflow with InMemory effect
         var inMemoryServices = new ServiceCollection();
         inMemoryServices.AddChainSharpEffects(options => options.AddInMemoryEffect());
-        inMemoryServices.AddScopedChainSharpWorkflow<IEffectAddOneWorkflow, EffectAddOneWorkflow>();
-        inMemoryServices.AddScopedChainSharpWorkflow<
+        inMemoryServices.AddScopedChainSharpRoute<IEffectAddOneWorkflow, EffectAddOneWorkflow>();
+        inMemoryServices.AddScopedChainSharpRoute<
             IEffectAddThreeWorkflow,
             EffectAddThreeWorkflow
         >();
-        inMemoryServices.AddScopedChainSharpWorkflow<
+        inMemoryServices.AddScopedChainSharpRoute<
             IEffectTransformWorkflow,
             EffectTransformWorkflow
         >();
-        inMemoryServices.AddScopedChainSharpWorkflow<
+        inMemoryServices.AddScopedChainSharpRoute<
             IEffectSimulatedIoWorkflow,
             EffectSimulatedIoWorkflow
         >();

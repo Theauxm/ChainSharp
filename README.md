@@ -37,7 +37,7 @@ public async Task<OrderReceipt> ProcessOrder(OrderRequest request)
 ## With ChainSharp
 
 ```csharp
-public class ProcessOrderWorkflow : EffectWorkflow<OrderRequest, OrderReceipt>, IProcessOrderWorkflow
+public class ProcessOrderWorkflow : ServiceTrain<OrderRequest, OrderReceipt>, IProcessOrderWorkflow
 {
     protected override async Task<Either<Exception, OrderReceipt>> RunInternal(OrderRequest input)
         => Activate(input)

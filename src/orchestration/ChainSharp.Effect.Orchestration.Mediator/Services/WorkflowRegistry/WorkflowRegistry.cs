@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Exceptions;
 
 namespace ChainSharp.Effect.Orchestration.Mediator.Services.WorkflowRegistry;
@@ -16,7 +16,7 @@ namespace ChainSharp.Effect.Orchestration.Mediator.Services.WorkflowRegistry;
 /// that maps input types to workflow types.
 ///
 /// The registry uses reflection to discover workflow implementations in the provided assemblies.
-/// It looks for classes that implement the IEffectWorkflow&lt;TIn, TOut&gt; interface and
+/// It looks for classes that implement the IServiceTrain&lt;TIn, TOut&gt; interface and
 /// extracts their input types to build the mapping.
 ///
 /// This implementation supports:
@@ -44,24 +44,24 @@ public class WorkflowRegistry : IWorkflowRegistry
     /// <param name="assemblies">The assemblies to scan for workflow implementations</param>
     /// <remarks>
     /// This constructor scans the provided assemblies for classes that implement the
-    /// IEffectWorkflow&lt;TIn, TOut&gt; interface and builds a dictionary that maps
+    /// IServiceTrain&lt;TIn, TOut&gt; interface and builds a dictionary that maps
     /// input types to workflow types.
     ///
     /// The constructor performs the following steps:
-    /// 1. Identifies the IEffectWorkflow&lt;TIn, TOut&gt; generic type definition
+    /// 1. Identifies the IServiceTrain&lt;TIn, TOut&gt; generic type definition
     /// 2. Scans each assembly for classes that implement this interface
     /// 3. Extracts the workflow types, preferring interfaces over concrete types
     /// 4. Extracts the input types from the workflow interfaces
     /// 5. Builds a dictionary that maps input types to workflow types
     ///
     /// If a workflow implementation is found that does not properly implement the
-    /// IEffectWorkflow&lt;TIn, TOut&gt; interface, a WorkflowException is thrown
+    /// IServiceTrain&lt;TIn, TOut&gt; interface, a WorkflowException is thrown
     /// with detailed information about the invalid implementation.
     /// </remarks>
     public WorkflowRegistry(params Assembly[] assemblies)
     {
         // The type we will be looking for in our assemblies
-        var workflowType = typeof(IEffectWorkflow<,>);
+        var workflowType = typeof(IServiceTrain<,>);
 
         var allWorkflowTypes = new HashSet<Type>();
 

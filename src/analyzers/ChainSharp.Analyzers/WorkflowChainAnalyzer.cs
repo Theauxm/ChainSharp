@@ -12,8 +12,8 @@ namespace ChainSharp.Analyzers;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class WorkflowChainAnalyzer : DiagnosticAnalyzer
 {
-    private const string WorkflowTypeName = "Workflow";
-    private const string WorkflowNamespace = "ChainSharp.Workflow";
+    private const string MonadTypeName = "Monad";
+    private const string MonadNamespace = "ChainSharp.Monad";
     private const string UnitMetadataName = "LanguageExt.Unit";
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
@@ -43,8 +43,8 @@ public sealed class WorkflowChainAnalyzer : DiagnosticAnalyzer
         if (methodSymbol?.ContainingType == null)
             return;
 
-        var workflowType = FindWorkflowBaseType(methodSymbol.ContainingType);
-        if (workflowType == null)
+        var monadType = FindMonadType(methodSymbol.ContainingType);
+        if (monadType == null)
             return;
 
         // Parse the fluent chain
@@ -56,9 +56,9 @@ public sealed class WorkflowChainAnalyzer : DiagnosticAnalyzer
         if (calls[0].MethodName != "Activate")
             return;
 
-        // Get workflow type parameters: Workflow<TInput, TReturn>
-        var tInput = workflowType.TypeArguments[0];
-        var tReturn = workflowType.TypeArguments[1];
+        // Get monad type parameters: Monad<TInput, TReturn>
+        var tInput = monadType.TypeArguments[0];
+        var tReturn = monadType.TypeArguments[1];
 
         // Find the Unit type symbol
         var unitType = context.Compilation.GetTypeByMetadataName(UnitMetadataName);
@@ -277,15 +277,15 @@ public sealed class WorkflowChainAnalyzer : DiagnosticAnalyzer
         if (symbolInfo.Symbol is not IMethodSymbol methodSymbol)
             return false;
 
-        // Verify receiver is Workflow<,> or a subclass
-        return FindWorkflowBaseType(methodSymbol.ContainingType) != null;
+        // Verify receiver is Monad<,>
+        return FindMonadType(methodSymbol.ContainingType) != null;
     }
 
     /// <summary>
-    /// Walks the base type chain to find Workflow&lt;TInput, TReturn&gt;.
+    /// Checks the type (and its base types) for Monad&lt;TInput, TReturn&gt;.
     /// Returns the constructed generic type (with concrete type arguments), or null.
     /// </summary>
-    private static INamedTypeSymbol? FindWorkflowBaseType(INamedTypeSymbol type)
+    private static INamedTypeSymbol? FindMonadType(INamedTypeSymbol type)
     {
         var current = type;
         while (current != null)
@@ -293,8 +293,8 @@ public sealed class WorkflowChainAnalyzer : DiagnosticAnalyzer
             if (
                 current.IsGenericType
                 && current.TypeArguments.Length == 2
-                && current.Name == WorkflowTypeName
-                && current.ContainingNamespace?.ToDisplayString() == WorkflowNamespace
+                && current.Name == MonadTypeName
+                && current.ContainingNamespace?.ToDisplayString() == MonadNamespace
             )
             {
                 return current;

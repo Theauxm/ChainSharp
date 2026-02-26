@@ -32,7 +32,7 @@ The provider uses Entity Framework Core with Npgsql. Workflow states and dead le
 
 ### What Gets Persisted
 
-Every `EffectWorkflow` execution creates a `Metadata` row:
+Every `ServiceTrain` execution creates a `Metadata` row:
 
 | Field | Description |
 |-------|-------------|
@@ -72,7 +72,7 @@ var services = new ServiceCollection();
 services.AddChainSharpEffects(options =>
     options
         .AddInMemoryEffect()
-        .AddEffectWorkflowBus(typeof(MyWorkflow).Assembly)
+        .AddServiceTrainBus(typeof(MyWorkflow).Assembly)
 );
 
 var provider = services.BuildServiceProvider();

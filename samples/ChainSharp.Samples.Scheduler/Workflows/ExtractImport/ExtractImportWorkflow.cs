@@ -1,4 +1,4 @@
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Samples.Scheduler.Workflows.ExtractImport.Steps;
 using LanguageExt;
 
@@ -9,9 +9,7 @@ namespace ChainSharp.Samples.Scheduler.Workflows.ExtractImport;
 /// Validates the table, extracts data from the source, imports it to the destination,
 /// and conditionally activates a dormant dependent quality check when anomalies are detected.
 /// </summary>
-public class ExtractImportWorkflow
-    : EffectWorkflow<ExtractImportInput, Unit>,
-        IExtractImportWorkflow
+public class ExtractImportWorkflow : ServiceTrain<ExtractImportInput, Unit>, IExtractImportWorkflow
 {
     protected override async Task<Either<Exception, Unit>> RunInternal(ExtractImportInput input) =>
         Activate(input)

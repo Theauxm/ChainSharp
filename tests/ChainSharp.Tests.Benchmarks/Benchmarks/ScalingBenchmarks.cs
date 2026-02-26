@@ -24,10 +24,10 @@ public class ScalingBenchmarks
     {
         var services = new ServiceCollection();
         services.AddChainSharpEffects();
-        services.AddScopedChainSharpWorkflow<IEffectAddOneX1Workflow, EffectAddOneX1Workflow>();
-        services.AddScopedChainSharpWorkflow<IEffectAddOneX3Workflow, EffectAddOneX3Workflow>();
-        services.AddScopedChainSharpWorkflow<IEffectAddOneX5Workflow, EffectAddOneX5Workflow>();
-        services.AddScopedChainSharpWorkflow<IEffectAddOneX10Workflow, EffectAddOneX10Workflow>();
+        services.AddScopedChainSharpRoute<IEffectAddOneX1Workflow, EffectAddOneX1Workflow>();
+        services.AddScopedChainSharpRoute<IEffectAddOneX3Workflow, EffectAddOneX3Workflow>();
+        services.AddScopedChainSharpRoute<IEffectAddOneX5Workflow, EffectAddOneX5Workflow>();
+        services.AddScopedChainSharpRoute<IEffectAddOneX10Workflow, EffectAddOneX10Workflow>();
         _provider = services.BuildServiceProvider();
     }
 

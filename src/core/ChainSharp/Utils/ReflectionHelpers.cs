@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Reflection;
+using ChainSharp.Monad;
 using ChainSharp.Step;
-using ChainSharp.Workflow;
 using LanguageExt;
 
 namespace ChainSharp.Utils;
@@ -23,10 +23,10 @@ internal static class ReflectionHelpers
     > StepTypeArgumentsCache = new();
 
     /// <summary>
-    /// Cache for resolved generic MethodInfo instances, keyed by (workflowType, methodName, stepType, tIn, tOut, paramCount).
+    /// Cache for resolved generic MethodInfo instances, keyed by (ownerType, methodName, stepType, tIn, tOut, paramCount).
     /// </summary>
     private static readonly ConcurrentDictionary<
-        (Type WorkflowType, string MethodName, Type StepType, Type TIn, Type TOut, int ParamCount),
+        (Type OwnerType, string MethodName, Type StepType, Type TIn, Type TOut, int ParamCount),
         MethodInfo
     > GenericMethodCache = new();
 
@@ -69,17 +69,17 @@ internal static class ReflectionHelpers
 
     /// <summary>
     /// Finds the ShortCircuitChain method that matches the specified types and parameter count.
-    /// Results are cached per (workflowType, stepType, tIn, tOut, paramCount) combination.
+    /// Results are cached per (monadType, stepType, tIn, tOut, paramCount) combination.
     /// </summary>
     internal static MethodInfo FindGenericChainInternalMethod<TStep, TInput, TReturn>(
-        Workflow<TInput, TReturn> workflow,
+        Monad<TInput, TReturn> monad,
         Type tIn,
         Type tOut,
         int parameterCount
     )
     {
         var cacheKey = (
-            workflow.GetType(),
+            monad.GetType(),
             "ShortCircuitChain",
             typeof(TStep),
             tIn,
@@ -94,7 +94,7 @@ internal static class ReflectionHelpers
             cacheKey,
             _ =>
             {
-                var methods = workflow
+                var methods = monad
                     .GetType()
                     .GetMethods(
                         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
@@ -121,16 +121,16 @@ internal static class ReflectionHelpers
 
     /// <summary>
     /// Finds the Chain method that matches the specified types and parameter count.
-    /// Results are cached per (workflowType, stepType, tIn, tOut, paramCount) combination.
+    /// Results are cached per (monadType, stepType, tIn, tOut, paramCount) combination.
     /// </summary>
     internal static MethodInfo FindGenericChainMethod<TStep, TInput, TReturn>(
-        Workflow<TInput, TReturn> workflow,
+        Monad<TInput, TReturn> monad,
         Type tIn,
         Type tOut,
         int parameterCount
     )
     {
-        var cacheKey = (workflow.GetType(), "Chain", typeof(TStep), tIn, tOut, parameterCount);
+        var cacheKey = (monad.GetType(), "Chain", typeof(TStep), tIn, tOut, parameterCount);
 
         if (GenericMethodCache.TryGetValue(cacheKey, out var cached))
             return cached;
@@ -139,7 +139,7 @@ internal static class ReflectionHelpers
             cacheKey,
             _ =>
             {
-                var methods = workflow
+                var methods = monad
                     .GetType()
                     .GetMethods(
                         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
@@ -167,24 +167,15 @@ internal static class ReflectionHelpers
     /// <summary>
     /// Extracts the Right value from a dynamic Either object.
     /// </summary>
-    /// <param name="eitherObject">The Either object</param>
-    /// <returns>An Option containing the Right value, or None if the Either is Left or not an Either</returns>
-    /// <remarks>
-    /// This method is used by the ShortCircuit method to extract the Right value from an Either
-    /// when the types are not known at compile time.
-    /// </remarks>
     internal static Option<dynamic> GetRightFromDynamicEither(dynamic eitherObject)
     {
         var eitherType = eitherObject.GetType();
 
-        // Check if the object is an Either
         if (eitherType.IsGenericType && eitherType.GetGenericTypeDefinition() == typeof(Either<,>))
         {
-            // Get the IsRight property
             var isRightProp = eitherType.GetProperty("IsRight");
             var isRight = (bool)isRightProp.GetValue(eitherObject, null);
 
-            // If it's Right, get the value
             if (isRight)
             {
                 var rightValueProp = eitherType.GetProperty("Case");

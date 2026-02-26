@@ -1,4 +1,4 @@
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Tests.MemoryLeak.Integration.TestWorkflows.TestModels;
 using LanguageExt;
 
@@ -7,14 +7,14 @@ namespace ChainSharp.Tests.MemoryLeak.Integration.TestWorkflows;
 /// <summary>
 /// Interface for the memory test workflow.
 /// </summary>
-public interface IMemoryTestWorkflow : IEffectWorkflow<MemoryTestInput, MemoryTestOutput>;
+public interface IMemoryTestWorkflow : IServiceTrain<MemoryTestInput, MemoryTestOutput>;
 
 /// <summary>
 /// A test workflow designed to generate memory allocation patterns for leak testing.
 /// This workflow creates large JsonDocument objects to amplify any memory leaks.
 /// </summary>
 public class MemoryTestWorkflow
-    : EffectWorkflow<MemoryTestInput, MemoryTestOutput>,
+    : ServiceTrain<MemoryTestInput, MemoryTestOutput>,
         IMemoryTestWorkflow
 {
     protected override async Task<Either<Exception, MemoryTestOutput>> RunInternal(
@@ -49,10 +49,10 @@ public class MemoryTestWorkflow
 /// <summary>
 /// A workflow that intentionally throws exceptions to test error handling memory behavior.
 /// </summary>
-public interface IFailingTestWorkflow : IEffectWorkflow<FailingTestInput, MemoryTestOutput>;
+public interface IFailingTestWorkflow : IServiceTrain<FailingTestInput, MemoryTestOutput>;
 
 public class FailingTestWorkflow
-    : EffectWorkflow<FailingTestInput, MemoryTestOutput>,
+    : ServiceTrain<FailingTestInput, MemoryTestOutput>,
         IFailingTestWorkflow
 {
     protected override async Task<Either<Exception, MemoryTestOutput>> RunInternal(
@@ -69,10 +69,10 @@ public class FailingTestWorkflow
 /// <summary>
 /// A workflow that creates nested child workflows to test hierarchical memory patterns.
 /// </summary>
-public interface INestedTestWorkflow : IEffectWorkflow<NestedTestInput, NestedTestOutput>;
+public interface INestedTestWorkflow : IServiceTrain<NestedTestInput, NestedTestOutput>;
 
 public class NestedTestWorkflow
-    : EffectWorkflow<NestedTestInput, NestedTestOutput>,
+    : ServiceTrain<NestedTestInput, NestedTestOutput>,
         INestedTestWorkflow
 {
     protected override async Task<Either<Exception, NestedTestOutput>> RunInternal(

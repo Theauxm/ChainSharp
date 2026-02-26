@@ -31,7 +31,7 @@ The `name` parameter automatically derives:
 - **`prunePrefix`** = `"{name}-"`
 - **`externalId`** = `"{name}-{item.Id}"` for each item
 
-Each `ManifestItem` contains the item's ID and input. The input type is inferred from `TWorkflow`'s `IEffectWorkflow<TInput, Unit>` interface and validated at configuration time.
+Each `ManifestItem` contains the item's ID and input. The input type is inferred from `TWorkflow`'s `IServiceTrain<TInput, Unit>` interface and validated at configuration time.
 
 ### Startup: Unnamed with ManifestItem
 
@@ -76,7 +76,7 @@ public SchedulerConfigurationBuilder ScheduleMany<TWorkflow, TInput, TSource>(
     Action<ScheduleOptions>? options = null,
     Action<TSource, ManifestOptions>? configureEach = null
 )
-    where TWorkflow : IEffectWorkflow<TInput, Unit>
+    where TWorkflow : IServiceTrain<TInput, Unit>
     where TInput : IManifestProperties
 
 // Explicit
@@ -87,7 +87,7 @@ public SchedulerConfigurationBuilder ScheduleMany<TWorkflow, TInput, TSource>(
     Action<ScheduleOptions>? options = null,
     Action<TSource, ManifestOptions>? configureEach = null
 )
-    where TWorkflow : IEffectWorkflow<TInput, Unit>
+    where TWorkflow : IServiceTrain<TInput, Unit>
     where TInput : IManifestProperties
 ```
 
@@ -102,7 +102,7 @@ Task<IReadOnlyList<Manifest>> ScheduleManyAsync<TWorkflow, TInput, TSource>(
     Action<TSource, ManifestOptions>? configureEach = null,
     CancellationToken ct = default
 )
-    where TWorkflow : IEffectWorkflow<TInput, Unit>
+    where TWorkflow : IServiceTrain<TInput, Unit>
     where TInput : IManifestProperties
 ```
 
@@ -112,13 +112,13 @@ Task<IReadOnlyList<Manifest>> ScheduleManyAsync<TWorkflow, TInput, TSource>(
 
 | Type Parameter | Constraint | Description |
 |---------------|------------|-------------|
-| `TWorkflow` | `class` | The workflow interface type. Must implement `IEffectWorkflow<TInput, Unit>`. The input type is inferred at configuration time. |
+| `TWorkflow` | `class` | The workflow interface type. Must implement `IServiceTrain<TInput, Unit>`. The input type is inferred at configuration time. |
 
 ### Legacy / Runtime API
 
 | Type Parameter | Constraint | Description |
 |---------------|------------|-------------|
-| `TWorkflow` | `IEffectWorkflow<TInput, Unit>` | The workflow interface type. All items in the batch execute the same workflow. |
+| `TWorkflow` | `IServiceTrain<TInput, Unit>` | The workflow interface type. All items in the batch execute the same workflow. |
 | `TInput` | `IManifestProperties` | The input type for the workflow. Each item in the batch can have different input data. |
 | `TSource` | — | The type of elements in the source collection. Can be any type — it is transformed into `(ExternalId, Input)` pairs by the `map` function. |
 

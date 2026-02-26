@@ -1,4 +1,4 @@
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using LanguageExt;
 
 namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager;
@@ -6,4 +6,4 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.ManifestManager;
 /// <summary>
 /// Interface for the ManifestManagerWorkflow which orchestrates the manifest-based job scheduling system.
 /// </summary>
-public interface IManifestManagerWorkflow : IEffectWorkflow<Unit, Unit>;
+public interface IManifestManagerWorkflow : IServiceTrain<Unit, Unit>;

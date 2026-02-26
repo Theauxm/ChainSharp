@@ -8,7 +8,7 @@ has_children: true
 
 # Workflow Methods
 
-Methods available on `Workflow<TInput, TReturn>` for composing steps inside `RunInternal`. These are the core building blocks of every ChainSharp workflow pipeline.
+Methods available on `Train<TInput, TReturn>` for composing steps inside `RunInternal`. These are the core building blocks of every ChainSharp workflow pipeline.
 
 A typical workflow calls these methods in sequence:
 

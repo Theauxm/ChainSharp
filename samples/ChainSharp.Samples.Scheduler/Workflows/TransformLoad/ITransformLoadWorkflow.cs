@@ -1,4 +1,4 @@
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using LanguageExt;
 
 namespace ChainSharp.Samples.Scheduler.Workflows.TransformLoad;
@@ -7,4 +7,4 @@ namespace ChainSharp.Samples.Scheduler.Workflows.TransformLoad;
 /// Interface for the TransformLoad workflow.
 /// Used by the WorkflowBus for workflow resolution.
 /// </summary>
-public interface ITransformLoadWorkflow : IEffectWorkflow<TransformLoadInput, Unit>;
+public interface ITransformLoadWorkflow : IServiceTrain<TransformLoadInput, Unit>;

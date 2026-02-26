@@ -66,7 +66,7 @@ public class ManifestGroupMaxActiveJobsTests
             .AddChainSharpEffects(
                 options =>
                     options
-                        .AddEffectWorkflowBus(
+                        .AddServiceTrainBus(
                             assemblies:
                             [
                                 typeof(AssemblyMarker).Assembly,

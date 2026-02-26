@@ -1,4 +1,4 @@
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Samples.Scheduler.Workflows.TransformLoad.Steps;
 using LanguageExt;
 
@@ -8,9 +8,7 @@ namespace ChainSharp.Samples.Scheduler.Workflows.TransformLoad;
 /// A "Transform &amp; Load" workflow that demonstrates dependent batch scheduling.
 /// Runs after ExtractImportWorkflow succeeds via .ThenMany() chaining.
 /// </summary>
-public class TransformLoadWorkflow
-    : EffectWorkflow<TransformLoadInput, Unit>,
-        ITransformLoadWorkflow
+public class TransformLoadWorkflow : ServiceTrain<TransformLoadInput, Unit>, ITransformLoadWorkflow
 {
     protected override async Task<Either<Exception, Unit>> RunInternal(TransformLoadInput input) =>
         Activate(input).Chain<TransformDataStep>().Chain<LoadDataStep>().Resolve();

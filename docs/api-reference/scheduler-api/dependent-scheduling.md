@@ -41,7 +41,7 @@ public SchedulerConfigurationBuilder Include<TWorkflow>(
     where TWorkflow : class
 ```
 
-Both infer the input type from `TWorkflow`'s `IEffectWorkflow<TInput, Unit>` interface and validate the provided `input` at configuration time.
+Both infer the input type from `TWorkflow`'s `IServiceTrain<TInput, Unit>` interface and validate the provided `input` at configuration time.
 
 ### Startup: IncludeMany with ManifestItem (Recommended)
 
@@ -94,11 +94,11 @@ The two-type-parameter single forms and three-type-parameter batch forms are sti
 ```csharp
 // Single
 public SchedulerConfigurationBuilder ThenInclude<TWorkflow, TInput>(...)
-    where TWorkflow : IEffectWorkflow<TInput, Unit>
+    where TWorkflow : IServiceTrain<TInput, Unit>
     where TInput : IManifestProperties
 
 public SchedulerConfigurationBuilder Include<TWorkflow, TInput>(...)
-    where TWorkflow : IEffectWorkflow<TInput, Unit>
+    where TWorkflow : IServiceTrain<TInput, Unit>
     where TInput : IManifestProperties
 
 // Batch (with map + dependsOn functions)
@@ -116,7 +116,7 @@ Task<Manifest> ScheduleDependentAsync<TWorkflow, TInput>(
     Action<ScheduleOptions>? options = null,
     CancellationToken ct = default
 )
-    where TWorkflow : IEffectWorkflow<TInput, Unit>
+    where TWorkflow : IServiceTrain<TInput, Unit>
     where TInput : IManifestProperties
 ```
 
@@ -131,7 +131,7 @@ Task<IReadOnlyList<Manifest>> ScheduleManyDependentAsync<TWorkflow, TInput, TSou
     Action<TSource, ManifestOptions>? configureEach = null,
     CancellationToken ct = default
 )
-    where TWorkflow : IEffectWorkflow<TInput, Unit>
+    where TWorkflow : IServiceTrain<TInput, Unit>
     where TInput : IManifestProperties
 ```
 
@@ -329,7 +329,7 @@ Task ActivateAsync<TWorkflow, TInput>(
     TInput input,
     CancellationToken ct = default
 )
-    where TWorkflow : IEffectWorkflow<TInput, Unit>
+    where TWorkflow : IServiceTrain<TInput, Unit>
     where TInput : IManifestProperties
 ```
 
@@ -351,7 +351,7 @@ Task ActivateManyAsync<TWorkflow, TInput>(
     IEnumerable<(string ExternalId, TInput Input)> activations,
     CancellationToken ct = default
 )
-    where TWorkflow : IEffectWorkflow<TInput, Unit>
+    where TWorkflow : IServiceTrain<TInput, Unit>
     where TInput : IManifestProperties
 ```
 

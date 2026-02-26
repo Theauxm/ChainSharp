@@ -32,18 +32,26 @@ namespace ChainSharp.Step
     public interface IStep<TIn, TOut> { }
 }
 
-namespace ChainSharp.Workflow
+namespace ChainSharp.Train
 {
-    public class Workflow<TInput, TReturn>
+    public class Train<TInput, TReturn>
     {
-        public Workflow<TInput, TReturn> Activate(TInput input, params object[] otherInputs) => this;
-        public Workflow<TInput, TReturn> Chain<TStep>() where TStep : class => this;
-        public Workflow<TInput, TReturn> Chain<TStep, TIn, TOut>() where TStep : ChainSharp.Step.IStep<TIn, TOut> => this;
-        public Workflow<TInput, TReturn> AddServices<T1>() => this;
-        public Workflow<TInput, TReturn> AddServices<T1, T2>() => this;
-        public Workflow<TInput, TReturn> IChain<TStep>() where TStep : class => this;
-        public Workflow<TInput, TReturn> ShortCircuit<TStep>() where TStep : class => this;
-        public Workflow<TInput, TReturn> Extract<TIn, TOut>() => this;
+        public ChainSharp.Monad.Monad<TInput, TReturn> Activate(TInput input, params object[] otherInputs)
+            => new ChainSharp.Monad.Monad<TInput, TReturn>();
+    }
+}
+
+namespace ChainSharp.Monad
+{
+    public class Monad<TInput, TReturn>
+    {
+        public Monad<TInput, TReturn> Chain<TStep>() where TStep : class => this;
+        public Monad<TInput, TReturn> Chain<TStep, TIn, TOut>() where TStep : ChainSharp.Step.IStep<TIn, TOut> => this;
+        public Monad<TInput, TReturn> AddServices<T1>() => this;
+        public Monad<TInput, TReturn> AddServices<T1, T2>() => this;
+        public Monad<TInput, TReturn> IChain<TStep>() where TStep : class => this;
+        public Monad<TInput, TReturn> ShortCircuit<TStep>() where TStep : class => this;
+        public Monad<TInput, TReturn> Extract<TIn, TOut>() => this;
         public TReturn Resolve() => default!;
     }
 }
@@ -81,7 +89,7 @@ namespace TestApp
 
     public class ProcessOrderStep : ChainSharp.Step.IStep<OrderRequest, OrderResult> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<OrderRequest, OrderResult>
+    public class TestWorkflow : ChainSharp.Train.Train<OrderRequest, OrderResult>
     {
         public void Run(OrderRequest input)
         {
@@ -111,7 +119,7 @@ namespace TestApp
     public class StepA : ChainSharp.Step.IStep<MyInput, Intermediate> { }
     public class StepB : ChainSharp.Step.IStep<NeedsSpecial, LanguageExt.Unit> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<MyInput, LanguageExt.Unit>
+    public class TestWorkflow : ChainSharp.Train.Train<MyInput, LanguageExt.Unit>
     {
         public void Run(MyInput input)
         {
@@ -145,7 +153,7 @@ namespace TestApp
 
     public class ValidateStep : ChainSharp.Step.IStep<OrderRequest, Validated> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<OrderRequest, Receipt>
+    public class TestWorkflow : ChainSharp.Train.Train<OrderRequest, Receipt>
     {
         public void Run(OrderRequest input)
         {
@@ -184,7 +192,7 @@ namespace TestApp
     public class ProduceOrderStep : ChainSharp.Step.IStep<User, Order> { }
     public class CombineStep : ChainSharp.Step.IStep<(User, Order), Combined> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<string, Combined>
+    public class TestWorkflow : ChainSharp.Train.Train<string, Combined>
     {
         public void Run(string input)
         {
@@ -218,7 +226,7 @@ namespace TestApp
     // Note: no step produces Order
     public class CombineStep : ChainSharp.Step.IStep<(User, Order), Combined> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<MyInput, Combined>
+    public class TestWorkflow : ChainSharp.Train.Train<MyInput, Combined>
     {
         public void Run(MyInput input)
         {
@@ -252,7 +260,7 @@ namespace TestApp
     public class ProducePairStep : ChainSharp.Step.IStep<string, (User, Order)> { }
     public class ConsumeUserStep : ChainSharp.Step.IStep<User, LanguageExt.Unit> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<string, LanguageExt.Unit>
+    public class TestWorkflow : ChainSharp.Train.Train<string, LanguageExt.Unit>
     {
         public void Run(string input)
         {
@@ -287,7 +295,7 @@ namespace TestApp
     public class ProduceUserStep : ChainSharp.Step.IStep<string, ConcreteUser> { }
     public class ConsumeInterfaceStep : ChainSharp.Step.IStep<IUser, Result> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<string, Result>
+    public class TestWorkflow : ChainSharp.Train.Train<string, Result>
     {
         public void Run(string input)
         {
@@ -319,7 +327,7 @@ namespace TestApp
     public class ProduceUnrelatedStep : ChainSharp.Step.IStep<MyInput, UnrelatedType> { }
     public class ConsumeInterfaceStep : ChainSharp.Step.IStep<IUser, Result> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<MyInput, Result>
+    public class TestWorkflow : ChainSharp.Train.Train<MyInput, Result>
     {
         public void Run(MyInput input)
         {
@@ -357,7 +365,7 @@ namespace TestApp
     public class ProduceUserStep : ChainSharp.Step.IStep<string, User> { }
     public class ProduceOrderStep : ChainSharp.Step.IStep<User, Order> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<string, (User, Order)>
+    public class TestWorkflow : ChainSharp.Train.Train<string, (User, Order)>
     {
         public void Run(string input)
         {
@@ -388,7 +396,7 @@ namespace TestApp
     public class ProduceUserStep : ChainSharp.Step.IStep<MyInput, User> { }
     // Note: no step produces Order
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<MyInput, (User, Order)>
+    public class TestWorkflow : ChainSharp.Train.Train<MyInput, (User, Order)>
     {
         public void Run(MyInput input)
         {
@@ -424,7 +432,7 @@ namespace TestApp
 
     public class ConsumeRepoStep : ChainSharp.Step.IStep<IRepository, Result> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<string, Result>
+    public class TestWorkflow : ChainSharp.Train.Train<string, Result>
     {
         public void Run(string input)
         {
@@ -453,7 +461,7 @@ namespace TestApp
 
     public class ConsumeResultStep : ChainSharp.Step.IStep<Result, LanguageExt.Unit> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<string, LanguageExt.Unit>
+    public class TestWorkflow : ChainSharp.Train.Train<string, LanguageExt.Unit>
     {
         public void Run(string input)
         {
@@ -483,7 +491,7 @@ namespace TestApp
     public class ProduceContainerStep : ChainSharp.Step.IStep<string, Container> { }
     public class ConsumeInnerStep : ChainSharp.Step.IStep<Inner, LanguageExt.Unit> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<string, LanguageExt.Unit>
+    public class TestWorkflow : ChainSharp.Train.Train<string, LanguageExt.Unit>
     {
         public void Run(string input)
         {
@@ -517,7 +525,7 @@ namespace TestApp
 
     public class ProcessOrderStep : ChainSharp.Step.IStep<OrderRequest, OrderResult> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<OrderRequest, OrderResult>
+    public class TestWorkflow : ChainSharp.Train.Train<OrderRequest, OrderResult>
     {
         public void Run(OrderRequest input)
         {
@@ -546,7 +554,7 @@ namespace TestApp
 
     public class BadStep : ChainSharp.Step.IStep<NeedsSpecial, Result> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<MyInput, Result>
+    public class TestWorkflow : ChainSharp.Train.Train<MyInput, Result>
     {
         public void Run(MyInput input)
         {
@@ -580,7 +588,7 @@ namespace TestApp
     public class ValidateStep : ChainSharp.Step.IStep<OrderRequest, Validated> { }
     public class CacheCheckStep : ChainSharp.Step.IStep<OrderRequest, Receipt> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<OrderRequest, Receipt>
+    public class TestWorkflow : ChainSharp.Train.Train<OrderRequest, Receipt>
     {
         public void Run(OrderRequest input)
         {
@@ -610,7 +618,7 @@ namespace TestApp
 
     public class MissStep : ChainSharp.Step.IStep<OrderRequest, Intermediate> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<OrderRequest, Receipt>
+    public class TestWorkflow : ChainSharp.Train.Train<OrderRequest, Receipt>
     {
         public void Run(OrderRequest input)
         {
@@ -644,7 +652,7 @@ namespace TestApp
     public class CacheStep : ChainSharp.Step.IStep<OrderRequest, CachedData> { }
     public class ProcessStep : ChainSharp.Step.IStep<CachedData, FinalResult> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<OrderRequest, FinalResult>
+    public class TestWorkflow : ChainSharp.Train.Train<OrderRequest, FinalResult>
     {
         public void Run(OrderRequest input)
         {
@@ -674,7 +682,7 @@ namespace TestApp
     public class ProducePairStep : ChainSharp.Step.IStep<string, (User, Order)> { }
     public class ConsumeUserStep : ChainSharp.Step.IStep<User, LanguageExt.Unit> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<string, LanguageExt.Unit>
+    public class TestWorkflow : ChainSharp.Train.Train<string, LanguageExt.Unit>
     {
         public void Run(string input)
         {
@@ -704,7 +712,7 @@ namespace TestApp
 {
     public class MyInput { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<MyInput, TestWorkflow>
+    public class TestWorkflow : ChainSharp.Train.Train<MyInput, TestWorkflow>
     {
         public void Run(MyInput input)
         {
@@ -732,7 +740,7 @@ namespace TestApp
 
     public class NeedsServiceStep : ChainSharp.Step.IStep<ExtraService, Result> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<MyInput, Result>
+    public class TestWorkflow : ChainSharp.Train.Train<MyInput, Result>
     {
         public void Run(MyInput input, ExtraService svc)
         {
@@ -762,7 +770,7 @@ namespace TestApp
 
     public class NeedsInterfaceStep : ChainSharp.Step.IStep<IService, Result> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<MyInput, Result>
+    public class TestWorkflow : ChainSharp.Train.Train<MyInput, Result>
     {
         public void Run(MyInput input, ConcreteService svc)
         {
@@ -792,7 +800,7 @@ namespace TestApp
 
     public class NeedsBothStep : ChainSharp.Step.IStep<(ServiceA, ServiceB), Result> { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<MyInput, Result>
+    public class TestWorkflow : ChainSharp.Train.Train<MyInput, Result>
     {
         public void Run(MyInput input, ServiceA a, ServiceB b)
         {
@@ -818,7 +826,7 @@ namespace TestApp
     public class MyInput { }
     public class MissingType { }
 
-    public class TestWorkflow : ChainSharp.Workflow.Workflow<MyInput, MissingType>
+    public class TestWorkflow : ChainSharp.Train.Train<MyInput, MissingType>
     {
         public void Run(MyInput input)
         {

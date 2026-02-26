@@ -1,19 +1,19 @@
 ---
 layout: default
-title: AddEffectWorkflowBus
+title: AddServiceTrainBus
 parent: Configuration
 grand_parent: API Reference
 nav_order: 7
 ---
 
-# AddEffectWorkflowBus
+# AddServiceTrainBus
 
-Registers the `IWorkflowBus` and `IWorkflowRegistry` services, and discovers all `IEffectWorkflow<,>` implementations via assembly scanning. This enables dynamic workflow dispatch by input type.
+Registers the `IWorkflowBus` and `IWorkflowRegistry` services, and discovers all `IServiceTrain<,>` implementations via assembly scanning. This enables dynamic workflow dispatch by input type.
 
 ## Signature
 
 ```csharp
-public static ChainSharpEffectConfigurationBuilder AddEffectWorkflowBus(
+public static ChainSharpEffectConfigurationBuilder AddServiceTrainBus(
     this ChainSharpEffectConfigurationBuilder configurationBuilder,
     ServiceLifetime effectWorkflowServiceLifetime = ServiceLifetime.Transient,
     params Assembly[] assemblies
@@ -25,7 +25,7 @@ public static ChainSharpEffectConfigurationBuilder AddEffectWorkflowBus(
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `effectWorkflowServiceLifetime` | `ServiceLifetime` | No | `Transient` | The DI lifetime for discovered workflow registrations |
-| `assemblies` | `params Assembly[]` | Yes | — | Assemblies to scan for `IEffectWorkflow<,>` implementations |
+| `assemblies` | `params Assembly[]` | Yes | — | Assemblies to scan for `IServiceTrain<,>` implementations |
 
 ## Returns
 
@@ -36,7 +36,7 @@ public static ChainSharpEffectConfigurationBuilder AddEffectWorkflowBus(
 ```csharp
 services.AddChainSharpEffects(options => options
     .AddPostgresEffect(connectionString)
-    .AddEffectWorkflowBus(
+    .AddServiceTrainBus(
         effectWorkflowServiceLifetime: ServiceLifetime.Scoped,
         assemblies: typeof(Program).Assembly)
 );
@@ -44,14 +44,14 @@ services.AddChainSharpEffects(options => options
 
 ## What It Registers
 
-1. Scans the specified assemblies for all types implementing `IEffectWorkflow<TIn, TOut>`
+1. Scans the specified assemblies for all types implementing `IServiceTrain<TIn, TOut>`
 2. Registers each discovered workflow with the DI container at the specified lifetime
 3. Registers `IWorkflowBus` for dynamic workflow dispatch
 4. Registers `IWorkflowRegistry` for workflow type lookup
 
 ## How Discovery Works
 
-1. Scans the specified assemblies for all types implementing `IEffectWorkflow<TIn, TOut>`.
+1. Scans the specified assemblies for all types implementing `IServiceTrain<TIn, TOut>`.
 2. For each discovered type, extracts the `TIn` (input) type.
 3. Registers the workflow in the `IWorkflowRegistry` keyed by `TIn`.
 4. Registers the workflow in the DI container with the specified lifetime.
@@ -62,12 +62,12 @@ Each input type must map to **exactly one** workflow. If two workflows accept th
 
 ```csharp
 // This is fine — different input types
-public class CreateOrderWorkflow : EffectWorkflow<CreateOrderInput, OrderResult> { }
-public class CancelOrderWorkflow : EffectWorkflow<CancelOrderInput, OrderResult> { }
+public class CreateOrderWorkflow : ServiceTrain<CreateOrderInput, OrderResult> { }
+public class CancelOrderWorkflow : ServiceTrain<CancelOrderInput, OrderResult> { }
 
 // This will FAIL — both accept OrderInput
-public class CreateOrderWorkflow : EffectWorkflow<OrderInput, OrderResult> { }
-public class UpdateOrderWorkflow : EffectWorkflow<OrderInput, OrderResult> { }
+public class CreateOrderWorkflow : ServiceTrain<OrderInput, OrderResult> { }
+public class UpdateOrderWorkflow : ServiceTrain<OrderInput, OrderResult> { }
 ```
 
 ## Lifetime Considerations
@@ -80,7 +80,7 @@ public class UpdateOrderWorkflow : EffectWorkflow<OrderInput, OrderResult> { }
 
 ## Remarks
 
-- The assembly scanning uses reflection to find `IEffectWorkflow<,>` implementations. Ensure the assemblies containing your workflows are passed to the `assemblies` parameter.
+- The assembly scanning uses reflection to find `IServiceTrain<,>` implementations. Ensure the assemblies containing your workflows are passed to the `assemblies` parameter.
 - Workflows registered here are available both through `IWorkflowBus.RunAsync` and through the scheduler system.
 - See [WorkflowBus]({{ site.baseurl }}{% link api-reference/mediator-api/workflow-bus.md %}) for the runtime dispatch API.
 

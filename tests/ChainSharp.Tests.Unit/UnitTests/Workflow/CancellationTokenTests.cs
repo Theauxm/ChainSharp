@@ -1,5 +1,5 @@
 using ChainSharp.Step;
-using ChainSharp.Workflow;
+using ChainSharp.Train;
 using FluentAssertions;
 using LanguageExt;
 
@@ -200,7 +200,7 @@ public class CancellationTokenTests : TestSetup
 
     #region Test Helpers
 
-    private class TokenCapturingWorkflow : Workflow<string, string>
+    private class TokenCapturingWorkflow : Train<string, string>
     {
         public CancellationToken CapturedToken { get; private set; }
 
@@ -268,7 +268,7 @@ public class CancellationTokenTests : TestSetup
         }
     }
 
-    private class SingleStepWorkflow : Workflow<string, string>
+    private class SingleStepWorkflow : Train<string, string>
     {
         private readonly Step<string, string> _step;
 
@@ -278,7 +278,7 @@ public class CancellationTokenTests : TestSetup
             Activate(input).Chain(_step).Resolve();
     }
 
-    private class TwoStepWorkflow : Workflow<string, string>
+    private class TwoStepWorkflow : Train<string, string>
     {
         private readonly Step<string, string> _step1;
         private readonly Step<string, string> _step2;

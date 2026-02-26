@@ -1,4 +1,4 @@
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Samples.Scheduler.Workflows.DataQualityCheck.Steps;
 using LanguageExt;
 
@@ -10,7 +10,7 @@ namespace ChainSharp.Samples.Scheduler.Workflows.DataQualityCheck;
 /// the topology but only activated at runtime with context-specific input.
 /// </summary>
 public class DataQualityCheckWorkflow
-    : EffectWorkflow<DataQualityCheckInput, Unit>,
+    : ServiceTrain<DataQualityCheckInput, Unit>,
         IDataQualityCheckWorkflow
 {
     protected override async Task<Either<Exception, Unit>> RunInternal(

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using ChainSharp.Exceptions;
 using ChainSharp.Step;
-using ChainSharp.Workflow;
+using ChainSharp.Train;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
 using NUnit.Framework;
@@ -14,7 +14,7 @@ namespace ChainSharp.Tests.Tests;
 /// </summary>
 public class JsonEscapingTests
 {
-    private class DummyWorkflow : Workflow<string, string>
+    private class DummyWorkflow : Train<string, string>
     {
         protected override Task<Either<Exception, string>> RunInternal(string input) =>
             Task.FromResult(Either<Exception, string>.Right(input));

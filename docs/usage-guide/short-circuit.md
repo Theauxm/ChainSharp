@@ -10,7 +10,7 @@ nav_order: 5
 `.ShortCircuit<TStep>()` lets a step end the workflow early with a valid result. If the step returns a value of the workflow's return type, that becomes the final result and remaining steps are skipped. If the step throws, the workflow continues normally.
 
 ```csharp
-public class ProcessOrderWorkflow : EffectWorkflow<OrderRequest, OrderResult>
+public class ProcessOrderWorkflow : ServiceTrain<OrderRequest, OrderResult>
 {
     protected override async Task<Either<Exception, OrderResult>> RunInternal(OrderRequest input)
         => Activate(input)

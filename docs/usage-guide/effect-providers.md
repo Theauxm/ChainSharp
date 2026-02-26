@@ -131,7 +131,7 @@ services.AddChainSharpEffects(options =>
         .SaveWorkflowParameters()              // Include input/output in metadata
         .AddStepLogger(serializeStepData: true) // Log individual step executions
         .AddStepProgress()                     // Step progress + cancellation check
-        .AddEffectWorkflowBus(assemblies)      // Enable workflow discovery
+        .AddServiceTrainBus(assemblies)      // Enable workflow discovery
 );
 ```
 
@@ -143,6 +143,6 @@ services.AddChainSharpEffects(options =>
         .AddInMemoryEffect()                   // Fast, no database needed
         .AddJsonEffect()                       // Log state changes
         .AddStepLogger()                       // Log step executions
-        .AddEffectWorkflowBus(assemblies)
+        .AddServiceTrainBus(assemblies)
 );
 ```

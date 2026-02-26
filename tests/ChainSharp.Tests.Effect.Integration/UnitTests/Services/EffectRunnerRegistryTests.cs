@@ -4,7 +4,7 @@ using ChainSharp.Effect.Services.EffectProviderFactory;
 using ChainSharp.Effect.Services.EffectRegistry;
 using ChainSharp.Effect.Services.EffectRunner;
 using ChainSharp.Effect.Services.EffectStep;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Effect.Services.StepEffectProvider;
 using ChainSharp.Effect.Services.StepEffectProviderFactory;
 using ChainSharp.Effect.Services.StepEffectRunner;
@@ -226,13 +226,13 @@ public class EffectRunnerRegistryTests
     {
         public Task BeforeStepExecution<TIn, TOut, TWorkflowIn, TWorkflowOut>(
             EffectStep<TIn, TOut> effectStep,
-            EffectWorkflow<TWorkflowIn, TWorkflowOut> effectWorkflow,
+            ServiceTrain<TWorkflowIn, TWorkflowOut> serviceTrain,
             CancellationToken cancellationToken
         ) => Task.CompletedTask;
 
         public Task AfterStepExecution<TIn, TOut, TWorkflowIn, TWorkflowOut>(
             EffectStep<TIn, TOut> effectStep,
-            EffectWorkflow<TWorkflowIn, TWorkflowOut> effectWorkflow,
+            ServiceTrain<TWorkflowIn, TWorkflowOut> serviceTrain,
             CancellationToken cancellationToken
         ) => Task.CompletedTask;
 

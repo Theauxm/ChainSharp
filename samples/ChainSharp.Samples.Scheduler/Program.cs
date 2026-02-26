@@ -30,7 +30,7 @@ builder.AddChainSharpDashboard();
 builder.Services.AddChainSharpEffects(
     options =>
         options
-            .AddEffectWorkflowBus(
+            .AddServiceTrainBus(
                 assemblies: [typeof(Program).Assembly, typeof(ManifestManagerWorkflow).Assembly,]
             )
             .AddPostgresEffect(connectionString)

@@ -18,7 +18,7 @@ public class WorkflowBusIntegrationTests
         var services = new ServiceCollection();
 
         services.AddChainSharpEffects(
-            o => o.AddEffectWorkflowBus(assemblies: [typeof(FakeWorkflowA).Assembly])
+            o => o.AddServiceTrainBus(assemblies: [typeof(FakeWorkflowA).Assembly])
         );
 
         services.AddChainSharpDashboard();

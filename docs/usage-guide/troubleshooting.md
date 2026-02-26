@@ -12,18 +12,18 @@ nav_order: 12
 The `WorkflowBus` couldn't find a workflow that accepts your input type.
 
 **Causes:**
-- The assembly containing your workflow wasn't registered with `AddEffectWorkflowBus`
-- Your workflow doesn't implement `IEffectWorkflow<TIn, TOut>`
+- The assembly containing your workflow wasn't registered with `AddServiceTrainBus`
+- Your workflow doesn't implement `IServiceTrain<TIn, TOut>`
 - Your workflow class is `abstract`
 
 **Fix:**
 ```csharp
 services.AddChainSharpEffects(o =>
-    o.AddEffectWorkflowBus(typeof(YourWorkflow).Assembly)  // Ensure correct assembly
+    o.AddServiceTrainBus(typeof(YourWorkflow).Assembly)  // Ensure correct assembly
 );
 ```
 
-*API Reference: [AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %})*
+*API Reference: [AddServiceTrainBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %})*
 
 ## "Unable to resolve service for type 'IStep'"
 
@@ -72,7 +72,7 @@ The most common cause: `TaskServerExecutorWorkflow.Assembly` isn't registered wi
 
 **Fix:**
 ```csharp
-.AddEffectWorkflowBus(
+.AddServiceTrainBus(
     typeof(Program).Assembly,
     typeof(TaskServerExecutorWorkflow).Assembly  // Don't forget this
 )

@@ -19,7 +19,7 @@ public class WorkflowRegistry : IWorkflowRegistry
     public WorkflowRegistry(params Assembly[] assemblies)
     {
         // Scan assemblies for workflow implementations
-        var workflowType = typeof(IEffectWorkflow<,>);
+        var workflowType = typeof(IServiceTrain<,>);
         var allWorkflowTypes = ScanAssembliesForWorkflows(assemblies, workflowType);
 
         // Create mapping: InputType -> WorkflowType
@@ -62,11 +62,11 @@ public class WorkflowBus : IWorkflowBus
 
 ### Input Type Uniqueness
 
-Each input type maps to exactly one workflow. This is enforced at startup by the `WorkflowRegistry`'s `ToDictionary` call—duplicate input types cause an exception. See [API Reference: AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %}) for the full uniqueness rules and code examples.
+Each input type maps to exactly one workflow. This is enforced at startup by the `WorkflowRegistry`'s `ToDictionary` call—duplicate input types cause an exception. See [API Reference: AddServiceTrainBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %}) for the full uniqueness rules and code examples.
 
 ### Workflow Discovery Rules
 
 1. **Must be concrete classes** (not abstract)
-2. **Must implement IEffectWorkflow<,>**
+2. **Must implement IServiceTrain<,>**
 3. **Must have parameterless constructor or be registered in DI**
 4. **Should implement a non-generic interface** for better DI integration

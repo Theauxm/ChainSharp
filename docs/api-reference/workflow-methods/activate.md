@@ -13,7 +13,7 @@ Stores the workflow input (and optional extra objects) into Memory. Typically th
 ## Signature
 
 ```csharp
-public Workflow<TInput, TReturn> Activate(TInput input, params object[] otherInputs)
+public Train<TInput, TReturn> Activate(TInput input, params object[] otherInputs)
 ```
 
 ## Parameters
@@ -25,7 +25,7 @@ public Workflow<TInput, TReturn> Activate(TInput input, params object[] otherInp
 
 ## Returns
 
-`Workflow<TInput, TReturn>` — the workflow instance, for fluent chaining.
+`Train<TInput, TReturn>` — the workflow instance, for fluent chaining.
 
 ## Examples
 

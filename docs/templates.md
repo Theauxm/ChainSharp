@@ -71,7 +71,7 @@ A minimal `WebApplication` configured with:
 A single workflow with one step that logs a greeting. Use it as a reference for building your own workflows, then delete it when you're ready.
 
 ```csharp
-public class HelloWorldWorkflow : EffectWorkflow<HelloWorldInput, Unit>, IHelloWorldWorkflow
+public class HelloWorldWorkflow : ServiceTrain<HelloWorldInput, Unit>, IHelloWorldWorkflow
 {
     protected override async Task<Either<Exception, Unit>> RunInternal(HelloWorldInput input) =>
         Activate(input).Chain<LogGreetingStep>().Resolve();
@@ -123,9 +123,9 @@ public record SyncCustomersInput : IManifestProperties
 2. Define a workflow interface and implementation:
 
 ```csharp
-public interface ISyncCustomersWorkflow : IEffectWorkflow<SyncCustomersInput, Unit>;
+public interface ISyncCustomersWorkflow : IServiceTrain<SyncCustomersInput, Unit>;
 
-public class SyncCustomersWorkflow : EffectWorkflow<SyncCustomersInput, Unit>, ISyncCustomersWorkflow
+public class SyncCustomersWorkflow : ServiceTrain<SyncCustomersInput, Unit>, ISyncCustomersWorkflow
 {
     protected override async Task<Either<Exception, Unit>> RunInternal(SyncCustomersInput input) =>
         Activate(input)

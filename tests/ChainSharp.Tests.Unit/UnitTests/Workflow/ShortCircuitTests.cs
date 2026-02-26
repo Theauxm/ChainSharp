@@ -1,5 +1,5 @@
 using ChainSharp.Step;
-using ChainSharp.Workflow;
+using ChainSharp.Train;
 using FluentAssertions;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
@@ -149,7 +149,7 @@ public class ShortCircuitTests : TestSetup
         public override async Task<string> Run(string input) => input + "world";
     }
 
-    private class TestWorkflow : Workflow<int, string>
+    private class TestWorkflow : Train<int, string>
     {
         protected override Task<Either<Exception, string>> RunInternal(int input) =>
             throw new NotImplementedException();
@@ -163,7 +163,7 @@ public class ShortCircuitTests : TestSetup
         }
     }
 
-    private class TestWorkflowOption : Workflow<Option<object>, string>
+    private class TestWorkflowOption : Train<Option<object>, string>
     {
         protected override Task<Either<Exception, string>> RunInternal(Option<object> input) =>
             throw new NotImplementedException();

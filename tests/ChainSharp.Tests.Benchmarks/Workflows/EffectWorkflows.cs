@@ -1,4 +1,4 @@
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Tests.Benchmarks.Models;
 using ChainSharp.Tests.Benchmarks.Steps;
 using LanguageExt;
@@ -7,31 +7,31 @@ namespace ChainSharp.Tests.Benchmarks.Workflows;
 
 // --- Interfaces ---
 
-public interface IEffectAddOneWorkflow : IEffectWorkflow<int, int>;
+public interface IEffectAddOneWorkflow : IServiceTrain<int, int>;
 
-public interface IEffectAddThreeWorkflow : IEffectWorkflow<int, int>;
+public interface IEffectAddThreeWorkflow : IServiceTrain<int, int>;
 
-public interface IEffectTransformWorkflow : IEffectWorkflow<PersonDto, PersonEntity>;
+public interface IEffectTransformWorkflow : IServiceTrain<PersonDto, PersonEntity>;
 
-public interface IEffectSimulatedIoWorkflow : IEffectWorkflow<int, int>;
+public interface IEffectSimulatedIoWorkflow : IServiceTrain<int, int>;
 
-public interface IEffectAddOneX1Workflow : IEffectWorkflow<int, int>;
+public interface IEffectAddOneX1Workflow : IServiceTrain<int, int>;
 
-public interface IEffectAddOneX3Workflow : IEffectWorkflow<int, int>;
+public interface IEffectAddOneX3Workflow : IServiceTrain<int, int>;
 
-public interface IEffectAddOneX5Workflow : IEffectWorkflow<int, int>;
+public interface IEffectAddOneX5Workflow : IServiceTrain<int, int>;
 
-public interface IEffectAddOneX10Workflow : IEffectWorkflow<int, int>;
+public interface IEffectAddOneX10Workflow : IServiceTrain<int, int>;
 
 // --- Implementations ---
 
-public class EffectAddOneWorkflow : EffectWorkflow<int, int>, IEffectAddOneWorkflow
+public class EffectAddOneWorkflow : ServiceTrain<int, int>, IEffectAddOneWorkflow
 {
     protected override Task<Either<Exception, int>> RunInternal(int input) =>
         Task.FromResult(Activate(input).Chain<AddOneStep>().Resolve());
 }
 
-public class EffectAddThreeWorkflow : EffectWorkflow<int, int>, IEffectAddThreeWorkflow
+public class EffectAddThreeWorkflow : ServiceTrain<int, int>, IEffectAddThreeWorkflow
 {
     protected override Task<Either<Exception, int>> RunInternal(int input) =>
         Task.FromResult(
@@ -40,14 +40,14 @@ public class EffectAddThreeWorkflow : EffectWorkflow<int, int>, IEffectAddThreeW
 }
 
 public class EffectTransformWorkflow
-    : EffectWorkflow<PersonDto, PersonEntity>,
+    : ServiceTrain<PersonDto, PersonEntity>,
         IEffectTransformWorkflow
 {
     protected override Task<Either<Exception, PersonEntity>> RunInternal(PersonDto input) =>
         Task.FromResult(Activate(input).Chain<TransformStep>().Resolve());
 }
 
-public class EffectSimulatedIoWorkflow : EffectWorkflow<int, int>, IEffectSimulatedIoWorkflow
+public class EffectSimulatedIoWorkflow : ServiceTrain<int, int>, IEffectSimulatedIoWorkflow
 {
     protected override Task<Either<Exception, int>> RunInternal(int input) =>
         Task.FromResult(
@@ -61,13 +61,13 @@ public class EffectSimulatedIoWorkflow : EffectWorkflow<int, int>, IEffectSimula
 
 // --- Scaling variants ---
 
-public class EffectAddOneX1Workflow : EffectWorkflow<int, int>, IEffectAddOneX1Workflow
+public class EffectAddOneX1Workflow : ServiceTrain<int, int>, IEffectAddOneX1Workflow
 {
     protected override Task<Either<Exception, int>> RunInternal(int input) =>
         Task.FromResult(Activate(input).Chain<AddOneStep>().Resolve());
 }
 
-public class EffectAddOneX3Workflow : EffectWorkflow<int, int>, IEffectAddOneX3Workflow
+public class EffectAddOneX3Workflow : ServiceTrain<int, int>, IEffectAddOneX3Workflow
 {
     protected override Task<Either<Exception, int>> RunInternal(int input) =>
         Task.FromResult(
@@ -75,7 +75,7 @@ public class EffectAddOneX3Workflow : EffectWorkflow<int, int>, IEffectAddOneX3W
         );
 }
 
-public class EffectAddOneX5Workflow : EffectWorkflow<int, int>, IEffectAddOneX5Workflow
+public class EffectAddOneX5Workflow : ServiceTrain<int, int>, IEffectAddOneX5Workflow
 {
     protected override Task<Either<Exception, int>> RunInternal(int input) =>
         Task.FromResult(
@@ -89,7 +89,7 @@ public class EffectAddOneX5Workflow : EffectWorkflow<int, int>, IEffectAddOneX5W
         );
 }
 
-public class EffectAddOneX10Workflow : EffectWorkflow<int, int>, IEffectAddOneX10Workflow
+public class EffectAddOneX10Workflow : ServiceTrain<int, int>, IEffectAddOneX10Workflow
 {
     protected override Task<Either<Exception, int>> RunInternal(int input) =>
         Task.FromResult(

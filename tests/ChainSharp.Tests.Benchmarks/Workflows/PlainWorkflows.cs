@@ -1,19 +1,19 @@
 using ChainSharp.Tests.Benchmarks.Models;
 using ChainSharp.Tests.Benchmarks.Steps;
-using ChainSharp.Workflow;
+using ChainSharp.Train;
 using LanguageExt;
 
 namespace ChainSharp.Tests.Benchmarks.Workflows;
 
 // --- Arithmetic workflows (int -> int) ---
 
-public class AddOneWorkflow : Workflow<int, int>
+public class AddOneWorkflow : Train<int, int>
 {
     protected override Task<Either<Exception, int>> RunInternal(int input) =>
         Task.FromResult(Activate(input).Chain<AddOneStep>().Resolve());
 }
 
-public class AddThreeWorkflow : Workflow<int, int>
+public class AddThreeWorkflow : Train<int, int>
 {
     protected override Task<Either<Exception, int>> RunInternal(int input) =>
         Task.FromResult(
@@ -23,7 +23,7 @@ public class AddThreeWorkflow : Workflow<int, int>
 
 // --- Transform workflow (PersonDto -> PersonEntity) ---
 
-public class TransformWorkflow : Workflow<PersonDto, PersonEntity>
+public class TransformWorkflow : Train<PersonDto, PersonEntity>
 {
     protected override Task<Either<Exception, PersonEntity>> RunInternal(PersonDto input) =>
         Task.FromResult(Activate(input).Chain<TransformStep>().Resolve());
@@ -31,7 +31,7 @@ public class TransformWorkflow : Workflow<PersonDto, PersonEntity>
 
 // --- Simulated I/O workflow ---
 
-public class SimulatedIoWorkflow : Workflow<int, int>
+public class SimulatedIoWorkflow : Train<int, int>
 {
     protected override Task<Either<Exception, int>> RunInternal(int input) =>
         Task.FromResult(
@@ -45,13 +45,13 @@ public class SimulatedIoWorkflow : Workflow<int, int>
 
 // --- Scaling workflows (parameterized by step count) ---
 
-public class AddOneX1Workflow : Workflow<int, int>
+public class AddOneX1Workflow : Train<int, int>
 {
     protected override Task<Either<Exception, int>> RunInternal(int input) =>
         Task.FromResult(Activate(input).Chain<AddOneStep>().Resolve());
 }
 
-public class AddOneX3Workflow : Workflow<int, int>
+public class AddOneX3Workflow : Train<int, int>
 {
     protected override Task<Either<Exception, int>> RunInternal(int input) =>
         Task.FromResult(
@@ -59,7 +59,7 @@ public class AddOneX3Workflow : Workflow<int, int>
         );
 }
 
-public class AddOneX5Workflow : Workflow<int, int>
+public class AddOneX5Workflow : Train<int, int>
 {
     protected override Task<Either<Exception, int>> RunInternal(int input) =>
         Task.FromResult(
@@ -73,7 +73,7 @@ public class AddOneX5Workflow : Workflow<int, int>
         );
 }
 
-public class AddOneX10Workflow : Workflow<int, int>
+public class AddOneX10Workflow : Train<int, int>
 {
     protected override Task<Either<Exception, int>> RunInternal(int input) =>
         Task.FromResult(

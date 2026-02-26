@@ -3,7 +3,7 @@ using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Provider.Json.Extensions;
 using ChainSharp.Effect.Provider.Json.Services.JsonEffectFactory;
 using ChainSharp.Effect.Services.EffectRegistry;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Effect.StepProvider.Logging.Extensions;
 using ChainSharp.Tests.ArrayLogger.Services.ArrayLoggingProvider;
 using FluentAssertions;
@@ -38,7 +38,7 @@ public class JsonEffectToggleTests
                         .AddJsonEffect()
                         .AddStepLogger(serializeStepData: true)
             )
-            .AddTransientChainSharpWorkflow<IToggleTestWorkflow, ToggleTestWorkflow>();
+            .AddTransientChainSharpRoute<IToggleTestWorkflow, ToggleTestWorkflow>();
 
         _serviceProvider = services.BuildServiceProvider();
     }
@@ -128,11 +128,11 @@ public class JsonEffectToggleTests
             .SelectMany(logger => logger.Logs.Where(log => log.Category == JsonEffectCategory))
             .Count();
 
-    private class ToggleTestWorkflow : EffectWorkflow<Unit, Unit>, IToggleTestWorkflow
+    private class ToggleTestWorkflow : ServiceTrain<Unit, Unit>, IToggleTestWorkflow
     {
         protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
             Activate(input).Resolve();
     }
 
-    private interface IToggleTestWorkflow : IEffectWorkflow<Unit, Unit> { }
+    private interface IToggleTestWorkflow : IServiceTrain<Unit, Unit> { }
 }

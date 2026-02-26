@@ -28,7 +28,7 @@ public SchedulerConfigurationBuilder Schedule<TWorkflow>(
     where TWorkflow : class
 ```
 
-The method resolves `TInput` by reflecting on `TWorkflow`'s `IEffectWorkflow<TInput, Unit>` interface. If the provided `input` doesn't match the expected type, an `InvalidOperationException` is thrown at configuration time.
+The method resolves `TInput` by reflecting on `TWorkflow`'s `IServiceTrain<TInput, Unit>` interface. If the provided `input` doesn't match the expected type, an `InvalidOperationException` is thrown at configuration time.
 
 ### Startup (SchedulerConfigurationBuilder) — Explicit Type Parameters
 
@@ -41,7 +41,7 @@ public SchedulerConfigurationBuilder Schedule<TWorkflow, TInput>(
     Schedule schedule,
     Action<ScheduleOptions>? options = null
 )
-    where TWorkflow : IEffectWorkflow<TInput, Unit>
+    where TWorkflow : IServiceTrain<TInput, Unit>
     where TInput : IManifestProperties
 ```
 
@@ -55,7 +55,7 @@ Task<Manifest> ScheduleAsync<TWorkflow, TInput>(
     Action<ScheduleOptions>? options = null,
     CancellationToken ct = default
 )
-    where TWorkflow : IEffectWorkflow<TInput, Unit>
+    where TWorkflow : IServiceTrain<TInput, Unit>
     where TInput : IManifestProperties
 ```
 
@@ -63,7 +63,7 @@ Task<Manifest> ScheduleAsync<TWorkflow, TInput>(
 
 | Type Parameter | Constraint | Description |
 |---------------|------------|-------------|
-| `TWorkflow` | `class` (inferred) / `IEffectWorkflow<TInput, Unit>` (explicit) | The workflow interface type. Must implement `IEffectWorkflow<TInput, Unit>`. The scheduler resolves the concrete implementation via `WorkflowBus` using the input type. |
+| `TWorkflow` | `class` (inferred) / `IServiceTrain<TInput, Unit>` (explicit) | The workflow interface type. Must implement `IServiceTrain<TInput, Unit>`. The scheduler resolves the concrete implementation via `WorkflowBus` using the input type. |
 | `TInput` | `IManifestProperties` | **Inferred at startup** from `TWorkflow`'s interface. The input type for the workflow. Must implement `IManifestProperties` (a marker interface) to enable serialization for scheduled job storage. Only required explicitly in the legacy two-type-param form and the runtime API. |
 
 ## Parameters
@@ -130,7 +130,7 @@ services.AddChainSharpEffects(options => options
 );
 ```
 
-Only the workflow interface type is specified. The input type (`SyncInput`) is inferred from `ISyncWorkflow : IEffectWorkflow<SyncInput, Unit>` and validated at configuration time.
+Only the workflow interface type is specified. The input type (`SyncInput`) is inferred from `ISyncWorkflow : IServiceTrain<SyncInput, Unit>` and validated at configuration time.
 
 ### Runtime Scheduling
 
@@ -153,5 +153,5 @@ public class MyService(IManifestScheduler scheduler)
 - At startup, manifests are not created immediately — they are captured and seeded when the application starts via `SchedulerStartupService`.
 - At runtime, `ScheduleAsync` creates/updates the manifest in the database immediately.
 - The `externalId` is the primary key for upsert logic. Changing it creates a new manifest rather than updating the existing one.
-- If the workflow type is not registered in the `WorkflowRegistry` (via `AddEffectWorkflowBus`), an `InvalidOperationException` is thrown.
+- If the workflow type is not registered in the `WorkflowRegistry` (via `AddServiceTrainBus`), an `InvalidOperationException` is thrown.
 - The group is determined by `.Group(...)` on `ScheduleOptions`. When not specified, it defaults to the `externalId`. Groups are auto-created (upserted by name) during scheduling. Orphaned groups are cleaned up on startup.

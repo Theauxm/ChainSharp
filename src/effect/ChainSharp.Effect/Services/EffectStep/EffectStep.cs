@@ -1,9 +1,9 @@
 using ChainSharp.Effect.Models.StepMetadata;
 using ChainSharp.Effect.Models.StepMetadata.DTOs;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Exceptions;
 using ChainSharp.Step;
-using ChainSharp.Workflow;
+using ChainSharp.Train;
 using LanguageExt;
 using Microsoft.Extensions.Logging;
 
@@ -21,27 +21,27 @@ public abstract class EffectStep<TIn, TOut> : Step<TIn, TOut>, IEffectStep<TIn, 
 
     public StepMetadata? Metadata { get; private set; }
 
-    public override Task<Either<Exception, TOut>> RailwayStep<TWorkflowIn, TWorkflowOut>(
+    public override Task<Either<Exception, TOut>> RailwayStep<TTrainIn, TTrainOut>(
         Either<Exception, TIn> previousOutput,
-        Workflow<TWorkflowIn, TWorkflowOut> workflow
+        Train<TTrainIn, TTrainOut> train
     )
     {
-        if (workflow is not EffectWorkflow<TWorkflowIn, TWorkflowOut> effectWorkflow)
+        if (train is not ServiceTrain<TTrainIn, TTrainOut> serviceTrain)
             throw new WorkflowException(
-                $"Cannot run an EffectStep ({GetType().Name}) against a non-EffectWorkflow ({workflow.GetType().Name})"
+                $"Cannot run an EffectStep ({GetType().Name}) against a non-ServiceTrain ({train.GetType().Name})"
             );
 
-        return RailwayStep(previousOutput, effectWorkflow);
+        return RailwayStep(previousOutput, serviceTrain);
     }
 
-    public async Task<Either<Exception, TOut>> RailwayStep<TWorkflowIn, TWorkflowOut>(
+    public async Task<Either<Exception, TOut>> RailwayStep<TTrainIn, TTrainOut>(
         Either<Exception, TIn> previousOutput,
-        EffectWorkflow<TWorkflowIn, TWorkflowOut> effectWorkflow
+        ServiceTrain<TTrainIn, TTrainOut> serviceTrain
     )
     {
-        if (effectWorkflow.Metadata is null)
+        if (serviceTrain.Metadata is null)
             throw new WorkflowException(
-                "Effect Workflow Metadata cannot be null. Something has gone horribly wrong."
+                "ServiceTrain Metadata cannot be null. Something has gone horribly wrong."
             );
 
         Metadata = StepMetadata.Create(
@@ -53,31 +53,29 @@ public abstract class EffectStep<TIn, TOut> : Step<TIn, TOut>, IEffectStep<TIn, 
                 OutputType = typeof(TOut),
                 State = previousOutput.State,
             },
-            effectWorkflow.Metadata
+            serviceTrain.Metadata
         );
 
-        // effectWorkflow.Steps.AddLast(Metadata);
-
-        if (effectWorkflow.StepEffectRunner is not null)
-            await effectWorkflow.StepEffectRunner.BeforeStepExecution(
+        if (serviceTrain.StepEffectRunner is not null)
+            await serviceTrain.StepEffectRunner.BeforeStepExecution(
                 this,
-                effectWorkflow,
-                effectWorkflow.CancellationToken
+                serviceTrain,
+                serviceTrain.CancellationToken
             );
 
         Metadata.StartTimeUtc = DateTime.UtcNow;
 
-        var result = await base.RailwayStep(previousOutput, effectWorkflow);
+        var result = await base.RailwayStep(previousOutput, serviceTrain);
 
         Metadata.EndTimeUtc = DateTime.UtcNow;
         Metadata.State = result.State;
         Metadata.HasRan = true;
 
-        if (effectWorkflow.StepEffectRunner is not null)
-            await effectWorkflow.StepEffectRunner.AfterStepExecution(
+        if (serviceTrain.StepEffectRunner is not null)
+            await serviceTrain.StepEffectRunner.AfterStepExecution(
                 this,
-                effectWorkflow,
-                effectWorkflow.CancellationToken
+                serviceTrain,
+                serviceTrain.CancellationToken
             );
 
         return result;

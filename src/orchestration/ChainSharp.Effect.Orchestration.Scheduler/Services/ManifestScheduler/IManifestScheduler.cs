@@ -1,6 +1,6 @@
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using LanguageExt;
 using Schedule = ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling.Schedule;
 
@@ -15,7 +15,7 @@ public interface IManifestScheduler
     /// Schedules a single workflow to run on a recurring basis.
     /// </summary>
     /// <typeparam name="TWorkflow">
-    /// The workflow interface type. Must implement IEffectWorkflow&lt;TInput, TOutput&gt;
+    /// The workflow interface type. Must implement IServiceTrain&lt;TInput, TOutput&gt;
     /// for some TOutput. The scheduler resolves the workflow via WorkflowBus using the input type.
     /// </typeparam>
     /// <typeparam name="TInput">
@@ -41,14 +41,14 @@ public interface IManifestScheduler
         Action<ScheduleOptions>? options = null,
         CancellationToken ct = default
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties;
 
     /// <summary>
     /// Schedules multiple instances of a workflow from a collection.
     /// </summary>
     /// <typeparam name="TWorkflow">
-    /// The workflow interface type. Must implement IEffectWorkflow&lt;TInput, TOutput&gt;
+    /// The workflow interface type. Must implement IServiceTrain&lt;TInput, TOutput&gt;
     /// for some TOutput. The scheduler resolves the workflow via WorkflowBus using the input type.
     /// </typeparam>
     /// <typeparam name="TInput">
@@ -86,7 +86,7 @@ public interface IManifestScheduler
         Action<TSource, ManifestOptions>? configureEach = null,
         CancellationToken ct = default
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties;
 
     /// <summary>
@@ -107,7 +107,7 @@ public interface IManifestScheduler
         Action<ScheduleOptions>? options = null,
         CancellationToken ct = default
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties;
 
     /// <summary>
@@ -131,7 +131,7 @@ public interface IManifestScheduler
         Action<TSource, ManifestOptions>? configureEach = null,
         CancellationToken ct = default
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties;
 
     /// <summary>

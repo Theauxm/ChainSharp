@@ -245,7 +245,7 @@ public static class ServiceExtensions
         where TImplementation : class, TService
         // Nothing inherently different about the injection. Overload for posterity.
         =>
-        services.AddScopedChainSharpWorkflow<TService, TImplementation>();
+        services.AddScopedChainSharpRoute<TService, TImplementation>();
 
     public static IServiceCollection AddScopedChainSharpStep(
         this IServiceCollection services,
@@ -254,7 +254,7 @@ public static class ServiceExtensions
     )
         // Nothing inherently different about the injection. Overload for posterity.
         =>
-        services.AddScopedChainSharpWorkflow(serviceInterface, serviceImplementation);
+        services.AddScopedChainSharpRoute(serviceInterface, serviceImplementation);
 
     public static IServiceCollection AddTransientChainSharpStep<TService, TImplementation>(
         this IServiceCollection services
@@ -263,7 +263,7 @@ public static class ServiceExtensions
         where TImplementation : class, TService
         // Nothing inherently different about the injection. Overload for posterity.
         =>
-        services.AddTransientChainSharpWorkflow<TService, TImplementation>();
+        services.AddTransientChainSharpRoute<TService, TImplementation>();
 
     public static IServiceCollection AddTransientChainSharpStep(
         this IServiceCollection services,
@@ -272,7 +272,7 @@ public static class ServiceExtensions
     )
         // Nothing inherently different about the injection. Overload for posterity.
         =>
-        services.AddTransientChainSharpWorkflow(serviceInterface, serviceImplementation);
+        services.AddTransientChainSharpRoute(serviceInterface, serviceImplementation);
 
     public static IServiceCollection AddSingletonChainSharpStep<TService, TImplementation>(
         this IServiceCollection services
@@ -281,7 +281,7 @@ public static class ServiceExtensions
         where TImplementation : class, TService
         // Nothing inherently different about the injection. Overload for posterity.
         =>
-        services.AddSingletonChainSharpWorkflow<TService, TImplementation>();
+        services.AddSingletonChainSharpRoute<TService, TImplementation>();
 
     public static IServiceCollection AddSingletonChainSharpStep(
         this IServiceCollection services,
@@ -290,13 +290,13 @@ public static class ServiceExtensions
     )
         // Nothing inherently different about the injection. Overload for posterity.
         =>
-        services.AddSingletonChainSharpWorkflow(serviceInterface, serviceImplementation);
+        services.AddSingletonChainSharpRoute(serviceInterface, serviceImplementation);
 
     #endregion
 
-    #region WorkflowInjection
+    #region RouteInjection
 
-    public static IServiceCollection AddScopedChainSharpWorkflow<TService, TImplementation>(
+    public static IServiceCollection AddScopedChainSharpRoute<TService, TImplementation>(
         this IServiceCollection services
     )
         where TService : class
@@ -313,7 +313,7 @@ public static class ServiceExtensions
         return services;
     }
 
-    public static IServiceCollection AddScopedChainSharpWorkflow(
+    public static IServiceCollection AddScopedChainSharpRoute(
         this IServiceCollection services,
         Type serviceInterface,
         Type serviceImplementation
@@ -333,7 +333,7 @@ public static class ServiceExtensions
         return services;
     }
 
-    public static IServiceCollection AddTransientChainSharpWorkflow<TService, TImplementation>(
+    public static IServiceCollection AddTransientChainSharpRoute<TService, TImplementation>(
         this IServiceCollection services
     )
         where TService : class
@@ -350,7 +350,7 @@ public static class ServiceExtensions
         return services;
     }
 
-    public static IServiceCollection AddTransientChainSharpWorkflow(
+    public static IServiceCollection AddTransientChainSharpRoute(
         this IServiceCollection services,
         Type serviceInterface,
         Type serviceImplementation
@@ -370,7 +370,7 @@ public static class ServiceExtensions
         return services;
     }
 
-    public static IServiceCollection AddSingletonChainSharpWorkflow<TService, TImplementation>(
+    public static IServiceCollection AddSingletonChainSharpRoute<TService, TImplementation>(
         this IServiceCollection services
     )
         where TService : class
@@ -387,7 +387,7 @@ public static class ServiceExtensions
         return services;
     }
 
-    public static IServiceCollection AddSingletonChainSharpWorkflow(
+    public static IServiceCollection AddSingletonChainSharpRoute(
         this IServiceCollection services,
         Type serviceInterface,
         Type serviceImplementation

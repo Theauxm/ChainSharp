@@ -20,7 +20,7 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Configuration;
 /// This builder allows configuring the scheduler as part of the ChainSharp effects setup:
 /// <code>
 /// services.AddChainSharpEffects(options => options
-///     .AddEffectWorkflowBus(assemblies)
+///     .AddServiceTrainBus(assemblies)
 ///     .AddPostgresEffect(connectionString)
 ///     .AddScheduler(scheduler => scheduler
 ///         .PollingInterval(TimeSpan.FromSeconds(30))
@@ -88,8 +88,8 @@ public partial class SchedulerConfigurationBuilder
             sp => sp.GetRequiredService<DormantDependentContext>()
         );
 
-        // Register JobDispatcher workflow (must use AddScopedChainSharpWorkflow for property injection)
-        _parentBuilder.ServiceCollection.AddScopedChainSharpWorkflow<
+        // Register JobDispatcher workflow (must use AddScopedChainSharpRoute for property injection)
+        _parentBuilder.ServiceCollection.AddScopedChainSharpRoute<
             IJobDispatcherWorkflow,
             JobDispatcherWorkflow
         >();

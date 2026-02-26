@@ -7,7 +7,7 @@ using ChainSharp.Effect.Models.WorkQueue.DTOs;
 using ChainSharp.Effect.Orchestration.Mediator.Services.WorkflowRegistry;
 using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
 using ChainSharp.Effect.Orchestration.Scheduler.Extensions;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using LanguageExt;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -32,7 +32,7 @@ public class ManifestScheduler(
         Action<ScheduleOptions>? options = null,
         CancellationToken ct = default
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties
     {
         workflowRegistry.ValidateWorkflowRegistration<TInput>();
@@ -73,7 +73,7 @@ public class ManifestScheduler(
         Action<TSource, ManifestOptions>? configureEach = null,
         CancellationToken ct = default
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties
     {
         workflowRegistry.ValidateWorkflowRegistration<TInput>();
@@ -154,7 +154,7 @@ public class ManifestScheduler(
         Action<ScheduleOptions>? options = null,
         CancellationToken ct = default
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties
     {
         workflowRegistry.ValidateWorkflowRegistration<TInput>();
@@ -210,7 +210,7 @@ public class ManifestScheduler(
         Action<TSource, ManifestOptions>? configureEach = null,
         CancellationToken ct = default
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties
     {
         workflowRegistry.ValidateWorkflowRegistration<TInput>();

@@ -1,5 +1,5 @@
 using ChainSharp.Effect.Models.Manifest;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using LanguageExt;
 
 namespace ChainSharp.Tests.Effect.Scheduler.Integration.Examples.Workflows;
@@ -8,9 +8,7 @@ namespace ChainSharp.Tests.Effect.Scheduler.Integration.Examples.Workflows;
 /// A simple test workflow for scheduler integration tests.
 /// Returns Unit since TaskServerExecutor uses the non-generic RunAsync which expects Unit output.
 /// </summary>
-public class SchedulerTestWorkflow
-    : EffectWorkflow<SchedulerTestInput, Unit>,
-        ISchedulerTestWorkflow
+public class SchedulerTestWorkflow : ServiceTrain<SchedulerTestInput, Unit>, ISchedulerTestWorkflow
 {
     protected override async Task<Either<Exception, Unit>> RunInternal(SchedulerTestInput input) =>
         Activate(input, Unit.Default).Resolve();
@@ -27,13 +25,13 @@ public record SchedulerTestInput : IManifestProperties
 /// <summary>
 /// Interface for the scheduler test workflow.
 /// </summary>
-public interface ISchedulerTestWorkflow : IEffectWorkflow<SchedulerTestInput, Unit> { }
+public interface ISchedulerTestWorkflow : IServiceTrain<SchedulerTestInput, Unit> { }
 
 /// <summary>
 /// A workflow that always fails, used for testing error handling.
 /// </summary>
 public class FailingSchedulerTestWorkflow
-    : EffectWorkflow<FailingSchedulerTestInput, Unit>,
+    : ServiceTrain<FailingSchedulerTestInput, Unit>,
         IFailingSchedulerTestWorkflow
 {
     protected override async Task<Either<Exception, Unit>> RunInternal(
@@ -52,5 +50,4 @@ public record FailingSchedulerTestInput : IManifestProperties
 /// <summary>
 /// Interface for the failing scheduler test workflow.
 /// </summary>
-public interface IFailingSchedulerTestWorkflow
-    : IEffectWorkflow<FailingSchedulerTestInput, Unit> { }
+public interface IFailingSchedulerTestWorkflow : IServiceTrain<FailingSchedulerTestInput, Unit> { }

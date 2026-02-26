@@ -44,7 +44,7 @@ public static class TestSetup
             options.SaveWorkflowParameters();
 
             // Add workflow bus and mediator for testing workflow execution
-            options.AddEffectWorkflowBus(assemblies: [typeof(AssemblyMarker).Assembly]);
+            options.AddServiceTrainBus(assemblies: [typeof(AssemblyMarker).Assembly]);
         });
 
         return services;
@@ -78,9 +78,9 @@ public static class TestSetup
         services.AddChainSharpEffects(options =>
         {
             // No data context - focus purely on memory leak testing
-            options.AddEffectWorkflowBus(
+            options.AddServiceTrainBus(
                 assemblies: [typeof(AssemblyMarker).Assembly],
-                effectWorkflowServiceLifetime: ServiceLifetime.Transient
+                serviceTrainLifetime: ServiceLifetime.Transient
             );
         });
 

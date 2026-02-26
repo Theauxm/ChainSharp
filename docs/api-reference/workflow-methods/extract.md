@@ -17,7 +17,7 @@ Pulls a nested property or field out of a Memory object into its own Memory slot
 Retrieves `TIn` from Memory, then extracts a `TOut` property/field from it.
 
 ```csharp
-public Workflow<TInput, TReturn> Extract<TIn, TOut>()
+public Train<TInput, TReturn> Extract<TIn, TOut>()
 ```
 
 ### Extract\<TIn, TOut\>(TIn input)
@@ -25,7 +25,7 @@ public Workflow<TInput, TReturn> Extract<TIn, TOut>()
 Extracts a `TOut` property/field from the provided `TIn` object.
 
 ```csharp
-public Workflow<TInput, TReturn> Extract<TIn, TOut>(TIn input)
+public Train<TInput, TReturn> Extract<TIn, TOut>(TIn input)
 ```
 
 ## Type Parameters
@@ -43,7 +43,7 @@ public Workflow<TInput, TReturn> Extract<TIn, TOut>(TIn input)
 
 ## Returns
 
-`Workflow<TInput, TReturn>` — the workflow instance, for fluent chaining.
+`Train<TInput, TReturn>` — the workflow instance, for fluent chaining.
 
 ## Example
 

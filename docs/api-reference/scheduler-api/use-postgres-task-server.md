@@ -44,7 +44,7 @@ public SchedulerConfigurationBuilder UsePostgresTaskServer(
 ```csharp
 services.AddChainSharpEffects(options => options
     .AddPostgresEffect(connectionString)
-    .AddEffectWorkflowBus(assemblies: typeof(Program).Assembly)
+    .AddServiceTrainBus(assemblies: typeof(Program).Assembly)
     .AddScheduler(scheduler => scheduler
         .UsePostgresTaskServer()
         .Schedule<IMyWorkflow, MyInput>("my-job", new MyInput(), Every.Minutes(5))
@@ -57,7 +57,7 @@ services.AddChainSharpEffects(options => options
 ```csharp
 services.AddChainSharpEffects(options => options
     .AddPostgresEffect(connectionString)
-    .AddEffectWorkflowBus(assemblies: typeof(Program).Assembly)
+    .AddServiceTrainBus(assemblies: typeof(Program).Assembly)
     .AddScheduler(scheduler => scheduler
         .UsePostgresTaskServer(options =>
         {

@@ -1,4 +1,5 @@
-using ChainSharp.Workflow;
+using ChainSharp.Monad;
+using ChainSharp.Train;
 using FluentAssertions;
 using LanguageExt;
 
@@ -17,13 +18,14 @@ public class AddServicesTests : TestSetup
         var serviceTypes = new[] { typeof(ITestService) };
 
         // Act
-        workflow.AddServices(services, serviceTypes);
+        var monad = workflow.Activate(0);
+        monad.AddServices(services, serviceTypes);
 
         // Assert
-        workflow.Exception.Should().BeNull();
-        workflow.Memory.Should().NotBeNull();
-        workflow.Memory.Should().ContainKey(typeof(ITestService));
-        workflow.Memory.Should().ContainValue(inputService);
+        monad.Exception.Should().BeNull();
+        monad.Memory.Should().NotBeNull();
+        monad.Memory.Should().ContainKey(typeof(ITestService));
+        monad.Memory.Should().ContainValue(inputService);
     }
 
     [Theory]
@@ -37,11 +39,12 @@ public class AddServicesTests : TestSetup
         var serviceTypes = new[] { typeof(ITestService) };
 
         // Act
-        workflow.AddServices(services, serviceTypes);
+        var monad = workflow.Activate(0);
+        monad.AddServices(services, serviceTypes);
 
         // Assert
-        workflow.Exception.Should().NotBeNull();
-        workflow.Memory.Should().NotBeNull();
+        monad.Exception.Should().NotBeNull();
+        monad.Memory.Should().NotBeNull();
     }
 
     [Theory]
@@ -55,11 +58,12 @@ public class AddServicesTests : TestSetup
         var serviceTypes = new[] { typeof(ITestService) };
 
         // Act
-        workflow.AddServices(services, serviceTypes);
+        var monad = workflow.Activate(0);
+        monad.AddServices(services, serviceTypes);
 
         // Assert
-        workflow.Exception.Should().NotBeNull();
-        workflow.Memory.Should().NotBeNull();
+        monad.Exception.Should().NotBeNull();
+        monad.Memory.Should().NotBeNull();
     }
 
     [Theory]
@@ -70,12 +74,14 @@ public class AddServicesTests : TestSetup
         var workflow = new TestWorkflow();
 
         // Act
-        workflow.AddServices<ITestService>(inputService);
+        var monad = workflow.Activate(0);
+        var baselineCount = monad.Memory.Count;
+        monad.AddServices<ITestService>(inputService);
 
         // Assert
-        workflow.Memory.Should().NotBeNull();
-        workflow.Exception.Should().BeNull();
-        workflow.Memory.Count.Should().Be(2);
+        monad.Memory.Should().NotBeNull();
+        monad.Exception.Should().BeNull();
+        (monad.Memory.Count - baselineCount).Should().Be(1);
     }
 
     [Theory]
@@ -87,12 +93,14 @@ public class AddServicesTests : TestSetup
         var workflow = new TestWorkflow();
 
         // Act
-        workflow.AddServices<ITestService1, ITestService2>(service1, service2);
+        var monad = workflow.Activate(0);
+        var baselineCount = monad.Memory.Count;
+        monad.AddServices<ITestService1, ITestService2>(service1, service2);
 
         // Assert
-        workflow.Memory.Should().NotBeNull();
-        workflow.Exception.Should().BeNull();
-        workflow.Memory.Count.Should().Be(3);
+        monad.Memory.Should().NotBeNull();
+        monad.Exception.Should().BeNull();
+        (monad.Memory.Count - baselineCount).Should().Be(2);
     }
 
     [Theory]
@@ -105,16 +113,18 @@ public class AddServicesTests : TestSetup
         var workflow = new TestWorkflow();
 
         // Act
-        workflow.AddServices<ITestService1, ITestService2, ITestService3>(
+        var monad = workflow.Activate(0);
+        var baselineCount = monad.Memory.Count;
+        monad.AddServices<ITestService1, ITestService2, ITestService3>(
             service1,
             service2,
             service3
         );
 
         // Assert
-        workflow.Memory.Should().NotBeNull();
-        workflow.Exception.Should().BeNull();
-        workflow.Memory.Count.Should().Be(4);
+        monad.Memory.Should().NotBeNull();
+        monad.Exception.Should().BeNull();
+        (monad.Memory.Count - baselineCount).Should().Be(3);
     }
 
     [Theory]
@@ -128,7 +138,9 @@ public class AddServicesTests : TestSetup
         var workflow = new TestWorkflow();
 
         // Act
-        workflow.AddServices<ITestService1, ITestService2, ITestService3, ITestService4>(
+        var monad = workflow.Activate(0);
+        var baselineCount = monad.Memory.Count;
+        monad.AddServices<ITestService1, ITestService2, ITestService3, ITestService4>(
             service1,
             service2,
             service3,
@@ -136,9 +148,9 @@ public class AddServicesTests : TestSetup
         );
 
         // Assert
-        workflow.Memory.Should().NotBeNull();
-        workflow.Exception.Should().BeNull();
-        workflow.Memory.Count.Should().Be(5);
+        monad.Memory.Should().NotBeNull();
+        monad.Exception.Should().BeNull();
+        (monad.Memory.Count - baselineCount).Should().Be(4);
     }
 
     [Theory]
@@ -153,7 +165,9 @@ public class AddServicesTests : TestSetup
         var workflow = new TestWorkflow();
 
         // Act
-        workflow.AddServices<
+        var monad = workflow.Activate(0);
+        var baselineCount = monad.Memory.Count;
+        monad.AddServices<
             ITestService1,
             ITestService2,
             ITestService3,
@@ -162,9 +176,9 @@ public class AddServicesTests : TestSetup
         >(service1, service2, service3, service4, service5);
 
         // Assert
-        workflow.Memory.Should().NotBeNull();
-        workflow.Exception.Should().BeNull();
-        workflow.Memory.Count.Should().Be(6);
+        monad.Memory.Should().NotBeNull();
+        monad.Exception.Should().BeNull();
+        (monad.Memory.Count - baselineCount).Should().Be(5);
     }
 
     [Theory]
@@ -180,7 +194,9 @@ public class AddServicesTests : TestSetup
         var workflow = new TestWorkflow();
 
         // Act
-        workflow.AddServices<
+        var monad = workflow.Activate(0);
+        var baselineCount = monad.Memory.Count;
+        monad.AddServices<
             ITestService1,
             ITestService2,
             ITestService3,
@@ -190,9 +206,9 @@ public class AddServicesTests : TestSetup
         >(service1, service2, service3, service4, service5, service6);
 
         // Assert
-        workflow.Memory.Should().NotBeNull();
-        workflow.Exception.Should().BeNull();
-        workflow.Memory.Count.Should().Be(7);
+        monad.Memory.Should().NotBeNull();
+        monad.Exception.Should().BeNull();
+        (monad.Memory.Count - baselineCount).Should().Be(6);
     }
 
     [Theory]
@@ -209,7 +225,9 @@ public class AddServicesTests : TestSetup
         var workflow = new TestWorkflow();
 
         // Act
-        workflow.AddServices<
+        var monad = workflow.Activate(0);
+        var baselineCount = monad.Memory.Count;
+        monad.AddServices<
             ITestService1,
             ITestService2,
             ITestService3,
@@ -220,9 +238,9 @@ public class AddServicesTests : TestSetup
         >(service1, service2, service3, service4, service5, service6, service7);
 
         // Assert
-        workflow.Memory.Should().NotBeNull();
-        workflow.Exception.Should().BeNull();
-        workflow.Memory.Count.Should().Be(8);
+        monad.Memory.Should().NotBeNull();
+        monad.Exception.Should().BeNull();
+        (monad.Memory.Count - baselineCount).Should().Be(7);
     }
 
     private class TestServiceNoInterface { }
@@ -259,7 +277,7 @@ public class AddServicesTests : TestSetup
 
     private interface ITestService7 { }
 
-    private class TestWorkflow : Workflow<int, string>
+    private class TestWorkflow : Train<int, string>
     {
         protected override Task<Either<Exception, string>> RunInternal(int input) =>
             throw new NotImplementedException();

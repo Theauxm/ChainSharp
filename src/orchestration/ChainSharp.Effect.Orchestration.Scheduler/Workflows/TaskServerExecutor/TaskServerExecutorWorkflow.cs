@@ -1,5 +1,5 @@
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor.Steps;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using LanguageExt;
 
 namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor;
@@ -15,7 +15,7 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.TaskServerExecutor
 /// 4. Updates the manifest's LastSuccessfulRun timestamp
 /// </remarks>
 public class TaskServerExecutorWorkflow
-    : EffectWorkflow<ExecuteManifestRequest, Unit>,
+    : ServiceTrain<ExecuteManifestRequest, Unit>,
         ITaskServerExecutorWorkflow
 {
     protected override async Task<Either<Exception, Unit>> RunInternal(

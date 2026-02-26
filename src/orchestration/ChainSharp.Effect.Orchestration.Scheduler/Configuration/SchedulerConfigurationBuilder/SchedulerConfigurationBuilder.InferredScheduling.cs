@@ -1,6 +1,6 @@
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.ManifestScheduler;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using LanguageExt;
 using Schedule = ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling.Schedule;
 
@@ -13,7 +13,7 @@ public partial class SchedulerConfigurationBuilder
     /// <summary>
     /// Schedules a workflow to run on a recurring basis.
     /// The input type is inferred from <typeparamref name="TWorkflow"/>'s
-    /// <c>IEffectWorkflow&lt;TInput, Unit&gt;</c> interface.
+    /// <c>IServiceTrain&lt;TInput, Unit&gt;</c> interface.
     /// </summary>
     public SchedulerConfigurationBuilder Schedule<TWorkflow>(
         string externalId,
@@ -409,7 +409,7 @@ public partial class SchedulerConfigurationBuilder
         if (input.GetType() != inputType)
             throw new InvalidOperationException(
                 $"Input type mismatch: {workflowType.Name} expects input of type "
-                    + $"'{inputType.Name}' (from IEffectWorkflow<{inputType.Name}, Unit>), "
+                    + $"'{inputType.Name}' (from IServiceTrain<{inputType.Name}, Unit>), "
                     + $"but received '{input.GetType().Name}'."
             );
 
@@ -435,7 +435,7 @@ public partial class SchedulerConfigurationBuilder
             if (item.Input.GetType() != expectedInputType)
                 throw new InvalidOperationException(
                     $"Input type mismatch: {workflowType.Name} expects input of type "
-                        + $"'{expectedInputType.Name}' (from IEffectWorkflow<{expectedInputType.Name}, Unit>), "
+                        + $"'{expectedInputType.Name}' (from IServiceTrain<{expectedInputType.Name}, Unit>), "
                         + $"but item '{item.Id}' has input of type '{item.Input.GetType().Name}'."
                 );
         }
@@ -448,13 +448,13 @@ public partial class SchedulerConfigurationBuilder
             .FirstOrDefault(
                 i =>
                     i.IsGenericType
-                    && i.GetGenericTypeDefinition() == typeof(IEffectWorkflow<,>)
+                    && i.GetGenericTypeDefinition() == typeof(IServiceTrain<,>)
                     && i.GetGenericArguments()[1] == typeof(Unit)
             );
 
         if (effectInterface is null)
             throw new InvalidOperationException(
-                $"Type '{workflowType.Name}' must implement IEffectWorkflow<TInput, Unit> "
+                $"Type '{workflowType.Name}' must implement IServiceTrain<TInput, Unit> "
                     + $"to be used with Schedule<{workflowType.Name}>(). Found interfaces: "
                     + $"[{string.Join(", ", workflowType.GetInterfaces().Select(i => i.Name))}]"
             );

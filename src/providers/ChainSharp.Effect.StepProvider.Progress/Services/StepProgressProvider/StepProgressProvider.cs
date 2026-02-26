@@ -1,5 +1,5 @@
 using ChainSharp.Effect.Services.EffectStep;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 
 namespace ChainSharp.Effect.StepProvider.Progress.Services.StepProgressProvider;
 
@@ -7,34 +7,34 @@ public class StepProgressProvider : IStepProgressProvider
 {
     public async Task BeforeStepExecution<TIn, TOut, TWorkflowIn, TWorkflowOut>(
         EffectStep<TIn, TOut> effectStep,
-        EffectWorkflow<TWorkflowIn, TWorkflowOut> effectWorkflow,
+        ServiceTrain<TWorkflowIn, TWorkflowOut> serviceTrain,
         CancellationToken cancellationToken
     )
     {
-        if (effectWorkflow.Metadata is null || effectWorkflow.EffectRunner is null)
+        if (serviceTrain.Metadata is null || serviceTrain.EffectRunner is null)
             return;
 
-        effectWorkflow.Metadata.CurrentlyRunningStep = effectStep.Metadata?.Name;
-        effectWorkflow.Metadata.StepStartedAt = DateTime.UtcNow;
+        serviceTrain.Metadata.CurrentlyRunningStep = effectStep.Metadata?.Name;
+        serviceTrain.Metadata.StepStartedAt = DateTime.UtcNow;
 
-        await effectWorkflow.EffectRunner.Update(effectWorkflow.Metadata);
-        await effectWorkflow.EffectRunner.SaveChanges(cancellationToken);
+        await serviceTrain.EffectRunner.Update(serviceTrain.Metadata);
+        await serviceTrain.EffectRunner.SaveChanges(cancellationToken);
     }
 
     public async Task AfterStepExecution<TIn, TOut, TWorkflowIn, TWorkflowOut>(
         EffectStep<TIn, TOut> effectStep,
-        EffectWorkflow<TWorkflowIn, TWorkflowOut> effectWorkflow,
+        ServiceTrain<TWorkflowIn, TWorkflowOut> serviceTrain,
         CancellationToken cancellationToken
     )
     {
-        if (effectWorkflow.Metadata is null || effectWorkflow.EffectRunner is null)
+        if (serviceTrain.Metadata is null || serviceTrain.EffectRunner is null)
             return;
 
-        effectWorkflow.Metadata.CurrentlyRunningStep = null;
-        effectWorkflow.Metadata.StepStartedAt = null;
+        serviceTrain.Metadata.CurrentlyRunningStep = null;
+        serviceTrain.Metadata.StepStartedAt = null;
 
-        await effectWorkflow.EffectRunner.Update(effectWorkflow.Metadata);
-        await effectWorkflow.EffectRunner.SaveChanges(cancellationToken);
+        await serviceTrain.EffectRunner.Update(serviceTrain.Metadata);
+        await serviceTrain.EffectRunner.SaveChanges(cancellationToken);
     }
 
     public void Dispose() { }

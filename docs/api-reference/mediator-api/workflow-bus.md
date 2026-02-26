@@ -108,7 +108,7 @@ public class ProcessOrderStep(IWorkflowBus workflowBus) : EffectStep<OrderInput,
 
 ## Remarks
 
-- Workflows are discovered by input type at registration time (via [AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %})). Each input type maps to exactly one workflow.
+- Workflows are discovered by input type at registration time (via [AddServiceTrainBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %})). Each input type maps to exactly one workflow.
 - The `metadata` parameter enables parent-child workflow chains — useful for tracking nested workflow executions in the dashboard.
 - `RunAsync` calls the workflow's `Run` method internally, which means exceptions are thrown (not returned as `Either`). Use try/catch for error handling.
 - The `cancellationToken` overloads forward the token to `workflow.Run(input, cancellationToken)`, which propagates it to all steps. See [Cancellation Tokens]({{ site.baseurl }}{% link usage-guide/cancellation-tokens.md %}) for details.

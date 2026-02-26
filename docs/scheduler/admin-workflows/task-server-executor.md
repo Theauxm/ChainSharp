@@ -75,13 +75,13 @@ The `TaskServerExecutorWorkflow` lives in the `ChainSharp.Effect.Orchestration.S
 
 ```csharp
 builder.Services.AddChainSharpEffects(options => options
-    .AddEffectWorkflowBus(
+    .AddServiceTrainBus(
         typeof(Program).Assembly,
         typeof(TaskServerExecutorWorkflow).Assembly  // required
     )
 );
 ```
 
-*API Reference: [AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %})*
+*API Reference: [AddServiceTrainBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %})*
 
 If you forget this, scheduled jobs will silently fail—Hangfire will invoke the TaskServerExecutor, but the WorkflowBus won't find it. No error, just nothing happens.

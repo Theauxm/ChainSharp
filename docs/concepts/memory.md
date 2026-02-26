@@ -103,7 +103,7 @@ public class ProcessCheckoutStep : Step<(User, Order, Payment), Receipt>
 This lets you load multiple entities in one step and consume them individually—or as a group—in later steps:
 
 ```csharp
-public class CheckoutWorkflow : EffectWorkflow<CheckoutRequest, Receipt>
+public class CheckoutWorkflow : ServiceTrain<CheckoutRequest, Receipt>
 {
     protected override async Task<Either<Exception, Receipt>> RunInternal(CheckoutRequest input)
         => Activate(input)

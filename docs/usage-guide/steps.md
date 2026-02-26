@@ -65,9 +65,9 @@ The token comes from the caller: `workflow.Run(input, cancellationToken)`. If no
 
 ChainSharp has two step base classes:
 
-**`Step<TIn, TOut>`** — The base class. Handles input/output and Railway error propagation. No metadata, no lifecycle hooks. Use this for lightweight steps or when running inside a plain `Workflow`.
+**`Step<TIn, TOut>`** — The base class. Handles input/output and Railway error propagation. No metadata, no lifecycle hooks. Use this for lightweight steps or when running inside a plain `Train`.
 
-**`EffectStep<TIn, TOut>`** — Extends `Step` with per-step metadata tracking. When run inside an `EffectWorkflow`, it records a `StepMetadata` entry with the step's name, input/output types, start/end times, and Railway state. Step effect providers (like `AddStepLogger`) hook into `EffectStep`'s lifecycle—they fire before and after each step executes.
+**`EffectStep<TIn, TOut>`** — Extends `Step` with per-step metadata tracking. When run inside a `ServiceTrain`, it records a `StepMetadata` entry with the step's name, input/output types, start/end times, and Railway state. Step effect providers (like `AddStepLogger`) hook into `EffectStep`'s lifecycle—they fire before and after each step executes.
 
 ```csharp
 // Base step — no metadata tracking
@@ -93,7 +93,7 @@ public class ValidateEmailStep(IUserRepository repo) : EffectStep<CreateUserRequ
 }
 ```
 
-The implementation is identical—just swap the base class. `EffectStep` only adds metadata when running inside an `EffectWorkflow`. If you use `EffectStep` inside a plain `Workflow`, it throws at runtime.
+The implementation is identical—just swap the base class. `EffectStep` only adds metadata when running inside a `ServiceTrain`. If you use `EffectStep` inside a plain `Train`, it throws at runtime.
 
 Use `EffectStep` when you want step-level observability (timing, logging via `AddStepLogger`). Use `Step` when you don't need it.
 
@@ -101,7 +101,7 @@ Use `EffectStep` when you want step-level observability (timing, logging via `Ad
 
 ## Dependency Injection in Steps
 
-Steps use standard constructor injection for their dependencies. Do **not** use the `[Inject]` attribute—that's used internally by the `EffectWorkflow` base class for its own framework-level services.
+Steps use standard constructor injection for their dependencies. Do **not** use the `[Inject]` attribute—that's used internally by the `ServiceTrain` base class for its own framework-level services.
 
 ```csharp
 // ❌ Don't use [Inject] in your steps

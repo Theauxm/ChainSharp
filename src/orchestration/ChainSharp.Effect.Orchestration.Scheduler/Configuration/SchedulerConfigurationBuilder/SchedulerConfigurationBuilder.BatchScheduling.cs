@@ -1,5 +1,5 @@
 using ChainSharp.Effect.Models.Manifest;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using LanguageExt;
 using Schedule = ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling.Schedule;
 
@@ -47,7 +47,7 @@ public partial class SchedulerConfigurationBuilder
         Action<ScheduleOptions>? options = null,
         Action<TSource, ManifestOptions>? configureEach = null
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties
     {
         // Materialize the sources to avoid multiple enumeration
@@ -126,7 +126,7 @@ public partial class SchedulerConfigurationBuilder
         Action<ScheduleOptions>? options = null,
         Action<TSource, ManifestOptions>? configureEach = null
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties =>
         ScheduleMany<TWorkflow, TInput, TSource>(
             sources,
@@ -181,7 +181,7 @@ public partial class SchedulerConfigurationBuilder
         Action<ScheduleOptions>? options = null,
         Action<TSource, ManifestOptions>? configureEach = null
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties
     {
         var sourceList = sources.ToList();
@@ -255,7 +255,7 @@ public partial class SchedulerConfigurationBuilder
         Action<ScheduleOptions>? options = null,
         Action<TSource, ManifestOptions>? configureEach = null
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties =>
         ThenIncludeMany<TWorkflow, TInput, TSource>(
             sources,
@@ -304,7 +304,7 @@ public partial class SchedulerConfigurationBuilder
         Action<ScheduleOptions>? options = null,
         Action<TSource, ManifestOptions>? configureEach = null
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties
     {
         var rootExternalId =
@@ -384,7 +384,7 @@ public partial class SchedulerConfigurationBuilder
         Action<ScheduleOptions>? options = null,
         Action<TSource, ManifestOptions>? configureEach = null
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties =>
         IncludeMany<TWorkflow, TInput, TSource>(
             sources,
@@ -440,7 +440,7 @@ public partial class SchedulerConfigurationBuilder
         Action<ScheduleOptions>? options = null,
         Action<TSource, ManifestOptions>? configureEach = null
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties
     {
         var sourceList = sources.ToList();
@@ -513,7 +513,7 @@ public partial class SchedulerConfigurationBuilder
         Action<ScheduleOptions>? options = null,
         Action<TSource, ManifestOptions>? configureEach = null
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties =>
         IncludeMany<TWorkflow, TInput, TSource>(
             sources,

@@ -15,15 +15,15 @@ Extension methods for registering ChainSharp workflows with the .NET DI containe
 ### Generic Overloads
 
 ```csharp
-public static IServiceCollection AddScopedChainSharpWorkflow<TService, TImplementation>(
+public static IServiceCollection AddScopedChainSharpRoute<TService, TImplementation>(
     this IServiceCollection services
 ) where TService : class where TImplementation : class, TService
 
-public static IServiceCollection AddTransientChainSharpWorkflow<TService, TImplementation>(
+public static IServiceCollection AddTransientChainSharpRoute<TService, TImplementation>(
     this IServiceCollection services
 ) where TService : class where TImplementation : class, TService
 
-public static IServiceCollection AddSingletonChainSharpWorkflow<TService, TImplementation>(
+public static IServiceCollection AddSingletonChainSharpRoute<TService, TImplementation>(
     this IServiceCollection services
 ) where TService : class where TImplementation : class, TService
 ```
@@ -31,19 +31,19 @@ public static IServiceCollection AddSingletonChainSharpWorkflow<TService, TImple
 ### Non-Generic Overloads
 
 ```csharp
-public static IServiceCollection AddScopedChainSharpWorkflow(
+public static IServiceCollection AddScopedChainSharpRoute(
     this IServiceCollection services,
     Type serviceInterface,
     Type serviceImplementation
 )
 
-public static IServiceCollection AddTransientChainSharpWorkflow(
+public static IServiceCollection AddTransientChainSharpRoute(
     this IServiceCollection services,
     Type serviceInterface,
     Type serviceImplementation
 )
 
-public static IServiceCollection AddSingletonChainSharpWorkflow(
+public static IServiceCollection AddSingletonChainSharpRoute(
     this IServiceCollection services,
     Type serviceInterface,
     Type serviceImplementation
@@ -64,8 +64,8 @@ public static IServiceCollection AddSingletonChainSharpWorkflow(
 ## Example
 
 ```csharp
-services.AddTransientChainSharpWorkflow<ICreateOrderWorkflow, CreateOrderWorkflow>();
-services.AddScopedChainSharpWorkflow<IProcessPaymentWorkflow, ProcessPaymentWorkflow>();
+services.AddTransientChainSharpRoute<ICreateOrderWorkflow, CreateOrderWorkflow>();
+services.AddScopedChainSharpRoute<IProcessPaymentWorkflow, ProcessPaymentWorkflow>();
 ```
 
 ## What It Does
@@ -78,18 +78,18 @@ services.AddScopedChainSharpWorkflow<IProcessPaymentWorkflow, ProcessPaymentWork
 
 ## When to Use
 
-Use these methods when your workflow class (or its base class) uses `[Inject]` properties. For example, `EffectWorkflow<TIn, TOut>` has:
+Use these methods when your workflow class (or its base class) uses `[Inject]` properties. For example, `ServiceTrain<TIn, TOut>` has:
 
 ```csharp
 [Inject] public IEffectRunner? EffectRunner { get; set; }
-[Inject] public ILogger<EffectWorkflow<TIn, TOut>>? Logger { get; set; }
+[Inject] public ILogger<ServiceTrain<TIn, TOut>>? Logger { get; set; }
 [Inject] public IStepEffectRunner? StepEffectRunner { get; set; }
 ```
 
-Without `AddChainSharpWorkflow`, these properties would remain `null` after DI resolution.
+Without `AddChainSharpRoute`, these properties would remain `null` after DI resolution.
 
 ## Remarks
 
-- If your workflows are discovered via [AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %}), you don't need to register them manually — the bus handles registration automatically.
+- If your workflows are discovered via [AddServiceTrainBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %}), you don't need to register them manually — the bus handles registration automatically.
 - These methods are primarily useful for workflows registered outside of assembly scanning, or when you need explicit control over the DI lifetime.
 - The non-generic overloads accept `Type` parameters for dynamic/reflection-based registration scenarios.

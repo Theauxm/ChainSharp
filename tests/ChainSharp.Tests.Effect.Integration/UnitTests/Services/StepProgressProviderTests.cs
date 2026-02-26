@@ -6,7 +6,7 @@ using ChainSharp.Effect.Models.StepMetadata;
 using ChainSharp.Effect.Models.StepMetadata.DTOs;
 using ChainSharp.Effect.Services.EffectRunner;
 using ChainSharp.Effect.Services.EffectStep;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Effect.StepProvider.Progress.Services.StepProgressProvider;
 using FluentAssertions;
 using LanguageExt;
@@ -366,7 +366,7 @@ public class StepProgressProviderTests
     /// <summary>
     /// Concrete test double for EffectWorkflow. Only used for property access in tests.
     /// </summary>
-    private class TestWorkflow : EffectWorkflow<string, string>
+    private class TestWorkflow : ServiceTrain<string, string>
     {
         protected override Task<Either<Exception, string>> RunInternal(string input) =>
             Task.FromResult<Either<Exception, string>>(input);

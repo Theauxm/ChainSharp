@@ -17,7 +17,7 @@ If the step **fails** (returns Left), the failure is **ignored** — no exceptio
 Creates and executes a step with short-circuit behavior.
 
 ```csharp
-public Workflow<TInput, TReturn> ShortCircuit<TStep>() where TStep : class
+public Train<TInput, TReturn> ShortCircuit<TStep>() where TStep : class
 ```
 
 | Type Parameter | Constraint | Description |
@@ -29,7 +29,7 @@ public Workflow<TInput, TReturn> ShortCircuit<TStep>() where TStep : class
 Executes a pre-created step with short-circuit behavior.
 
 ```csharp
-public Workflow<TInput, TReturn> ShortCircuit<TStep>(TStep stepInstance) where TStep : class
+public Train<TInput, TReturn> ShortCircuit<TStep>(TStep stepInstance) where TStep : class
 ```
 
 | Parameter | Type | Description |

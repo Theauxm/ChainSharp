@@ -40,4 +40,4 @@ See [Nested Workflows](../usage-guide/mediator.md#nested-workflows) for implemen
 
 ## Execution Flow
 
-For a diagram of the full EffectWorkflow lifecycle—from client request through metadata initialization to SaveChanges—see [Core & Effects: Execution Flow](../architecture/core-and-effects.md#execution-flow).
+For a diagram of the full ServiceTrain lifecycle—from client request through metadata initialization to SaveChanges—see [Core & Effects: Execution Flow](../architecture/core-and-effects.md#execution-flow).

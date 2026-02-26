@@ -1,4 +1,5 @@
-using ChainSharp.Workflow;
+using ChainSharp.Monad;
+using ChainSharp.Train;
 using FluentAssertions;
 using LanguageExt;
 
@@ -16,12 +17,13 @@ public class ExtractTests : TestSetup
         var workflow = new TestWorkflow();
 
         // Act
-        workflow.Activate(input, inputObject).Extract<TestClass, string>();
+        var monad = workflow.Activate(input, inputObject);
+        monad.Extract<TestClass, string>();
 
         // Assert
-        workflow.Exception.Should().BeNull();
-        workflow.Memory.Should().NotBeNull();
-        workflow.Memory.Should().ContainValue("hello");
+        monad.Exception.Should().BeNull();
+        monad.Memory.Should().NotBeNull();
+        monad.Memory.Should().ContainValue("hello");
     }
 
     [Theory]
@@ -34,12 +36,13 @@ public class ExtractTests : TestSetup
         var workflow = new TestWorkflow();
 
         // Act
-        workflow.Activate(input).Extract<TestClass, string>(inputObject);
+        var monad = workflow.Activate(input);
+        monad.Extract<TestClass, string>(inputObject);
 
         // Assert
-        workflow.Exception.Should().BeNull();
-        workflow.Memory.Should().NotBeNull();
-        workflow.Memory.Should().ContainValue("hello");
+        monad.Exception.Should().BeNull();
+        monad.Memory.Should().NotBeNull();
+        monad.Memory.Should().ContainValue("hello");
     }
 
     [Theory]
@@ -52,11 +55,12 @@ public class ExtractTests : TestSetup
         var workflow = new TestWorkflow();
 
         // Act
-        workflow.Activate(input, inputObject).Extract<TestClass, bool>();
+        var monad = workflow.Activate(input, inputObject);
+        monad.Extract<TestClass, bool>();
 
         // Assert
-        workflow.Exception.Should().NotBeNull();
-        workflow.Memory.Should().NotBeNull();
+        monad.Exception.Should().NotBeNull();
+        monad.Memory.Should().NotBeNull();
     }
 
     [Theory]
@@ -68,11 +72,12 @@ public class ExtractTests : TestSetup
         var workflow = new TestWorkflow();
 
         // Act
-        workflow.Activate(input).Extract<TestClass, bool>();
+        var monad = workflow.Activate(input);
+        monad.Extract<TestClass, bool>();
 
         // Assert
-        workflow.Exception.Should().NotBeNull();
-        workflow.Memory.Should().NotBeNull();
+        monad.Exception.Should().NotBeNull();
+        monad.Memory.Should().NotBeNull();
     }
 
     [Theory]
@@ -83,11 +88,12 @@ public class ExtractTests : TestSetup
         var workflow = new TestWorkflow();
 
         // Act
-        workflow.Activate(input).Extract<TestClass, string>(null!);
+        var monad = workflow.Activate(input);
+        monad.Extract<TestClass, string>(null!);
 
         // Assert
-        workflow.Exception.Should().NotBeNull();
-        workflow.Memory.Should().NotBeNull();
+        monad.Exception.Should().NotBeNull();
+        monad.Memory.Should().NotBeNull();
     }
 
     private class TestClass
@@ -95,7 +101,7 @@ public class ExtractTests : TestSetup
         public string TestString { get; set; }
     }
 
-    private class TestWorkflow : Workflow<int, string>
+    private class TestWorkflow : Train<int, string>
     {
         protected override Task<Either<Exception, string>> RunInternal(int input) =>
             throw new NotImplementedException();

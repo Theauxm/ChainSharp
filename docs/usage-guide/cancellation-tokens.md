@@ -11,14 +11,14 @@ ChainSharp threads `CancellationToken` through the entire pipeline — from the 
 
 ## How It Works
 
-CancellationToken propagation is **property-based**, not parameter-based. The token is stored as a property on `Workflow` and `Step`, so the `Step.Run(TIn input)` signature stays unchanged:
+CancellationToken propagation is **property-based**, not parameter-based. The token is stored as a property on `Train` and `Step`, so the `Step.Run(TIn input)` signature stays unchanged:
 
 ```
 Run(input, cancellationToken)
         │
         ▼
 ┌──────────────────────────┐
-│      Workflow             │
+│      Train                │
 │  CancellationToken = ct  │
 └──────────┬───────────────┘
            │  Chain(step)
@@ -259,15 +259,15 @@ Configure the grace period:
 
 *See also: [Task Server]({{ site.baseurl }}{% link scheduler/task-server.md %})*
 
-## EffectWorkflow Token Propagation
+## ServiceTrain Token Propagation
 
-`EffectWorkflow` (the database-tracked workflow base class) propagates the token to all its internal operations:
+`ServiceTrain` (the database-tracked workflow base class) propagates the token to all its internal operations:
 
 - `SaveChangesAsync(CancellationToken)` — transaction commits use the token
 - `BeginTransaction(CancellationToken)` — transaction starts use the token
 - Step effect providers receive the token for their before/after hooks
 
-If a workflow is cancelled mid-execution, the `EffectWorkflow` catch block still runs `FinishWorkflow` to record the cancellation in Metadata — so you get an audit trail even for cancelled workflows. `FinishWorkflow` also clears the step progress columns (`CurrentlyRunningStep` and `StepStartedAt`) as a safety net.
+If a workflow is cancelled mid-execution, the `ServiceTrain` catch block still runs `FinishWorkflow` to record the cancellation in Metadata — so you get an audit trail even for cancelled workflows. `FinishWorkflow` also clears the step progress columns (`CurrentlyRunningStep` and `StepStartedAt`) as a safety net.
 
 ## Cancelling Running Workflows
 
@@ -398,10 +398,10 @@ public async Task Workflow_CancelDuringStep_PropagatesCancellation()
 
 | Layer | How the token arrives | What it's used for |
 |-------|----------------------|-------------------|
-| **Workflow** | `Run(input, ct)` or `RunEither(input, ct)` | Stored on `Workflow.CancellationToken` property |
+| **Train** | `Run(input, ct)` or `RunEither(input, ct)` | Stored on `Train.CancellationToken` property |
 | **Step** | Copied from workflow before `Run()` is called | Access via `this.CancellationToken` in `Run()` |
 | **WorkflowBus** | `RunAsync<TOut>(input, ct)` | Forwarded to `workflow.Run(input, ct)` |
-| **EffectWorkflow** | Inherited from `Workflow` | Passed to `SaveChangesAsync`, `BeginTransaction` |
+| **ServiceTrain** | Inherited from `Train` | Passed to `SaveChangesAsync`, `BeginTransaction` |
 | **Background Services** | `stoppingToken` from `ExecuteAsync` | Passed to `workflow.Run(input, stoppingToken)` |
 | **PostgresWorkerService** | `shutdownCts.Token` (grace period) | Passed to `workflow.Run(input, shutdownCts.Token)` |
 | **Task Server** | `EnqueueAsync(id, ct)` | Passed to `SaveChangesAsync` / `workflow.Run()` |

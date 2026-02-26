@@ -1,4 +1,4 @@
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Samples.Scheduler.Workflows.AlwaysFails.Steps;
 using LanguageExt;
 
@@ -9,7 +9,7 @@ namespace ChainSharp.Samples.Scheduler.Workflows.AlwaysFails;
 /// Scheduled with MaxRetries(1) so it dead-letters almost immediately,
 /// providing a convenient way to test the dead letter detail page.
 /// </summary>
-public class AlwaysFailsWorkflow : EffectWorkflow<AlwaysFailsInput, Unit>, IAlwaysFailsWorkflow
+public class AlwaysFailsWorkflow : ServiceTrain<AlwaysFailsInput, Unit>, IAlwaysFailsWorkflow
 {
     protected override async Task<Either<Exception, Unit>> RunInternal(AlwaysFailsInput input) =>
         Activate(input).Chain<ThrowExceptionStep>().Resolve();

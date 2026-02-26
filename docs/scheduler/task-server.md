@@ -56,7 +56,7 @@ The JobDispatcher commits the Metadata creation and WorkQueue status update in a
 
 ```csharp
 builder.Services.AddChainSharpEffects(options => options
-    .AddEffectWorkflowBus(
+    .AddServiceTrainBus(
         typeof(Program).Assembly,
         typeof(TaskServerExecutorWorkflow).Assembly
     )

@@ -1,6 +1,6 @@
 using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Tests.ArrayLogger.Services.ArrayLoggingProvider;
 using FluentAssertions;
 using LanguageExt;
@@ -11,9 +11,7 @@ namespace ChainSharp.Tests.Effect.Json.Integration.IntegrationTests;
 public class JsonEffectProviderTests : TestSetup
 {
     public override ServiceProvider ConfigureServices(IServiceCollection services) =>
-        services
-            .AddTransientChainSharpWorkflow<ITestWorkflow, TestWorkflow>()
-            .BuildServiceProvider();
+        services.AddTransientChainSharpRoute<ITestWorkflow, TestWorkflow>().BuildServiceProvider();
 
     [Theory]
     public async Task TestJsonEffect()
@@ -37,7 +35,7 @@ public class JsonEffectProviderTests : TestSetup
         arrayProvider.Loggers.Should().HaveCount(5);
 
         // Verify that we have the expected logger types:
-        // 1. Two workflow loggers (ILogger<EffectWorkflow<Unit, Unit>>) - may have empty logs
+        // 1. Two workflow loggers (ILogger<ServiceTrain<Unit, Unit>>) - may have empty logs
         // 2. One JsonEffectProvider logger (ILogger<JsonEffectProvider>) - should have JSON logs
         var jsonProviderLoggers = arrayProvider
             .Loggers.Where(
@@ -63,11 +61,11 @@ public class JsonEffectProviderTests : TestSetup
             .NotBeEmpty("JsonEffectProvider logger should contain JSON metadata logs");
     }
 
-    private class TestWorkflow : EffectWorkflow<Unit, Unit>, ITestWorkflow
+    private class TestWorkflow : ServiceTrain<Unit, Unit>, ITestWorkflow
     {
         protected override async Task<Either<Exception, Unit>> RunInternal(Unit input) =>
             Activate(input).Resolve();
     }
 
-    private interface ITestWorkflow : IEffectWorkflow<Unit, Unit> { }
+    private interface ITestWorkflow : IServiceTrain<Unit, Unit> { }
 }

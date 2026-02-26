@@ -52,7 +52,7 @@ public abstract class TestSetup
             .AddChainSharpEffects(
                 options =>
                     options
-                        .AddEffectWorkflowBus(
+                        .AddServiceTrainBus(
                             assemblies:
                             [
                                 typeof(AssemblyMarker).Assembly,

@@ -1,5 +1,5 @@
 using ChainSharp.Step;
-using ChainSharp.Workflow;
+using ChainSharp.Train;
 using FluentAssertions;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
@@ -23,20 +23,6 @@ public class CancellationTokenRunOverloadTests : TestSetup
     }
 
     [Theory]
-    public async Task Run_InputServiceProviderAndToken_ReturnsResult()
-    {
-        // Arrange
-        using var cts = new CancellationTokenSource();
-        var workflow = new SimpleWorkflow();
-
-        // Act
-        var result = await workflow.Run("hello", (IServiceProvider)null!, cts.Token);
-
-        // Assert
-        result.Should().Be("hello_processed");
-    }
-
-    [Theory]
     public async Task RunEither_InputAndToken_ReturnsRight()
     {
         // Arrange
@@ -44,7 +30,8 @@ public class CancellationTokenRunOverloadTests : TestSetup
         var workflow = new SimpleWorkflow();
 
         // Act
-        var result = await workflow.RunEither("hello", cts.Token);
+        workflow.CancellationToken = cts.Token;
+        var result = await workflow.RunEither("hello");
 
         // Assert
         result.IsRight.Should().BeTrue();
@@ -59,25 +46,11 @@ public class CancellationTokenRunOverloadTests : TestSetup
         var workflow = new FailingWorkflow();
 
         // Act
-        var result = await workflow.RunEither("hello", cts.Token);
+        workflow.CancellationToken = cts.Token;
+        var result = await workflow.RunEither("hello");
 
         // Assert
         result.IsLeft.Should().BeTrue();
-    }
-
-    [Theory]
-    public async Task RunEither_InputServiceProviderAndToken_ReturnsRight()
-    {
-        // Arrange
-        using var cts = new CancellationTokenSource();
-        var workflow = new SimpleWorkflow();
-
-        // Act
-        var result = await workflow.RunEither("hello", (IServiceProvider)null!, cts.Token);
-
-        // Assert
-        result.IsRight.Should().BeTrue();
-        result.ValueUnsafe().Should().Be("hello_processed");
     }
 
     [Theory]
@@ -121,19 +94,19 @@ public class CancellationTokenRunOverloadTests : TestSetup
 
     #region Test Helpers
 
-    private class SimpleWorkflow : Workflow<string, string>
+    private class SimpleWorkflow : Train<string, string>
     {
         protected override async Task<Either<Exception, string>> RunInternal(string input) =>
             Activate(input).Chain(new ProcessStep()).Resolve();
     }
 
-    private class FailingWorkflow : Workflow<string, string>
+    private class FailingWorkflow : Train<string, string>
     {
         protected override async Task<Either<Exception, string>> RunInternal(string input) =>
             Activate(input).Chain(new FailStep()).Resolve();
     }
 
-    private class TokenCapturingWorkflow : Workflow<string, string>
+    private class TokenCapturingWorkflow : Train<string, string>
     {
         public CancellationToken TokenDuringExecution { get; private set; }
 
@@ -144,7 +117,7 @@ public class CancellationTokenRunOverloadTests : TestSetup
         }
     }
 
-    private class StepWorkflow : Workflow<string, string>
+    private class StepWorkflow : Train<string, string>
     {
         private readonly Step<string, string> _step;
 

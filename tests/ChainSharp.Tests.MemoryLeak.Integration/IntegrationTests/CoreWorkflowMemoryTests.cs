@@ -1,8 +1,9 @@
 using ChainSharp.Step;
 using ChainSharp.Tests.MemoryLeak.Integration.Utils;
-using ChainSharp.Workflow;
+using ChainSharp.Train;
 using FluentAssertions;
 using LanguageExt;
+using Monad = ChainSharp.Monad;
 
 namespace ChainSharp.Tests.MemoryLeak.Integration.IntegrationTests;
 
@@ -361,79 +362,75 @@ public class TupleStep : Step<SimpleInput, (string Result, int Count, DateTime T
 }
 
 // Test workflows
-public class SmallChainWorkflow : Workflow<SimpleInput, SimpleOutput>
+public class SmallChainWorkflow : Train<SimpleInput, SimpleOutput>
 {
     protected override Task<Either<Exception, SimpleOutput>> RunInternal(SimpleInput input)
     {
-        var result = Chain<ProcessStep, SimpleInput, SimpleOutput>(input, out var output)
-            .Resolve(output);
+        var result = Activate(input).Chain<ProcessStep>().Resolve();
         return Task.FromResult(result);
     }
 }
 
-public class LargeChainWorkflow : Workflow<SimpleInput, SimpleOutput>
+public class LargeChainWorkflow : Train<SimpleInput, SimpleOutput>
 {
     protected override Task<Either<Exception, SimpleOutput>> RunInternal(SimpleInput input)
     {
         // Chain multiple steps to fill Memory dictionary
-        var workflow = Chain<ProcessStep, SimpleInput, SimpleOutput>(input, out var step1)
-            .Chain<ProcessOutputStep, SimpleOutput, SimpleOutput>(step1, out var step2)
-            .Chain<ProcessOutputStep, SimpleOutput, SimpleOutput>(step2, out var step3)
-            .Chain<ProcessOutputStep, SimpleOutput, SimpleOutput>(step3, out var step4)
-            .Chain<ProcessOutputStep, SimpleOutput, SimpleOutput>(step4, out var step5);
+        var result = Activate(input)
+            .Chain<ProcessStep>()
+            .Chain<ProcessOutputStep>()
+            .Chain<ProcessOutputStep>()
+            .Chain<ProcessOutputStep>()
+            .Chain<ProcessOutputStep>()
+            .Resolve();
 
-        var result = workflow.Resolve(step5);
         return Task.FromResult(result);
     }
 }
 
-public class LargeDataWorkflow : Workflow<LargeDataModel, SimpleOutput>
+public class LargeDataWorkflow : Train<LargeDataModel, SimpleOutput>
 {
     protected override Task<Either<Exception, SimpleOutput>> RunInternal(LargeDataModel input)
     {
-        var result = Chain<LargeDataStep, LargeDataModel, SimpleOutput>(input, out var output)
-            .Resolve(output);
+        var result = Activate(input).Chain<LargeDataStep>().Resolve();
         return Task.FromResult(result);
     }
 }
 
-public class VeryLargeDataWorkflow : Workflow<VeryLargeDataModel, SimpleOutput>
+public class VeryLargeDataWorkflow : Train<VeryLargeDataModel, SimpleOutput>
 {
     protected override Task<Either<Exception, SimpleOutput>> RunInternal(VeryLargeDataModel input)
     {
         var largeModel = new LargeDataModel(input.Name, input.Data);
-        var result = Chain<LargeDataStep, LargeDataModel, SimpleOutput>(largeModel, out var output)
-            .Resolve(output);
+        var result = Activate(input, largeModel).Chain<LargeDataStep>().Resolve();
         return Task.FromResult(result);
     }
 }
 
-public class TupleWorkflow : Workflow<SimpleInput, (string Result, int Count, DateTime Timestamp)>
+public class TupleWorkflow : Train<SimpleInput, (string Result, int Count, DateTime Timestamp)>
 {
     protected override Task<
         Either<Exception, (string Result, int Count, DateTime Timestamp)>
     > RunInternal(SimpleInput input)
     {
-        var result = Chain<TupleStep, SimpleInput, (string Result, int Count, DateTime Timestamp)>(
-                input,
-                out var output
-            )
-            .Resolve(output);
+        var result = Activate(input).Chain<TupleStep>().Resolve();
         return Task.FromResult(result);
     }
 }
 
 // Testable workflow that exposes Memory dictionary for testing
-public class TestableWorkflow : Workflow<SimpleInput, SimpleOutput>
+public class TestableWorkflow : Train<SimpleInput, SimpleOutput>
 {
+    private Monad.Monad<SimpleInput, SimpleOutput>? _monad;
+
     protected override Task<Either<Exception, SimpleOutput>> RunInternal(SimpleInput input)
     {
-        var result = Chain<ProcessStep, SimpleInput, SimpleOutput>(input, out var output)
-            .Resolve(output);
+        _monad = Activate(input);
+        var result = _monad.Chain<ProcessStep>().Resolve();
         return Task.FromResult(result);
     }
 
-    public int GetMemoryCount() => Memory.Count;
+    public int GetMemoryCount() => _monad?.Memory.Count ?? 0;
 
-    public void ClearMemory() => Memory.Clear();
+    public void ClearMemory() => _monad?.Memory.Clear();
 }

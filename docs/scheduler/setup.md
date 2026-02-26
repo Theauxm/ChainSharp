@@ -30,7 +30,7 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Database");
 
 builder.Services.AddChainSharpEffects(options => options
-    .AddEffectWorkflowBus(
+    .AddServiceTrainBus(
         typeof(Program).Assembly,
         typeof(TaskServerExecutorWorkflow).Assembly  // Required — see note below
     )
@@ -107,12 +107,12 @@ Types without `IManifestProperties` won't compile with the scheduling API—this
 
 ### 2. Create the Workflow
 
-Standard `EffectWorkflow` with an interface for DI resolution:
+Standard `ServiceTrain` with an interface for DI resolution:
 
 ```csharp
-public interface ISyncCustomersWorkflow : IEffectWorkflow<SyncCustomersInput, Unit> { }
+public interface ISyncCustomersWorkflow : IServiceTrain<SyncCustomersInput, Unit> { }
 
-public class SyncCustomersWorkflow : EffectWorkflow<SyncCustomersInput, Unit>, ISyncCustomersWorkflow
+public class SyncCustomersWorkflow : ServiceTrain<SyncCustomersInput, Unit>, ISyncCustomersWorkflow
 {
     protected override async Task<Either<Exception, Unit>> RunInternal(SyncCustomersInput input)
         => Activate(input)

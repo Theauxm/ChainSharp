@@ -36,7 +36,7 @@ public static SchedulerConfigurationBuilder UseHangfire(
 ```csharp
 services.AddChainSharpEffects(options => options
     .AddPostgresEffect(connectionString)
-    .AddEffectWorkflowBus(assemblies: typeof(Program).Assembly)
+    .AddServiceTrainBus(assemblies: typeof(Program).Assembly)
     .AddScheduler(scheduler => scheduler
         .UseHangfire(connectionString)
         .Schedule<IMyWorkflow, MyInput>("my-job", new MyInput(), Every.Minutes(5))

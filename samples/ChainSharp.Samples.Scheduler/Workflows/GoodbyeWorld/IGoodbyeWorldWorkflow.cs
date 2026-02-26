@@ -1,4 +1,4 @@
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using LanguageExt;
 
 namespace ChainSharp.Samples.Scheduler.Workflows.GoodbyeWorld;
@@ -7,4 +7,4 @@ namespace ChainSharp.Samples.Scheduler.Workflows.GoodbyeWorld;
 /// Interface for the GoodbyeWorld workflow.
 /// Used by the WorkflowBus for workflow resolution.
 /// </summary>
-public interface IGoodbyeWorldWorkflow : IEffectWorkflow<GoodbyeWorldInput, Unit>;
+public interface IGoodbyeWorldWorkflow : IServiceTrain<GoodbyeWorldInput, Unit>;

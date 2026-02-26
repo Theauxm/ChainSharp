@@ -4,9 +4,9 @@ using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Orchestration.Mediator.Services.WorkflowRegistry;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Exceptions;
-using ChainSharp.Workflow;
+using ChainSharp.Route;
 using LanguageExt;
 using LanguageExt.ClassInstances;
 using Microsoft.Extensions.DependencyInjection;
@@ -209,11 +209,16 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
             type =>
             {
                 var method = type.GetMethods()
-                    // Run function on Workflow
+                    // Run function on Train/ServiceTrain
                     .Where(x => x.Name == "Run")
-                    // Run(input) and Run(input, serviceCollection) exist. We want the former.
-                    .Where(x => x.GetParameters().Length == 1)
-                    // Run(input) has an implementation in ChainSharp and ChainSharp.Effect (the latter with the "new" keyword).
+                    // Run(input, cancellationToken = default) has 2 parameters (second is optional CancellationToken).
+                    .Where(x =>
+                    {
+                        var parameters = x.GetParameters();
+                        return parameters.Length == 2
+                            && parameters[1].ParameterType == typeof(CancellationToken);
+                    })
+                    // Run has an implementation in ChainSharp and ChainSharp.Effect (the latter with the "new" keyword).
                     // We want the one from ChainSharp.Effect
                     .FirstOrDefault(x => x.Module.Name.Contains("Effect"));
 
@@ -227,7 +232,8 @@ public class WorkflowBus(IServiceProvider serviceProvider, IWorkflowRegistry reg
         );
 
         // And finally run the workflow, casting the return type to preserve type safety.
-        var taskRunMethod = (Task<TOut>?)runMethod.Invoke(workflowService, [workflowInput]);
+        var taskRunMethod = (Task<TOut>?)
+            runMethod.Invoke(workflowService, [workflowInput, CancellationToken.None]);
 
         if (taskRunMethod is null)
             throw new WorkflowException(

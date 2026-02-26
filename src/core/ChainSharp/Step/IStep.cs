@@ -1,11 +1,11 @@
-using ChainSharp.Workflow;
+using ChainSharp.Train;
 using LanguageExt;
 
 namespace ChainSharp.Step;
 
 /// <summary>
-/// Defines the contract for a step in a workflow.
-/// Steps are the fundamental building blocks of workflows, each performing a single operation
+/// Defines the contract for a step in a train.
+/// Steps are the fundamental building blocks of trains, each performing a single operation
 /// and returning either a result or an exception.
 /// </summary>
 /// <typeparam name="TIn">The input type for this step</typeparam>
@@ -26,9 +26,10 @@ public interface IStep<TIn, TOut>
     /// can be chained together with automatic error handling.
     /// </summary>
     /// <param name="previousOutput">Either a result from the previous step or an exception</param>
+    /// <param name="train">The Train executing this step</param>
     /// <returns>Either the result of this step or an exception</returns>
-    public Task<Either<Exception, TOut>> RailwayStep<TWorkflowIn, TWorkflowOut>(
+    public Task<Either<Exception, TOut>> RailwayStep<TTrainIn, TTrainOut>(
         Either<Exception, TIn> previousOutput,
-        Workflow<TWorkflowIn, TWorkflowOut> workflow
+        Train<TTrainIn, TTrainOut> train
     );
 }

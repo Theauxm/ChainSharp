@@ -1,6 +1,6 @@
 using ChainSharp.Effect.Data.Services.IDataContextFactory;
 using ChainSharp.Effect.Services.EffectStep;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChainSharp.Effect.StepProvider.Progress.Services.CancellationCheckProvider;
@@ -10,17 +10,17 @@ public class CancellationCheckProvider(IDataContextProviderFactory dataContextFa
 {
     public async Task BeforeStepExecution<TIn, TOut, TWorkflowIn, TWorkflowOut>(
         EffectStep<TIn, TOut> effectStep,
-        EffectWorkflow<TWorkflowIn, TWorkflowOut> effectWorkflow,
+        ServiceTrain<TWorkflowIn, TWorkflowOut> serviceTrain,
         CancellationToken cancellationToken
     )
     {
-        if (effectWorkflow.Metadata is null)
+        if (serviceTrain.Metadata is null)
             return;
 
         await using var context = await dataContextFactory.CreateDbContextAsync(cancellationToken);
 
         var cancelRequested = await context
-            .Metadatas.Where(m => m.Id == effectWorkflow.Metadata.Id)
+            .Metadatas.Where(m => m.Id == serviceTrain.Metadata.Id)
             .Select(m => m.CancellationRequested)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -30,7 +30,7 @@ public class CancellationCheckProvider(IDataContextProviderFactory dataContextFa
 
     public Task AfterStepExecution<TIn, TOut, TWorkflowIn, TWorkflowOut>(
         EffectStep<TIn, TOut> effectStep,
-        EffectWorkflow<TWorkflowIn, TWorkflowOut> effectWorkflow,
+        ServiceTrain<TWorkflowIn, TWorkflowOut> serviceTrain,
         CancellationToken cancellationToken
     ) => Task.CompletedTask;
 

@@ -41,7 +41,7 @@ The actual business logic gets buried under null checks and error handling.
 The same flow, without the noise:
 
 ```csharp
-public class ProcessOrderWorkflow : EffectWorkflow<OrderRequest, OrderReceipt>
+public class ProcessOrderWorkflow : ServiceTrain<OrderRequest, OrderReceipt>
 {
     protected override async Task<Either<Exception, OrderReceipt>> RunInternal(OrderRequest input)
         => Activate(input)

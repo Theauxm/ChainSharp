@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using ChainSharp.Exceptions;
 using ChainSharp.Extensions;
-using ChainSharp.Workflow;
+using ChainSharp.Train;
 using FluentAssertions;
 using LanguageExt;
 
@@ -16,16 +16,17 @@ public class AddTupleToMemoryTests : TestSetup
         var input = 1;
         var inputTuple = ("hello", false);
 
-        var workflow = new TestWorkflow().Activate(input);
+        var workflow = new TestWorkflow();
+        var monad = workflow.Activate(input);
 
         // Act
-        workflow.AddTupleToMemory(inputTuple);
+        monad.AddTupleToMemory(inputTuple);
 
         // Assert
-        workflow.Exception.Should().BeNull();
-        workflow.Memory.Count.Should().Be(47); // Unit is always added, along with input.
-        workflow.Memory.Values.Should().Contain(false);
-        workflow.Memory.Values.Should().Contain("hello");
+        monad.Exception.Should().BeNull();
+        monad.Memory.Count.Should().Be(47); // Unit is always added, along with input.
+        monad.Memory.Values.Should().Contain(false);
+        monad.Memory.Values.Should().Contain("hello");
     }
 
     [Theory]
@@ -35,10 +36,11 @@ public class AddTupleToMemoryTests : TestSetup
         var input = 1;
         var inputTuple = "hello";
 
-        var workflow = new TestWorkflow().Activate(input);
+        var workflow = new TestWorkflow();
+        var monad = workflow.Activate(input);
 
         // Act
-        Assert.Throws<WorkflowException>(() => workflow.AddTupleToMemory(inputTuple));
+        Assert.Throws<WorkflowException>(() => monad.AddTupleToMemory(inputTuple));
     }
 
     [Theory]
@@ -46,10 +48,11 @@ public class AddTupleToMemoryTests : TestSetup
     {
         // Arrange
         var input = 1;
-        var workflow = new TestWorkflow().Activate(input);
+        var workflow = new TestWorkflow();
+        var monad = workflow.Activate(input);
 
         // Act
-        Assert.Throws<WorkflowException>(() => workflow.AddTupleToMemory((ITuple)null!));
+        Assert.Throws<WorkflowException>(() => monad.AddTupleToMemory((ITuple)null!));
     }
 
     [Theory]
@@ -59,17 +62,18 @@ public class AddTupleToMemoryTests : TestSetup
         var input = 1;
         var inputTuple = (42, "world", 3.14);
 
-        var workflow = new TestWorkflow().Activate(input);
+        var workflow = new TestWorkflow();
+        var monad = workflow.Activate(input);
 
         // Act
-        workflow.AddTupleToMemory(inputTuple);
+        monad.AddTupleToMemory(inputTuple);
 
         // Assert
-        workflow.Exception.Should().BeNull();
-        workflow.Memory.Count.Should().Be(78); // Unit is always added, along with input.
-        workflow.Memory.Values.Should().Contain(42);
-        workflow.Memory.Values.Should().Contain("world");
-        workflow.Memory.Values.Should().Contain(3.14);
+        monad.Exception.Should().BeNull();
+        monad.Memory.Count.Should().Be(78); // Unit is always added, along with input.
+        monad.Memory.Values.Should().Contain(42);
+        monad.Memory.Values.Should().Contain("world");
+        monad.Memory.Values.Should().Contain(3.14);
     }
 
     [Theory]
@@ -79,10 +83,11 @@ public class AddTupleToMemoryTests : TestSetup
         var input = 1;
         var inputTuple = new ValueTuple();
 
-        var workflow = new TestWorkflow().Activate(input);
+        var workflow = new TestWorkflow();
+        var monad = workflow.Activate(input);
 
         // Act
-        Assert.Throws<WorkflowException>(() => workflow.AddTupleToMemory(inputTuple));
+        Assert.Throws<WorkflowException>(() => monad.AddTupleToMemory(inputTuple));
     }
 
     [Theory]
@@ -92,10 +97,11 @@ public class AddTupleToMemoryTests : TestSetup
         var input = 1;
         var inputTuple = (1, 2, 3, 4, 5, 6, 7, 8);
 
-        var workflow = new TestWorkflow().Activate(input);
+        var workflow = new TestWorkflow();
+        var monad = workflow.Activate(input);
 
         // Act
-        Assert.Throws<WorkflowException>(() => workflow.AddTupleToMemory(inputTuple));
+        Assert.Throws<WorkflowException>(() => monad.AddTupleToMemory(inputTuple));
     }
 
     [Theory]
@@ -106,22 +112,23 @@ public class AddTupleToMemoryTests : TestSetup
         var inputTuple1 = (1, "first");
         var inputTuple2 = (2, "second");
 
-        var workflow = new TestWorkflow().Activate(input);
-        workflow.AddTupleToMemory(inputTuple1);
+        var workflow = new TestWorkflow();
+        var monad = workflow.Activate(input);
+        monad.AddTupleToMemory(inputTuple1);
 
         // Act
-        workflow.AddTupleToMemory(inputTuple2);
+        monad.AddTupleToMemory(inputTuple2);
 
         // Assert
-        workflow.Exception.Should().BeNull();
-        workflow.Memory.Count.Should().Be(42); // Unit is always added, along with input.
-        workflow.Memory.Values.Should().Contain(2);
-        workflow.Memory.Values.Should().Contain("second");
+        monad.Exception.Should().BeNull();
+        monad.Memory.Count.Should().Be(42); // Unit is always added, along with input.
+        monad.Memory.Values.Should().Contain(2);
+        monad.Memory.Values.Should().Contain("second");
     }
 
-    private class TestWorkflow : Workflow<int, string>
+    private class TestWorkflow : Train<int, string>
     {
         protected override async Task<Either<Exception, string>> RunInternal(int input) =>
-            Resolve();
+            Activate(input).Resolve();
     }
 }

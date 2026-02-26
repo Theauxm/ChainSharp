@@ -5,7 +5,7 @@ using ChainSharp.Effect.Models.Metadata;
 using ChainSharp.Effect.Models.Metadata.DTOs;
 using ChainSharp.Effect.Orchestration.Scheduler.Services.CancellationRegistry;
 using ChainSharp.Effect.Services.EffectStep;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Effect.StepProvider.Progress.Services.CancellationCheckProvider;
 using ChainSharp.Tests.Effect.Scheduler.Integration.Examples.Workflows;
 using FluentAssertions;
@@ -372,7 +372,7 @@ public class CancellationIntegrationTests : TestSetup
     private static TestProgressWorkflow CreateWorkflowWithMetadata(Metadata metadata)
     {
         var workflow = new TestProgressWorkflow();
-        var prop = typeof(EffectWorkflow<string, string>).GetProperty(
+        var prop = typeof(ServiceTrain<string, string>).GetProperty(
             "Metadata",
             BindingFlags.Public | BindingFlags.Instance
         );
@@ -386,7 +386,7 @@ public class CancellationIntegrationTests : TestSetup
 /// <summary>
 /// Minimal concrete EffectWorkflow for testing step effect providers.
 /// </summary>
-public class TestProgressWorkflow : EffectWorkflow<string, string>
+public class TestProgressWorkflow : ServiceTrain<string, string>
 {
     protected override Task<Either<Exception, string>> RunInternal(string input) =>
         Task.FromResult<Either<Exception, string>>(input);

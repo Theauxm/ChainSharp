@@ -12,7 +12,7 @@ nav_order: 10
 ### Workflow-Level Error Handling
 
 ```csharp
-public class RobustWorkflow : EffectWorkflow<ProcessOrderRequest, ProcessOrderResult>
+public class RobustWorkflow : ServiceTrain<ProcessOrderRequest, ProcessOrderResult>
 {
     protected override async Task<Either<Exception, ProcessOrderResult>> RunInternal(ProcessOrderRequest input)
     {

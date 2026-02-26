@@ -1,5 +1,5 @@
 using ChainSharp.Exceptions;
-using ChainSharp.Workflow;
+using ChainSharp.Train;
 using FluentAssertions;
 using LanguageExt;
 
@@ -32,14 +32,14 @@ public class WorkflowTests
         );
     }
 
-    private class UnitWorkflow : Workflow<LanguageExt.Unit, LanguageExt.Unit>
+    private class UnitWorkflow : Train<LanguageExt.Unit, LanguageExt.Unit>
     {
         protected override async Task<Either<Exception, LanguageExt.Unit>> RunInternal(
             LanguageExt.Unit input
         ) => Activate(input).Resolve();
     }
 
-    private class NotImplementedWorkflow : Workflow<LanguageExt.Unit, LanguageExt.Unit>
+    private class NotImplementedWorkflow : Train<LanguageExt.Unit, LanguageExt.Unit>
     {
         protected override async Task<Either<Exception, LanguageExt.Unit>> RunInternal(
             LanguageExt.Unit input

@@ -15,13 +15,13 @@ Has overloads for 1 through 7 services.
 ## Signatures
 
 ```csharp
-public Workflow<TInput, TReturn> AddServices<T1>(T1 service)
-public Workflow<TInput, TReturn> AddServices<T1, T2>(T1 service1, T2 service2)
-public Workflow<TInput, TReturn> AddServices<T1, T2, T3>(T1 s1, T2 s2, T3 s3)
-public Workflow<TInput, TReturn> AddServices<T1, T2, T3, T4>(T1 s1, T2 s2, T3 s3, T4 s4)
-public Workflow<TInput, TReturn> AddServices<T1, T2, T3, T4, T5>(T1 s1, T2 s2, T3 s3, T4 s4, T5 s5)
-public Workflow<TInput, TReturn> AddServices<T1, T2, T3, T4, T5, T6>(T1 s1, T2 s2, T3 s3, T4 s4, T5 s5, T6 s6)
-public Workflow<TInput, TReturn> AddServices<T1, T2, T3, T4, T5, T6, T7>(T1 s1, T2 s2, T3 s3, T4 s4, T5 s5, T6 s6, T7 s7)
+public Train<TInput, TReturn> AddServices<T1>(T1 service)
+public Train<TInput, TReturn> AddServices<T1, T2>(T1 service1, T2 service2)
+public Train<TInput, TReturn> AddServices<T1, T2, T3>(T1 s1, T2 s2, T3 s3)
+public Train<TInput, TReturn> AddServices<T1, T2, T3, T4>(T1 s1, T2 s2, T3 s3, T4 s4)
+public Train<TInput, TReturn> AddServices<T1, T2, T3, T4, T5>(T1 s1, T2 s2, T3 s3, T4 s4, T5 s5)
+public Train<TInput, TReturn> AddServices<T1, T2, T3, T4, T5, T6>(T1 s1, T2 s2, T3 s3, T4 s4, T5 s5, T6 s6)
+public Train<TInput, TReturn> AddServices<T1, T2, T3, T4, T5, T6, T7>(T1 s1, T2 s2, T3 s3, T4 s4, T5 s5, T6 s6, T7 s7)
 ```
 
 ## Type Parameters
@@ -36,7 +36,7 @@ All services are **required** (non-null). Passing `null` throws an `Exception`.
 
 ## Returns
 
-`Workflow<TInput, TReturn>` — the workflow instance, for fluent chaining.
+`Train<TInput, TReturn>` — the workflow instance, for fluent chaining.
 
 ## Example
 
@@ -45,7 +45,7 @@ public class ProcessOrderWorkflow(
     IPaymentGateway paymentGateway,
     IInventoryService inventoryService,
     INotificationService notificationService
-) : EffectWorkflow<OrderInput, OrderResult>
+) : ServiceTrain<OrderInput, OrderResult>
 {
     protected override async Task<Either<Exception, OrderResult>> RunInternal(OrderInput input)
     {

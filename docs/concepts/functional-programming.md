@@ -91,6 +91,6 @@ services.AddChainSharpEffects(options =>
 
 Remove any line and the workflow still runs—it just has fewer side effects. Add a line and you gain new observability without modifying a single step.
 
-The `EffectWorkflow` base class manages this lifecycle. When you use a plain `Workflow`, you get chaining and error propagation but no effects. When you use `EffectWorkflow`, you get the full effect system on top.
+The `ServiceTrain` base class manages this lifecycle. When you use a plain `Train`, you get chaining and error propagation but no effects. When you use `ServiceTrain`, you get the full effect system on top.
 
 See [Effect Providers](../usage-guide/effect-providers.md) for configuring each provider, and [Core & Effects](../architecture/core-and-effects.md) for how the `EffectRunner` coordinates them internally.

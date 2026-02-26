@@ -1,5 +1,5 @@
 using ChainSharp.Extensions;
-using ChainSharp.Workflow;
+using ChainSharp.Train;
 using FluentAssertions;
 using LanguageExt;
 
@@ -13,14 +13,15 @@ public class ExtractTypeFromMemoryTests : TestSetup
         // Arrange
         var input = 1;
 
-        var workflow = new TestWorkflow().Activate(input);
+        var workflow = new TestWorkflow();
+        var monad = workflow.Activate(input);
 
         // Act
-        var result = workflow.ExtractTypeFromMemory<int, int, string>();
+        var result = monad.ExtractTypeFromMemory<int, int, string>();
 
         // Assert
         result.Should().Be(input);
-        workflow.Exception.Should().BeNull();
+        monad.Exception.Should().BeNull();
     }
 
     [Theory]
@@ -30,15 +31,16 @@ public class ExtractTypeFromMemoryTests : TestSetup
         var input = 1;
         var tupleInput = ("hello", false);
 
-        var workflow = new TestWorkflow().Activate(input, tupleInput);
+        var workflow = new TestWorkflow();
+        var monad = workflow.Activate(input, tupleInput);
 
         // Act
-        var result = workflow.ExtractTypeFromMemory<(string, bool), int, string>();
+        var result = monad.ExtractTypeFromMemory<(string, bool), int, string>();
 
         // Assert
         result.Should().NotBeNull();
         result.Should().Be(tupleInput);
-        workflow.Exception.Should().BeNull();
+        monad.Exception.Should().BeNull();
     }
 
     [Theory]
@@ -48,15 +50,16 @@ public class ExtractTypeFromMemoryTests : TestSetup
         var input = 1;
         var tupleInput = ("hello", false);
 
-        var workflow = new TestWorkflow().Activate(input, tupleInput);
+        var workflow = new TestWorkflow();
+        var monad = workflow.Activate(input, tupleInput);
 
         // Act
-        var result = ((string, bool)?)workflow.ExtractTypeFromMemory(typeof((string, bool)));
+        var result = ((string, bool)?)monad.ExtractTypeFromMemory(typeof((string, bool)));
 
         // Assert
         result.Should().NotBeNull();
         result.Should().Be(tupleInput);
-        workflow.Exception.Should().BeNull();
+        monad.Exception.Should().BeNull();
     }
 
     [Theory]
@@ -66,13 +69,14 @@ public class ExtractTypeFromMemoryTests : TestSetup
         var input = 1;
         var tupleInput = ValueTuple.Create(1);
 
-        var workflow = new TestWorkflow().Activate(input, tupleInput);
+        var workflow = new TestWorkflow();
+        var monad = workflow.Activate(input, tupleInput);
 
         // Act
-        var result = (ValueTuple<int>?)workflow.ExtractTypeFromMemory(typeof(ValueTuple<int>));
+        var result = (ValueTuple<int>?)monad.ExtractTypeFromMemory(typeof(ValueTuple<int>));
 
         // Assert
-        workflow.Exception.Should().NotBeNull();
+        monad.Exception.Should().NotBeNull();
         result.Should().BeNull();
     }
 
@@ -83,13 +87,14 @@ public class ExtractTypeFromMemoryTests : TestSetup
         var input = 1;
         var tupleInput = ValueTuple.Create(1);
 
-        var workflow = new TestWorkflow().Activate(input, tupleInput);
+        var workflow = new TestWorkflow();
+        var monad = workflow.Activate(input, tupleInput);
 
         // Act
-        var result = workflow.ExtractTypeFromMemory<ValueTuple<int>?, int, string>();
+        var result = monad.ExtractTypeFromMemory<ValueTuple<int>?, int, string>();
 
         // Assert
-        workflow.Exception.Should().NotBeNull();
+        monad.Exception.Should().NotBeNull();
         result.Should().BeNull();
     }
 
@@ -100,12 +105,13 @@ public class ExtractTypeFromMemoryTests : TestSetup
         var input = 1;
         var tupleInput = ("hello", false);
 
-        var workflow = new TestWorkflow().Activate(input, tupleInput);
+        var workflow = new TestWorkflow();
+        var monad = workflow.Activate(input, tupleInput);
 
         List<Type> typesToExtract = [typeof(bool), typeof(string), typeof(int)];
 
         // Act
-        var result = workflow.ExtractTypesFromMemory(typesToExtract);
+        var result = monad.ExtractTypesFromMemory(typesToExtract);
 
         result.Should().NotBeNull();
         result.Length.Should().Be(3);
@@ -120,21 +126,22 @@ public class ExtractTypeFromMemoryTests : TestSetup
         // Arrange
         var input = 1;
 
-        var workflow = new TestWorkflow().Activate(input);
+        var workflow = new TestWorkflow();
+        var monad = workflow.Activate(input);
 
         List<Type> typesToExtract = [typeof(bool), typeof(string), typeof(int)];
 
         // Act
-        var result = workflow.ExtractTypesFromMemory(typesToExtract);
+        var result = monad.ExtractTypesFromMemory(typesToExtract);
 
         result.Should().NotBeNull();
         result.Length.Should().Be(3);
-        workflow.Exception.Should().NotBeNull();
+        monad.Exception.Should().NotBeNull();
     }
 
-    private class TestWorkflow : Workflow<int, string>
+    private class TestWorkflow : Train<int, string>
     {
         protected override async Task<Either<Exception, string>> RunInternal(int input) =>
-            Resolve();
+            Activate(input).Resolve();
     }
 }

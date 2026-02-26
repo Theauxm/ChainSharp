@@ -1,6 +1,6 @@
 using ChainSharp.Effect.Configuration.ChainSharpEffectConfiguration;
 using ChainSharp.Effect.Services.EffectStep;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Exceptions;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -16,7 +16,7 @@ public class StepLoggerProvider(
 {
     public async Task BeforeStepExecution<TIn, TOut, TWorkflowIn, TWorkflowOut>(
         EffectStep<TIn, TOut> effectStep,
-        EffectWorkflow<TWorkflowIn, TWorkflowOut> effectWorkflow,
+        ServiceTrain<TWorkflowIn, TWorkflowOut> serviceTrain,
         CancellationToken cancellationToken
     )
     {
@@ -30,7 +30,7 @@ public class StepLoggerProvider(
 
     public async Task AfterStepExecution<TIn, TOut, TWorkflowIn, TWorkflowOut>(
         EffectStep<TIn, TOut> effectStep,
-        EffectWorkflow<TWorkflowIn, TWorkflowOut> effectWorkflow,
+        ServiceTrain<TWorkflowIn, TWorkflowOut> serviceTrain,
         CancellationToken cancellationToken
     )
     {

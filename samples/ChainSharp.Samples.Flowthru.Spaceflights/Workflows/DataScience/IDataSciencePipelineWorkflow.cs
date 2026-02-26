@@ -1,6 +1,6 @@
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using LanguageExt;
 
 namespace ChainSharp.Samples.Flowthru.Spaceflights.Workflows.DataScience;
 
-public interface IDataSciencePipelineWorkflow : IEffectWorkflow<DataSciencePipelineInput, Unit>;
+public interface IDataSciencePipelineWorkflow : IServiceTrain<DataSciencePipelineInput, Unit>;

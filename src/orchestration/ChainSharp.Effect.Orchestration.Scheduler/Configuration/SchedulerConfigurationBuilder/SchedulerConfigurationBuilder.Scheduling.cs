@@ -1,5 +1,5 @@
 using ChainSharp.Effect.Models.Manifest;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using LanguageExt;
 using Schedule = ChainSharp.Effect.Orchestration.Scheduler.Services.Scheduling.Schedule;
 
@@ -44,7 +44,7 @@ public partial class SchedulerConfigurationBuilder
         Schedule schedule,
         Action<ScheduleOptions>? options = null
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties
     {
         var resolved = new ScheduleOptions();
@@ -93,7 +93,7 @@ public partial class SchedulerConfigurationBuilder
         TInput input,
         Action<ScheduleOptions>? options = null
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties
     {
         var parentExternalId =
@@ -156,7 +156,7 @@ public partial class SchedulerConfigurationBuilder
         TInput input,
         Action<ScheduleOptions>? options = null
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties
     {
         var parentExternalId =

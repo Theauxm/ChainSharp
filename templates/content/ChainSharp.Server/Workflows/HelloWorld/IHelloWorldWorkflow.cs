@@ -1,4 +1,4 @@
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using LanguageExt;
 
 namespace ChainSharp.Server.Workflows.HelloWorld;
@@ -7,4 +7,4 @@ namespace ChainSharp.Server.Workflows.HelloWorld;
 /// Interface for the HelloWorld workflow.
 /// Used by the WorkflowBus for workflow resolution.
 /// </summary>
-public interface IHelloWorldWorkflow : IEffectWorkflow<HelloWorldInput, Unit>;
+public interface IHelloWorldWorkflow : IServiceTrain<HelloWorldInput, Unit>;

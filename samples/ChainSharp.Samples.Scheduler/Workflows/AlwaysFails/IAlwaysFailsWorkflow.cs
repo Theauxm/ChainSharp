@@ -1,4 +1,4 @@
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using LanguageExt;
 
 namespace ChainSharp.Samples.Scheduler.Workflows.AlwaysFails;
@@ -8,4 +8,4 @@ namespace ChainSharp.Samples.Scheduler.Workflows.AlwaysFails;
 /// This workflow always throws an exception, which causes it to dead-letter
 /// after exhausting its retry budget—useful for testing dead letter resolution.
 /// </summary>
-public interface IAlwaysFailsWorkflow : IEffectWorkflow<AlwaysFailsInput, Unit>;
+public interface IAlwaysFailsWorkflow : IServiceTrain<AlwaysFailsInput, Unit>;

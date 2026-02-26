@@ -15,7 +15,7 @@ For conceptual explanations and tutorials, see [Core Concepts]({{ site.baseurl }
 
 ### [Workflow Methods]({{ site.baseurl }}{% link api-reference/workflow-methods.md %})
 
-Methods available inside `RunInternal` on `Workflow<TInput, TReturn>` — the core building blocks for composing steps into a pipeline.
+Methods available inside `RunInternal` on `Train<TInput, TReturn>` — the core building blocks for composing steps into a pipeline.
 
 Includes: `Activate`, `Chain`, `ShortCircuit`, `Extract`, `AddServices`, `Resolve`, `Run` / `RunEither`.
 
@@ -23,7 +23,7 @@ Includes: `Activate`, `Chain`, `ShortCircuit`, `Extract`, `AddServices`, `Resolv
 
 The `AddChainSharpEffects` entry point and every extension method on `ChainSharpEffectConfigurationBuilder` — data providers, effect providers, and orchestration setup.
 
-Includes: `AddPostgresEffect`, `AddInMemoryEffect`, `AddJsonEffect`, `SaveWorkflowParameters`, `AddStepLogger`, `AddEffectWorkflowBus`, `AddEffect`, `AddStepEffect`, `SetEffectLogLevel`.
+Includes: `AddPostgresEffect`, `AddInMemoryEffect`, `AddJsonEffect`, `SaveWorkflowParameters`, `AddStepLogger`, `AddServiceTrainBus`, `AddEffect`, `AddStepEffect`, `SetEffectLogLevel`.
 
 ### [Scheduler API]({{ site.baseurl }}{% link api-reference/scheduler-api.md %})
 
@@ -35,7 +35,7 @@ Includes: `AddScheduler`, `UseHangfire`, `Schedule`, `ScheduleMany`, dependent s
 
 The `IWorkflowBus` interface for dynamically dispatching workflows by input type.
 
-Includes: `RunAsync`, `InitializeWorkflow`, `AddEffectWorkflowBus`.
+Includes: `RunAsync`, `InitializeWorkflow`, `AddServiceTrainBus`.
 
 ### [Dashboard API]({{ site.baseurl }}{% link api-reference/dashboard-api.md %})
 
@@ -47,4 +47,4 @@ Includes: `AddChainSharpDashboard`, `UseChainSharpDashboard`, `DashboardOptions`
 
 Helper methods for registering workflows and steps with `[Inject]` property injection support.
 
-Includes: `AddScopedChainSharpWorkflow`, `AddTransientChainSharpWorkflow`, `AddSingletonChainSharpWorkflow`, and step equivalents.
+Includes: `AddScopedChainSharpRoute`, `AddTransientChainSharpRoute`, `AddSingletonChainSharpRoute`, and step equivalents.

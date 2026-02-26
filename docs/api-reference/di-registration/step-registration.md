@@ -53,5 +53,5 @@ services.AddTransientChainSharpStep<IProcessPaymentStep, ProcessPaymentStep>();
 
 ## Remarks
 
-- These methods delegate directly to the workflow registration equivalents. They exist for semantic clarity — `AddChainSharpStep` communicates intent better than `AddChainSharpWorkflow` when registering steps.
+- These methods delegate directly to the workflow registration equivalents. They exist for semantic clarity — `AddChainSharpStep` communicates intent better than `AddChainSharpRoute` when registering steps.
 - Steps typically don't need manual DI registration unless they use `[Inject]` properties. Most steps are created by the workflow's `Chain<TStep>()` method using Memory-based constructor injection.

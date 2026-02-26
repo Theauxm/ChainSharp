@@ -27,7 +27,7 @@ The analyzer makes it a compile-time error. You see the problem immediately in y
 
 ## What It Checks
 
-The analyzer triggers on every `.Resolve()` call in a `Workflow<,>` or `EffectWorkflow<,>` subclass. It walks backward through the fluent chain to `Activate()`, then simulates Memory forward:
+The analyzer triggers on every `.Resolve()` call in a `Train<,>` or `ServiceTrain<,>` subclass. It walks backward through the fluent chain to `Activate()`, then simulates Memory forward:
 
 ```
 Activate(input)       → Memory = { TInput, Unit }
@@ -52,7 +52,7 @@ Activate(input)       → Memory = { TInput, Unit }
 Fires when a step needs a type that no previous step has produced.
 
 ```csharp
-public class BrokenWorkflow : EffectWorkflow<string, Unit>
+public class BrokenWorkflow : ServiceTrain<string, Unit>
 {
     protected override async Task<Either<Exception, Unit>> RunInternal(string input) =>
         Activate(input)
@@ -73,7 +73,7 @@ which has not been produced by a previous step. Available: [string, Unit].
 Fires when `Resolve()` needs a type that hasn't been produced. The analyzer tracks all chain methods including `ShortCircuit`, so a missing return type is always an error.
 
 ```csharp
-public class MissingReturnWorkflow : EffectWorkflow<OrderRequest, Receipt>
+public class MissingReturnWorkflow : ServiceTrain<OrderRequest, Receipt>
 {
     protected override async Task<Either<Exception, Receipt>> RunInternal(OrderRequest input) =>
         Activate(input)
@@ -94,7 +94,7 @@ The analyzer mirrors the runtime's Memory behavior:
 
 ## Known Limitations
 
-**Sibling interface inputs.** When the workflow's `TInput` is an interface (e.g., `Workflow<IFoo, Unit>`) and a step requires a different interface that the runtime concrete type also implements, the analyzer can't verify this. Suppress with `#pragma warning disable CHAIN001`.
+**Sibling interface inputs.** When the workflow's `TInput` is an interface (e.g., `Train<IFoo, Unit>`) and a step requires a different interface that the runtime concrete type also implements, the analyzer can't verify this. Suppress with `#pragma warning disable CHAIN001`.
 
 **Cross-method chains.** The analyzer only looks within a single method body. If you build a chain across helper methods, it won't follow the calls.
 

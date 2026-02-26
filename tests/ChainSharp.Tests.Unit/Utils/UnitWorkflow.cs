@@ -1,9 +1,9 @@
-using ChainSharp.Workflow;
+using ChainSharp.Train;
 using LanguageExt;
 
 namespace ChainSharp.Tests.Unit.Utils;
 
-public class UnitWorkflow : Workflow<LanguageExt.Unit, LanguageExt.Unit>
+public class UnitWorkflow : Train<LanguageExt.Unit, LanguageExt.Unit>
 {
     protected override async Task<Either<Exception, LanguageExt.Unit>> RunInternal(
         LanguageExt.Unit input

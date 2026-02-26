@@ -80,7 +80,7 @@ public async Task CreateUserWorkflow_CreatesUser()
     var services = new ServiceCollection();
     services.AddSingleton<IUserRepository, FakeUserRepository>();
     services.AddSingleton<IEmailService, FakeEmailService>();
-    services.AddChainSharpEffects(o => o.AddEffectWorkflowBus(typeof(CreateUserWorkflow).Assembly));
+    services.AddChainSharpEffects(o => o.AddServiceTrainBus(typeof(CreateUserWorkflow).Assembly));
 
     var provider = services.BuildServiceProvider();
     var bus = provider.GetRequiredService<IWorkflowBus>();
@@ -99,7 +99,7 @@ public async Task CreateUserWorkflow_CreatesUser()
 }
 ```
 
-*API Reference: [AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %}), [WorkflowBus.RunAsync]({{ site.baseurl }}{% link api-reference/mediator-api/workflow-bus.md %})*
+*API Reference: [AddServiceTrainBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %}), [WorkflowBus.RunAsync]({{ site.baseurl }}{% link api-reference/mediator-api/workflow-bus.md %})*
 
 ## Integration Testing with InMemory Provider
 
@@ -115,7 +115,7 @@ public async Task Workflow_PersistsMetadata()
     services.AddChainSharpEffects(options =>
         options
             .AddInMemoryEffect()
-            .AddEffectWorkflowBus(typeof(CreateUserWorkflow).Assembly)
+            .AddServiceTrainBus(typeof(CreateUserWorkflow).Assembly)
     );
 
     var provider = services.BuildServiceProvider();
@@ -132,7 +132,7 @@ public async Task Workflow_PersistsMetadata()
 }
 ```
 
-*API Reference: [AddInMemoryEffect]({{ site.baseurl }}{% link api-reference/configuration/add-in-memory-effect.md %}), [AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %})*
+*API Reference: [AddInMemoryEffect]({{ site.baseurl }}{% link api-reference/configuration/add-in-memory-effect.md %}), [AddServiceTrainBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %})*
 
 ## Testing Cancellation
 

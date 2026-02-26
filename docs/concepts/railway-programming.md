@@ -18,7 +18,7 @@ Failure Track:          Exception → [Skip] → [Skip] → Exception
 ChainSharp uses `Either<Exception, T>` from LanguageExt to represent this. A value is either `Left` (an exception) or `Right` (the success value):
 
 ```csharp
-public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>, ICreateUserWorkflow
+public class CreateUserWorkflow : ServiceTrain<CreateUserRequest, User>, ICreateUserWorkflow
 {
     protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
         => Activate(input)
@@ -44,21 +44,21 @@ context.Orders.Update(order);
 await context.SaveChanges();
 ```
 
-ChainSharp's `EffectWorkflow` does the same thing. Steps can track models, log entries, and other effects. Nothing actually persists until the workflow completes successfully and calls `SaveChanges`. If any step fails, nothing is saved.
+ChainSharp's `ServiceTrain` does the same thing. Steps can track models, log entries, and other effects. Nothing actually persists until the workflow completes successfully and calls `SaveChanges`. If any step fails, nothing is saved.
 
 This gives you atomic workflows—either everything succeeds and all effects are applied, or something fails and nothing is applied.
 
-## Workflow vs EffectWorkflow
+## Train vs ServiceTrain
 
 ChainSharp has two base classes for workflows:
 
-**`Workflow<TIn, TOut>`** — The core class. Handles chaining, [Memory](memory.md), and error propagation. No metadata, no effects, no automatic dependency injection from an `IServiceProvider`. Use this when:
+**`Train<TIn, TOut>`** — The core class. Handles chaining, [Memory](memory.md), and error propagation. No metadata, no effects, no automatic dependency injection from an `IServiceProvider`. Use this when:
 - You want a lightweight workflow without persistence
 - You're composing steps inside a larger system that handles its own concerns
 - Testing or prototyping
 
 ```csharp
-public class SimpleUserCreation : Workflow<CreateUserRequest, User>
+public class SimpleUserCreation : Train<CreateUserRequest, User>
 {
     protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
         => Activate(input)
@@ -68,7 +68,7 @@ public class SimpleUserCreation : Workflow<CreateUserRequest, User>
 }
 ```
 
-**`EffectWorkflow<TIn, TOut>`** — Extends `Workflow` with:
+**`ServiceTrain<TIn, TOut>`** — Extends `Train` with:
 - Automatic metadata tracking (start time, end time, success/failure, inputs/outputs)
 - Effect providers (database persistence, JSON logging, parameter serialization)
 - Integration with `IWorkflowBus` for workflow discovery
@@ -77,7 +77,7 @@ public class SimpleUserCreation : Workflow<CreateUserRequest, User>
 Use this when you want observability, persistence, or the mediator pattern:
 
 ```csharp
-public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>
+public class CreateUserWorkflow : ServiceTrain<CreateUserRequest, User>
 {
     protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
         => Activate(input)
@@ -87,4 +87,4 @@ public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>
 }
 ```
 
-Most applications should use `EffectWorkflow`. The base `Workflow` exists for cases where you need the chaining pattern without the infrastructure.
+Most applications should use `ServiceTrain`. The base `Train` exists for cases where you need the chaining pattern without the infrastructure.

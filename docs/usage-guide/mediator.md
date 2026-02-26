@@ -53,13 +53,13 @@ Register workflows during startup by pointing the bus at your assemblies:
 
 ```csharp
 builder.Services.AddChainSharpEffects(options => options
-    .AddEffectWorkflowBus(typeof(Program).Assembly)
+    .AddServiceTrainBus(typeof(Program).Assembly)
 );
 ```
 
-*API Reference: [AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %})*
+*API Reference: [AddServiceTrainBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %})*
 
-Pass multiple assemblies if your workflows live in different projects. Each input type must map to exactly one workflow—see [API Reference: AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %}) for discovery mechanics, input type uniqueness rules, and lifetime considerations.
+Pass multiple assemblies if your workflows live in different projects. Each input type must map to exactly one workflow—see [API Reference: AddServiceTrainBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %}) for discovery mechanics, input type uniqueness rules, and lifetime considerations.
 
 ## Using WorkflowBus in a Controller
 
@@ -94,7 +94,7 @@ See [API Reference: WorkflowBus.RunAsync]({{ site.baseurl }}{% link api-referenc
 
 ## Direct Injection
 
-You don't have to use the bus. `AddEffectWorkflowBus` also registers each workflow by its interface, so you can inject them directly:
+You don't have to use the bus. `AddServiceTrainBus` also registers each workflow by its interface, so you can inject them directly:
 
 ```csharp
 // GraphQL mutation using Hot Chocolate

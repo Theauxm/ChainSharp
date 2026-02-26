@@ -1,5 +1,5 @@
 using ChainSharp.Effect.Orchestration.Scheduler.Workflows.MetadataCleanup.Steps;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using LanguageExt;
 
 namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.MetadataCleanup;
@@ -8,7 +8,7 @@ namespace ChainSharp.Effect.Orchestration.Scheduler.Workflows.MetadataCleanup;
 /// Deletes expired metadata entries for configured workflow types.
 /// </summary>
 public class MetadataCleanupWorkflow
-    : EffectWorkflow<MetadataCleanupRequest, Unit>,
+    : ServiceTrain<MetadataCleanupRequest, Unit>,
         IMetadataCleanupWorkflow
 {
     protected override async Task<Either<Exception, Unit>> RunInternal(

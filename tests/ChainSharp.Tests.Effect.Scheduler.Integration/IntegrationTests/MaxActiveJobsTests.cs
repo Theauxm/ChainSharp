@@ -70,7 +70,7 @@ public class MaxActiveJobsTests
             .AddChainSharpEffects(
                 options =>
                     options
-                        .AddEffectWorkflowBus(
+                        .AddServiceTrainBus(
                             assemblies:
                             [
                                 typeof(AssemblyMarker).Assembly,
@@ -735,7 +735,7 @@ public class MaxActiveJobsTests
             .AddChainSharpEffects(
                 options =>
                     options
-                        .AddEffectWorkflowBus(
+                        .AddServiceTrainBus(
                             assemblies:
                             [
                                 typeof(AssemblyMarker).Assembly,

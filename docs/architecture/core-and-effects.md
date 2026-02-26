@@ -15,11 +15,11 @@ The foundation layer providing Railway Oriented Programming patterns.
 
 ```csharp
 // Base workflow class
-public abstract class Workflow<TIn, TOut>
+public abstract class Train<TIn, TOut>
 {
     public Task<TOut> Run(TIn input);
 
-    protected Workflow<TIn, TOut> Activate(TIn input);
+    protected Train<TIn, TOut> Activate(TIn input);
 }
 
 // Step interface for individual operations
@@ -28,7 +28,7 @@ public interface IStep<TIn, TOut>
     Task<TOut> Run(TIn input);
 }
 
-// Chaining is done via methods on Workflow<TIn, TOut> itself
+// Chaining is done via methods on Train<TIn, TOut> itself
 // e.g. Activate(input).Chain<MyStep>().Chain<MyOtherStep>().Resolve()
 // See API Reference > Workflow Methods for all overloads
 ```
@@ -39,14 +39,14 @@ This layer handles chaining, error propagation, and the core workflow lifecycle.
 
 Extends core workflows with dependency injection, metadata tracking, and effect management.
 
-### EffectWorkflow<TIn, TOut>
+### ServiceTrain<TIn, TOut>
 
 ```csharp
-public abstract class EffectWorkflow<TIn, TOut> : Workflow<TIn, TOut>, IEffectWorkflow<TIn, TOut>
+public abstract class ServiceTrain<TIn, TOut> : Train<TIn, TOut>, IServiceTrain<TIn, TOut>
 {
     // Internal framework properties (injected automatically)
     [Inject] public IEffectRunner? EffectRunner { get; set; }
-    [Inject] public ILogger<EffectWorkflow<TIn, TOut>>? Logger { get; set; }
+    [Inject] public ILogger<ServiceTrain<TIn, TOut>>? Logger { get; set; }
     [Inject] public IServiceProvider? ServiceProvider { get; set; }
 
     public Metadata Metadata { get; private set; }
@@ -141,7 +141,7 @@ public interface IEffectProvider : IDisposable
 
 ## Execution Flow
 
-The full lifecycle of an `EffectWorkflow` execution, corresponding to the `Run` method shown above:
+The full lifecycle of a `ServiceTrain` execution, corresponding to the `Run` method shown above:
 
 ```
 [Client Request]

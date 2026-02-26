@@ -1,10 +1,10 @@
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using LanguageExt;
 
 namespace ChainSharp.Tests.Effect.Integration.Examples.Workflows;
 
 public class TestEffectWorkflow
-    : EffectWorkflow<TestEffectWorkflowInput, TestEffectWorkflow>,
+    : ServiceTrain<TestEffectWorkflowInput, TestEffectWorkflow>,
         ITestEffectWorkflow
 {
     protected override async Task<Either<Exception, TestEffectWorkflow>> RunInternal(
@@ -15,4 +15,4 @@ public class TestEffectWorkflow
 public record TestEffectWorkflowInput();
 
 public interface ITestEffectWorkflow
-    : IEffectWorkflow<TestEffectWorkflowInput, TestEffectWorkflow> { }
+    : IServiceTrain<TestEffectWorkflowInput, TestEffectWorkflow> { }

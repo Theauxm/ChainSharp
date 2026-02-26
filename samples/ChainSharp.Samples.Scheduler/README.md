@@ -45,7 +45,7 @@ The sample seeds a "HelloWorld" manifest that runs every 60 seconds. The manifes
 
 | Component | Purpose |
 |-----------|---------|
-| `HelloWorldWorkflow` | Simple EffectWorkflow that logs a greeting |
+| `HelloWorldWorkflow` | Simple ServiceTrain that logs a greeting |
 | `HelloWorldInput` | Workflow input implementing `IManifestProperties` |
 | `LogGreetingStep` | Step that performs the greeting logic |
 | `ManifestManagerWorkflow` | Built-in workflow that polls for scheduled jobs |
@@ -88,15 +88,15 @@ Edit `appsettings.json` to customize:
 
 2. **Create a workflow**:
    ```csharp
-   public class MyJobWorkflow : EffectWorkflow<MyJobInput, Unit>, IMyJobWorkflow
+   public class MyJobWorkflow : ServiceTrain<MyJobInput, Unit>, IMyJobWorkflow
    {
        protected override async Task<Either<Exception, Unit>> RunInternal(MyJobInput input) =>
            Activate(input)
                .Chain<MyStep>()
                .Resolve();
    }
-   
-   public interface IMyJobWorkflow : IEffectWorkflow<MyJobInput, Unit>;
+
+   public interface IMyJobWorkflow : IServiceTrain<MyJobInput, Unit>;
    ```
 
 3. **Schedule the workflow** (at startup via the scheduler builder):
@@ -110,7 +110,7 @@ Edit `appsettings.json` to customize:
                Cron.Daily())));
    ```
 
-   The input type is inferred from `IMyJobWorkflow`'s `IEffectWorkflow<MyJobInput, Unit>` interface — only one type parameter needed.
+   The input type is inferred from `IMyJobWorkflow`'s `IServiceTrain<MyJobInput, Unit>` interface — only one type parameter needed.
 
    For batch scheduling, use `ScheduleMany` with `ManifestItem`:
    ```csharp

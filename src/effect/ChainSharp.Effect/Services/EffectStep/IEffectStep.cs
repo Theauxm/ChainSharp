@@ -1,4 +1,4 @@
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Step;
 using LanguageExt;
 
@@ -6,8 +6,8 @@ namespace ChainSharp.Effect.Services.EffectStep;
 
 public interface IEffectStep<TIn, TOut> : IStep<TIn, TOut>
 {
-    public Task<Either<Exception, TOut>> RailwayStep<TWorkflowIn, TWorkflowOut>(
+    public Task<Either<Exception, TOut>> RailwayStep<TTrainIn, TTrainOut>(
         Either<Exception, TIn> previousOutput,
-        EffectWorkflow<TWorkflowIn, TWorkflowOut> effectWorkflow
+        ServiceTrain<TTrainIn, TTrainOut> serviceTrain
     );
 }

@@ -4,7 +4,7 @@ using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.Metadata.DTOs;
 using ChainSharp.Effect.Orchestration.Mediator.Services.WorkflowBus;
 using ChainSharp.Effect.Services.EffectStep;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Step;
 using ChainSharp.Tests.ArrayLogger.Services.ArrayLoggingProvider;
 using FluentAssertions;
@@ -136,7 +136,7 @@ public class PostgresContextTests : TestSetup
         logLevel.Should().Be(1);
     }
 
-    internal class TestWorkflow : EffectWorkflow<TestWorkflowInput, TestWorkflow>, ITestWorkflow
+    internal class TestWorkflow : ServiceTrain<TestWorkflowInput, TestWorkflow>, ITestWorkflow
     {
         protected override async Task<Either<Exception, TestWorkflow>> RunInternal(
             TestWorkflowInput input
@@ -144,7 +144,7 @@ public class PostgresContextTests : TestSetup
     }
 
     internal class TestWorkflowWithoutInterface
-        : EffectWorkflow<TestWorkflowWithoutInterfaceInput, TestWorkflowWithoutInterface>
+        : ServiceTrain<TestWorkflowWithoutInterfaceInput, TestWorkflowWithoutInterface>
     {
         protected override async Task<Either<Exception, TestWorkflowWithoutInterface>> RunInternal(
             TestWorkflowWithoutInterfaceInput input
@@ -156,7 +156,7 @@ public class PostgresContextTests : TestSetup
     internal record TestWorkflowInput;
 
     internal class TestWorkflowWithinWorkflow()
-        : EffectWorkflow<
+        : ServiceTrain<
             TestWorkflowWithinWorkflowInput,
             (ITestWorkflow, ITestWorkflowWithinWorkflow)
         >,
@@ -188,10 +188,10 @@ public class PostgresContextTests : TestSetup
         }
     }
 
-    internal interface ITestWorkflow : IEffectWorkflow<TestWorkflowInput, TestWorkflow> { }
+    internal interface ITestWorkflow : IServiceTrain<TestWorkflowInput, TestWorkflow> { }
 
     internal interface ITestWorkflowWithinWorkflow
-        : IEffectWorkflow<
+        : IServiceTrain<
             TestWorkflowWithinWorkflowInput,
             (ITestWorkflow, ITestWorkflowWithinWorkflow)
         > { }

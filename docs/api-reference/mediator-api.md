@@ -23,4 +23,4 @@ This decouples callers from specific workflow implementations and enables workfl
 | Page | Description |
 |------|-------------|
 | [WorkflowBus]({{ site.baseurl }}{% link api-reference/mediator-api/workflow-bus.md %}) | `IWorkflowBus` interface — `RunAsync`, `InitializeWorkflow` |
-| [AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/mediator-api/add-effect-workflow-bus.md %}) | Registration and assembly scanning configuration |
+| [AddServiceTrainBus]({{ site.baseurl }}{% link api-reference/mediator-api/add-effect-workflow-bus.md %}) | Registration and assembly scanning configuration |

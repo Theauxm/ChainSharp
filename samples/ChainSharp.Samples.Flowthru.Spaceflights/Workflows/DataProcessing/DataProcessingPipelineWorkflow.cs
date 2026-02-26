@@ -1,15 +1,15 @@
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Samples.Flowthru.Spaceflights.Workflows.DataProcessing.Steps;
 using LanguageExt;
 
 namespace ChainSharp.Samples.Flowthru.Spaceflights.Workflows.DataProcessing;
 
 /// <summary>
-/// Wraps the flowthru DataProcessing pipeline as a ChainSharp EffectWorkflow.
+/// Wraps the flowthru DataProcessing pipeline as a ChainSharp ServiceTrain.
 /// Preprocesses raw company, shuttle, and review data into a model input table.
 /// </summary>
 public class DataProcessingPipelineWorkflow
-    : EffectWorkflow<DataProcessingPipelineInput, Unit>,
+    : ServiceTrain<DataProcessingPipelineInput, Unit>,
         IDataProcessingPipelineWorkflow
 {
     protected override async Task<Either<Exception, Unit>> RunInternal(

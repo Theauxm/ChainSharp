@@ -44,7 +44,7 @@ dotnet add package Theauxm.ChainSharp.Effect
 var builder = WebApplication.CreateBuilder(args);
 
 // Add ChainSharp services
-builder.Services.AddChainSharpEffects(o => o.AddEffectWorkflowBus(typeof(Program).Assembly));
+builder.Services.AddChainSharpEffects(o => o.AddServiceTrainBus(typeof(Program).Assembly));
 
 // Add your application services
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -55,7 +55,7 @@ var app = builder.Build();
 app.Run();
 ```
 
-*API Reference: [AddChainSharpEffects]({{ site.baseurl }}{% link api-reference/configuration.md %}), [AddEffectWorkflowBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %})*
+*API Reference: [AddChainSharpEffects]({{ site.baseurl }}{% link api-reference/configuration.md %}), [AddServiceTrainBus]({{ site.baseurl }}{% link api-reference/configuration/add-effect-workflow-bus.md %})*
 
 ## Creating Your First Workflow
 
@@ -84,9 +84,9 @@ public record User
 ### 2. Implement the Workflow
 
 ```csharp
-public interface ICreateUserWorkflow : IEffectWorkflow<CreateUserRequest, User> { }
+public interface ICreateUserWorkflow : IServiceTrain<CreateUserRequest, User> { }
 
-public class CreateUserWorkflow : EffectWorkflow<CreateUserRequest, User>, ICreateUserWorkflow
+public class CreateUserWorkflow : ServiceTrain<CreateUserRequest, User>, ICreateUserWorkflow
 {
     protected override async Task<Either<Exception, User>> RunInternal(CreateUserRequest input)
         => Activate(input)

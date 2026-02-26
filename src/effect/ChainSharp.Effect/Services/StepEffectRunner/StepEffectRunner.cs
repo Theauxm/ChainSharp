@@ -1,7 +1,7 @@
 using ChainSharp.Effect.Extensions;
 using ChainSharp.Effect.Services.EffectRegistry;
 using ChainSharp.Effect.Services.EffectStep;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Effect.Services.StepEffectProvider;
 using ChainSharp.Effect.Services.StepEffectProviderFactory;
 using Microsoft.Extensions.Logging;
@@ -32,23 +32,23 @@ public class StepEffectRunner : IStepEffectRunner
 
     public async Task BeforeStepExecution<TIn, TOut, TWorkflowIn, TWorkflowOut>(
         EffectStep<TIn, TOut> effectStep,
-        EffectWorkflow<TWorkflowIn, TWorkflowOut> effectWorkflow,
+        ServiceTrain<TWorkflowIn, TWorkflowOut> serviceTrain,
         CancellationToken cancellationToken
     )
     {
         await ActiveStepEffectProviders.RunAllAsync(
-            provider => provider.BeforeStepExecution(effectStep, effectWorkflow, cancellationToken)
+            provider => provider.BeforeStepExecution(effectStep, serviceTrain, cancellationToken)
         );
     }
 
     public async Task AfterStepExecution<TIn, TOut, TWorkflowIn, TWorkflowOut>(
         EffectStep<TIn, TOut> effectStep,
-        EffectWorkflow<TWorkflowIn, TWorkflowOut> effectWorkflow,
+        ServiceTrain<TWorkflowIn, TWorkflowOut> serviceTrain,
         CancellationToken cancellationToken
     )
     {
         await ActiveStepEffectProviders.RunAllAsync(
-            provider => provider.AfterStepExecution(effectStep, effectWorkflow, cancellationToken)
+            provider => provider.AfterStepExecution(effectStep, serviceTrain, cancellationToken)
         );
     }
 

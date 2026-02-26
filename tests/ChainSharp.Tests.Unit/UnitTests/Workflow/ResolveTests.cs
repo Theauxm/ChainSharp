@@ -1,6 +1,6 @@
 using ChainSharp.Exceptions;
 using ChainSharp.Step;
-using ChainSharp.Workflow;
+using ChainSharp.Train;
 using FluentAssertions;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
@@ -96,25 +96,25 @@ public class ResolveTests : TestSetup
         result.Swap().ValueUnsafe().Should().BeOfType<WorkflowException>();
     }
 
-    private class TestWorkflow : Workflow<int, int>
+    private class TestWorkflow : Train<int, int>
     {
         protected override Task<Either<Exception, int>> RunInternal(int input) =>
             throw new NotImplementedException();
     }
 
-    private class TestStringWorkflow : Workflow<int, string>
+    private class TestStringWorkflow : Train<int, string>
     {
         protected override Task<Either<Exception, string>> RunInternal(int input) =>
             throw new NotImplementedException();
     }
 
-    private class TestObjectWorkflow : Workflow<object, object>
+    private class TestObjectWorkflow : Train<object, object>
     {
         protected override Task<Either<Exception, object>> RunInternal(object input) =>
             throw new NotImplementedException();
     }
 
-    private class TestTupleWorkflow : Workflow<LanguageExt.Unit, (int, string)>
+    private class TestTupleWorkflow : Train<LanguageExt.Unit, (int, string)>
     {
         protected override Task<Either<Exception, (int, string)>> RunInternal(
             LanguageExt.Unit input

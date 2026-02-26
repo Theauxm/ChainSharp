@@ -1,6 +1,7 @@
 using ChainSharp.Extensions;
+using ChainSharp.Monad;
 using ChainSharp.Step;
-using ChainSharp.Workflow;
+using ChainSharp.Train;
 using FluentAssertions;
 using LanguageExt;
 
@@ -15,9 +16,10 @@ public class InitializeStepTests : TestSetup
         var input = 1;
 
         var workflow = new TestWorkflow();
+        var monad = workflow.Activate(1);
 
         // Act
-        var step = workflow.InitializeStep<TestValidStep, int, string>();
+        var step = monad.InitializeStep<TestValidStep, int, string>();
 
         // Assert
         step.Should().NotBeNull();
@@ -30,19 +32,20 @@ public class InitializeStepTests : TestSetup
     public async Task TestInvalidInitializeStep()
     {
         // Arrange
-        var workflow = new TestWorkflow().Activate(1);
+        var workflow = new TestWorkflow();
+        var monad = workflow.Activate(1);
 
         // Act
-        var step = workflow.InitializeStep<TestInvalidStep, int, string>();
+        var step = monad.InitializeStep<TestInvalidStep, int, string>();
 
         // Assert
-        workflow.Exception.Should().NotBeNull();
+        monad.Exception.Should().NotBeNull();
     }
 
-    private class TestWorkflow : Workflow<int, string>
+    private class TestWorkflow : Train<int, string>
     {
         protected override async Task<Either<Exception, string>> RunInternal(int input) =>
-            Resolve();
+            Activate(input).Resolve();
     }
 
     private class TestValidStep : Step<int, string>

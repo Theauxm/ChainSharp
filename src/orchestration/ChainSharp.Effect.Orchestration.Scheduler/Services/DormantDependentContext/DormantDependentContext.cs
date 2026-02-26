@@ -5,7 +5,7 @@ using ChainSharp.Effect.Enums;
 using ChainSharp.Effect.Models.Manifest;
 using ChainSharp.Effect.Models.WorkQueue.DTOs;
 using ChainSharp.Effect.Orchestration.Scheduler.Configuration;
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using ChainSharp.Effect.Utils;
 using LanguageExt;
 using Microsoft.EntityFrameworkCore;
@@ -46,7 +46,7 @@ internal class DormantDependentContext(
         TInput input,
         CancellationToken ct = default
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties
     {
         EnsureInitialized();
@@ -61,7 +61,7 @@ internal class DormantDependentContext(
         IEnumerable<(string ExternalId, TInput Input)> activations,
         CancellationToken ct = default
     )
-        where TWorkflow : IEffectWorkflow<TInput, Unit>
+        where TWorkflow : IServiceTrain<TInput, Unit>
         where TInput : IManifestProperties
     {
         EnsureInitialized();

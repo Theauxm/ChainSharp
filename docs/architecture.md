@@ -30,7 +30,7 @@ How ChainSharp's components fit together.
                     ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     ChainSharp.Effect                               │
-│    [EffectWorkflow] ────► [EffectRunner] ────► [EffectProviders]   │
+│    [ServiceTrain] ────► [EffectRunner] ────► [EffectProviders]     │
 └─────────────────────────────────┬───────────────────────────────────┘
                                   │
                                   ▼

@@ -26,8 +26,8 @@ Three execution modes are compared for identical workloads:
 | Mode | Description |
 |------|-------------|
 | **Serial** | Plain function calls — no framework, no abstractions |
-| **BaseWorkflow** | `Workflow<TIn, TOut>` — the core Chain/Resolve pipeline with `Either` error handling |
-| **EffectWorkflow (no effects)** | `EffectWorkflow<TIn, TOut>` — full DI-resolved workflow with effect runner lifecycle, but no effect providers registered |
+| **BaseTrain** | `Train<TIn, TOut>` — the core Chain/Resolve pipeline with `Either` error handling |
+| **ServiceTrain (no effects)** | `ServiceTrain<TIn, TOut>` — full DI-resolved workflow with effect runner lifecycle, but no effect providers registered |
 
 ## Workflow Overhead
 
@@ -36,31 +36,31 @@ How much does ChainSharp cost for different kinds of work?
 | Method | Mean | Allocated |
 |--------|-----:|----------:|
 | **Serial — Add 1** | 0.23 ns | — |
-| BaseWorkflow — Add 1 | 1,564 ns | 3,688 B |
-| EffectWorkflow — Add 1 | 7,061 ns | 7,176 B |
+| BaseTrain — Add 1 | 1,564 ns | 3,688 B |
+| ServiceTrain — Add 1 | 7,061 ns | 7,176 B |
 | | | |
 | **Serial — Add 3** (3 steps) | 0.23 ns | — |
-| BaseWorkflow — Add 3 | 1,966 ns | 4,536 B |
-| EffectWorkflow — Add 3 | 7,696 ns | 8,024 B |
+| BaseTrain — Add 3 | 1,966 ns | 4,536 B |
+| ServiceTrain — Add 3 | 7,696 ns | 8,024 B |
 | | | |
 | **Serial — Transform** (DTO → entity) | 19.7 ns | 152 B |
-| BaseWorkflow — Transform | 1,340 ns | 1,648 B |
-| EffectWorkflow — Transform | 6,889 ns | 5,232 B |
+| BaseTrain — Transform | 1,340 ns | 1,648 B |
+| ServiceTrain — Transform | 6,889 ns | 5,232 B |
 | | | |
 | **Serial — Simulated I/O** (3× `Task.Yield`) | 1,053 ns | 112 B |
-| BaseWorkflow — Simulated I/O | 3,747 ns | 4,992 B |
-| EffectWorkflow — Simulated I/O | 9,516 ns | 8,479 B |
+| BaseTrain — Simulated I/O | 3,747 ns | 4,992 B |
+| ServiceTrain — Simulated I/O | 9,516 ns | 8,479 B |
 
 ### Reading the Numbers
 
-For trivial arithmetic, the framework overhead looks enormous in relative terms — a `BaseWorkflow` is ~6,900× slower than `input + 1`. But that comparison is misleading because `input + 1` completes in a fraction of a nanosecond.
+For trivial arithmetic, the framework overhead looks enormous in relative terms — a `BaseTrain` is ~6,900× slower than `input + 1`. But that comparison is misleading because `input + 1` completes in a fraction of a nanosecond.
 
 In absolute terms:
 
-- **BaseWorkflow** adds roughly **1.5 μs** of fixed overhead per invocation.
-- **EffectWorkflow** (no effects) adds roughly **7 μs** per invocation, covering DI scope creation and effect runner lifecycle.
+- **BaseTrain** adds roughly **1.5 μs** of fixed overhead per invocation.
+- **ServiceTrain** (no effects) adds roughly **7 μs** per invocation, covering DI scope creation and effect runner lifecycle.
 
-Once the steps do real work, the overhead shrinks dramatically. With simulated I/O (`Task.Yield`), the BaseWorkflow is only **3.6×** the serial cost instead of 6,900×.
+Once the steps do real work, the overhead shrinks dramatically. With simulated I/O (`Task.Yield`), the BaseTrain is only **3.6×** the serial cost instead of 6,900×.
 
 For a workflow step that makes a database call (~1–10 ms) or an HTTP request (~50–500 ms), the 1.5–7 μs framework overhead is **less than 0.01%** of total execution time.
 
@@ -68,7 +68,7 @@ For a workflow step that makes a database call (~1–10 ms) or an HTTP request (
 
 How does overhead grow as you chain more steps?
 
-| Steps | Serial | BaseWorkflow | EffectWorkflow | Base Overhead/Step | Effect Overhead/Step |
+| Steps | Serial | BaseTrain | ServiceTrain | Base Overhead/Step | Effect Overhead/Step |
 |------:|-------:|-------------:|---------------:|-------------------:|---------------------:|
 | 1 | 4.7 ns | 1,630 ns | 7,186 ns | — | — |
 | 3 | 4.7 ns | 1,987 ns | 7,622 ns | ~179 ns | ~218 ns |
@@ -79,20 +79,20 @@ Each additional step adds roughly **200 ns** of overhead in both workflow modes.
 
 ### Memory Scaling
 
-| Steps | BaseWorkflow | EffectWorkflow |
+| Steps | BaseTrain | ServiceTrain |
 |------:|-------------:|---------------:|
 | 1 | 3,688 B | 7,176 B |
 | 3 | 4,536 B | 8,024 B |
 | 5 | 5,384 B | 8,872 B |
 | 10 | 7,720 B | 11,352 B |
 
-Each additional step allocates roughly **~424 B** (BaseWorkflow) or **~464 B** (EffectWorkflow).
+Each additional step allocates roughly **~424 B** (BaseTrain) or **~464 B** (ServiceTrain).
 
 ## Where the Overhead Comes From
 
 | Source | Approximate Cost |
 |--------|-----------------|
-| `Workflow` base class instantiation + `Either` wrapping | ~1.3 μs |
+| `Train` base class instantiation + `Either` wrapping | ~1.3 μs |
 | Per-step: type resolution, `Chain<T>` dispatch, `Either` bind | ~200 ns/step |
 | DI scope creation (`CreateScope`) | ~1 μs |
 | Effect runner lifecycle (initialize + save, no providers) | ~4.5 μs |

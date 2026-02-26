@@ -5,7 +5,7 @@ using ChainSharp.Tests.Examples.Brewery.Steps.Bottle;
 using ChainSharp.Tests.Examples.Brewery.Steps.Brew;
 using ChainSharp.Tests.Examples.Brewery.Steps.Ferment;
 using ChainSharp.Tests.Examples.Brewery.Steps.Prepare;
-using ChainSharp.Workflow;
+using ChainSharp.Train;
 using FluentAssertions;
 using LanguageExt;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,7 +37,7 @@ public class WorkflowTests : TestSetup
     }
 
     private class ChainTest(IBrew brew, IPrepare prepare, IBottle bottle)
-        : Workflow<Ingredients, List<GlassBottle>>
+        : Train<Ingredients, List<GlassBottle>>
     {
         protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(
             Ingredients input
@@ -52,7 +52,7 @@ public class WorkflowTests : TestSetup
                 .Resolve();
     }
 
-    private class ChainTestWithNoInputs : Workflow<Ingredients, List<GlassBottle>>
+    private class ChainTestWithNoInputs : Train<Ingredients, List<GlassBottle>>
     {
         protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(
             Ingredients input
@@ -72,7 +72,7 @@ public class WorkflowTests : TestSetup
         }
     }
 
-    private class ChainTestWithInterfaceTuple : Workflow<Ingredients, List<GlassBottle>>
+    private class ChainTestWithInterfaceTuple : Train<Ingredients, List<GlassBottle>>
     {
         protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(
             Ingredients input
@@ -93,7 +93,7 @@ public class WorkflowTests : TestSetup
         }
     }
 
-    private class ChainTestWithOneTypedService : Workflow<Ingredients, List<GlassBottle>>
+    private class ChainTestWithOneTypedService : Train<Ingredients, List<GlassBottle>>
     {
         protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(
             Ingredients input
@@ -119,7 +119,7 @@ public class WorkflowTests : TestSetup
         }
     }
 
-    private class ChainTestWithTwoTypedServices : Workflow<Ingredients, List<GlassBottle>>
+    private class ChainTestWithTwoTypedServices : Train<Ingredients, List<GlassBottle>>
     {
         protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(
             Ingredients input
@@ -146,7 +146,7 @@ public class WorkflowTests : TestSetup
         }
     }
 
-    private class ChainTestWithMockedService : Workflow<Ingredients, List<GlassBottle>>
+    private class ChainTestWithMockedService : Train<Ingredients, List<GlassBottle>>
     {
         protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(
             Ingredients input
@@ -166,15 +166,14 @@ public class WorkflowTests : TestSetup
         }
     }
 
-    private class WorkflowTestWithTupleInput
-        : Workflow<(int, string, object), (bool, double, object)>
+    private class WorkflowTestWithTupleInput : Train<(int, string, object), (bool, double, object)>
     {
         protected override async Task<Either<Exception, (bool, double, object)>> RunInternal(
             (int, string, object) input
         ) => Activate(input).Chain<TupleReturnStep>().ShortCircuit<TupleReturnStep>().Resolve();
     }
 
-    private class ChainTestWithUnitInput : Workflow<Ingredients, List<GlassBottle>>
+    private class ChainTestWithUnitInput : Train<Ingredients, List<GlassBottle>>
     {
         protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(
             Ingredients input
@@ -196,7 +195,7 @@ public class WorkflowTests : TestSetup
     }
 
     private class ChainTestWithShortCircuit(IPrepare prepare, IFerment ferment)
-        : Workflow<Ingredients, List<GlassBottle>>
+        : Train<Ingredients, List<GlassBottle>>
     {
         protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(
             Ingredients input
@@ -217,7 +216,7 @@ public class WorkflowTests : TestSetup
     }
 
     private class ChainTestWithShortCircuitStaysLeft(IPrepare prepare, IFerment ferment)
-        : Workflow<Ingredients, List<GlassBottle>>
+        : Train<Ingredients, List<GlassBottle>>
     {
         protected override async Task<Either<Exception, List<GlassBottle>>> RunInternal(
             Ingredients input
@@ -261,14 +260,14 @@ public class WorkflowTests : TestSetup
         public int Number;
     }
 
-    private class AccessInnerPropertyTypeWorkflow : Workflow<OuterProperty, InnerProperty>
+    private class AccessInnerPropertyTypeWorkflow : Train<OuterProperty, InnerProperty>
     {
         protected override async Task<Either<Exception, InnerProperty>> RunInternal(
             OuterProperty input
         ) => Activate(input).Extract<OuterProperty, InnerProperty>().Resolve();
     }
 
-    private class AccessInnerFieldTypeWorkflow : Workflow<OuterField, InnerField>
+    private class AccessInnerFieldTypeWorkflow : Train<OuterField, InnerField>
     {
         protected override async Task<Either<Exception, InnerField>> RunInternal(
             OuterField input

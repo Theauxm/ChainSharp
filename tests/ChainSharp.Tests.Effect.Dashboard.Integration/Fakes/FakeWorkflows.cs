@@ -1,4 +1,4 @@
-using ChainSharp.Effect.Services.EffectWorkflow;
+using ChainSharp.Effect.Services.ServiceTrain;
 using LanguageExt;
 
 #pragma warning disable CS8766 // Nullability mismatch on Metadata property inherited from EffectWorkflow
@@ -8,9 +8,9 @@ namespace ChainSharp.Tests.Effect.Dashboard.Integration.Fakes;
 // --- Simple workflow A ---
 public record FakeInputA;
 
-public interface IFakeWorkflowA : IEffectWorkflow<FakeInputA, string> { }
+public interface IFakeWorkflowA : IServiceTrain<FakeInputA, string> { }
 
-public class FakeWorkflowA : EffectWorkflow<FakeInputA, string>, IFakeWorkflowA
+public class FakeWorkflowA : ServiceTrain<FakeInputA, string>, IFakeWorkflowA
 {
     protected override Task<Either<Exception, string>> RunInternal(FakeInputA input) =>
         Task.FromResult<Either<Exception, string>>("ok");
@@ -19,9 +19,9 @@ public class FakeWorkflowA : EffectWorkflow<FakeInputA, string>, IFakeWorkflowA
 // --- Simple workflow B ---
 public record FakeInputB;
 
-public interface IFakeWorkflowB : IEffectWorkflow<FakeInputB, int> { }
+public interface IFakeWorkflowB : IServiceTrain<FakeInputB, int> { }
 
-public class FakeWorkflowB : EffectWorkflow<FakeInputB, int>, IFakeWorkflowB
+public class FakeWorkflowB : ServiceTrain<FakeInputB, int>, IFakeWorkflowB
 {
     protected override Task<Either<Exception, int>> RunInternal(FakeInputB input) =>
         Task.FromResult<Either<Exception, int>>(0);
@@ -30,19 +30,19 @@ public class FakeWorkflowB : EffectWorkflow<FakeInputB, int>, IFakeWorkflowB
 // --- Simple workflow C ---
 public record FakeInputC;
 
-public interface IFakeWorkflowC : IEffectWorkflow<FakeInputC, bool> { }
+public interface IFakeWorkflowC : IServiceTrain<FakeInputC, bool> { }
 
-public class FakeWorkflowC : EffectWorkflow<FakeInputC, bool>, IFakeWorkflowC
+public class FakeWorkflowC : ServiceTrain<FakeInputC, bool>, IFakeWorkflowC
 {
     protected override Task<Either<Exception, bool>> RunInternal(FakeInputC input) =>
         Task.FromResult<Either<Exception, bool>>(true);
 }
 
 // --- Workflow with generic input/output types for friendly name tests ---
-public interface IFakeGenericWorkflow : IEffectWorkflow<List<string>, Dictionary<string, int>> { }
+public interface IFakeGenericWorkflow : IServiceTrain<List<string>, Dictionary<string, int>> { }
 
 public class FakeGenericWorkflow
-    : EffectWorkflow<List<string>, Dictionary<string, int>>,
+    : ServiceTrain<List<string>, Dictionary<string, int>>,
         IFakeGenericWorkflow
 {
     protected override Task<Either<Exception, Dictionary<string, int>>> RunInternal(
